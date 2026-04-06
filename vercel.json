@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/translate", "destination": "/api/translate.js" },
     { "source": "/", "destination": "/repuguard-global.html" },
     { "source": "/signup", "destination": "/repuguard-signup.html" },
     { "source": "/dashboard", "destination": "/repuguard-dashboard.html" }
