@@ -1,9 +1,9 @@
-{
+{{
   "rewrites": [
     { "source": "/", "destination": "/repuguard-global.html" },
     { "source": "/signup", "destination": "/repuguard-signup.html" },
     { "source": "/dashboard", "destination": "/repuguard-dashboard.html" }
-  ],
+  ],  
   "headers": [
     {
       "source": "/(.*)",
