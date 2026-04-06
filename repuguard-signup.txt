@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepuGuard — Démarrer votre essai gratuit</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  :root {
+    --black: #080910; --surface: #0f1117; --card: #151820;
+    --border: rgba(255,255,255,0.07); --accent: #e8ff47;
+    --accent2: #47c8ff; --red: #ff4747; --green: #47ff8a;
+    --white: #f0f2f7; --muted: #6b7280;
+    --font-display: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--black); color: var(--white); font-family: var(--font-body); font-size: 16px; line-height: 1.6; min-height: 100vh; }
+
+/* LAYOUT */
+.page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+/* LEFT PANEL */
+.left-panel {
+background: var(–surface);
+border-right: 1px solid var(–border);
+padding: 3rem;
+display: flex;
+flex-direction: column;
+justify-content: center;
+position: relative;
+overflow: hidden;
+}
+.left-panel::before {
+content: ‘’;
+position: absolute;
+bottom: -100px; left: -100px;
+width: 400px; height: 400px;
+background: radial-gradient(circle, rgba(232,255,71,0.05) 0%, transparent 70%);
+pointer-events: none;
+}
+.logo { font-family: var(–font-display); font-weight: 800; font-size: 1.4rem; color: var(–white); text-decoration: none; margin-bottom: 3rem; display: block; }
+.logo span { color: var(–accent); }
+
+.plan-selector { margin-bottom: 2.5rem; }
+.plan-selector-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(–muted); margin-bottom: 1rem; }
+.plan-options { display: flex; flex-direction: column; gap: 0.75rem; }
+.plan-option {
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 1rem 1.2rem;
+cursor: pointer;
+transition: all 0.2s;
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: var(–card);
+}
+.plan-option:hover { border-color: rgba(232,255,71,0.3); }
+.plan-option.selected { border-color: var(–accent); background: rgba(232,255,71,0.05); }
+.plan-option-left { display: flex; flex-direction: column; gap: 0.15rem; }
+.plan-option-name { font-family: var(–font-display); font-weight: 700; font-size: 0.95rem; }
+.plan-option-desc { font-size: 0.75rem; color: var(–muted); }
+.plan-option-price { font-family: var(–font-display); font-weight: 800; font-size: 1.1rem; }
+.plan-option-price span { font-size: 0.7rem; font-weight: 400; opacity: 0.6; }
+.plan-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(–border); display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+.plan-option.selected .plan-radio { border-color: var(–accent); background: var(–accent); }
+.plan-option.selected .plan-radio::after { content: ‘’; width: 6px; height: 6px; border-radius: 50%; background: var(–black); }
+
+.benefits { margin-top: 1rem; }
+.benefits-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(–muted); margin-bottom: 1rem; }
+.benefit-item { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 0.75rem; font-size: 0.85rem; color: var(–muted); }
+.benefit-icon { color: var(–accent); font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+
+.trust-badges { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(–border); }
+.trust-badge { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(–muted); }
+.trust-badge-icon { font-size: 1rem; }
+
+/* RIGHT PANEL */
+.right-panel { padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
+.form-header { margin-bottom: 2rem; }
+.form-header h1 { font-family: var(–font-display); font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+.form-header p { color: var(–muted); font-size: 0.88rem; }
+.trial-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(71,255,138,0.1); border: 1px solid rgba(71,255,138,0.2); color: var(–green); padding: 0.3rem 0.8rem; border-radius: 100px; font-size: 0.75rem; font-weight: 600; margin-bottom: 1.5rem; }
+
+/* STEPS INDICATOR */
+.steps-indicator { display: flex; align-items: center; gap: 0; margin-bottom: 2rem; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; transition: all 0.3s; }
+.step-dot.done { background: var(–accent); color: var(–black); }
+.step-dot.active { background: var(–white); color: var(–black); }
+.step-dot.pending { background: var(–card); color: var(–muted); border: 1px solid var(–border); }
+.step-line { flex: 1; height: 1px; background: var(–border); transition: background 0.3s; }
+.step-line.done { background: var(–accent); }
+.step-label { font-size: 0.7rem; color: var(–muted); margin-top: 0.3rem; text-align: center; }
+.steps-labels { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+.step-label-item { font-size: 0.7rem; color: var(–muted); flex: 1; text-align: center; }
+.step-label-item.active { color: var(–white); font-weight: 600; }
+.step-label-item.done { color: var(–accent); }
+
+/* FORM */
+.form-step { display: none; }
+.form-step.active { display: block; }
+
+.form-group { margin-bottom: 1.2rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+label { display: block; font-size: 0.8rem; font-weight: 500; color: var(–muted); margin-bottom: 0.4rem; }
+input[type=“text”], input[type=“email”], input[type=“password”], select {
+width: 100%;
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 8px;
+color: var(–white);
+padding: 0.75rem 1rem;
+font-size: 0.9rem;
+font-family: var(–font-body);
+outline: none;
+transition: border-color 0.2s;
+-webkit-appearance: none;
+}
+input:focus, select:focus { border-color: rgba(232,255,71,0.4); }
+input.error { border-color: var(–red); }
+.error-msg { font-size: 0.75rem; color: var(–red); margin-top: 0.3rem; display: none; }
+.error-msg.show { display: block; }
+select option { background: var(–card); }
+
+/* PASSWORD STRENGTH */
+.password-strength { margin-top: 0.5rem; display: none; }
+.strength-bar { height: 3px; border-radius: 2px; background: var(–border); overflow: hidden; margin-bottom: 0.3rem; }
+.strength-fill { height: 100%; width: 0; transition: all 0.3s; border-radius: 2px; }
+.strength-text { font-size: 0.72rem; color: var(–muted); }
+
+/* STRIPE ELEMENTS */
+.stripe-field {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 0.75rem 1rem;
+transition: border-color 0.2s;
+}
+.stripe-field.StripeElement–focus { border-color: rgba(232,255,71,0.4); }
+.stripe-field.StripeElement–invalid { border-color: var(–red); }
+.card-icons { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.card-icon { width: 32px; height: 20px; border-radius: 3px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(–muted); font-weight: 700; }
+
+/* ORDER SUMMARY */
+.order-summary { background: var(–card); border: 1px solid var(–border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; }
+.order-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 0.6rem; }
+.order-row:last-child { margin-bottom: 0; padding-top: 0.6rem; border-top: 1px solid var(–border); font-weight: 700; font-size: 0.95rem; }
+.order-label { color: var(–muted); }
+.order-value { color: var(–white); }
+.order-free { color: var(–green); font-weight: 600; }
+
+/* BUTTONS */
+.btn-submit {
+width: 100%;
+background: var(–accent);
+color: var(–black);
+border: none;
+border-radius: 8px;
+padding: 1rem;
+font-family: var(–font-display);
+font-weight: 700;
+font-size: 1rem;
+cursor: pointer;
+transition: all 0.2s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 0.5rem;
+letter-spacing: -0.01em;
+}
+.btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232,255,71,0.25); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-back { background: none; border: 1px solid var(–border); color: var(–muted); border-radius: 8px; padding: 0.75rem 1.5rem; font-family: var(–font-body); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; margin-right: 0.75rem; }
+.btn-back:hover { border-color: rgba(255,255,255,0.2); color: var(–white); }
+.btn-row { display: flex; align-items: center; margin-top: 1.5rem; }
+.btn-row .btn-submit { flex: 1; }
+
+/* SPINNER */
+.spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.3); border-top-color: var(–black); border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SUCCESS SCREEN */
+.success-screen { display: none; text-align: center; padding: 2rem 0; }
+.success-icon { font-size: 4rem; margin-bottom: 1rem; }
+.success-screen h2 { font-family: var(–font-display); font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
+.success-screen p { color: var(–muted); margin-bottom: 2rem; font-size: 0.9rem; line-height: 1.6; }
+.success-next-steps { background: var(–card); border: 1px solid var(–border); border-radius: 12px; padding: 1.2rem; text-align: left; margin-bottom: 1.5rem; }
+.next-step-item { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem; font-size: 0.85rem; }
+.next-step-item:last-child { margin-bottom: 0; }
+.next-step-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(232,255,71,0.15); color: var(–accent); font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* DIVIDER */
+.divider { display: flex; align-items: center; gap: 0.8rem; margin: 1.2rem 0; }
+.divider-line { flex: 1; height: 1px; background: var(–border); }
+.divider-text { font-size: 0.75rem; color: var(–muted); }
+
+/* LEGAL */
+.legal-text { font-size: 0.72rem; color: var(–muted); line-height: 1.5; margin-top: 1rem; text-align: center; }
+.legal-text a { color: var(–muted); text-decoration: underline; }
+
+/* TOOLTIP */
+.tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+.tooltip-icon { width: 14px; height: 14px; border-radius: 50%; background: var(–border); color: var(–muted); font-size: 0.6rem; display: inline-flex; align-items: center; justify-content: center; cursor: help; margin-left: 0.3rem; }
+.tooltip-box { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(–white); color: var(–black); font-size: 0.72rem; padding: 0.4rem 0.7rem; border-radius: 6px; white-space: nowrap; display: none; z-index: 10; }
+.tooltip-wrap:hover .tooltip-box { display: block; }
+
+/* RESPONSIVE */
+@media (max-width: 800px) {
+.page { grid-template-columns: 1fr; }
+.left-panel { display: none; }
+.right-panel { padding: 2rem 1.5rem; }
+}
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+  <!-- LEFT PANEL — PLAN SELECTOR + BENEFITS -->
+
+  <div class="left-panel">
+    <a href="repuguard-global.html" class="logo">Repu<span>Guard</span></a>
+
+```
+<div class="plan-selector">
+  <div class="plan-selector-label">Choisissez votre plan</div>
+  <div class="plan-options">
+    <div class="plan-option" onclick="selectPlan(this, 'starter', 29, 'Starter')" id="plan-starter">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div class="plan-radio"></div>
+        <div class="plan-option-left">
+          <div class="plan-option-name">Starter</div>
+          <div class="plan-option-desc">1 établissement · 8 plateformes</div>
+        </div>
+      </div>
+      <div class="plan-option-price">29€<span>/mois</span></div>
+    </div>
+    <div class="plan-option selected" onclick="selectPlan(this, 'pro', 69, 'Pro')" id="plan-pro">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div class="plan-radio"></div>
+        <div class="plan-option-left">
+          <div class="plan-option-name">Pro ⭐</div>
+          <div class="plan-option-desc">3 établissements · 15+ plateformes</div>
+        </div>
+      </div>
+      <div class="plan-option-price">69€<span>/mois</span></div>
+    </div>
+    <div class="plan-option" onclick="selectPlan(this, 'business', 149, 'Business')" id="plan-business">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div class="plan-radio"></div>
+        <div class="plan-option-left">
+          <div class="plan-option-name">Business</div>
+          <div class="plan-option-desc">10 établissements · API · White-label</div>
+        </div>
+      </div>
+      <div class="plan-option-price">149€<span>/mois</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="benefits">
+  <div class="benefits-title">Inclus dans tous les plans</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> 14 jours d'essai gratuit — aucune carte débitée avant</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> Surveillance 24h/24, 7j/7 sans interruption</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> Réponses IA générées automatiquement</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> Alertes email + SMS en temps réel</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> Annulation à tout moment, sans pénalité</div>
+  <div class="benefit-item"><span class="benefit-icon">✓</span> Support client 7j/7</div>
+</div>
+
+<div class="trust-badges">
+  <div class="trust-badge"><span class="trust-badge-icon">🔒</span> Paiement SSL sécurisé</div>
+  <div class="trust-badge"><span class="trust-badge-icon">🇪🇺</span> Données hébergées en Europe</div>
+  <div class="trust-badge"><span class="trust-badge-icon">✓</span> Conforme RGPD</div>
+</div>
+```
+
+  </div>
+
+  <!-- RIGHT PANEL — FORM -->
+
+  <div class="right-panel">
+
+```
+<div id="mainForm">
+  <div class="trial-badge">🎁 14 jours gratuits — aucun débit aujourd'hui</div>
+
+  <div class="form-header">
+    <h1>Créer votre compte</h1>
+    <p>Votre réputation sera surveillée dans moins de 5 minutes.</p>
+  </div>
+
+  <!-- STEPS INDICATOR -->
+  <div class="steps-indicator">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot pending" id="dot-2">2</div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot pending" id="dot-3">3</div>
+  </div>
+  <div class="steps-labels">
+    <div class="step-label-item active" id="label-1">Votre compte</div>
+    <div class="step-label-item" id="label-2">Votre business</div>
+    <div class="step-label-item" id="label-3">Paiement</div>
+  </div>
+
+  <!-- STEP 1 — ACCOUNT -->
+  <div class="form-step active" id="step-1">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" id="firstName" placeholder="Marie" autocomplete="given-name">
+        <div class="error-msg" id="err-firstName">Prénom requis</div>
+      </div>
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="lastName" placeholder="Dupont" autocomplete="family-name">
+        <div class="error-msg" id="err-lastName">Nom requis</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Adresse email</label>
+      <input type="email" id="email" placeholder="marie@monentreprise.fr" autocomplete="email">
+      <div class="error-msg" id="err-email">Email valide requis</div>
+    </div>
+    <div class="form-group">
+      <label>
+        Mot de passe
+        <div class="tooltip-wrap">
+          <span class="tooltip-icon">?</span>
+          <div class="tooltip-box">Min. 8 caractères, 1 majuscule, 1 chiffre</div>
+        </div>
+      </label>
+      <input type="password" id="password" placeholder="••••••••" oninput="checkPasswordStrength(this.value)">
+      <div class="password-strength" id="pwStrength">
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <div class="strength-text" id="strengthText"></div>
+      </div>
+      <div class="error-msg" id="err-password">Minimum 8 caractères requis</div>
+    </div>
+    <div class="form-group">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="passwordConfirm" placeholder="••••••••">
+      <div class="error-msg" id="err-passwordConfirm">Les mots de passe ne correspondent pas</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-submit" onclick="goToStep2()">
+        <span>Continuer</span>
+        <span>→</span>
+        <div class="spinner" id="spin1"></div>
+      </button>
+    </div>
+    <div class="divider"><div class="divider-line"></div><div class="divider-text">ou</div><div class="divider-line"></div></div>
+    <p style="text-align:center;font-size:0.82rem;color:var(--muted)">Déjà un compte ? <a href="#" style="color:var(--accent);text-decoration:none">Se connecter</a></p>
+  </div>
+
+  <!-- STEP 2 — BUSINESS INFO -->
+  <div class="form-step" id="step-2">
+    <div class="form-group">
+      <label>Nom de votre établissement / marque</label>
+      <input type="text" id="businessName" placeholder="Restaurant Le Provençal">
+      <div class="error-msg" id="err-businessName">Nom requis</div>
+    </div>
+    <div class="form-group">
+      <label>Secteur d'activité</label>
+      <select id="sector">
+        <option value="">Sélectionner votre secteur...</option>
+        <option value="restaurant">Restaurant / Café / Bar</option>
+        <option value="hotel">Hôtel / Hébergement</option>
+        <option value="medical">Médical / Santé / Bien-être</option>
+        <option value="retail">Commerce / Boutique</option>
+        <option value="service">Services professionnels</option>
+        <option value="beauty">Beauté / Coiffure / Spa</option>
+        <option value="education">Éducation / Formation</option>
+        <option value="real-estate">Immobilier</option>
+        <option value="influencer">Créateur de contenu / Influenceur</option>
+        <option value="other">Autre</option>
+      </select>
+      <div class="error-msg" id="err-sector">Secteur requis</div>
+    </div>
+    <div class="form-group">
+      <label>Site web ou profil Google (optionnel)</label>
+      <input type="text" id="website" placeholder="https://monrestaurant.fr ou Maps URL">
+    </div>
+    <div class="form-group">
+      <label>Pays</label>
+      <select id="country">
+        <option value="FR">🇫🇷 France</option>
+        <option value="BE">🇧🇪 Belgique</option>
+        <option value="CH">🇨🇭 Suisse</option>
+        <option value="LU">🇱🇺 Luxembourg</option>
+        <option value="ES">🇪🇸 Espagne</option>
+        <option value="IT">🇮🇹 Italie</option>
+        <option value="DE">🇩🇪 Allemagne</option>
+        <option value="GB">🇬🇧 Royaume-Uni</option>
+        <option value="US">🇺🇸 États-Unis</option>
+        <option value="CA">🇨🇦 Canada</option>
+        <option value="MA">🇲🇦 Maroc</option>
+        <option value="SN">🇸🇳 Sénégal</option>
+        <option value="OTHER">🌍 Autre</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>
+        Plateformes à surveiller en priorité
+        <div class="tooltip-wrap">
+          <span class="tooltip-icon">?</span>
+          <div class="tooltip-box">Vous pourrez en ajouter d'autres dans votre dashboard</div>
+        </div>
+      </label>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.3rem" id="platformPicker">
+        <span class="platform-tag selected" onclick="togglePlatform(this)" data-p="google">Google</span>
+        <span class="platform-tag selected" onclick="togglePlatform(this)" data-p="tripadvisor">TripAdvisor</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="facebook">Facebook</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="instagram">Instagram</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="twitter">X / Twitter</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="trustpilot">Trustpilot</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="reddit">Reddit</span>
+        <span class="platform-tag" onclick="togglePlatform(this)" data-p="youtube">YouTube</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goToStep(1)">← Retour</button>
+      <button class="btn-submit" onclick="goToStep3()">
+        <span>Continuer vers le paiement</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 3 — PAYMENT -->
+  <div class="form-step" id="step-3">
+    <div class="order-summary">
+      <div class="order-row">
+        <span class="order-label">Plan sélectionné</span>
+        <span class="order-value" id="summaryPlan">Pro — 69€/mois</span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Essai gratuit (14 jours)</span>
+        <span class="order-free">-69€</span>
+      </div>
+      <div class="order-row">
+        <span class="order-label">Dû aujourd'hui</span>
+        <span class="order-value" style="color:var(--green);font-size:1.1rem">0,00 €</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Numéro de carte</label>
+      <div id="cardNumber" class="stripe-field"></div>
+      <div class="card-icons">
+        <div class="card-icon">VISA</div>
+        <div class="card-icon">MC</div>
+        <div class="card-icon">AMEX</div>
+        <div class="card-icon">CB</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date d'expiration</label>
+        <div id="cardExpiry" class="stripe-field"></div>
+      </div>
+      <div class="form-group">
+        <label>
+          Code CVV
+          <div class="tooltip-wrap">
+            <span class="tooltip-icon">?</span>
+            <div class="tooltip-box">3 chiffres au dos de votre carte</div>
+          </div>
+        </label>
+        <div id="cardCvc" class="stripe-field"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Nom sur la carte</label>
+      <input type="text" id="cardName" placeholder="MARIE DUPONT" style="text-transform:uppercase">
+      <div class="error-msg" id="err-cardName">Nom requis</div>
+    </div>
+
+    <div id="payment-error" style="color:var(--red);font-size:0.82rem;margin-bottom:1rem;display:none"></div>
+
+    <div class="btn-row">
+      <button class="btn-back" onclick="goToStep(2)">← Retour</button>
+      <button class="btn-submit" id="submitBtn" onclick="handlePayment()">
+        <span id="submitText">🔒 Démarrer gratuitement</span>
+        <div class="spinner" id="spinPayment"></div>
+      </button>
+    </div>
+
+    <div class="legal-text">
+      En continuant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et notre <a href="#">Politique de confidentialité</a>.<br>
+      Votre carte sera débitée de <strong id="legalAmount">69€</strong>/mois après 14 jours d'essai gratuit. Annulable à tout moment.
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">🎉</div>
+  <h2>Bienvenue sur RepuGuard !</h2>
+  <p>Votre compte est créé. Votre réputation est maintenant surveillée.<br>Vérifiez votre email pour confirmer votre adresse.</p>
+  <div class="success-next-steps">
+    <div class="next-step-item">
+      <div class="next-step-num">1</div>
+      <div>Confirmez votre email — un lien vous a été envoyé à <strong id="confirmedEmail"></strong></div>
+    </div>
+    <div class="next-step-item">
+      <div class="next-step-num">2</div>
+      <div>Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div>
+    </div>
+    <div class="next-step-item">
+      <div class="next-step-num">3</div>
+      <div>Configurez vos préférences d'alerte (email, SMS, fréquence)</div>
+    </div>
+  </div>
+  <a href="#" class="btn-submit" style="text-decoration:none;justify-content:center">
+    Accéder à mon dashboard →
+  </a>
+</div>
+```
+
+  </div>
+</div>
+
+<style>
+  .platform-tag {
+    padding: 0.35rem 0.8rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .platform-tag.selected {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.08);
+    color: var(--accent);
+  }
+  .platform-tag:hover { border-color: rgba(255,255,255,0.2); color: var(--white); }
+</style>
+
+<script>
+// ═══════════════════════════════════════
+// STRIPE SETUP
+// Replace with your actual Stripe publishable key
+// ═══════════════════════════════════════
+const STRIPE_KEY = 'pk_test_REPLACE_WITH_YOUR_STRIPE_KEY';
+
+let stripe, cardNumber, cardExpiry, cardCvc;
+
+function initStripe() {
+  try {
+    stripe = Stripe(STRIPE_KEY);
+    const elements = stripe.elements({
+      fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400&display=swap' }]
+    });
+    const style = {
+      base: {
+        color: '#f0f2f7',
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: '15px',
+        fontWeight: '400',
+        '::placeholder': { color: '#6b7280' },
+      },
+      invalid: { color: '#ff4747' }
+    };
+    cardNumber = elements.create('cardNumber', { style, showIcon: true });
+    cardExpiry = elements.create('cardExpiry', { style });
+    cardCvc = elements.create('cardCvc', { style });
+    cardNumber.mount('#cardNumber');
+    cardExpiry.mount('#cardExpiry');
+    cardCvc.mount('#cardCvc');
+  } catch(e) {
+    console.log('Stripe init — add your key to activate payments');
+  }
+}
+
+// ═══════════════════════════════════════
+// PLAN SELECTION
+// ═══════════════════════════════════════
+let selectedPlan = { id: 'pro', price: 69, name: 'Pro' };
+
+function selectPlan(el, id, price, name) {
+  document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlan = { id, price, name };
+  document.getElementById('summaryPlan').textContent = `${name} — ${price}€/mois`;
+  document.getElementById('legalAmount').textContent = `${price}€`;
+}
+
+// ═══════════════════════════════════════
+// PLATFORM TAGS
+// ═══════════════════════════════════════
+function togglePlatform(el) {
+  el.classList.toggle('selected');
+}
+
+// ═══════════════════════════════════════
+// PASSWORD STRENGTH
+// ═══════════════════════════════════════
+function checkPasswordStrength(val) {
+  const bar = document.getElementById('pwStrength');
+  const fill = document.getElementById('strengthFill');
+  const text = document.getElementById('strengthText');
+  bar.style.display = val.length > 0 ? 'block' : 'none';
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { pct: '25%', color: '#ff4747', label: 'Très faible' },
+    { pct: '50%', color: '#ffaa47', label: 'Faible' },
+    { pct: '75%', color: '#47c8ff', label: 'Bon' },
+    { pct: '100%', color: '#47ff8a', label: 'Excellent' },
+  ];
+  const lvl = levels[score - 1] || levels[0];
+  fill.style.width = score > 0 ? lvl.pct : '0';
+  fill.style.background = lvl.color;
+  text.textContent = score > 0 ? lvl.label : '';
+  text.style.color = lvl.color;
+}
+
+// ═══════════════════════════════════════
+// VALIDATION
+// ═══════════════════════════════════════
+function showError(id, msg) {
+  const input = document.getElementById(id);
+  const err = document.getElementById('err-' + id);
+  if (input) input.classList.add('error');
+  if (err) { err.textContent = msg || err.textContent; err.classList.add('show'); }
+}
+function clearError(id) {
+  const input = document.getElementById(id);
+  const err = document.getElementById('err-' + id);
+  if (input) input.classList.remove('error');
+  if (err) err.classList.remove('show');
+}
+function clearAllErrors() {
+  document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('input.error, select.error').forEach(e => e.classList.remove('error'));
+}
+
+function validateStep1() {
+  clearAllErrors();
+  let valid = true;
+  const firstName = document.getElementById('firstName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pw = document.getElementById('password').value;
+  const pwc = document.getElementById('passwordConfirm').value;
+  if (!firstName) { showError('firstName'); valid = false; }
+  if (!lastName) { showError('lastName'); valid = false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('email', 'Entrez un email valide'); valid = false; }
+  if (pw.length < 8) { showError('password', 'Minimum 8 caractères'); valid = false; }
+  if (pw !== pwc) { showError('passwordConfirm', 'Les mots de passe ne correspondent pas'); valid = false; }
+  return valid;
+}
+
+function validateStep2() {
+  clearAllErrors();
+  let valid = true;
+  if (!document.getElementById('businessName').value.trim()) { showError('businessName'); valid = false; }
+  if (!document.getElementById('sector').value) { showError('sector', 'Sélectionnez votre secteur'); valid = false; }
+  return valid;
+}
+
+// ═══════════════════════════════════════
+// STEP NAVIGATION
+// ═══════════════════════════════════════
+function goToStep(n) {
+  document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  updateStepIndicator(n);
+  if (n === 3) initStripe();
+}
+
+function goToStep2() {
+  if (!validateStep1()) return;
+  goToStep(2);
+}
+
+function goToStep3() {
+  if (!validateStep2()) return;
+  goToStep(3);
+}
+
+function updateStepIndicator(active) {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot-' + i);
+    const label = document.getElementById('label-' + i);
+    if (i < active) {
+      dot.className = 'step-dot done';
+      dot.innerHTML = '✓';
+      label.className = 'step-label-item done';
+    } else if (i === active) {
+      dot.className = 'step-dot active';
+      dot.textContent = i;
+      label.className = 'step-label-item active';
+    } else {
+      dot.className = 'step-dot pending';
+      dot.textContent = i;
+      label.className = 'step-label-item';
+    }
+    if (i < 3) {
+      const line = document.getElementById('line-' + i);
+      line.className = 'step-line' + (i < active ? ' done' : '');
+    }
+  }
+}
+
+// ═══════════════════════════════════════
+// PAYMENT HANDLER
+// ═══════════════════════════════════════
+async function handlePayment() {
+  clearAllErrors();
+  const cardName = document.getElementById('cardName').value.trim();
+  if (!cardName) { showError('cardName'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  const text = document.getElementById('submitText');
+  const spin = document.getElementById('spinPayment');
+  const errDiv = document.getElementById('payment-error');
+
+  btn.disabled = true;
+  text.style.display = 'none';
+  spin.style.display = 'block';
+  errDiv.style.display = 'none';
+
+  try {
+    if (!stripe || !cardNumber) {
+      // Demo mode — no real Stripe key
+      await new Promise(r => setTimeout(r, 1800));
+      showSuccess();
+      return;
+    }
+
+    const { paymentMethod, error } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardNumber,
+      billing_details: { name: cardName, email: document.getElementById('email').value }
+    });
+
+    if (error) {
+      errDiv.textContent = error.message;
+      errDiv.style.display = 'block';
+      btn.disabled = false;
+      text.style.display = 'inline';
+      spin.style.display = 'none';
+      return;
+    }
+
+    // ─── HERE: send paymentMethod.id + plan + user data to your backend ───
+    // const res = await fetch('/api/create-subscription', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     paymentMethodId: paymentMethod.id,
+    //     plan: selectedPlan.id,
+    //     email: document.getElementById('email').value,
+    //     name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
+    //   })
+    // });
+    // const data = await res.json();
+
+    showSuccess();
+
+  } catch(err) {
+    errDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+    errDiv.style.display = 'block';
+    btn.disabled = false;
+    text.style.display = 'inline';
+    spin.style.display = 'none';
+  }
+}
+
+function showSuccess() {
+  document.getElementById('mainForm').style.display = 'none';
+  const s = document.getElementById('successScreen');
+  s.style.display = 'block';
+  document.getElementById('confirmedEmail').textContent = document.getElementById('email').value;
+}
+
+// Add real-time clear errors on input
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', () => {
+      el.classList.remove('error');
+      const err = document.getElementById('err-' + el.id);
+      if (err) err.classList.remove('show');
+    });
+  });
+});
+</script>
+
+</body>
+</html>

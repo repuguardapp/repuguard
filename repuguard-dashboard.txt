@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepuGuard — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #06070d;
+  --surface: #0d0f18;
+  --card: #12141f;
+  --card2: #171929;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --accent: #e8ff47;
+  --accent-dim: rgba(232,255,71,0.08);
+  --blue: #47c8ff;
+  --blue-dim: rgba(71,200,255,0.08);
+  --red: #ff5252;
+  --red-dim: rgba(255,82,82,0.1);
+  --green: #52ffaa;
+  --green-dim: rgba(82,255,170,0.08);
+  --orange: #ffaa52;
+  --orange-dim: rgba(255,170,82,0.1);
+  --white: #eef0f8;
+  --muted: #5a6078;
+  --muted2: #8890a8;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --sidebar-w: 240px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+background: var(–black);
+color: var(–white);
+font-family: var(–font-body);
+font-size: 14px;
+line-height: 1.5;
+overflow-x: hidden;
+min-height: 100vh;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+width: var(–sidebar-w);
+background: var(–surface);
+border-right: 1px solid var(–border);
+display: flex;
+flex-direction: column;
+position: fixed;
+top: 0; left: 0; bottom: 0;
+z-index: 50;
+transition: transform 0.3s;
+}
+
+.sidebar-logo {
+padding: 1.5rem 1.4rem 1rem;
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.logo-text { font-family: var(–font-display); font-weight: 800; font-size: 1.1rem; color: var(–white); text-decoration: none; }
+.logo-text span { color: var(–accent); }
+.plan-chip { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; background: var(–accent-dim); color: var(–accent); padding: 2px 7px; border-radius: 100px; border: 1px solid rgba(232,255,71,0.15); }
+
+.business-switcher {
+margin: 1rem 1rem 0;
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 0.7rem 0.8rem;
+display: flex;
+align-items: center;
+justify-content: space-between;
+cursor: pointer;
+transition: border-color 0.2s;
+}
+.business-switcher:hover { border-color: var(–border2); }
+.biz-info { display: flex; flex-direction: column; }
+.biz-name { font-size: 0.82rem; font-weight: 600; color: var(–white); }
+.biz-type { font-size: 0.7rem; color: var(–muted2); }
+.biz-arrow { color: var(–muted); font-size: 0.7rem; }
+
+.nav-section { margin-top: 1.2rem; padding: 0 0.8rem; }
+.nav-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(–muted); padding: 0 0.6rem; margin-bottom: 0.4rem; }
+.nav-item {
+display: flex;
+align-items: center;
+gap: 0.65rem;
+padding: 0.55rem 0.7rem;
+border-radius: 8px;
+cursor: pointer;
+transition: all 0.15s;
+color: var(–muted2);
+font-size: 0.83rem;
+font-weight: 400;
+margin-bottom: 2px;
+position: relative;
+text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(–white); }
+.nav-item.active { background: var(–accent-dim); color: var(–accent); font-weight: 600; }
+.nav-icon { width: 16px; text-align: center; font-size: 0.9rem; flex-shrink: 0; }
+.nav-badge { margin-left: auto; background: var(–red); color: white; font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 100px; min-width: 16px; text-align: center; }
+.nav-badge.yellow { background: var(–orange); color: var(–black); }
+
+.sidebar-footer {
+margin-top: auto;
+padding: 1rem;
+border-top: 1px solid var(–border);
+}
+.trial-notice {
+background: var(–accent-dim);
+border: 1px solid rgba(232,255,71,0.12);
+border-radius: 10px;
+padding: 0.8rem;
+margin-bottom: 0.8rem;
+}
+.trial-notice-title { font-size: 0.75rem; font-weight: 700; color: var(–accent); margin-bottom: 0.2rem; }
+.trial-notice-text { font-size: 0.7rem; color: var(–muted2); line-height: 1.4; }
+.trial-bar { height: 3px; background: var(–border); border-radius: 2px; margin-top: 0.6rem; overflow: hidden; }
+.trial-fill { height: 100%; width: 35%; background: var(–accent); border-radius: 2px; }
+.user-row { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; padding: 0.4rem 0.2rem; border-radius: 8px; transition: background 0.2s; }
+.user-row:hover { background: rgba(255,255,255,0.04); }
+.user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(–accent), var(–blue)); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: var(–black); flex-shrink: 0; }
+.user-name { font-size: 0.8rem; font-weight: 500; }
+.user-email { font-size: 0.68rem; color: var(–muted2); }
+.user-settings { margin-left: auto; color: var(–muted); font-size: 0.8rem; }
+
+/* ── MAIN ── */
+.main {
+margin-left: var(–sidebar-w);
+flex: 1;
+display: flex;
+flex-direction: column;
+min-height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+height: 56px;
+background: rgba(6,7,13,0.8);
+backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 1.5rem;
+position: sticky;
+top: 0;
+z-index: 40;
+}
+.topbar-left { display: flex; align-items: center; gap: 0.8rem; }
+.page-title { font-family: var(–font-display); font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; }
+.topbar-right { display: flex; align-items: center; gap: 0.8rem; }
+.topbar-btn {
+width: 32px; height: 32px;
+border-radius: 8px;
+background: var(–card);
+border: 1px solid var(–border);
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+font-size: 0.9rem;
+transition: all 0.2s;
+position: relative;
+}
+.topbar-btn:hover { border-color: var(–border2); background: var(–card2); }
+.topbar-notif::after { content: ‘3’; position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; background: var(–red); border-radius: 50%; font-size: 0.55rem; font-weight: 700; color: white; display: flex; align-items: center; justify-content: center; line-height: 14px; text-align: center; }
+.live-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(–muted2); }
+.live-dot { width: 6px; height: 6px; background: var(–green); border-radius: 50%; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* ── CONTENT ── */
+.content { padding: 1.5rem; flex: 1; }
+
+/* ── SCORE HERO ── */
+.score-hero {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 1.5rem;
+margin-bottom: 1.2rem;
+display: grid;
+grid-template-columns: auto 1fr auto;
+gap: 2rem;
+align-items: center;
+position: relative;
+overflow: hidden;
+}
+.score-hero::before {
+content: ‘’;
+position: absolute;
+right: -60px; top: -60px;
+width: 200px; height: 200px;
+background: radial-gradient(circle, rgba(232,255,71,0.04) 0%, transparent 70%);
+pointer-events: none;
+}
+
+.score-ring {
+position: relative;
+width: 90px;
+height: 90px;
+flex-shrink: 0;
+}
+.score-ring svg { width: 90px; height: 90px; transform: rotate(-90deg); }
+.score-ring-bg { fill: none; stroke: var(–border2); stroke-width: 5; }
+.score-ring-fill { fill: none; stroke: var(–accent); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 251.2; stroke-dashoffset: 50; transition: stroke-dashoffset 1s ease; }
+.score-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-number { font-family: var(–font-display); font-size: 1.6rem; font-weight: 800; line-height: 1; color: var(–accent); }
+.score-max { font-size: 0.65rem; color: var(–muted2); }
+
+.score-info { min-width: 0; }
+.score-title { font-family: var(–font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
+.score-subtitle { font-size: 0.8rem; color: var(–muted2); margin-bottom: 0.8rem; }
+.score-platforms { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.platform-pill {
+display: flex; align-items: center; gap: 0.3rem;
+background: var(–card2); border: 1px solid var(–border);
+border-radius: 100px; padding: 3px 8px;
+font-size: 0.7rem; color: var(–muted2);
+}
+.platform-pill .dot { width: 5px; height: 5px; border-radius: 50%; }
+.dot-green { background: var(–green); }
+.dot-orange { background: var(–orange); }
+.dot-red { background: var(–red); }
+
+.score-trend { text-align: right; flex-shrink: 0; }
+.trend-value { font-family: var(–font-display); font-size: 1.4rem; font-weight: 800; color: var(–green); }
+.trend-label { font-size: 0.72rem; color: var(–muted2); }
+.trend-sparkline { margin-top: 0.5rem; }
+
+/* ── STATS ROW ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.2rem; }
+.stat-card {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 1rem 1.1rem;
+transition: border-color 0.2s;
+cursor: default;
+}
+.stat-card:hover { border-color: var(–border2); }
+.stat-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.stat-card-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+.icon-red { background: var(–red-dim); }
+.icon-green { background: var(–green-dim); }
+.icon-blue { background: var(–blue-dim); }
+.icon-orange { background: var(–orange-dim); }
+.stat-card-delta { font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 100px; }
+.delta-up { background: var(–green-dim); color: var(–green); }
+.delta-down { background: var(–red-dim); color: var(–red); }
+.delta-neutral { background: var(–border); color: var(–muted2); }
+.stat-card-val { font-family: var(–font-display); font-size: 1.7rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 0.2rem; }
+.stat-card-label { font-size: 0.72rem; color: var(–muted2); }
+
+/* ── GRID 2COL ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+.grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+
+/* ── PANEL ── */
+.panel { background: var(–card); border: 1px solid var(–border); border-radius: 14px; overflow: hidden; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; border-bottom: 1px solid var(–border); }
+.panel-title { font-family: var(–font-display); font-size: 0.88rem; font-weight: 700; letter-spacing: -0.01em; }
+.panel-action { font-size: 0.72rem; color: var(–muted2); cursor: pointer; transition: color 0.2s; background: none; border: none; font-family: var(–font-body); }
+.panel-action:hover { color: var(–accent); }
+.panel-body { padding: 1rem 1.2rem; }
+
+/* ── MINI CHART ── */
+.chart-wrap { position: relative; height: 80px; margin-bottom: 0.5rem; }
+.chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 100%; }
+.chart-bar { flex: 1; border-radius: 3px 3px 0 0; transition: opacity 0.2s; cursor: pointer; }
+.chart-bar:hover { opacity: 0.7; }
+.chart-legend { display: flex; gap: 1rem; font-size: 0.68rem; color: var(–muted2); }
+.legend-item { display: flex; align-items: center; gap: 0.3rem; }
+.legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── ALERTS LIST ── */
+.alert-item {
+display: flex;
+align-items: flex-start;
+gap: 0.8rem;
+padding: 0.85rem 0;
+border-bottom: 1px solid var(–border);
+transition: background 0.15s;
+cursor: pointer;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { margin: 0 -1.2rem; padding-left: 1.2rem; padding-right: 1.2rem; background: rgba(255,255,255,0.02); }
+.alert-severity {
+width: 28px; height: 28px; border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+font-size: 0.75rem; flex-shrink: 0; margin-top: 1px;
+}
+.sev-critical { background: var(–red-dim); }
+.sev-warning { background: var(–orange-dim); }
+.sev-info { background: var(–blue-dim); }
+.sev-ok { background: var(–green-dim); }
+.alert-content { flex: 1; min-width: 0; }
+.alert-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; flex-wrap: wrap; }
+.alert-platform-tag { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(–muted2); }
+.alert-time { font-size: 0.65rem; color: var(–muted); margin-left: auto; flex-shrink: 0; }
+.alert-text { font-size: 0.8rem; color: var(–white); line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alert-meta { font-size: 0.7rem; color: var(–muted2); margin-top: 0.2rem; }
+.alert-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+.alert-btn { font-size: 0.68rem; padding: 3px 8px; border-radius: 5px; border: 1px solid var(–border); background: none; color: var(–muted2); cursor: pointer; font-family: var(–font-body); transition: all 0.2s; }
+.alert-btn.primary { background: var(–accent-dim); color: var(–accent); border-color: rgba(232,255,71,0.15); }
+.alert-btn:hover { border-color: var(–border2); color: var(–white); }
+.unread-dot { width: 6px; height: 6px; background: var(–accent); border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+
+/* ── SCORE BY PLATFORM ── */
+.platform-score-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(–border); }
+.platform-score-item:last-child { border-bottom: none; }
+.platform-logo { width: 28px; height: 28px; border-radius: 7px; background: var(–card2); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; border: 1px solid var(–border); }
+.platform-name { font-size: 0.82rem; font-weight: 500; flex: 1; }
+.platform-stars { font-size: 0.7rem; color: var(–accent); letter-spacing: 1px; }
+.platform-score-val { font-family: var(–font-display); font-size: 0.88rem; font-weight: 700; margin-left: auto; }
+.platform-bar-wrap { width: 60px; height: 4px; background: var(–border); border-radius: 2px; overflow: hidden; margin-left: 0.5rem; }
+.platform-bar-fill { height: 100%; border-radius: 2px; background: var(–accent); }
+
+/* ── RESPONSE PANEL ── */
+.response-card {
+background: var(–card2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 1rem;
+margin-bottom: 0.8rem;
+}
+.response-original { font-size: 0.78rem; color: var(–muted2); line-height: 1.5; margin-bottom: 0.8rem; font-style: italic; }
+.response-ai {
+background: var(–accent-dim);
+border: 1px solid rgba(232,255,71,0.12);
+border-radius: 8px;
+padding: 0.8rem;
+font-size: 0.8rem;
+line-height: 1.6;
+color: var(–white);
+margin-bottom: 0.8rem;
+}
+.response-ai-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(–accent); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
+.response-actions-row { display: flex; gap: 0.5rem; }
+.r-btn { flex: 1; padding: 0.5rem; border-radius: 7px; font-size: 0.75rem; font-weight: 600; cursor: pointer; font-family: var(–font-display); border: none; transition: all 0.2s; }
+.r-btn-primary { background: var(–accent); color: var(–black); }
+.r-btn-primary:hover { opacity: 0.85; }
+.r-btn-ghost { background: var(–card); color: var(–muted2); border: 1px solid var(–border); }
+.r-btn-ghost:hover { color: var(–white); border-color: var(–border2); }
+
+/* ── ACTIVITY FEED ── */
+.activity-item { display: flex; gap: 0.7rem; padding: 0.6rem 0; border-bottom: 1px solid var(–border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; flex-shrink: 0; }
+.activity-text { font-size: 0.78rem; color: var(–muted2); line-height: 1.4; }
+.activity-text strong { color: var(–white); font-weight: 500; }
+.activity-time { font-size: 0.65rem; color: var(–muted); margin-top: 0.15rem; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(–border); padding: 0 1.2rem; }
+.tab { padding: 0.7rem 0.9rem; font-size: 0.78rem; cursor: pointer; color: var(–muted2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; font-weight: 400; background: none; border-top: none; border-left: none; border-right: none; font-family: var(–font-body); }
+.tab:hover { color: var(–white); }
+.tab.active { color: var(–accent); border-bottom-color: var(–accent); font-weight: 600; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 2rem 1rem; color: var(–muted2); }
+.empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.empty-text { font-size: 0.82rem; }
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(–card); border: 1px solid var(–border2); border-radius: 16px; padding: 1.5rem; max-width: 480px; width: 90%; position: relative; animation: modal-in 0.25s ease; }
+@keyframes modal-in { from { opacity:0; transform:scale(0.96) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+.modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(–muted2); cursor: pointer; font-size: 1.1rem; transition: color 0.2s; }
+.modal-close:hover { color: var(–white); }
+.modal-title { font-family: var(–font-display); font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+.modal-sub { font-size: 0.8rem; color: var(–muted2); margin-bottom: 1.2rem; }
+
+/* ── TOAST ── */
+.toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+.toast { background: var(–card2); border: 1px solid var(–border2); border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.82rem; display: flex; align-items: center; gap: 0.6rem; pointer-events: all; animation: toast-in 0.3s ease; max-width: 300px; }
+@keyframes toast-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.toast-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* ── MOBILE TOGGLE ── */
+.sidebar-toggle { display: none; width: 32px; height: 32px; border-radius: 8px; background: var(–card); border: 1px solid var(–border); align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 900px) { .grid-2, .grid-3-1 { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+.sidebar { transform: translateX(-100%); }
+.sidebar.open { transform: translateX(0); }
+.main { margin-left: 0; }
+.sidebar-toggle { display: flex; }
+.score-hero { grid-template-columns: auto 1fr; }
+.score-trend { display: none; }
+}
+</style>
+
+</head>
+<body>
+
+<div class="app">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="repuguard-global.html" class="logo-text">Repu<span>Guard</span></a>
+    <span class="plan-chip">Pro</span>
+  </div>
+
+  <div class="business-switcher" onclick="openModal('switchBiz')">
+    <div class="biz-info">
+      <div class="biz-name">🍽️ Le Provençal</div>
+      <div class="biz-type">Restaurant · Lyon</div>
+    </div>
+    <div class="biz-arrow">⌄</div>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-label">Principal</div>
+    <a class="nav-item active" onclick="setPage('dashboard')">
+      <span class="nav-icon">⬡</span> Vue d'ensemble
+    </a>
+    <a class="nav-item" onclick="setPage('alerts')">
+      <span class="nav-icon">🔔</span> Alertes
+      <span class="nav-badge">3</span>
+    </a>
+    <a class="nav-item" onclick="setPage('responses')">
+      <span class="nav-icon">✍️</span> Réponses IA
+      <span class="nav-badge yellow">2</span>
+    </a>
+    <a class="nav-item" onclick="setPage('score')">
+      <span class="nav-icon">📊</span> Score & Tendances
+    </a>
+    <a class="nav-item" onclick="setPage('mentions')">
+      <span class="nav-icon">📡</span> Toutes les mentions
+    </a>
+  </nav>
+
+  <nav class="nav-section">
+    <div class="nav-label">Configuration</div>
+    <a class="nav-item" onclick="setPage('platforms')">
+      <span class="nav-icon">🔗</span> Plateformes
+    </a>
+    <a class="nav-item" onclick="setPage('notifications')">
+      <span class="nav-icon">📬</span> Notifications
+    </a>
+    <a class="nav-item" onclick="setPage('reports')">
+      <span class="nav-icon">📄</span> Rapports
+    </a>
+  </nav>
+
+  <nav class="nav-section">
+    <div class="nav-label">Compte</div>
+    <a class="nav-item" onclick="setPage('billing')">
+      <span class="nav-icon">💳</span> Abonnement
+    </a>
+    <a class="nav-item" onclick="setPage('settings')">
+      <span class="nav-icon">⚙️</span> Paramètres
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="trial-notice">
+      <div class="trial-notice-title">🎁 Essai gratuit — J10 / 14</div>
+      <div class="trial-notice-text">4 jours restants. Aucun débit prévu.</div>
+      <div class="trial-bar"><div class="trial-fill"></div></div>
+    </div>
+    <div class="user-row">
+      <div class="user-avatar">ML</div>
+      <div>
+        <div class="user-name">Marie L.</div>
+        <div class="user-email">marie@leprovencal.fr</div>
+      </div>
+      <div class="user-settings">⚙</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+
+<div class="main">
+
+  <!-- TOPBAR -->
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <span class="page-title" id="pageTitle">Vue d'ensemble</span>
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        Surveillance active
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div style="font-size:0.72rem;color:var(--muted2)">Dernière analyse : <span style="color:var(--white)">il y a 4 min</span></div>
+      <div class="topbar-btn topbar-notif" title="Notifications" onclick="openModal('notifPanel')">🔔</div>
+      <div class="topbar-btn" title="Aide">?</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+
+  <div class="content" id="pageContent">
+
+```
+<!-- ═══ PAGE: DASHBOARD ═══ -->
+<div id="page-dashboard">
+
+  <!-- SCORE HERO -->
+  <div class="score-hero">
+    <div class="score-ring">
+      <svg viewBox="0 0 90 90">
+        <circle class="score-ring-bg" cx="45" cy="45" r="40"/>
+        <circle class="score-ring-fill" id="scoreRing" cx="45" cy="45" r="40"/>
+      </svg>
+      <div class="score-ring-text">
+        <div class="score-number" id="scoreNumber">8.2</div>
+        <div class="score-max">/10</div>
+      </div>
+    </div>
+
+    <div class="score-info">
+      <div class="score-title">Score de réputation — Le Provençal</div>
+      <div class="score-subtitle">Basé sur 847 avis analysés sur 6 plateformes · Mis à jour il y a 4 min</div>
+      <div class="score-platforms">
+        <div class="platform-pill"><div class="dot dot-green"></div>Google 4.6★</div>
+        <div class="platform-pill"><div class="dot dot-green"></div>TripAdvisor 4.4★</div>
+        <div class="platform-pill"><div class="dot dot-orange"></div>Facebook 3.9★</div>
+        <div class="platform-pill"><div class="dot dot-green"></div>Trustpilot 4.7★</div>
+        <div class="platform-pill"><div class="dot dot-red"></div>Twitter 2 alertes</div>
+      </div>
+    </div>
+
+    <div class="score-trend">
+      <div class="trend-value">+0.4</div>
+      <div class="trend-label">vs mois dernier</div>
+      <svg width="80" height="30" class="trend-sparkline">
+        <polyline points="0,25 16,20 32,22 48,15 64,12 80,8" fill="none" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-red">🔔</div>
+        <div class="stat-card-delta delta-down">+2 aujourd'hui</div>
+      </div>
+      <div class="stat-card-val" style="color:var(--red)">3</div>
+      <div class="stat-card-label">Alertes non traitées</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-green">⭐</div>
+        <div class="stat-card-delta delta-up">↑ 12 cette semaine</div>
+      </div>
+      <div class="stat-card-val" style="color:var(--green)">847</div>
+      <div class="stat-card-label">Avis analysés total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-blue">✍️</div>
+        <div class="stat-card-delta delta-neutral">En attente</div>
+      </div>
+      <div class="stat-card-val" style="color:var(--blue)">2</div>
+      <div class="stat-card-label">Réponses IA à valider</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-orange">📡</div>
+        <div class="stat-card-delta delta-up">↑ 8% vs S-1</div>
+      </div>
+      <div class="stat-card-val" style="color:var(--orange)">124</div>
+      <div class="stat-card-label">Mentions ce mois</div>
+    </div>
+  </div>
+
+  <!-- ALERTS + CHART -->
+  <div class="grid-3-1">
+
+    <!-- RECENT ALERTS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🔔 Alertes récentes</div>
+        <button class="panel-action" onclick="setPage('alerts')">Voir tout →</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'all')">Toutes (8)</button>
+        <button class="tab" onclick="switchTab(this,'critical')">Critiques (3)</button>
+        <button class="tab" onclick="switchTab(this,'pending')">À traiter (3)</button>
+      </div>
+      <div class="panel-body" style="padding-top:0.5rem">
+
+        <div class="alert-item" onclick="openAlertDetail(1)">
+          <div class="unread-dot"></div>
+          <div class="alert-severity sev-critical">⚠️</div>
+          <div class="alert-content">
+            <div class="alert-top">
+              <span class="alert-platform-tag">Google Reviews</span>
+              <span class="alert-time">il y a 12 min</span>
+            </div>
+            <div class="alert-text">"Service catastrophique ce soir, attente de 45 minutes sans explication..."</div>
+            <div class="alert-meta">Note : 1★ · Auteur : @pierreM · Gravité : 9/10</div>
+            <div class="alert-actions">
+              <button class="alert-btn primary" onclick="openModal('responseModal');event.stopPropagation()">✍️ Voir réponse IA</button>
+              <button class="alert-btn" onclick="event.stopPropagation()">Ignorer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-item" onclick="openAlertDetail(2)">
+          <div class="unread-dot"></div>
+          <div class="alert-severity sev-critical">⚠️</div>
+          <div class="alert-content">
+            <div class="alert-top">
+              <span class="alert-platform-tag">Twitter / X</span>
+              <span class="alert-time">il y a 38 min</span>
+            </div>
+            <div class="alert-text">Mention négative virale — 2 340 impressions · "Évitez ce restaurant..."</div>
+            <div class="alert-meta">Gravité : 8/10 · Portée élevée</div>
+            <div class="alert-actions">
+              <button class="alert-btn primary" onclick="openModal('responseModal');event.stopPropagation()">✍️ Voir réponse IA</button>
+              <button class="alert-btn" onclick="event.stopPropagation()">Marquer lu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-item">
+          <div class="unread-dot"></div>
+          <div class="alert-severity sev-warning">⚡</div>
+          <div class="alert-content">
+            <div class="alert-top">
+              <span class="alert-platform-tag">TripAdvisor</span>
+              <span class="alert-time">il y a 2h</span>
+            </div>
+            <div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div>
+            <div class="alert-meta">Note : 2★ · Gravité : 5/10</div>
+            <div class="alert-actions">
+              <button class="alert-btn primary" onclick="openModal('responseModal');event.stopPropagation()">✍️ Répondre avec IA</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-item">
+          <div style="width:6px;flex-shrink:0"></div>
+          <div class="alert-severity sev-ok">✅</div>
+          <div class="alert-content">
+            <div class="alert-top">
+              <span class="alert-platform-tag">Google Reviews</span>
+              <span class="alert-time">il y a 5h</span>
+            </div>
+            <div class="alert-text">"Superbe soirée, accueil chaleureux et cuisine raffinée !"</div>
+            <div class="alert-meta">Note : 5★ · Gravité : 0/10 — Positif</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COL -->
+    <div style="display:flex;flex-direction:column;gap:1.2rem">
+
+      <!-- SCORE BY PLATFORM -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📊 Par plateforme</div>
+        </div>
+        <div class="panel-body">
+          <div class="platform-score-item">
+            <div class="platform-logo">G</div>
+            <div>
+              <div class="platform-name">Google</div>
+              <div class="platform-stars">★★★★½</div>
+            </div>
+            <div class="platform-score-val">4.6</div>
+            <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:92%"></div></div>
+          </div>
+          <div class="platform-score-item">
+            <div class="platform-logo" style="font-size:0.6rem">TA</div>
+            <div>
+              <div class="platform-name">TripAdvisor</div>
+              <div class="platform-stars">★★★★½</div>
+            </div>
+            <div class="platform-score-val">4.4</div>
+            <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:88%"></div></div>
+          </div>
+          <div class="platform-score-item">
+            <div class="platform-logo">f</div>
+            <div>
+              <div class="platform-name">Facebook</div>
+              <div class="platform-stars" style="color:var(--orange)">★★★★</div>
+            </div>
+            <div class="platform-score-val" style="color:var(--orange)">3.9</div>
+            <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:78%;background:var(--orange)"></div></div>
+          </div>
+          <div class="platform-score-item">
+            <div class="platform-logo" style="font-size:0.6rem">TP</div>
+            <div>
+              <div class="platform-name">Trustpilot</div>
+              <div class="platform-stars">★★★★★</div>
+            </div>
+            <div class="platform-score-val">4.7</div>
+            <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:94%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">⚡ Activité récente</div>
+        </div>
+        <div class="panel-body">
+          <div class="activity-item">
+            <div class="activity-icon icon-green">✓</div>
+            <div>
+              <div class="activity-text"><strong>Réponse publiée</strong> sur Google · Avis de Claire B.</div>
+              <div class="activity-time">il y a 1h</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon icon-blue">📄</div>
+            <div>
+              <div class="activity-text"><strong>Rapport hebdomadaire</strong> envoyé par email</div>
+              <div class="activity-time">Lundi 08:00</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon icon-orange">📡</div>
+            <div>
+              <div class="activity-text"><strong>Nouvelle plateforme</strong> détectée : Yelp France</div>
+              <div class="activity-time">Dimanche</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon icon-red">🔔</div>
+            <div>
+              <div class="activity-text"><strong>Score Facebook</strong> en baisse de 0.2 points</div>
+              <div class="activity-time">Samedi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EVOLUTION CHART -->
+  <div class="panel" style="margin-bottom:1.2rem">
+    <div class="panel-header">
+      <div class="panel-title">📈 Évolution du score (30 derniers jours)</div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="panel-action" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:var(--accent-dim);color:var(--accent)">30j</button>
+        <button class="panel-action" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px">7j</button>
+        <button class="panel-action" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px">90j</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <svg width="100%" height="120" viewBox="0 0 600 120" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e8ff47" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#e8ff47" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,90 L20,85 L40,80 L60,82 L80,75 L100,70 L120,72 L140,65 L160,60 L180,58 L200,55 L220,50 L240,52 L260,45 L280,40 L300,42 L320,35 L340,30 L360,28 L380,25 L400,22 L420,20 L440,18 L460,22 L480,18 L500,15 L520,12 L540,10 L560,8 L580,8 L600,5 L600,120 L0,120 Z" fill="url(#chartGrad)"/>
+        <path d="M0,90 L20,85 L40,80 L60,82 L80,75 L100,70 L120,72 L140,65 L160,60 L180,58 L200,55 L220,50 L240,52 L260,45 L280,40 L300,42 L320,35 L340,30 L360,28 L380,25 L400,22 L420,20 L440,18 L460,22 L480,18 L500,15 L520,12 L540,10 L560,8 L580,8 L600,5" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Alert markers -->
+        <circle cx="140" cy="65" r="4" fill="var(--red)" opacity="0.8"/>
+        <circle cx="460" cy="22" r="4" fill="var(--orange)" opacity="0.8"/>
+      </svg>
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--muted);margin-top:0.3rem;padding:0 2px">
+        <span>1 Juin</span><span>8 Juin</span><span>15 Juin</span><span>22 Juin</span><span>Aujourd'hui</span>
+      </div>
+      <div style="display:flex;gap:1.2rem;margin-top:0.8rem;font-size:0.72rem;color:var(--muted2)">
+        <div style="display:flex;align-items:center;gap:0.3rem"><div style="width:8px;height:2px;background:var(--accent);border-radius:1px"></div>Score global</div>
+        <div style="display:flex;align-items:center;gap:0.3rem"><div style="width:8px;height:8px;background:var(--red);border-radius:50%;opacity:0.8"></div>Alerte critique</div>
+        <div style="display:flex;align-items:center;gap:0.3rem"><div style="width:8px;height:8px;background:var(--orange);border-radius:50%;opacity:0.8"></div>Alerte modérée</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-dashboard -->
+
+<!-- ═══ OTHER PAGES (placeholder) ═══ -->
+<div id="page-alerts" style="display:none">
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">🔔 Toutes les alertes</div></div>
+    <div class="panel-body" style="padding:2rem;text-align:center;color:var(--muted2)">
+      Page alertes complète — construction en cours par RepuGuard.
+    </div>
+  </div>
+</div>
+
+<div id="page-responses" style="display:none">
+  <div class="panel">
+    <div class="panel-header"><div class="panel-title">✍️ Réponses IA à valider</div></div>
+    <div class="panel-body">
+      <div class="response-card">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem">Avis original — Google Reviews · 1★ · il y a 12 min</div>
+        <div class="response-original">"Service catastrophique ce soir, attente de 45 minutes sans explication. Déçu de cette adresse que j'aimais auparavant."</div>
+        <div class="response-ai">
+          <div class="response-ai-label">🤖 Réponse générée par IA</div>
+          Bonjour, nous sommes sincèrement désolés pour votre expérience de ce soir. Une attente de 45 minutes sans information est tout à fait inacceptable et ne reflète pas nos standards habituels. Nous avons en effet fait face à un imprévu en cuisine ce soir-là. Nous aimerions vous inviter à revenir pour vous offrir l'expérience que vous méritez. N'hésitez pas à nous contacter directement à contact@leprovencal.fr.
+        </div>
+        <div class="response-actions-row">
+          <button class="r-btn r-btn-primary" onclick="showToast('✅','Réponse publiée sur Google !')">✓ Publier cette réponse</button>
+          <button class="r-btn r-btn-ghost" onclick="showToast('✍️','Ouverture de l\'éditeur...')">Modifier</button>
+          <button class="r-btn r-btn-ghost" onclick="showToast('🔄','Nouvelle réponse générée...')">Régénérer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══════════════ MODAL: RESPONSE ═══════════════ -->
+
+<div class="modal-overlay" id="modal-responseModal" onclick="closeModalOutside(event,'responseModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('responseModal')">✕</button>
+    <div class="modal-title">✍️ Réponse IA générée</div>
+    <div class="modal-sub">Avis Google · 1★ · @pierreM · il y a 12 min</div>
+    <div style="background:var(--card2);border-radius:8px;padding:0.8rem;font-size:0.78rem;color:var(--muted2);font-style:italic;margin-bottom:1rem;line-height:1.5">
+      "Service catastrophique ce soir, attente de 45 minutes sans explication..."
+    </div>
+    <div class="response-ai" style="margin-bottom:1rem">
+      <div class="response-ai-label">🤖 Réponse suggérée</div>
+      Bonjour, nous sommes sincèrement désolés pour votre expérience de ce soir. Une attente de 45 minutes sans information est tout à fait inacceptable. Nous avons fait face à un imprévu en cuisine ce soir-là. Nous aimerions vous inviter à revenir pour vous offrir l'expérience que vous méritez — contactez-nous directement à contact@leprovencal.fr.
+    </div>
+    <div style="display:flex;gap:0.6rem">
+      <button class="r-btn r-btn-primary" style="flex:2" onclick="closeModal('responseModal');showToast('✅','Réponse publiée sur Google !')">✓ Publier</button>
+      <button class="r-btn r-btn-ghost" onclick="showToast('✍️','Éditeur ouvert...')">Modifier</button>
+      <button class="r-btn r-btn-ghost" onclick="showToast('🔄','Nouvelle version...')">🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: SWITCH BIZ ═══════════════ -->
+
+<div class="modal-overlay" id="modal-switchBiz" onclick="closeModalOutside(event,'switchBiz')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('switchBiz')">✕</button>
+    <div class="modal-title">Changer d'établissement</div>
+    <div class="modal-sub">Plan Pro — jusqu'à 3 établissements</div>
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <div onclick="closeModal('switchBiz')" style="background:var(--accent-dim);border:1px solid rgba(232,255,71,0.15);border-radius:10px;padding:0.8rem 1rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:0.85rem;font-weight:600">🍽️ Le Provençal</div><div style="font-size:0.72rem;color:var(--muted2)">Restaurant · Lyon · Score 8.2</div></div>
+        <span style="color:var(--accent);font-size:0.75rem">✓ Actif</span>
+      </div>
+      <div onclick="closeModal('switchBiz');showToast('🏨','Passage à L\'Hôtel des Arts...')" style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;cursor:pointer">
+        <div style="font-size:0.85rem;font-weight:600">🏨 L'Hôtel des Arts</div>
+        <div style="font-size:0.72rem;color:var(--muted2)">Hôtel · Paris · Score 7.8</div>
+      </div>
+      <div onclick="openModal('addBiz');closeModal('switchBiz')" style="background:var(--card2);border:1px dashed var(--border);border-radius:10px;padding:0.8rem 1rem;cursor:pointer;text-align:center;color:var(--muted2);font-size:0.82rem">
+        + Ajouter un établissement
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TOASTS ═══════════════ -->
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══ PAGE NAVIGATION ═══
+const pages = {
+  'dashboard': 'Vue d\'ensemble',
+  'alerts': 'Alertes',
+  'responses': 'Réponses IA',
+  'score': 'Score & Tendances',
+  'mentions': 'Toutes les mentions',
+  'platforms': 'Plateformes',
+  'notifications': 'Notifications',
+  'reports': 'Rapports',
+  'billing': 'Abonnement',
+  'settings': 'Paramètres'
+};
+
+function setPage(id) {
+  // Hide all pages
+  document.querySelectorAll('[id^="page-"]').forEach(p => p.style.display = 'none');
+  // Show target or fallback
+  const target = document.getElementById('page-' + id);
+  if (target) {
+    target.style.display = 'block';
+  } else {
+    // Create placeholder
+    const ph = document.createElement('div');
+    ph.id = 'page-' + id;
+    ph.innerHTML = `<div class="panel"><div class="panel-header"><div class="panel-title">${pages[id] || id}</div></div><div class="panel-body" style="padding:3rem;text-align:center;color:var(--muted2)"><div style="font-size:2rem;margin-bottom:0.8rem">🔧</div><div style="font-size:0.85rem">Cette section est en cours de construction.<br>Elle sera disponible dans la prochaine version.</div></div></div>`;
+    document.getElementById('pageContent').appendChild(ph);
+  }
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  // Update title
+  document.getElementById('pageTitle').textContent = pages[id] || id;
+  // Close sidebar on mobile
+  if (window.innerWidth < 700) document.getElementById('sidebar').classList.remove('open');
+}
+
+// ═══ TABS ═══
+function switchTab(btn, id) {
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══ MODALS ═══
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+}
+function closeModalOutside(e, id) {
+  if (e.target === e.currentTarget) closeModal(id);
+}
+
+// ═══ TOASTS ═══
+function showToast(icon, msg) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+  wrap.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(8px)';
+    t.style.transition = 'all 0.3s';
+    setTimeout(() => t.remove(), 300);
+  }, 3000);
+}
+
+// ═══ SIDEBAR TOGGLE ═══
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ═══ SCORE RING ANIMATION ═══
+window.addEventListener('load', () => {
+  const ring = document.getElementById('scoreRing');
+  const circumference = 2 * Math.PI * 40;
+  const score = 8.2;
+  const offset = circumference - (score / 10) * circumference;
+  ring.style.strokeDashoffset = offset;
+});
+
+// ═══ ALERT DETAIL ═══
+function openAlertDetail(id) {
+  openModal('responseModal');
+}
+
+// ═══ LIVE CLOCK ═══
+function updateLastScan() {
+  let mins = 4;
+  setInterval(() => {
+    mins++;
+    const el = document.querySelector('.topbar-right span[style]');
+    if (el) el.textContent = `il y a ${mins} min`;
+  }, 60000);
+}
+updateLastScan();
+</script>
+
+</body>
+</html>
