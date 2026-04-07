@@ -1,7 +1,4 @@
-export const config = { runtime: ‘edge’ };
-
 export default async function handler(req) {
-// CORS headers
 const corsHeaders = {
 ‘Access-Control-Allow-Origin’: ‘*’,
 ‘Access-Control-Allow-Methods’: ‘POST, OPTIONS’,
@@ -20,7 +17,10 @@ status: 405, headers: corsHeaders
 }
 
 try {
-const { texts, targetLang, langName } = await req.json();
+const body = await req.json();
+const texts = body.texts;
+const targetLang = body.targetLang;
+const langName = body.langName;
 
 ```
 if (!texts || !targetLang || targetLang === 'fr') {
@@ -36,26 +36,9 @@ if (!apiKey) {
   });
 }
 
-// Build the translation prompt
 const textsJson = JSON.stringify(texts);
-const prompt = `Translate the following JSON object values from French to ${langName} (${targetLang}).
-```
+const prompt = 'Translate the following JSON object values from French to ' + langName + ' (' + targetLang + ').\n\nSTRICT RULES:\n- Translate ONLY the values, never the keys\n- Keep HTML tags like <br>, <em>, <strong> exactly as they are\n- Keep special characters and emojis exactly as they are\n- Keep brand name RepuGuard unchanged\n- Keep platform names (Google, TripAdvisor, Facebook, X, Reddit) unchanged\n- Keep numbers and symbols unchanged\n- Return ONLY valid JSON, no explanation, no markdown\n\nJSON to translate:\n' + textsJson;
 
-STRICT RULES:
-
-- Translate ONLY the values, never the keys
-- Keep HTML tags like <br>, <em>, <strong> exactly as they are
-- Keep special characters → ✓ ⚠ ★ 🔔 📡 ✍️ 📊 📬 🌍 exactly as they are
-- Keep brand name “RepuGuard” unchanged
-- Keep platform names (Google, TripAdvisor, Facebook, X, Reddit, etc.) unchanged
-- Keep numbers, percentages, € symbols unchanged
-- For RTL languages (Arabic, Hebrew, Persian), translate naturally
-- Return ONLY valid JSON, no explanation, no markdown backticks
-
-JSON to translate:
-${textsJson}`;
-
-```
 const response = await fetch('https://api.anthropic.com/v1/messages', {
   method: 'POST',
   headers: {
@@ -71,11 +54,11 @@ const response = await fetch('https://api.anthropic.com/v1/messages', {
 });
 
 const data = await response.json();
-const text = data.content?.[0]?.text || '{}';
+const text = data.content[0].text;
 const clean = text.replace(/```json\n?|\n?```/g, '').trim();
 const translations = JSON.parse(clean);
 
-return new Response(JSON.stringify({ translations }), {
+return new Response(JSON.stringify({ translations: translations }), {
   status: 200, headers: corsHeaders
 });
 ```
@@ -86,3 +69,5 @@ status: 500, headers: corsHeaders
 });
 }
 }
+
+export const config = { runtime: ‘edge’ };
