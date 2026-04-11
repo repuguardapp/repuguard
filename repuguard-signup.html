@@ -551,7 +551,7 @@ letter-spacing: -0.01em;
 // STRIPE SETUP
 // Replace with your actual Stripe publishable key
 // ═══════════════════════════════════════
-const STRIPE_KEY = 'pk_test_REPLACE_WITH_YOUR_STRIPE_KEY';
+const STRIPE_KEY = 'pk_test_51TJfAt4AfFLajYNsPfq6hEcUgvRxmBGY2ARylkjKY0gqD4YTwCIcGXcy8malUdu3mYzwxWElIKINKLsnz1dJ6Dy700NP1o3EWU';
 
 let stripe, cardNumber, cardExpiry, cardCvc;
 
@@ -586,6 +586,12 @@ function initStripe() {
 // PLAN SELECTION
 // ═══════════════════════════════════════
 let selectedPlan = { id: 'pro', price: 69, name: 'Pro' };
+
+const PRICE_IDS = {
+  starter: 'price_1TJfMs4AfFLajYNswedRcOT5',
+  pro: 'price_1TJfOW4AfFLajYNsmOvVBxGj',
+  business: 'price_1TJfPU4AfFLajYNsJtTIsjl3'
+};
 
 function selectPlan(el, id, price, name) {
   document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
@@ -757,18 +763,26 @@ async function handlePayment() {
       return;
     }
 
-    // ─── HERE: send paymentMethod.id + plan + user data to your backend ───
-    // const res = await fetch('/api/create-subscription', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     paymentMethodId: paymentMethod.id,
-    //     plan: selectedPlan.id,
-    //     email: document.getElementById('email').value,
-    //     name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
-    //   })
-    // });
-    // const data = await res.json();
+    // Send to backend
+    const res = await fetch('/api/create-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paymentMethodId: paymentMethod.id,
+        priceId: PRICE_IDS[selectedPlan.id],
+        email: document.getElementById('email').value,
+        name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
+      })
+    });
+    const subData = await res.json();
+    if (subData.error) {
+      errDiv.textContent = subData.error;
+      errDiv.style.display = 'block';
+      btn.disabled = false;
+      text.style.display = 'inline';
+      spin.style.display = 'none';
+      return;
+    }
 
     showSuccess();
 
