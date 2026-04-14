@@ -156,7 +156,7 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 .trans-bar.active{transform:scaleX(1);}
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
-@media(max-width:1200px){.alert-demo{display:none;}h1{font-size:clamp(2.2rem,8vw,3.5rem);}.stats-band{gap:2rem;}}
+@media(max-width:1280px){.alert-demo{display:none;}h1{font-size:clamp(2.2rem,8vw,3.5rem);}.stats-band{gap:2rem;}}
 @media(max-width:600px){.nav-links{display:none;}.hero{padding:7rem 5% 3rem;}}
 </style>
 
@@ -444,6 +444,26 @@ document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 
 initTheme();
 buildLangList('');
+
+// Restore saved language on page load
+(function() {
+  var savedLang = localStorage.getItem('rg-lang');
+  if (savedLang && savedLang !== 'fr') {
+    var match = LANGUAGES.find(function(l) { return l.code === savedLang; });
+    if (match) {
+      currentLang = match.code;
+      document.getElementById('currentFlag').textContent = match.flag;
+      document.getElementById('currentLangName').textContent = match.name;
+      document.documentElement.setAttribute('dir', match.dir);
+      document.documentElement.setAttribute('lang', match.code);
+      if (cache[match.code]) {
+        applyTrans(cache[match.code]);
+      } else {
+        translatePage(match);
+      }
+    }
+  }
+})();
 </script>
 
 </body>
