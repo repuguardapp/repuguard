@@ -1,575 +1,168 @@
 <!DOCTYPE html>
 
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RepuGuard — Online Reputation Protection</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<title>RepuGuard — Protégez votre réputation en ligne</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black: #080910;
-    --surface: #0f1117;
-    --card: #151820;
-    --border: rgba(255,255,255,0.07);
-    --accent: #e8ff47;
-    --accent2: #47c8ff;
-    --red: #ff4747;
-    --white: #f0f2f7;
-    --muted: #6b7280;
-    --font-display: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--black);
-    color: var(--white);
-    font-family: var(--font-body);
-    font-size: 16px;
-    line-height: 1.6;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-  }
+[data-theme="dark"] {
+  --bg: #080910; --surface: #0f1117; --card: #151820;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --accent: #e8ff47; --accent-dim: rgba(232,255,71,0.08); --accent-border: rgba(232,255,71,0.2);
+  --blue: #47c8ff; --red: #ff5252; --red-dim: rgba(255,82,82,0.1); --green: #52ffaa;
+  --text: #eef0f8; --muted: #5a6078; --muted2: #8890a8; --btn-text: #080910;
+}
+[data-theme="light"] {
+  --bg: #f5f6fa; --surface: #ffffff; --card: #eef0f8;
+  --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.15);
+  --accent: #1a56e8; --accent-dim: rgba(26,86,232,0.08); --accent-border: rgba(26,86,232,0.25);
+  --blue: #0284c7; --red: #dc2626; --red-dim: rgba(220,38,38,0.08); --green: #16a34a;
+  --text: #0f1117; --muted: #9098b0; --muted2: #6b7280; --btn-text: #ffffff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background-color:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden;transition:background-color .3s,color .3s;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;background-color:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);gap:1rem;transition:background-color .3s;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--text);text-decoration:none;flex-shrink:0;}
+.logo span{color:var(--accent);}
+.nav-links{display:flex;gap:1.5rem;align-items:center;list-style:none;}
+.nav-links a{color:var(--muted2);text-decoration:none;font-size:.88rem;transition:color .2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{background-color:var(--accent)!important;color:var(--btn-text)!important;padding:.45rem 1.1rem!important;border-radius:6px;font-weight:600!important;}
+.nav-right{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.theme-btn{width:34px;height:34px;border-radius:8px;background-color:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;transition:border-color .2s,background-color .3s;flex-shrink:0;}
+.theme-btn:hover{border-color:var(--border2);}
+.lang-selector{position:relative;}
+.lang-btn{display:flex;align-items:center;gap:.4rem;background-color:var(--card);border:1px solid var(--border);color:var(--text);padding:.38rem .75rem;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .2s,background-color .3s;white-space:nowrap;}
+.lang-btn:hover{border-color:var(--border2);}
+.lang-dropdown{position:absolute;top:calc(100% + 8px);right:0;background-color:var(--card);border:1px solid var(--border);border-radius:12px;padding:.5rem;min-width:210px;max-height:320px;overflow-y:auto;display:none;z-index:200;box-shadow:0 20px 40px rgba(0,0,0,.3);}
+.lang-dropdown.open{display:block;}
+.lang-search{width:100%;background-color:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.4rem .7rem;font-size:.8rem;margin-bottom:.4rem;font-family:'DM Sans',sans-serif;outline:none;}
+.lang-group-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:.4rem .8rem .2rem;}
+.lang-option{display:flex;align-items:center;gap:.6rem;padding:.45rem .8rem;border-radius:8px;cursor:pointer;font-size:.82rem;color:var(--muted2);transition:all .15s;}
+.lang-option:hover{background-color:var(--surface);color:var(--text);}
+.lang-option.active{color:var(--accent);}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:8rem 5% 4rem;position:relative;overflow:hidden;}
+.hero-glow{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(232,255,71,.06) 0%,transparent 70%);pointer-events:none;}
+[data-theme="light"] .hero-glow{background:radial-gradient(circle,rgba(26,86,232,.06) 0%,transparent 70%);}
+.alert-badge{display:inline-flex;align-items:center;gap:.5rem;background-color:var(--red-dim);border:1px solid rgba(255,82,82,.25);color:var(--red);padding:.4rem 1rem;border-radius:100px;font-size:.8rem;font-weight:500;margin-bottom:2rem;width:fit-content;animation:pulse-red 2s infinite;}
+@keyframes pulse-red{0%,100%{border-color:rgba(255,82,82,.25);}50%{border-color:rgba(255,82,82,.6);}}
+.dot-live{width:7px;height:7px;background-color:var(--red);border-radius:50%;animation:blink 1.5s infinite;flex-shrink:0;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(2.8rem,6vw,5.5rem);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:1.5rem;max-width:800px;}
+h1 em{font-style:normal;color:var(--accent);}
+.hero-sub{font-size:clamp(1rem,1.8vw,1.15rem);color:var(--muted2);max-width:520px;margin-bottom:2.5rem;font-weight:300;line-height:1.7;}
+.hero-cta-group{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+.btn-primary{background-color:var(--accent);color:var(--btn-text);padding:.9rem 2rem;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;text-decoration:none;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;display:inline-flex;align-items:center;gap:.5rem;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,255,71,.25);}
+[data-theme="light"] .btn-primary:hover{box-shadow:0 8px 30px rgba(26,86,232,.25);}
+.btn-ghost{color:var(--muted2);font-size:.9rem;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;transition:color .2s;}
+.btn-ghost:hover{color:var(--text);}
+.hero-proof{margin-top:3rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;}
+.proof-item{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:var(--muted2);}
+.proof-check{color:var(--accent);font-weight:700;}
+.alert-demo{position:absolute;right:5%;top:50%;transform:translateY(-50%);width:320px;display:flex;flex-direction:column;gap:.75rem;}
+.alert-card{background-color:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;opacity:0;transform:translateX(20px);animation:slide-in .5s forwards;transition:background-color .3s;}
+.alert-card:nth-child(1){animation-delay:.3s;}
+.alert-card:nth-child(2){animation-delay:.8s;border-left:2px solid var(--red);}
+.alert-card:nth-child(3){animation-delay:1.3s;border-left:2px solid var(--accent);}
+@keyframes slide-in{to{opacity:1;transform:translateX(0);}}
+.alert-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;}
+.alert-platform{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted2);}
+.alert-time{font-size:.7rem;color:var(--muted);}
+.alert-text{font-size:.83rem;color:var(--text);line-height:1.4;}
+.alert-score{display:inline-block;margin-top:.4rem;font-size:.7rem;padding:2px 8px;border-radius:100px;font-weight:600;}
+.score-red{background-color:var(--red-dim);color:var(--red);}
+.score-green{background-color:var(--accent-dim);color:var(--accent);}
+.stats-band{background-color:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2.5rem 5%;display:flex;justify-content:center;gap:4rem;flex-wrap:wrap;transition:background-color .3s;}
+.stat-item{text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1;}
+.stat-num span{color:var(--accent);}
+.stat-label{font-size:.8rem;color:var(--muted2);margin-top:.3rem;max-width:140px;}
+section{padding:6rem 5%;}
+.section-label{font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:1rem;}
+.section-sub{color:var(--muted2);max-width:480px;font-weight:300;line-height:1.7;margin-bottom:3rem;}
+.surface-section{background-color:var(--surface);transition:background-color .3s;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;}
+.step-card{background-color:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:border-color .2s,background-color .3s;}
+.step-card:hover{border-color:var(--accent-border);}
+.step-num{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--border2);line-height:1;margin-bottom:1rem;}
+.step-icon{font-size:1.5rem;margin-bottom:.8rem;}
+.step-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+.step-desc{font-size:.85rem;color:var(--muted2);line-height:1.6;}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background-color:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:3rem;}
+.feature-item{background-color:var(--card);padding:2rem;transition:background-color .2s;}
+.feature-item:hover{background-color:var(--surface);}
+.feature-icon{width:40px;height:40px;border-radius:10px;background-color:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1rem;}
+.feature-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:.4rem;}
+.feature-desc{font-size:.82rem;color:var(--muted2);line-height:1.6;}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;max-width:1000px;margin:0 auto;}
+.plan-card{background-color:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;transition:transform .3s,background-color .3s;position:relative;}
+.plan-card.featured{border-color:var(--accent);background:linear-gradient(160deg,var(--accent-dim) 0%,var(--card) 60%);}
+.plan-card:hover{transform:translateY(-4px);}
+.featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background-color:var(--accent);color:var(--btn-text);font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;}
+.plan-name{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted2);margin-bottom:1rem;}
+.plan-price{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:.3rem;}
+.plan-price sup{font-size:1.2rem;vertical-align:top;margin-top:.5rem;font-weight:400;opacity:.6;}
+.plan-price span{font-size:.9rem;font-weight:400;opacity:.5;}
+.plan-desc{font-size:.82rem;color:var(--muted2);margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);line-height:1.5;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.8rem;}
+.plan-features li{font-size:.83rem;color:var(--muted2);display:flex;align-items:flex-start;gap:.5rem;}
+.plan-features li::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;}
+.btn-plan{display:block;text-align:center;padding:.75rem;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;text-decoration:none;transition:all .2s;cursor:pointer;border:none;}
+.btn-plan-primary{background-color:var(--accent);color:var(--btn-text);}
+.btn-plan-primary:hover{opacity:.85;transform:translateY(-1px);}
+.btn-plan-ghost{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-plan-ghost:hover{border-color:var(--border2);}
+.testimonials{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;}
+.testimonial-card{background-color:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:background-color .3s;}
+.stars{color:var(--accent);font-size:.85rem;letter-spacing:2px;margin-bottom:1rem;}
+.testimonial-text{font-size:.9rem;line-height:1.7;color:var(--text);margin-bottom:1.2rem;font-style:italic;font-weight:300;}
+.testimonial-author{display:flex;align-items:center;gap:.8rem;}
+.author-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--blue));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#080910;flex-shrink:0;}
+.author-name{font-weight:600;font-size:.85rem;}
+.author-role{font-size:.75rem;color:var(--muted2);}
+.faq-list{max-width:680px;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-question{width:100%;background:none;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;text-align:left;padding:1.3rem 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;transition:color .2s;}
+.faq-question:hover{color:var(--accent);}
+.faq-chevron{flex-shrink:0;transition:transform .3s;color:var(--muted);}
+.faq-answer{font-size:.88rem;color:var(--muted2);line-height:1.7;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;}
+.faq-answer.open{max-height:300px;padding-bottom:1.2rem;}
+.faq-item.open .faq-chevron{transform:rotate(180deg);}
+.cta-section{text-align:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem;}
+.footer-links{display:flex;gap:1.5rem;list-style:none;}
+.footer-links a{color:var(--muted2);text-decoration:none;font-size:.8rem;transition:color .2s;}
+.footer-links a:hover{color:var(--text);}
+.footer-copy{font-size:.78rem;color:var(--muted);}
 
-/* NAV */
-nav {
-position: fixed;
-top: 0; left: 0; right: 0;
-z-index: 100;
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 1.2rem 5%;
-background: rgba(8,9,16,0.9);
-backdrop-filter: blur(20px);
-border-bottom: 1px solid var(–border);
-gap: 1rem;
-}
-.logo {
-font-family: var(–font-display);
-font-weight: 800;
-font-size: 1.3rem;
-letter-spacing: -0.02em;
-color: var(–white);
-text-decoration: none;
-flex-shrink: 0;
-}
-.logo span { color: var(–accent); }
-.nav-links {
-display: flex;
-gap: 1.5rem;
-align-items: center;
-list-style: none;
-}
-.nav-links a {
-color: var(–muted);
-text-decoration: none;
-font-size: 0.88rem;
-transition: color 0.2s;
-}
-.nav-links a:hover { color: var(–white); }
-.nav-cta {
-background: var(–accent) !important;
-color: var(–black) !important;
-padding: 0.45rem 1.1rem !important;
-border-radius: 6px;
-font-weight: 600 !important;
-font-size: 0.82rem !important;
-}
+/* RTL */
+[dir=“rtl”] body{direction:rtl;}
+[dir=“rtl”] nav,[dir=“rtl”] .nav-links,[dir=“rtl”] .nav-right,[dir=“rtl”] .hero-cta-group,[dir=“rtl”] .hero-proof,[dir=“rtl”] .proof-item,[dir=“rtl”] .alert-badge,[dir=“rtl”] .testimonial-author,[dir=“rtl”] footer{flex-direction:row-reverse;}
+[dir=“rtl”] h1,[dir=“rtl”] h2,[dir=“rtl”] .hero-sub,[dir=“rtl”] .section-sub,[dir=“rtl”] .step-desc,[dir=“rtl”] .feature-desc,[dir=“rtl”] .testimonial-text,[dir=“rtl”] .section-label,[dir=“rtl”] .faq-answer{text-align:right;}
+[dir=“rtl”] .faq-question{text-align:right;flex-direction:row-reverse;}
+[dir=“rtl”] .alert-demo{right:auto;left:5%;}
+[dir=“rtl”] .alert-card{transform:translateX(-20px);}
+[dir=“rtl”] .alert-card:nth-child(2){border-left:none;border-right:2px solid var(–red);}
+[dir=“rtl”] .alert-card:nth-child(3){border-left:none;border-right:2px solid var(–accent);}
+[dir=“rtl”] .plan-features li{flex-direction:row-reverse;}
+[dir=“rtl”] .footer-links{flex-direction:row-reverse;}
 
-/* LANG SELECTOR */
-.lang-selector {
-position: relative;
-flex-shrink: 0;
-}
-.lang-btn {
-display: flex;
-align-items: center;
-gap: 0.4rem;
-background: var(–card);
-border: 1px solid var(–border);
-color: var(–white);
-padding: 0.4rem 0.8rem;
-border-radius: 8px;
-font-size: 0.82rem;
-cursor: pointer;
-font-family: var(–font-body);
-transition: border-color 0.2s;
-white-space: nowrap;
-}
-.lang-btn:hover { border-color: rgba(255,255,255,0.2); }
-.lang-flag { font-size: 1rem; }
-.lang-dropdown {
-position: absolute;
-top: calc(100% + 8px);
-right: 0;
-background: var(–card);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 0.5rem;
-min-width: 200px;
-max-height: 320px;
-overflow-y: auto;
-display: none;
-z-index: 200;
-box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.lang-dropdown.open { display: block; }
-.lang-option {
-display: flex;
-align-items: center;
-gap: 0.6rem;
-padding: 0.5rem 0.8rem;
-border-radius: 8px;
-cursor: pointer;
-font-size: 0.83rem;
-color: var(–muted);
-transition: all 0.15s;
-}
-.lang-option:hover { background: rgba(255,255,255,0.05); color: var(–white); }
-.lang-option.active { color: var(–accent); }
-.lang-search {
-width: 100%;
-background: rgba(255,255,255,0.05);
-border: 1px solid var(–border);
-border-radius: 6px;
-color: var(–white);
-padding: 0.4rem 0.7rem;
-font-size: 0.8rem;
-margin-bottom: 0.4rem;
-font-family: var(–font-body);
-outline: none;
-}
-.lang-search::placeholder { color: var(–muted); }
-.lang-group-label {
-font-size: 0.68rem;
-text-transform: uppercase;
-letter-spacing: 0.1em;
-color: var(–muted);
-padding: 0.4rem 0.8rem 0.2rem;
-}
-
-/* TRANSLATING INDICATOR */
-.translating-bar {
-position: fixed;
-top: 0; left: 0; right: 0;
-height: 2px;
-background: linear-gradient(90deg, var(–accent), var(–accent2));
-z-index: 999;
-transform: scaleX(0);
-transform-origin: left;
-transition: transform 0.3s;
-}
-.translating-bar.active { transform: scaleX(1); }
-
-/* HERO */
-.hero {
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-justify-content: center;
-padding: 8rem 5% 4rem;
-position: relative;
-overflow: hidden;
-}
-.hero-glow {
-position: absolute;
-top: 20%; left: 50%;
-transform: translateX(-50%);
-width: 600px; height: 600px;
-background: radial-gradient(circle, rgba(232,255,71,0.06) 0%, transparent 70%);
-pointer-events: none;
-}
-.hero-glow2 {
-position: absolute;
-top: 40%; right: -10%;
-width: 400px; height: 400px;
-background: radial-gradient(circle, rgba(71,200,255,0.05) 0%, transparent 70%);
-pointer-events: none;
-}
-.alert-badge {
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-background: rgba(255,71,71,0.1);
-border: 1px solid rgba(255,71,71,0.25);
-color: var(–red);
-padding: 0.4rem 1rem;
-border-radius: 100px;
-font-size: 0.8rem;
-font-weight: 500;
-margin-bottom: 2rem;
-width: fit-content;
-animation: pulse-border 2s infinite;
-}
-@keyframes pulse-border {
-0%,100% { border-color: rgba(255,71,71,0.25); }
-50% { border-color: rgba(255,71,71,0.6); }
-}
-.dot-live {
-width: 7px; height: 7px;
-background: var(–red);
-border-radius: 50%;
-animation: blink 1.5s infinite;
-flex-shrink: 0;
-}
-@keyframes blink {
-0%,100% { opacity:1; } 50% { opacity:0.3; }
-}
-h1 {
-font-family: var(–font-display);
-font-size: clamp(2.8rem, 6vw, 5.5rem);
-font-weight: 800;
-line-height: 1.05;
-letter-spacing: -0.03em;
-margin-bottom: 1.5rem;
-max-width: 800px;
-}
-h1 em { font-style: normal; color: var(–accent); }
-.hero-sub {
-font-size: clamp(1rem, 1.8vw, 1.2rem);
-color: var(–muted);
-max-width: 520px;
-margin-bottom: 2.5rem;
-font-weight: 300;
-line-height: 1.7;
-}
-.hero-cta-group {
-display: flex;
-gap: 1rem;
-align-items: center;
-flex-wrap: wrap;
-}
-.btn-primary {
-background: var(–accent);
-color: var(–black);
-padding: 0.9rem 2rem;
-border-radius: 8px;
-font-family: var(–font-display);
-font-weight: 700;
-font-size: 0.95rem;
-text-decoration: none;
-border: none;
-cursor: pointer;
-transition: all 0.2s;
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-letter-spacing: -0.01em;
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232,255,71,0.25); }
-.btn-ghost {
-color: var(–muted);
-font-size: 0.9rem;
-text-decoration: none;
-display: inline-flex;
-align-items: center;
-gap: 0.4rem;
-transition: color 0.2s;
-background: none;
-border: none;
-cursor: pointer;
-font-family: var(–font-body);
-}
-.btn-ghost:hover { color: var(–white); }
-.hero-proof {
-margin-top: 3.5rem;
-display: flex;
-align-items: center;
-gap: 1.5rem;
-flex-wrap: wrap;
-}
-.proof-item {
-display: flex;
-align-items: center;
-gap: 0.5rem;
-font-size: 0.82rem;
-color: var(–muted);
-}
-.proof-check { color: var(–accent); font-weight: 700; }
-
-/* ALERT DEMO */
-.alert-demo {
-position: absolute;
-right: 5%; top: 50%;
-transform: translateY(-50%);
-width: 320px;
-display: flex;
-flex-direction: column;
-gap: 0.75rem;
-}
-.alert-card {
-background: var(–card);
-border: 1px solid var(–border);
-border-radius: 12px;
-padding: 1rem 1.2rem;
-opacity: 0;
-transform: translateX(20px);
-animation: slide-in 0.5s forwards;
-}
-.alert-card:nth-child(1) { animation-delay: 0.3s; }
-.alert-card:nth-child(2) { animation-delay: 0.8s; border-left: 2px solid var(–red); }
-.alert-card:nth-child(3) { animation-delay: 1.3s; border-left: 2px solid var(–accent); }
-@keyframes slide-in { to { opacity:1; transform:translateX(0); } }
-.alert-card-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-margin-bottom: 0.4rem;
-}
-.alert-platform { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(–muted); }
-.alert-time { font-size: 0.7rem; color: var(–muted); }
-.alert-text { font-size: 0.83rem; color: var(–white); line-height: 1.4; }
-.alert-score { display: inline-block; margin-top: 0.4rem; font-size: 0.7rem; padding: 2px 8px; border-radius: 100px; font-weight: 600; }
-.score-red { background: rgba(255,71,71,0.15); color: var(–red); }
-.score-green { background: rgba(232,255,71,0.12); color: var(–accent); }
-
-/* STATS */
-.stats-band {
-background: var(–surface);
-border-top: 1px solid var(–border);
-border-bottom: 1px solid var(–border);
-padding: 2.5rem 5%;
-display: flex;
-justify-content: center;
-gap: 4rem;
-flex-wrap: wrap;
-}
-.stat-item { text-align: center; }
-.stat-num {
-font-family: var(–font-display);
-font-size: 2.2rem;
-font-weight: 800;
-letter-spacing: -0.03em;
-color: var(–white);
-line-height: 1;
-}
-.stat-num span { color: var(–accent); }
-.stat-label { font-size: 0.8rem; color: var(–muted); margin-top: 0.3rem; max-width: 140px; }
-
-/* SECTIONS */
-section { padding: 6rem 5%; position: relative; }
-.section-label {
-font-size: 0.75rem;
-font-weight: 600;
-letter-spacing: 0.12em;
-text-transform: uppercase;
-color: var(–accent);
-margin-bottom: 1rem;
-}
-h2 {
-font-family: var(–font-display);
-font-size: clamp(2rem, 4vw, 3rem);
-font-weight: 800;
-letter-spacing: -0.03em;
-line-height: 1.1;
-margin-bottom: 1rem;
-}
-.section-sub { color: var(–muted); max-width: 480px; font-weight: 300; line-height: 1.7; margin-bottom: 3rem; }
-
-/* STEPS */
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-.step-card {
-background: var(–card);
-border: 1px solid var(–border);
-border-radius: 16px;
-padding: 1.8rem;
-transition: border-color 0.3s;
-}
-.step-card:hover { border-color: rgba(232,255,71,0.2); }
-.step-num { font-family: var(–font-display); font-size: 3rem; font-weight: 800; color: rgba(255,255,255,0.05); line-height: 1; margin-bottom: 1rem; }
-.step-icon { font-size: 1.5rem; margin-bottom: 0.8rem; }
-.step-title { font-family: var(–font-display); font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
-.step-desc { font-size: 0.85rem; color: var(–muted); line-height: 1.6; }
-
-/* FEATURES */
-.features-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-gap: 1px;
-background: var(–border);
-border: 1px solid var(–border);
-border-radius: 16px;
-overflow: hidden;
-}
-.feature-item { background: var(–card); padding: 2rem; transition: background 0.3s; }
-.feature-item:hover { background: var(–surface); }
-.feature-icon {
-width: 40px; height: 40px;
-border-radius: 10px;
-background: rgba(232,255,71,0.08);
-display: flex; align-items: center; justify-content: center;
-font-size: 1.2rem;
-margin-bottom: 1rem;
-}
-.feature-title { font-family: var(–font-display); font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; }
-.feature-desc { font-size: 0.82rem; color: var(–muted); line-height: 1.6; }
-
-/* PRICING */
-.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
-.plan-card {
-background: var(–card);
-border: 1px solid var(–border);
-border-radius: 16px;
-padding: 2rem;
-transition: all 0.3s;
-position: relative;
-}
-.plan-card.featured { border-color: var(–accent); background: linear-gradient(160deg, rgba(232,255,71,0.05) 0%, var(–card) 60%); }
-.plan-card:hover { transform: translateY(-4px); }
-.featured-badge {
-position: absolute;
-top: -12px; left: 50%;
-transform: translateX(-50%);
-background: var(–accent);
-color: var(–black);
-font-size: 0.7rem;
-font-weight: 700;
-padding: 3px 12px;
-border-radius: 100px;
-letter-spacing: 0.06em;
-text-transform: uppercase;
-white-space: nowrap;
-}
-.plan-name { font-family: var(–font-display); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(–muted); margin-bottom: 1rem; }
-.plan-price { font-family: var(–font-display); font-size: 2.8rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.3rem; }
-.plan-price sup { font-size: 1.2rem; vertical-align: top; margin-top: 0.5rem; font-weight: 400; opacity: 0.6; }
-.plan-price span { font-size: 0.9rem; font-weight: 400; opacity: 0.5; }
-.plan-desc { font-size: 0.82rem; color: var(–muted); margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(–border); line-height: 1.5; }
-.plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.8rem; }
-.plan-features li { font-size: 0.83rem; color: var(–muted); display: flex; align-items: flex-start; gap: 0.5rem; }
-.plan-features li::before { content: ‘✓’; color: var(–accent); font-weight: 700; flex-shrink: 0; }
-.btn-plan { display: block; text-align: center; padding: 0.75rem; border-radius: 8px; font-family: var(–font-display); font-weight: 700; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; }
-.btn-plan-primary { background: var(–accent); color: var(–black); }
-.btn-plan-primary:hover { box-shadow: 0 6px 20px rgba(232,255,71,0.3); transform: translateY(-1px); }
-.btn-plan-ghost { background: transparent; color: var(–white); border: 1px solid var(–border); }
-.btn-plan-ghost:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
-
-/* TESTIMONIALS */
-.testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-.testimonial-card { background: var(–card); border: 1px solid var(–border); border-radius: 16px; padding: 1.8rem; }
-.stars { color: var(–accent); font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 1rem; }
-.testimonial-text { font-size: 0.9rem; line-height: 1.7; color: var(–white); margin-bottom: 1.2rem; font-style: italic; font-weight: 300; }
-.testimonial-author { display: flex; align-items: center; gap: 0.8rem; }
-.author-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(–accent), var(–accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(–black); flex-shrink: 0; }
-.author-name { font-weight: 600; font-size: 0.85rem; }
-.author-role { font-size: 0.75rem; color: var(–muted); }
-
-/* FAQ */
-.faq-list { max-width: 680px; }
-.faq-item { border-bottom: 1px solid var(–border); }
-.faq-question { width: 100%; background: none; border: none; color: var(–white); font-family: var(–font-body); font-size: 0.95rem; font-weight: 500; text-align: left; padding: 1.3rem 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; transition: color 0.2s; }
-.faq-question:hover { color: var(–accent); }
-.faq-chevron { flex-shrink: 0; transition: transform 0.3s; color: var(–muted); }
-.faq-answer { font-size: 0.88rem; color: var(–muted); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
-.faq-answer.open { max-height: 300px; padding-bottom: 1.2rem; }
-.faq-item.open .faq-chevron { transform: rotate(180deg); }
-
-/* CTA */
-.cta-section { text-align: center; background: linear-gradient(160deg, rgba(232,255,71,0.04) 0%, transparent 60%); border-top: 1px solid var(–border); border-bottom: 1px solid var(–border); }
-.cta-section h2 { margin: 0 auto 1rem; }
-.cta-section .section-sub { margin: 0 auto 2rem; text-align: center; }
-
-/* FOOTER */
-footer { padding: 2rem 5%; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(–border); flex-wrap: wrap; gap: 1rem; }
-.footer-links { display: flex; gap: 1.5rem; list-style: none; }
-.footer-links a { color: var(–muted); text-decoration: none; font-size: 0.8rem; transition: color 0.2s; }
-.footer-links a:hover { color: var(–white); }
-.footer-copy { font-size: 0.78rem; color: var(–muted); }
-
-/* RTL support */
-[dir=“rtl”] { direction: rtl; }
-[dir=“rtl”] .hero { text-align: right; }
-[dir=“rtl”] .nav-links { flex-direction: row-reverse; }
-[dir=“rtl”] .hero-proof { flex-direction: row-reverse; }
-[dir=“rtl”] .alert-demo { right: auto; left: 5%; transform: translateY(-50%); }
-[dir=“rtl”] .score-platforms { flex-direction: row-reverse; flex-wrap: wrap; }
-[dir=“rtl”] .stats-row { direction: rtl; }
-[dir=“rtl”] h1, [dir=“rtl”] h2, [dir=“rtl”] .hero-sub { text-align: right; }
-[dir=“rtl”] .section-sub { text-align: right; }
-[dir=“rtl”] .step-desc, [dir=“rtl”] .feature-desc { text-align: right; }
-[dir=“rtl”] .plan-features li { flex-direction: row-reverse; }
-[dir=“rtl”] .plan-features li::before { margin-right: 0; margin-left: 0.5rem; }
-[dir=“rtl”] .testimonial-text { text-align: right; }
-[dir=“rtl”] .testimonial-author { flex-direction: row-reverse; }
-[dir=“rtl”] .alert-demo { right: auto; left: 5%; }
-[dir=“rtl”] .faq-question { text-align: right; }
-
-/* SCROLL REVEAL */
-.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* RESPONSIVE */
-@media (max-width: 900px) { .alert-demo { display: none; } h1 { font-size: clamp(2.2rem, 8vw, 3.5rem); } .stats-band { gap: 2rem; } }
-@media (max-width: 600px) { .nav-links { display: none; } .hero { padding: 7rem 5% 3rem; } }
-
-/* Skeleton loading for translated content */
-.t-loading { opacity: 0.4; transition: opacity 0.3s; }
-
-/* LIGHT MODE */
-[data-theme=“light”] {
-–black: #f8f9fc;
-–surface: #ffffff;
-–card: #f0f2f8;
-–card2: #e8ebf5;
-–border: rgba(0,0,0,0.08);
-–border2: rgba(0,0,0,0.15);
-–white: #0f1117;
-–muted: #9098b0;
-–muted2: #6b7280;
-–accent: #1a56e8;
-–accent2: #0ea5e9;
-–red: #dc2626;
-–green: #16a34a;
-–orange: #d97706;
-–accent-dim: rgba(26,86,232,0.08);
-–blue-dim: rgba(14,165,233,0.08);
-–red-dim: rgba(220,38,38,0.08);
-–green-dim: rgba(22,163,74,0.08);
-}
-
-[data-theme=“light”] body {
-background: #f8f9fc;
-color: #0f1117;
-}
-[data-theme=“light”] body::before { opacity: 0; }
-[data-theme=“light”] .alert-badge { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.2); }
-[data-theme=“light”] h1 em { color: var(–accent); }
-[data-theme=“light”] .score-ring-fill { stroke: var(–accent); }
-[data-theme=“light”] .score-number { color: var(–accent); }
-[data-theme=“light”] .trend-value { color: #16a34a; }
-[data-theme=“light”] .btn-primary { background: var(–accent); color: #ffffff; }
-[data-theme=“light”] .nav-cta { background: var(–accent) !important; color: #ffffff !important; }
-[data-theme=“light”] .plan-card.featured { border-color: var(–accent); background: linear-gradient(160deg, rgba(26,86,232,0.05) 0%, var(–card) 60%); }
-[data-theme=“light”] .featured-badge { background: var(–accent); color: #ffffff; }
-[data-theme=“light”] .plan-features li::before { color: var(–accent); }
-[data-theme=“light”] .section-label { color: var(–accent); }
-[data-theme=“light”] .trial-badge { background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.2); color: #16a34a; }
-
-/* THEME TOGGLE BUTTON */
-.theme-toggle {
-width: 36px; height: 36px; border-radius: 8px;
-background: var(–card); border: 1px solid var(–border);
-display: flex; align-items: center; justify-content: center;
-cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
-}
-.theme-toggle:hover { border-color: var(–border2); }
-
+.trans-bar{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(–accent),var(–blue));z-index:999;transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.trans-bar.active{transform:scaleX(1);}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+@media(max-width:900px){.alert-demo{display:none;}h1{font-size:clamp(2.2rem,8vw,3.5rem);}.stats-band{gap:2rem;}}
+@media(max-width:600px){.nav-links{display:none;}.hero{padding:7rem 5% 3rem;}}
 </style>
+
 </head>
 <body>
-
-<div class="translating-bar" id="transBar"></div>
-
-<!-- NAV -->
+<div class="trans-bar" id="transBar"></div>
 
 <nav>
   <a href="#" class="logo">Repu<span>Guard</span></a>
@@ -579,29 +172,25 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
     <li><a href="#pricing" data-t="nav_pricing">Tarifs</a></li>
     <li><a href="/signup" class="nav-cta" data-t="nav_cta">Essai gratuit</a></li>
   </ul>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Mode clair/sombre">🌙</button>
-  <div class="lang-selector">
-    <button class="lang-btn" onclick="toggleLangDropdown()" id="langBtn">
-      <span class="lang-flag" id="currentFlag">🇫🇷</span>
-      <span id="currentLangName">Français</span>
-      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-    </button>
-    <div class="lang-dropdown" id="langDropdown">
-      <input class="lang-search" type="text" placeholder="Search language..." oninput="filterLangs(this.value)" id="langSearch">
-      <div id="langList"></div>
+  <div class="nav-right">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+    <div class="lang-selector">
+      <button class="lang-btn" id="langBtn" onclick="toggleLang(event)">
+        <span id="currentFlag">🇫🇷</span>
+        <span id="currentLangName">Français</span>
+        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="lang-dropdown" id="langDropdown">
+        <input class="lang-search" id="langSearch" type="text" placeholder="Search..." oninput="filterLangs(this.value)">
+        <div id="langList"></div>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- HERO -->
-
 <section class="hero">
   <div class="hero-glow"></div>
-  <div class="hero-glow2"></div>
-  <div class="alert-badge">
-    <div class="dot-live"></div>
-    <span data-t="hero_badge">Surveillance en temps réel</span>
-  </div>
+  <div class="alert-badge"><div class="dot-live"></div><span data-t="hero_badge">Surveillance en temps réel</span></div>
   <h1 data-t="hero_h1">Votre réputation,<br><em>protégée</em> en permanence.</h1>
   <p class="hero-sub" data-t="hero_sub">RepuGuard surveille Google, TripAdvisor, les réseaux sociaux et le web en temps réel. Dès qu'une menace apparaît, vous recevez une alerte — avec une réponse rédigée par IA, prête à envoyer.</p>
   <div class="hero-cta-group">
@@ -609,9 +198,9 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
     <a href="#how" class="btn-ghost" data-t="hero_cta2">Voir comment ça marche</a>
   </div>
   <div class="hero-proof">
-    <div class="proof-item"><span class="proof-check">✓</span> <span data-t="proof1">Aucune carte bancaire requise</span></div>
-    <div class="proof-item"><span class="proof-check">✓</span> <span data-t="proof2">Configuration en 5 minutes</span></div>
-    <div class="proof-item"><span class="proof-check">✓</span> <span data-t="proof3">Annulable à tout moment</span></div>
+    <div class="proof-item"><span class="proof-check">✓</span><span data-t="proof1">Aucune carte bancaire requise</span></div>
+    <div class="proof-item"><span class="proof-check">✓</span><span data-t="proof2">Configuration en 5 minutes</span></div>
+    <div class="proof-item"><span class="proof-check">✓</span><span data-t="proof3">Annulable à tout moment</span></div>
   </div>
   <div class="alert-demo">
     <div class="alert-card">
@@ -632,16 +221,12 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
   </div>
 </section>
 
-<!-- STATS -->
-
 <div class="stats-band">
   <div class="stat-item"><div class="stat-num">82<span>%</span></div><div class="stat-label" data-t="stat1">des clients lisent les avis avant d'acheter</div></div>
   <div class="stat-item"><div class="stat-num">-22<span>%</span></div><div class="stat-label" data-t="stat2">de CA avec 1 article négatif en page 1 Google</div></div>
   <div class="stat-item"><div class="stat-num">&lt;5<span>min</span></div><div class="stat-label" data-t="stat3">pour recevoir votre première alerte</div></div>
   <div class="stat-item"><div class="stat-num">24<span>/7</span></div><div class="stat-label" data-t="stat4">surveillance sans interruption</div></div>
 </div>
-
-<!-- HOW IT WORKS -->
 
 <section id="how">
   <div class="section-label" data-t="how_label">Comment ça marche</div>
@@ -655,12 +240,10 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
   </div>
 </section>
 
-<!-- FEATURES -->
-
-<section id="features" style="background:var(--surface)">
+<section id="features" class="surface-section">
   <div class="section-label" data-t="feat_label">Fonctionnalités</div>
   <h2 data-t="feat_h2">Tout ce dont vous avez besoin,<br>rien de superflu.</h2>
-  <div class="features-grid reveal" style="margin-top:3rem">
+  <div class="features-grid">
     <div class="feature-item"><div class="feature-icon">📡</div><div class="feature-title" data-t="f1_title">Surveillance 15+ plateformes</div><p class="feature-desc" data-t="f1_desc">Google, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, forums locaux et plus.</p></div>
     <div class="feature-item"><div class="feature-icon">🧠</div><div class="feature-title" data-t="f2_title">Analyse sentiment IA</div><p class="feature-desc" data-t="f2_desc">Chaque mention est analysée et notée de 1 à 10. Seules les vraies menaces déclenchent une alerte.</p></div>
     <div class="feature-item"><div class="feature-icon">✍️</div><div class="feature-title" data-t="f3_title">Réponses rédigées par IA</div><p class="feature-desc" data-t="f3_desc">Réponse professionnelle générée instantanément, dans votre ton, dans la langue du commentaire.</p></div>
@@ -669,8 +252,6 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
     <div class="feature-item"><div class="feature-icon">🌍</div><div class="feature-title" data-t="f6_title">Multilingue global</div><p class="feature-desc" data-t="f6_desc">Détecte et analyse les mentions dans toutes les langues. Répond dans la langue du client.</p></div>
   </div>
 </section>
-
-<!-- PRICING -->
 
 <section id="pricing">
   <div class="section-label" style="text-align:center" data-t="price_label">Tarifs</div>
@@ -681,82 +262,54 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
       <div class="plan-name">Starter</div>
       <div class="plan-price"><sup>€</sup>29<span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p1_desc">Idéal pour les indépendants et auto-entrepreneurs.</p>
-      <ul class="plan-features">
-        <li data-t="p1_f1">1 établissement surveillé</li>
-        <li data-t="p1_f2">8 plateformes</li>
-        <li data-t="p1_f3">Alertes email</li>
-        <li data-t="p1_f4">Rapport mensuel</li>
-        <li data-t="p1_f5">5 réponses IA/mois</li>
-      </ul>
-      <a href="#" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
+      <ul class="plan-features"><li data-t="p1_f1">1 établissement surveillé</li><li data-t="p1_f2">8 plateformes</li><li data-t="p1_f3">Alertes email</li><li data-t="p1_f4">Rapport mensuel</li><li data-t="p1_f5">5 réponses IA/mois</li></ul>
+      <a href="/signup?plan=starter" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
     </div>
     <div class="plan-card featured">
       <div class="featured-badge" data-t="popular">Le plus populaire</div>
       <div class="plan-name">Pro</div>
       <div class="plan-price"><sup>€</sup>69<span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p2_desc">Pour les PME et professionnels qui dépendent de leur réputation.</p>
-      <ul class="plan-features">
-        <li data-t="p2_f1">3 établissements surveillés</li>
-        <li data-t="p2_f2">15+ plateformes</li>
-        <li data-t="p2_f3">Alertes email + SMS</li>
-        <li data-t="p2_f4">Rapport hebdomadaire</li>
-        <li data-t="p2_f5">Réponses IA illimitées</li>
-        <li data-t="p2_f6">Score réputation temps réel</li>
-      </ul>
-      <a href="#" class="btn-plan btn-plan-primary" data-t="cta_free">Commencer gratuitement</a>
+      <ul class="plan-features"><li data-t="p2_f1">3 établissements surveillés</li><li data-t="p2_f2">15+ plateformes</li><li data-t="p2_f3">Alertes email + SMS</li><li data-t="p2_f4">Rapport hebdomadaire</li><li data-t="p2_f5">Réponses IA illimitées</li><li data-t="p2_f6">Score réputation temps réel</li></ul>
+      <a href="/signup?plan=pro" class="btn-plan btn-plan-primary" data-t="cta_free">Commencer gratuitement</a>
     </div>
     <div class="plan-card">
       <div class="plan-name">Business</div>
       <div class="plan-price"><sup>€</sup>149<span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p3_desc">Pour les agences et multi-établissements.</p>
-      <ul class="plan-features">
-        <li data-t="p3_f1">10 établissements</li>
-        <li data-t="p3_f2">Toutes plateformes</li>
-        <li data-t="p3_f3">Alertes prioritaires</li>
-        <li data-t="p3_f4">Rapports white-label</li>
-        <li data-t="p3_f5">Accès API</li>
-        <li data-t="p3_f6">Support prioritaire</li>
-      </ul>
-      <a href="#" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
+      <ul class="plan-features"><li data-t="p3_f1">10 établissements</li><li data-t="p3_f2">Toutes plateformes</li><li data-t="p3_f3">Alertes prioritaires</li><li data-t="p3_f4">Rapports white-label</li><li data-t="p3_f5">Accès API</li><li data-t="p3_f6">Support prioritaire</li></ul>
+      <a href="/signup?plan=business" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
     </div>
   </div>
 </section>
 
-<!-- TESTIMONIALS -->
-
-<section style="background:var(--surface)">
+<section class="surface-section">
   <div class="section-label" style="text-align:center" data-t="testi_label">Témoignages</div>
   <h2 style="text-align:center;margin-bottom:3rem" data-t="testi_h2">Ils dorment mieux depuis.</h2>
   <div class="testimonials reveal">
-    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t1_text">"J'ai reçu l'alerte 3 heures après le commentaire négatif. La réponse générée était parfaite. Sans RepuGuard, j'aurais découvert ça le lendemain matin."</p><div class="testimonial-author"><div class="author-avatar">ML</div><div><div class="author-name">Marie L.</div><div class="author-role" data-t="t1_role">Restauratrice, Lyon</div></div></div></div>
-    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t2_text">"En tant que médecin libéral, ma réputation en ligne c'est mon cabinet. RepuGuard me donne une tranquillité d'esprit que je n'avais pas avant."</p><div class="testimonial-author"><div class="author-avatar">DR</div><div><div class="author-name">Dr. Ramos</div><div class="author-role" data-t="t2_role">Médecin généraliste, Madrid</div></div></div></div>
-    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t3_text">"Je gère 6 hôtels. Avant je passais 2h par jour à surveiller les avis. Maintenant RepuGuard fait tout ça, et me prévient uniquement quand c'est urgent."</p><div class="testimonial-author"><div class="author-avatar">TB</div><div><div class="author-name">Thomas B.</div><div class="author-role" data-t="t3_role">Directeur hôtelier, Paris</div></div></div></div>
+    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t1_text">"J'ai reçu l'alerte 3 heures après le commentaire négatif. La réponse générée était parfaite."</p><div class="testimonial-author"><div class="author-avatar">ML</div><div><div class="author-name">Marie L.</div><div class="author-role" data-t="t1_role">Restauratrice, Lyon</div></div></div></div>
+    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t2_text">"Ma réputation en ligne c'est mon cabinet. RepuGuard me donne une tranquillité d'esprit que je n'avais pas avant."</p><div class="testimonial-author"><div class="author-avatar">DR</div><div><div class="author-name">Dr. Ramos</div><div class="author-role" data-t="t2_role">Médecin généraliste, Madrid</div></div></div></div>
+    <div class="testimonial-card"><div class="stars">★★★★★</div><p class="testimonial-text" data-t="t3_text">"Je gère 6 hôtels. Avant je passais 2h par jour à surveiller les avis. Maintenant RepuGuard fait tout ça."</p><div class="testimonial-author"><div class="author-avatar">TB</div><div><div class="author-name">Thomas B.</div><div class="author-role" data-t="t3_role">Directeur hôtelier, Paris</div></div></div></div>
   </div>
 </section>
-
-<!-- FAQ -->
 
 <section id="faq">
-  <div class="section-label" data-t="faq_label">Questions fréquentes</div>
+  <div class="section-label" data-t="faq_label">FAQ</div>
   <h2 data-t="faq_h2">Questions fréquentes</h2>
   <div class="faq-list reveal" style="margin-top:2rem">
-    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq1_q">Est-ce que RepuGuard surveille vraiment toutes les plateformes ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq1_a">Oui — Google Reviews, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, et de nombreux forums locaux. Nous ajoutons régulièrement de nouvelles sources.</span></div></div>
-    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq2_q">Les réponses IA sont-elles vraiment utilisables directement ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq2_a">Dans 85 % des cas, oui. Vous pouvez toujours les modifier avant de les publier. La réponse n'est jamais publiée automatiquement sans votre validation.</span></div></div>
-    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq3_q">Combien de temps prend la configuration ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq3_a">Moins de 5 minutes. Vous entrez le nom de votre établissement, votre secteur et vos préférences de notification. RepuGuard commence à surveiller immédiatement.</span></div></div>
-    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq4_q">Puis-je annuler à tout moment ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq4_a">Oui, sans aucune condition ni pénalité. Vous gérez votre abonnement depuis votre tableau de bord, en toute autonomie.</span></div></div>
+    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq1_q">Est-ce que RepuGuard surveille vraiment toutes les plateformes ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq1_a">Oui — Google Reviews, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, et de nombreux forums locaux.</span></div></div>
+    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq2_q">Les réponses IA sont-elles vraiment utilisables directement ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq2_a">Dans 85 % des cas, oui. Vous pouvez toujours les modifier avant de les publier.</span></div></div>
+    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq3_q">Combien de temps prend la configuration ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq3_a">Moins de 5 minutes. Vous entrez le nom de votre établissement, votre secteur et vos préférences de notification.</span></div></div>
+    <div class="faq-item"><button class="faq-question" onclick="toggleFaq(this)"><span data-t="faq4_q">Puis-je annuler à tout moment ?</span><svg class="faq-chevron" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="faq-answer"><span data-t="faq4_a">Oui, sans aucune condition ni pénalité. Vous gérez votre abonnement depuis votre tableau de bord.</span></div></div>
   </div>
 </section>
 
-<!-- CTA -->
-
-<section class="cta-section">
+<section class="cta-section surface-section">
   <div class="section-label" data-t="cta_label">Commencer maintenant</div>
   <h2 data-t="cta_h2">La prochaine alerte,<br>vous la recevrez à temps.</h2>
-  <p class="section-sub" data-t="cta_sub">14 jours gratuits, sans carte bancaire. Commencez à surveiller votre réputation en moins de 5 minutes.</p>
+  <p class="section-sub" style="margin:0 auto 2rem;text-align:center" data-t="cta_sub">14 jours gratuits, sans carte bancaire.</p>
   <a href="/signup" class="btn-primary" style="margin:0 auto;display:inline-flex" data-t="cta_btn">Démarrer l'essai gratuit →</a>
 </section>
-
-<!-- FOOTER -->
 
 <footer>
   <a href="#" class="logo">Repu<span>Guard</span></a>
@@ -769,368 +322,128 @@ cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
 </footer>
 
 <script>
-// ═══════════════════════════════════════════
-// LANGUAGES DATABASE
-// ═══════════════════════════════════════════
-const LANGUAGES = [
-  { code:'fr', name:'Français', flag:'🇫🇷', dir:'ltr', region:'Europe' },
-  { code:'en', name:'English', flag:'🇬🇧', dir:'ltr', region:'Europe' },
-  { code:'de', name:'Deutsch', flag:'🇩🇪', dir:'ltr', region:'Europe' },
-  { code:'es', name:'Español', flag:'🇪🇸', dir:'ltr', region:'Europe' },
-  { code:'it', name:'Italiano', flag:'🇮🇹', dir:'ltr', region:'Europe' },
-  { code:'pt', name:'Português', flag:'🇵🇹', dir:'ltr', region:'Europe' },
-  { code:'nl', name:'Nederlands', flag:'🇳🇱', dir:'ltr', region:'Europe' },
-  { code:'pl', name:'Polski', flag:'🇵🇱', dir:'ltr', region:'Europe' },
-  { code:'ru', name:'Русский', flag:'🇷🇺', dir:'ltr', region:'Europe' },
-  { code:'tr', name:'Türkçe', flag:'🇹🇷', dir:'ltr', region:'Europe' },
-  { code:'pt-BR', name:'Português (Brasil)', flag:'🇧🇷', dir:'ltr', region:'Amérique Latine' },
-  { code:'es-MX', name:'Español (México)', flag:'🇲🇽', dir:'ltr', region:'Amérique Latine' },
-  { code:'ar', name:'العربية', flag:'🇸🇦', dir:'rtl', region:'Moyen-Orient / MENA' },
-  { code:'fa', name:'فارسی', flag:'🇮🇷', dir:'rtl', region:'Moyen-Orient / MENA' },
-  { code:'he', name:'עברית', flag:'🇮🇱', dir:'rtl', region:'Moyen-Orient / MENA' },
-  { code:'zh', name:'中文 (简体)', flag:'🇨🇳', dir:'ltr', region:'Asie' },
-  { code:'zh-TW', name:'中文 (繁體)', flag:'🇹🇼', dir:'ltr', region:'Asie' },
-  { code:'ja', name:'日本語', flag:'🇯🇵', dir:'ltr', region:'Asie' },
-  { code:'ko', name:'한국어', flag:'🇰🇷', dir:'ltr', region:'Asie' },
-  { code:'hi', name:'हिन्दी', flag:'🇮🇳', dir:'ltr', region:'Asie' },
-  { code:'th', name:'ภาษาไทย', flag:'🇹🇭', dir:'ltr', region:'Asie' },
-  { code:'vi', name:'Tiếng Việt', flag:'🇻🇳', dir:'ltr', region:'Asie' },
-  { code:'id', name:'Bahasa Indonesia', flag:'🇮🇩', dir:'ltr', region:'Asie' },
-  { code:'ms', name:'Bahasa Melayu', flag:'🇲🇾', dir:'ltr', region:'Asie' },
-  { code:'sw', name:'Kiswahili', flag:'🇰🇪', dir:'ltr', region:'Afrique' },
-  { code:'am', name:'አማርኛ', flag:'🇪🇹', dir:'ltr', region:'Afrique' },
-];
+var LANGUAGES=[{code:'fr',name:'Français',flag:'🇫🇷',dir:'ltr',region:'Europe'},{code:'en',name:'English',flag:'🇬🇧',dir:'ltr',region:'Europe'},{code:'de',name:'Deutsch',flag:'🇩🇪',dir:'ltr',region:'Europe'},{code:'es',name:'Español',flag:'🇪🇸',dir:'ltr',region:'Europe'},{code:'it',name:'Italiano',flag:'🇮🇹',dir:'ltr',region:'Europe'},{code:'pt',name:'Português',flag:'🇵🇹',dir:'ltr',region:'Europe'},{code:'nl',name:'Nederlands',flag:'🇳🇱',dir:'ltr',region:'Europe'},{code:'pl',name:'Polski',flag:'🇵🇱',dir:'ltr',region:'Europe'},{code:'ru',name:'Русский',flag:'🇷🇺',dir:'ltr',region:'Europe'},{code:'tr',name:'Türkçe',flag:'🇹🇷',dir:'ltr',region:'Europe'},{code:'pt-BR',name:'Português (Brasil)',flag:'🇧🇷',dir:'ltr',region:'Amérique Latine'},{code:'es-MX',name:'Español (México)',flag:'🇲🇽',dir:'ltr',region:'Amérique Latine'},{code:'ar',name:'العربية',flag:'🇸🇦',dir:'rtl',region:'Moyen-Orient'},{code:'fa',name:'فارسی',flag:'🇮🇷',dir:'rtl',region:'Moyen-Orient'},{code:'he',name:'עברית',flag:'🇮🇱',dir:'rtl',region:'Moyen-Orient'},{code:'zh',name:'中文 (简体)',flag:'🇨🇳',dir:'ltr',region:'Asie'},{code:'ja',name:'日本語',flag:'🇯🇵',dir:'ltr',region:'Asie'},{code:'ko',name:'한국어',flag:'🇰🇷',dir:'ltr',region:'Asie'},{code:'hi',name:'हिन्दी',flag:'🇮🇳',dir:'ltr',region:'Asie'},{code:'id',name:'Bahasa Indonesia',flag:'🇮🇩',dir:'ltr',region:'Asie'},{code:'sw',name:'Kiswahili',flag:'🇰🇪',dir:'ltr',region:'Afrique'}];
 
-// ═══════════════════════════════════════════
-// BASE FRENCH CONTENT (source of truth)
-// ═══════════════════════════════════════════
-const BASE_CONTENT = {
-  nav_how: "Comment ça marche",
-  nav_features: "Fonctionnalités",
-  nav_pricing: "Tarifs",
-  nav_cta: "Essai gratuit",
-  hero_badge: "Surveillance en temps réel",
-  hero_h1: "Votre réputation,<br><em>protégée</em> en permanence.",
-  hero_sub: "RepuGuard surveille Google, TripAdvisor, les réseaux sociaux et le web en temps réel. Dès qu'une menace apparaît, vous recevez une alerte — avec une réponse rédigée par IA, prête à envoyer.",
-  hero_cta1: "Démarrer gratuitement →",
-  hero_cta2: "Voir comment ça marche",
-  proof1: "Aucune carte bancaire requise",
-  proof2: "Configuration en 5 minutes",
-  proof3: "Annulable à tout moment",
-  demo_time1: "il y a 2 min",
-  demo_time2: "il y a 8 min",
-  demo_time3: "automatique",
-  demo_text1: '"Service décevant, personnel peu aimable..."',
-  demo_text2: "Mention négative détectée — 847 abonnés",
-  demo_text3: "Réponse professionnelle générée et prête à publier ✓",
-  demo_score1: "⚠ Critique — 1★",
-  demo_score2: "⚠ Risque élevé",
-  demo_score3: "✓ Prêt à envoyer",
-  stat1: "des clients lisent les avis avant d'acheter",
-  stat2: "de CA avec 1 article négatif en page 1 Google",
-  stat3: "pour recevoir votre première alerte",
-  stat4: "surveillance sans interruption",
-  how_label: "Comment ça marche",
-  how_h2: "Actif en 5 minutes.<br>Automatique pour toujours.",
-  how_sub: "Aucune compétence technique requise. Vous entrez votre nom et votre secteur — RepuGuard s'occupe du reste.",
-  step1_title: "Connexion en 1 clic",
-  step1_desc: "Entrez le nom de votre établissement. RepuGuard identifie automatiquement vos profils sur Google, TripAdvisor, Facebook et plus.",
-  step2_title: "Surveillance continue",
-  step2_desc: "Chaque heure, notre système scanne le web entier à votre place. Avis, articles, mentions, commentaires — rien n'échappe.",
-  step3_title: "Alerte immédiate",
-  step3_desc: "Dès qu'une menace est détectée, vous recevez un SMS et un email avec le niveau de gravité, la source, et le contexte complet.",
-  step4_title: "Réponse IA prête",
-  step4_desc: "RepuGuard génère automatiquement une réponse professionnelle adaptée à votre ton et à la plateforme. Validez en 1 clic.",
-  feat_label: "Fonctionnalités",
-  feat_h2: "Tout ce dont vous avez besoin,<br>rien de superflu.",
-  f1_title: "Surveillance 15+ plateformes",
-  f1_desc: "Google, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, forums locaux et plus.",
-  f2_title: "Analyse sentiment IA",
-  f2_desc: "Chaque mention est analysée et notée de 1 à 10. Seules les vraies menaces déclenchent une alerte.",
-  f3_title: "Réponses rédigées par IA",
-  f3_desc: "Réponse professionnelle générée instantanément, dans votre ton, dans la langue du commentaire.",
-  f4_title: "Score de réputation",
-  f4_desc: "Un score global mis à jour en temps réel. Suivez l'évolution semaine après semaine.",
-  f5_title: "Rapports automatiques",
-  f5_desc: "Rapport hebdomadaire envoyé par email. Aucune action requise de votre part.",
-  f6_title: "Multilingue global",
-  f6_desc: "Détecte et analyse les mentions dans toutes les langues. Répond dans la langue du client.",
-  price_label: "Tarifs",
-  price_h2: "Simple. Transparent. Sans surprise.",
-  price_sub: "14 jours d'essai gratuit sur tous les plans. Aucune carte bancaire requise.",
-  per_month: "/mois",
-  p1_desc: "Idéal pour les indépendants et auto-entrepreneurs.",
-  p1_f1: "1 établissement surveillé",
-  p1_f2: "8 plateformes",
-  p1_f3: "Alertes email",
-  p1_f4: "Rapport mensuel",
-  p1_f5: "5 réponses IA/mois",
-  p2_desc: "Pour les PME et professionnels qui dépendent de leur réputation.",
-  p2_f1: "3 établissements surveillés",
-  p2_f2: "15+ plateformes",
-  p2_f3: "Alertes email + SMS",
-  p2_f4: "Rapport hebdomadaire",
-  p2_f5: "Réponses IA illimitées",
-  p2_f6: "Score réputation temps réel",
-  p3_desc: "Pour les agences et multi-établissements.",
-  p3_f1: "10 établissements",
-  p3_f2: "Toutes plateformes",
-  p3_f3: "Alertes prioritaires",
-  p3_f4: "Rapports white-label",
-  p3_f5: "Accès API",
-  p3_f6: "Support prioritaire",
-  popular: "Le plus populaire",
-  cta_free: "Commencer gratuitement",
-  testi_label: "Témoignages",
-  testi_h2: "Ils dorment mieux depuis.",
-  t1_text: '"J\'ai reçu l\'alerte 3 heures après le commentaire négatif. La réponse générée était parfaite. Sans RepuGuard, j\'aurais découvert ça le lendemain matin."',
-  t1_role: "Restauratrice, Lyon",
-  t2_text: '"En tant que médecin libéral, ma réputation en ligne c\'est mon cabinet. RepuGuard me donne une tranquillité d\'esprit que je n\'avais pas avant."',
-  t2_role: "Médecin généraliste, Madrid",
-  t3_text: '"Je gère 6 hôtels. Avant je passais 2h par jour à surveiller les avis. Maintenant RepuGuard fait tout ça, et me prévient uniquement quand c\'est urgent."',
-  t3_role: "Directeur hôtelier, Paris",
-  faq_label: "FAQ",
-  faq_h2: "Questions fréquentes",
-  faq1_q: "Est-ce que RepuGuard surveille vraiment toutes les plateformes ?",
-  faq1_a: "Oui — Google Reviews, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, et de nombreux forums locaux. Nous ajoutons régulièrement de nouvelles sources.",
-  faq2_q: "Les réponses IA sont-elles vraiment utilisables directement ?",
-  faq2_a: "Dans 85 % des cas, oui. Vous pouvez toujours les modifier avant de les publier. La réponse n'est jamais publiée automatiquement sans votre validation.",
-  faq3_q: "Combien de temps prend la configuration ?",
-  faq3_a: "Moins de 5 minutes. Vous entrez le nom de votre établissement, votre secteur et vos préférences de notification. RepuGuard commence à surveiller immédiatement.",
-  faq4_q: "Puis-je annuler à tout moment ?",
-  faq4_a: "Oui, sans aucune condition ni pénalité. Vous gérez votre abonnement depuis votre tableau de bord, en toute autonomie.",
-  cta_label: "Commencer maintenant",
-  cta_h2: "La prochaine alerte,<br>vous la recevrez à temps.",
-  cta_sub: "14 jours gratuits, sans carte bancaire. Commencez à surveiller votre réputation en moins de 5 minutes.",
-  cta_btn: "Démarrer l'essai gratuit →",
-  footer_privacy: "Confidentialité",
-  footer_terms: "Conditions",
+var BASE={nav_how:"Comment ça marche",nav_features:"Fonctionnalités",nav_pricing:"Tarifs",nav_cta:"Essai gratuit",hero_badge:"Surveillance en temps réel",hero_h1:"Votre réputation,<br><em>protégée</em> en permanence.",hero_sub:"RepuGuard surveille Google, TripAdvisor, les réseaux sociaux et le web en temps réel. Dès qu'une menace apparaît, vous recevez une alerte — avec une réponse rédigée par IA, prête à envoyer.",hero_cta1:"Démarrer gratuitement →",hero_cta2:"Voir comment ça marche",proof1:"Aucune carte bancaire requise",proof2:"Configuration en 5 minutes",proof3:"Annulable à tout moment",demo_time1:"il y a 2 min",demo_time2:"il y a 8 min",demo_time3:"automatique",demo_text1:'"Service décevant, personnel peu aimable..."',demo_text2:"Mention négative détectée — 847 abonnés",demo_text3:"Réponse professionnelle générée et prête à publier ✓",demo_score1:"⚠ Critique — 1★",demo_score2:"⚠ Risque élevé",demo_score3:"✓ Prêt à envoyer",stat1:"des clients lisent les avis avant d'acheter",stat2:"de CA avec 1 article négatif en page 1 Google",stat3:"pour recevoir votre première alerte",stat4:"surveillance sans interruption",how_label:"Comment ça marche",how_h2:"Actif en 5 minutes.<br>Automatique pour toujours.",how_sub:"Aucune compétence technique requise. Vous entrez votre nom et votre secteur — RepuGuard s'occupe du reste.",step1_title:"Connexion en 1 clic",step1_desc:"Entrez le nom de votre établissement. RepuGuard identifie automatiquement vos profils sur Google, TripAdvisor, Facebook et plus.",step2_title:"Surveillance continue",step2_desc:"Chaque heure, notre système scanne le web entier à votre place. Avis, articles, mentions, commentaires — rien n'échappe.",step3_title:"Alerte immédiate",step3_desc:"Dès qu'une menace est détectée, vous recevez un SMS et un email avec le niveau de gravité, la source, et le contexte complet.",step4_title:"Réponse IA prête",step4_desc:"RepuGuard génère automatiquement une réponse professionnelle adaptée à votre ton et à la plateforme. Validez en 1 clic.",feat_label:"Fonctionnalités",feat_h2:"Tout ce dont vous avez besoin,<br>rien de superflu.",f1_title:"Surveillance 15+ plateformes",f1_desc:"Google, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, forums locaux et plus.",f2_title:"Analyse sentiment IA",f2_desc:"Chaque mention est analysée et notée de 1 à 10. Seules les vraies menaces déclenchent une alerte.",f3_title:"Réponses rédigées par IA",f3_desc:"Réponse professionnelle générée instantanément, dans votre ton, dans la langue du commentaire.",f4_title:"Score de réputation",f4_desc:"Un score global mis à jour en temps réel. Suivez l'évolution semaine après semaine.",f5_title:"Rapports automatiques",f5_desc:"Rapport hebdomadaire envoyé par email. Aucune action requise de votre part.",f6_title:"Multilingue global",f6_desc:"Détecte et analyse les mentions dans toutes les langues. Répond dans la langue du client.",price_label:"Tarifs",price_h2:"Simple. Transparent. Sans surprise.",price_sub:"14 jours d'essai gratuit sur tous les plans. Aucune carte bancaire requise.",per_month:"/mois",p1_desc:"Idéal pour les indépendants et auto-entrepreneurs.",p1_f1:"1 établissement surveillé",p1_f2:"8 plateformes",p1_f3:"Alertes email",p1_f4:"Rapport mensuel",p1_f5:"5 réponses IA/mois",p2_desc:"Pour les PME et professionnels qui dépendent de leur réputation.",p2_f1:"3 établissements surveillés",p2_f2:"15+ plateformes",p2_f3:"Alertes email + SMS",p2_f4:"Rapport hebdomadaire",p2_f5:"Réponses IA illimitées",p2_f6:"Score réputation temps réel",p3_desc:"Pour les agences et multi-établissements.",p3_f1:"10 établissements",p3_f2:"Toutes plateformes",p3_f3:"Alertes prioritaires",p3_f4:"Rapports white-label",p3_f5:"Accès API",p3_f6:"Support prioritaire",popular:"Le plus populaire",cta_free:"Commencer gratuitement",testi_label:"Témoignages",testi_h2:"Ils dorment mieux depuis.",t1_text:'"J\'ai reçu l\'alerte 3 heures après le commentaire négatif. La réponse générée était parfaite."',t1_role:"Restauratrice, Lyon",t2_text:'"Ma réputation en ligne c\'est mon cabinet. RepuGuard me donne une tranquillité d\'esprit que je n\'avais pas avant."',t2_role:"Médecin généraliste, Madrid",t3_text:'"Je gère 6 hôtels. Avant je passais 2h par jour à surveiller les avis. Maintenant RepuGuard fait tout ça."',t3_role:"Directeur hôtelier, Paris",faq_label:"FAQ",faq_h2:"Questions fréquentes",faq1_q:"Est-ce que RepuGuard surveille vraiment toutes les plateformes ?",faq1_a:"Oui — Google Reviews, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, et de nombreux forums locaux.",faq2_q:"Les réponses IA sont-elles vraiment utilisables directement ?",faq2_a:"Dans 85 % des cas, oui. Vous pouvez toujours les modifier avant de les publier.",faq3_q:"Combien de temps prend la configuration ?",faq3_a:"Moins de 5 minutes. Vous entrez le nom de votre établissement, votre secteur et vos préférences de notification.",faq4_q:"Puis-je annuler à tout moment ?",faq4_a:"Oui, sans aucune condition ni pénalité. Vous gérez votre abonnement depuis votre tableau de bord.",cta_label:"Commencer maintenant",cta_h2:"La prochaine alerte,<br>vous la recevrez à temps.",cta_sub:"14 jours gratuits, sans carte bancaire.",cta_btn:"Démarrer l'essai gratuit →",footer_privacy:"Confidentialité",footer_terms:"Conditions"};
+
+var currentLang='fr',isTranslating=false,cache={fr:BASE};
+
+function toggleTheme(){
+  var html=document.documentElement;
+  var btn=document.getElementById('themeBtn');
+  var isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  btn.textContent=isDark?'🌙':'☀️';
+  localStorage.setItem('rg-theme',isDark?'light':'dark');
 }
 
+function initTheme(){
+  var saved=localStorage.getItem('rg-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  document.getElementById('themeBtn').textContent=saved==='dark'?'☀️':'🌙';
+}
 
-// ═══════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════
-let currentLang = 'fr';
-let translationCache = { fr: BASE_CONTENT };
-let isTranslating = false;
-
-// ═══════════════════════════════════════════
-// LANG DROPDOWN
-// ═══════════════════════════════════════════
-function buildLangList(filter = '') {
-  const list = document.getElementById('langList');
-  list.innerHTML = '';
-  const groups = {};
-  LANGUAGES.forEach(l => {
-    if (filter && !l.name.toLowerCase().includes(filter.toLowerCase()) && !l.code.toLowerCase().includes(filter.toLowerCase())) return;
-    if (!groups[l.region]) groups[l.region] = [];
+function buildLangList(filter){
+  filter=(filter||'').toLowerCase();
+  var list=document.getElementById('langList');
+  list.innerHTML='';
+  var groups={};
+  LANGUAGES.forEach(function(l){
+    if(filter&&!l.name.toLowerCase().includes(filter)&&!l.code.toLowerCase().includes(filter))return;
+    if(!groups[l.region])groups[l.region]=[];
     groups[l.region].push(l);
   });
-  Object.entries(groups).forEach(([region, langs]) => {
-    const label = document.createElement('div');
-    label.className = 'lang-group-label';
-    label.textContent = region;
-    list.appendChild(label);
-    langs.forEach(l => {
-      const opt = document.createElement('div');
-      opt.className = 'lang-option' + (l.code === currentLang ? ' active' : '');
-      opt.innerHTML = `<span>${l.flag}</span><span>${l.name}</span>`;
-      opt.onclick = () => selectLang(l);
+  Object.keys(groups).forEach(function(region){
+    var lbl=document.createElement('div');
+    lbl.className='lang-group-label';
+    lbl.textContent=region;
+    list.appendChild(lbl);
+    groups[region].forEach(function(l){
+      var opt=document.createElement('div');
+      opt.className='lang-option'+(l.code===currentLang?' active':'');
+      opt.innerHTML='<span>'+l.flag+'</span><span>'+l.name+'</span>';
+      opt.addEventListener('click',function(){selectLang(l);});
       list.appendChild(opt);
     });
   });
 }
 
-function toggleLangDropdown() {
-  const dd = document.getElementById('langDropdown');
+function filterLangs(val){buildLangList(val);}
+
+function toggleLang(e){
+  e.stopPropagation();
+  var dd=document.getElementById('langDropdown');
+  var wasOpen=dd.classList.contains('open');
   dd.classList.toggle('open');
-  if (dd.classList.contains('open')) {
-    buildLangList();
-    document.getElementById('langSearch').focus();
-    document.getElementById('langSearch').value = '';
+  if(!wasOpen){
+    buildLangList('');
+    var s=document.getElementById('langSearch');
+    s.value='';
+    s.focus();
   }
 }
 
-function filterLangs(val) { buildLangList(val); }
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.lang-selector') && !e.target.closest('.theme-toggle')) {
-    const dd = document.getElementById('langDropdown');
-    if (dd) dd.classList.remove('open');
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.lang-selector')){
+    document.getElementById('langDropdown').classList.remove('open');
   }
 });
 
-// ═══════════════════════════════════════════
-// SELECT LANGUAGE
-// ═══════════════════════════════════════════
-async function selectLang(langObj) {
+function selectLang(l){
   document.getElementById('langDropdown').classList.remove('open');
-  if (langObj.code === currentLang) return;
-  currentLang = langObj.code;
-  localStorage.setItem('repuguard-lang', langObj.code);
-  document.getElementById('currentFlag').textContent = langObj.flag;
-  document.getElementById('currentLangName').textContent = langObj.name;
-  document.documentElement.dir = langObj.dir;
-  document.documentElement.lang = langObj.code;
-
-  if (translationCache[langObj.code]) {
-    applyTranslations(translationCache[langObj.code]);
-    return;
-  }
-
-  if (langObj.code === 'fr') {
-    applyTranslations(BASE_CONTENT);
-    return;
-  }
-
-  await translatePage(langObj);
+  if(l.code===currentLang)return;
+  currentLang=l.code;
+  localStorage.setItem('rg-lang',l.code);
+  document.getElementById('currentFlag').textContent=l.flag;
+  document.getElementById('currentLangName').textContent=l.name;
+  document.documentElement.setAttribute('dir',l.dir);
+  document.documentElement.setAttribute('lang',l.code);
+  if(cache[l.code]){applyTrans(cache[l.code]);}
+  else if(l.code==='fr'){applyTrans(BASE);}
+  else{translatePage(l);}
 }
 
-// ═══════════════════════════════════════════
-// APPLY TRANSLATIONS TO DOM
-// ═══════════════════════════════════════════
-function applyTranslations(translations) {
-  document.querySelectorAll('[data-t]').forEach(el => {
-    const key = el.getAttribute('data-t');
-    if (translations[key] !== undefined) {
-      if (el.tagName === 'INPUT') {
-        el.placeholder = translations[key];
-      } else {
-        el.innerHTML = translations[key];
-      }
-    }
+function applyTrans(t){
+  document.querySelectorAll('[data-t]').forEach(function(el){
+    var k=el.getAttribute('data-t');
+    if(t[k]!==undefined)el.innerHTML=t[k];
   });
 }
 
-// ═══════════════════════════════════════════
-// AI TRANSLATION via Claude API
-// ═══════════════════════════════════════════
-async function translatePage(langObj) {
-  if (isTranslating) return;
-  isTranslating = true;
-  const bar = document.getElementById('transBar');
+async function translatePage(l){
+  if(isTranslating)return;
+  isTranslating=true;
+  var bar=document.getElementById('transBar');
   bar.classList.add('active');
-  document.querySelectorAll('[data-t]').forEach(el => el.classList.add('t-loading'));
-
-  const keysToTranslate = Object.entries(BASE_CONTENT);
-  const batchSize = 30;
-  const result = { ...BASE_CONTENT };
-
-  try {
-    for (let i = 0; i < keysToTranslate.length; i += batchSize) {
-      const batch = keysToTranslate.slice(i, i + batchSize);
-      const batchObj = Object.fromEntries(batch);
-
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          texts: batchObj,
-          targetLang: langObj.code,
-          langName: langObj.name
-        })
-      });
-
-      const data = await response.json();
-      if (data.translations) {
-        Object.assign(result, data.translations);
-        applyTranslations(result);
-      }
+  var keys=Object.keys(BASE);
+  var result=Object.assign({},BASE);
+  try{
+    for(var i=0;i<keys.length;i+=30){
+      var batch={};
+      keys.slice(i,i+30).forEach(function(k){batch[k]=BASE[k];});
+      var res=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texts:batch,targetLang:l.code,langName:l.name})});
+      var data=await res.json();
+      if(data.translations){Object.assign(result,data.translations);applyTrans(result);}
     }
-
-    translationCache[langObj.code] = result;
-    applyTranslations(result);
-
-  } catch(err) {
-    console.error('Translation failed:', err);
-    applyTranslations(BASE_CONTENT);
-  } finally {
-    document.querySelectorAll('[data-t]').forEach(el => el.classList.remove('t-loading'));
-    bar.classList.remove('active');
-    isTranslating = false;
-  }
+    cache[l.code]=result;
+    applyTrans(result);
+  }catch(err){console.error(err);applyTrans(BASE);}
+  finally{bar.classList.remove('active');isTranslating=false;}
 }
 
-// ═══════════════════════════════════════════
-// AUTO-DETECT BROWSER LANGUAGE
-// ═══════════════════════════════════════════
-function detectBrowserLang() {
-  // Only auto-detect if user hasn't manually chosen a language
-  if (localStorage.getItem('repuguard-lang')) return;
-  const browserLang = navigator.language || 'fr';
-  const code = browserLang.split('-')[0];
-  const match = LANGUAGES.find(l => l.code === browserLang || l.code === code);
-  if (match && match.code !== 'fr') {
-    selectLang(match);
-  }
+function toggleFaq(btn){
+  var item=btn.parentElement;
+  var answer=item.querySelector('.faq-answer');
+  var isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');i.querySelector('.faq-answer').classList.remove('open');});
+  if(!isOpen){item.classList.add('open');answer.classList.add('open');}
 }
 
-// ═══════════════════════════════════════════
-// FAQ
-// ═══════════════════════════════════════════
-function toggleFaq(btn) {
-  const item = btn.parentElement;
-  const answer = item.querySelector('.faq-answer');
-  const isOpen = item.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(i => {
-    i.classList.remove('open');
-    i.querySelector('.faq-answer').classList.remove('open');
-  });
-  if (!isOpen) { item.classList.add('open'); answer.classList.add('open'); }
-}
+var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 
-// ═══════════════════════════════════════════
-// SCROLL REVEAL
-// ═══════════════════════════════════════════
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-buildLangList();
-detectBrowserLang();
-
-// ═══════════════════════════════════════════
-// THEME TOGGLE
-// ═══════════════════════════════════════════
-function toggleTheme() {
-  const html = document.documentElement;
-  const btn = document.getElementById('themeToggle');
-  const isLight = html.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    // Switch to dark
-    html.removeAttribute('data-theme');
-    if (btn) btn.textContent = '☀️';
-    localStorage.setItem('repuguard-theme', 'dark');
-  } else {
-    // Switch to light
-    html.setAttribute('data-theme', 'light');
-    if (btn) btn.textContent = '🌙';
-    localStorage.setItem('repuguard-theme', 'light');
-  }
-}
-
-function initTheme() {
-  const saved = localStorage.getItem('repuguard-theme');
-  const btn = document.getElementById('themeToggle');
-  if (saved === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light');
-    if (btn) btn.textContent = '🌙';
-  } else {
-    // Default: dark mode
-    document.documentElement.removeAttribute('data-theme');
-    if (btn) btn.textContent = '☀️';
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  initTheme();
-});
-
+initTheme();
+buildLangList('');
 </script>
 
 </body>
