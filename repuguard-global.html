@@ -393,7 +393,6 @@ function selectLang(l){
   document.getElementById('langDropdown').classList.remove('open');
   if(l.code===currentLang)return;
   currentLang=l.code;
-  localStorage.setItem('rg-lang',l.code);
   document.getElementById('currentFlag').textContent=l.flag;
   document.getElementById('currentLangName').textContent=l.name;
   document.documentElement.setAttribute('dir',l.dir);
@@ -445,23 +444,23 @@ document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 initTheme();
 buildLangList('');
 
-// Restore saved language on page load
+// Auto-detect browser language
 (function() {
-  var savedLang = localStorage.getItem('rg-lang');
-  if (savedLang && savedLang !== 'fr') {
-    var match = LANGUAGES.find(function(l) { return l.code === savedLang; });
-    if (match) {
-      currentLang = match.code;
-      document.getElementById('currentFlag').textContent = match.flag;
-      document.getElementById('currentLangName').textContent = match.name;
-      document.documentElement.setAttribute('dir', match.dir);
-      document.documentElement.setAttribute('lang', match.code);
-      if (cache[match.code]) {
-        applyTrans(cache[match.code]);
-      } else {
-        translatePage(match);
-      }
-    }
+  var nav = navigator.language || navigator.userLanguage || 'fr';
+  var code = nav.toLowerCase();
+  // Try exact match first, then prefix match
+  var match = LANGUAGES.find(function(l) { return l.code.toLowerCase() === code; });
+  if (!match) {
+    var prefix = code.split('-')[0];
+    match = LANGUAGES.find(function(l) { return l.code.toLowerCase() === prefix; });
+  }
+  if (match && match.code !== 'fr') {
+    currentLang = match.code;
+    document.getElementById('currentFlag').textContent = match.flag;
+    document.getElementById('currentLangName').textContent = match.name;
+    document.documentElement.setAttribute('dir', match.dir);
+    document.documentElement.setAttribute('lang', match.code);
+    translatePage(match);
   }
 })();
 </script>
