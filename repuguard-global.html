@@ -499,8 +499,53 @@ footer { padding: 2rem 5%; display: flex; align-items: center; justify-content: 
 
 /* Skeleton loading for translated content */
 .t-loading { opacity: 0.4; transition: opacity 0.3s; }
-</style>
 
+/* LIGHT MODE */
+[data-theme=“light”] {
+–black: #f8f9fc;
+–surface: #ffffff;
+–card: #f0f2f8;
+–card2: #e8ebf5;
+–border: rgba(0,0,0,0.08);
+–border2: rgba(0,0,0,0.15);
+–white: #0f1117;
+–muted: #9098b0;
+–muted2: #6b7280;
+–accent: #1a56e8;
+–accent2: #0ea5e9;
+–red: #dc2626;
+–green: #16a34a;
+–orange: #d97706;
+–accent-dim: rgba(26,86,232,0.08);
+–blue-dim: rgba(14,165,233,0.08);
+–red-dim: rgba(220,38,38,0.08);
+–green-dim: rgba(22,163,74,0.08);
+}
+
+[data-theme=“light”] body::before { opacity: 0; }
+[data-theme=“light”] .alert-badge { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.2); }
+[data-theme=“light”] h1 em { color: var(–accent); }
+[data-theme=“light”] .score-ring-fill { stroke: var(–accent); }
+[data-theme=“light”] .score-number { color: var(–accent); }
+[data-theme=“light”] .trend-value { color: #16a34a; }
+[data-theme=“light”] .btn-primary { background: var(–accent); color: #ffffff; }
+[data-theme=“light”] .nav-cta { background: var(–accent) !important; color: #ffffff !important; }
+[data-theme=“light”] .plan-card.featured { border-color: var(–accent); background: linear-gradient(160deg, rgba(26,86,232,0.05) 0%, var(–card) 60%); }
+[data-theme=“light”] .featured-badge { background: var(–accent); color: #ffffff; }
+[data-theme=“light”] .plan-features li::before { color: var(–accent); }
+[data-theme=“light”] .section-label { color: var(–accent); }
+[data-theme=“light”] .trial-badge { background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.2); color: #16a34a; }
+
+/* THEME TOGGLE BUTTON */
+.theme-toggle {
+width: 36px; height: 36px; border-radius: 8px;
+background: var(–card); border: 1px solid var(–border);
+display: flex; align-items: center; justify-content: center;
+cursor: pointer; font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(–border2); }
+
+</style>
 </head>
 <body>
 
@@ -844,83 +889,6 @@ const BASE_CONTENT = {
   footer_terms: "Conditions",
 }
 
-/* LIGHT MODE */
-[data-theme="light"] {
-  --black: #f8f9fc;
-  --surface: #ffffff;
-  --card: #f0f2f8;
-  --card2: #e8ebf5;
-  --border: rgba(0,0,0,0.08);
-  --border2: rgba(0,0,0,0.15);
-  --white: #0f1117;
-  --muted: #9098b0;
-  --muted2: #6b7280;
-  --accent: #1a56e8;
-  --accent2: #0ea5e9;
-  --red: #dc2626;
-  --green: #16a34a;
-  --orange: #d97706;
-  --accent-dim: rgba(26,86,232,0.08);
-  --blue-dim: rgba(14,165,233,0.08);
-  --red-dim: rgba(220,38,38,0.08);
-  --green-dim: rgba(22,163,74,0.08);
-}
-
-[data-theme="light"] body::before { opacity: 0; }
-
-[data-theme="light"] .alert-badge {
-  background: rgba(220,38,38,0.08);
-  border-color: rgba(220,38,38,0.2);
-}
-
-[data-theme="light"] h1 em { color: var(--accent); }
-
-[data-theme="light"] .score-ring-fill { stroke: var(--accent); }
-[data-theme="light"] .score-number { color: var(--accent); }
-[data-theme="light"] .trend-value { color: #16a34a; }
-
-[data-theme="light"] .btn-primary {
-  background: var(--accent);
-  color: #ffffff;
-}
-
-[data-theme="light"] .nav-cta {
-  background: var(--accent) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="light"] .plan-card.featured {
-  border-color: var(--accent);
-  background: linear-gradient(160deg, rgba(26,86,232,0.05) 0%, var(--card) 60%);
-}
-
-[data-theme="light"] .featured-badge {
-  background: var(--accent);
-  color: #ffffff;
-}
-
-[data-theme="light"] .plan-features li::before { color: var(--accent); }
-[data-theme="light"] .section-label { color: var(--accent); }
-[data-theme="light"] .trial-badge { background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.2); color: #16a34a; }
-
-/* THEME TOGGLE BUTTON */
-.theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-.theme-toggle:hover { border-color: var(--border2); }
-
-;
 
 // ═══════════════════════════════════════════
 // STATE
@@ -982,6 +950,7 @@ async function selectLang(langObj) {
   document.getElementById('langDropdown').classList.remove('open');
   if (langObj.code === currentLang) return;
   currentLang = langObj.code;
+  localStorage.setItem('repuguard-lang', langObj.code);
   document.getElementById('currentFlag').textContent = langObj.flag;
   document.getElementById('currentLangName').textContent = langObj.name;
   document.documentElement.dir = langObj.dir;
@@ -1069,6 +1038,8 @@ async function translatePage(langObj) {
 // AUTO-DETECT BROWSER LANGUAGE
 // ═══════════════════════════════════════════
 function detectBrowserLang() {
+  // Only auto-detect if user hasn't manually chosen a language
+  if (localStorage.getItem('repuguard-lang')) return;
   const browserLang = navigator.language || 'fr';
   const code = browserLang.split('-')[0];
   const match = LANGUAGES.find(l => l.code === browserLang || l.code === code);
@@ -1113,10 +1084,12 @@ function toggleTheme() {
   const btn = document.getElementById('themeToggle');
   const isLight = html.getAttribute('data-theme') === 'light';
   if (isLight) {
+    // Switch to dark
     html.removeAttribute('data-theme');
     if (btn) btn.textContent = '☀️';
     localStorage.setItem('repuguard-theme', 'dark');
   } else {
+    // Switch to light
     html.setAttribute('data-theme', 'light');
     if (btn) btn.textContent = '🌙';
     localStorage.setItem('repuguard-theme', 'light');
@@ -1125,12 +1098,12 @@ function toggleTheme() {
 
 function initTheme() {
   const saved = localStorage.getItem('repuguard-theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const btn = document.getElementById('themeToggle');
-  if (saved === 'light' || (!saved && !prefersDark)) {
+  if (saved === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
     if (btn) btn.textContent = '🌙';
   } else {
+    // Default: dark mode
     document.documentElement.removeAttribute('data-theme');
     if (btn) btn.textContent = '☀️';
   }
