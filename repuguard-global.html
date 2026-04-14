@@ -338,9 +338,19 @@ function toggleTheme(){
 }
 
 function initTheme(){
-  var saved=localStorage.getItem('rg-theme')||'dark';
-  document.documentElement.setAttribute('data-theme',saved);
-  document.getElementById('themeBtn').textContent=saved==='dark'?'☀️':'🌙';
+  var saved=localStorage.getItem('rg-theme');
+  var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme=saved||(systemDark?'dark':'light');
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('themeBtn').textContent=theme==='dark'?'☀️':'🌙';
+  // Listen for system theme changes in real-time
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){
+    if(!localStorage.getItem('rg-theme')){
+      var t=e.matches?'dark':'light';
+      document.documentElement.setAttribute('data-theme',t);
+      document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';
+    }
+  });
 }
 
 function buildLangList(filter){
