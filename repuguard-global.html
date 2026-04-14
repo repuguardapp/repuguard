@@ -410,23 +410,24 @@ function applyTrans(t){
 }
 
 async function translatePage(l){
-  if(isTranslating)return;
+  if(isTranslating){isTranslating=false;}
   isTranslating=true;
+  var targetCode=l.code;
   var bar=document.getElementById('transBar');
   bar.classList.add('active');
   var keys=Object.keys(BASE);
   var result=Object.assign({},BASE);
   try{
     for(var i=0;i<keys.length;i+=30){
+      if(currentLang!==targetCode){break;}
       var batch={};
       keys.slice(i,i+30).forEach(function(k){batch[k]=BASE[k];});
       var res=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texts:batch,targetLang:l.code,langName:l.name})});
       var data=await res.json();
-      if(data.translations){Object.assign(result,data.translations);applyTrans(result);}
+      if(currentLang===targetCode&&data.translations){Object.assign(result,data.translations);applyTrans(result);}
     }
-    cache[l.code]=result;
-    applyTrans(result);
-  }catch(err){console.error(err);applyTrans(BASE);}
+    if(currentLang===targetCode){cache[l.code]=result;applyTrans(result);}
+  }catch(err){console.error(err);if(currentLang===targetCode)applyTrans(BASE);}
   finally{bar.classList.remove('active');isTranslating=false;}
 }
 
