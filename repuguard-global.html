@@ -969,8 +969,9 @@ function toggleLangDropdown() {
 function filterLangs(val) { buildLangList(val); }
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.lang-selector')) {
-    document.getElementById('langDropdown').classList.remove('open');
+  if (!e.target.closest('.lang-selector') && !e.target.closest('.theme-toggle')) {
+    const dd = document.getElementById('langDropdown');
+    if (dd) dd.classList.remove('open');
   }
 });
 
@@ -1110,15 +1111,15 @@ detectBrowserLang();
 function toggleTheme() {
   const html = document.documentElement;
   const btn = document.getElementById('themeToggle');
-  const isDark = html.getAttribute('data-theme') !== 'light';
-  if (isDark) {
-    html.setAttribute('data-theme', 'light');
-    btn.textContent = '🌙';
-    localStorage.setItem('repuguard-theme', 'light');
-  } else {
+  const isLight = html.getAttribute('data-theme') === 'light';
+  if (isLight) {
     html.removeAttribute('data-theme');
-    btn.textContent = '☀️';
+    if (btn) btn.textContent = '☀️';
     localStorage.setItem('repuguard-theme', 'dark');
+  } else {
+    html.setAttribute('data-theme', 'light');
+    if (btn) btn.textContent = '🌙';
+    localStorage.setItem('repuguard-theme', 'light');
   }
 }
 
@@ -1135,7 +1136,9 @@ function initTheme() {
   }
 }
 
-initTheme();
+document.addEventListener('DOMContentLoaded', function() {
+  initTheme();
+});
 
 </script>
 
