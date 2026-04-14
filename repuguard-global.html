@@ -444,25 +444,7 @@ document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 initTheme();
 buildLangList('');
 
-// Auto-detect browser language
-(function() {
-  var nav = navigator.language || navigator.userLanguage || 'fr';
-  var code = nav.toLowerCase();
-  // Try exact match first, then prefix match
-  var match = LANGUAGES.find(function(l) { return l.code.toLowerCase() === code; });
-  if (!match) {
-    var prefix = code.split('-')[0];
-    match = LANGUAGES.find(function(l) { return l.code.toLowerCase() === prefix; });
-  }
-  if (match && match.code !== 'fr') {
-    currentLang = match.code;
-    document.getElementById('currentFlag').textContent = match.flag;
-    document.getElementById('currentLangName').textContent = match.name;
-    document.documentElement.setAttribute('dir', match.dir);
-    document.documentElement.setAttribute('lang', match.code);
-    translatePage(match);
-  }
-})();
+// Language: manual selection only
 </script>
 
 </body>
