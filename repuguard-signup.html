@@ -517,8 +517,8 @@ letter-spacing: -0.01em;
       <div>Configurez vos préférences d'alerte (email, SMS, fréquence)</div>
     </div>
   </div>
-  <a href="#" class="btn-submit" style="text-decoration:none;justify-content:center">
-    Accéder à mon dashboard →
+  <a href="/login" class="btn-submit" style="text-decoration:none;justify-content:center">
+    Se connecter à mon dashboard →
   </a>
 </div>
 ```
@@ -744,7 +744,25 @@ async function handlePayment() {
     if (!stripe || !cardNumber) {
       // Demo mode — no real Stripe key
       await new Promise(r => setTimeout(r, 1800));
-      showSuccess();
+      // Create account in Supabase
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'signup',
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+          firstName: document.getElementById('firstName').value,
+          lastName: document.getElementById('lastName').value,
+          businessName: document.getElementById('businessName').value,
+          sector: document.getElementById('sector').value,
+          country: document.getElementById('country').value,
+          plan: selectedPlan.id
+        })
+      });
+    } catch(e) { console.log('Auth creation:', e); }
+    showSuccess();
       return;
     }
 
