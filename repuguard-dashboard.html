@@ -878,6 +878,29 @@ margin-bottom: 0.8rem;
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
+// AUTH CHECK - redirect to login if not authenticated
+(function() {
+  var token = localStorage.getItem('rg-token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+  // Load user info
+  var user = JSON.parse(localStorage.getItem('rg-user') || '{}');
+  if (user.email) {
+    var emailEl = document.querySelector('.user-email');
+    var nameEl = document.querySelector('.user-name');
+    if (emailEl) emailEl.textContent = user.email;
+    if (nameEl) nameEl.textContent = (user.user_metadata && user.user_metadata.first_name) || user.email.split('@')[0];
+  }
+})();
+
+function logout() {
+  localStorage.removeItem('rg-token');
+  localStorage.removeItem('rg-user');
+  window.location.href = '/login';
+}
+
 // ═══ PAGE NAVIGATION ═══
 const pages = {
   'dashboard': 'Vue d\'ensemble',
