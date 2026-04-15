@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepuGuard — Connexion</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+[data-theme="dark"]{--bg:#080910;--card:#151820;--border:rgba(255,255,255,0.07);--accent:#e8ff47;--text:#eef0f8;--muted:#8890a8;--red:#ff5252;--btn-text:#080910;}
+[data-theme="light"]{--bg:#f5f6fa;--card:#ffffff;--border:rgba(0,0,0,0.08);--accent:#1a56e8;--text:#0f1117;--muted:#6b7280;--red:#dc2626;--btn-text:#ffffff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;transition:background .3s,color .3s;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--text);text-decoration:none;display:block;margin-bottom:2rem;}
+.logo span{color:var(--accent);}
+h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.4rem;}
+.subtitle{font-size:.85rem;color:var(--muted);margin-bottom:2rem;}
+.form-group{margin-bottom:1.2rem;}
+label{display:block;font-size:.78rem;font-weight:500;color:var(--muted);margin-bottom:.4rem;}
+input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:.75rem 1rem;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;}
+input:focus{border-color:var(--accent);}
+.btn{width:100%;background:var(--accent);color:var(--btn-text);border:none;border-radius:8px;padding:.9rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;transition:opacity .2s;margin-top:.5rem;}
+.btn:hover{opacity:.85;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.error{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.25);color:var(--red);padding:.7rem 1rem;border-radius:8px;font-size:.82rem;margin-bottom:1rem;display:none;}
+.error.show{display:block;}
+.links{text-align:center;margin-top:1.5rem;font-size:.82rem;color:var(--muted);}
+.links a{color:var(--accent);text-decoration:none;}
+.spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,.3);border-top-color:var(--btn-text);border-radius:50%;animation:spin .7s linear infinite;display:none;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.success{background:rgba(82,255,170,.08);border:1px solid rgba(82,255,170,.2);color:#52ffaa;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;margin-bottom:1rem;display:none;}
+.success.show{display:block;}
+</style>
+</head>
+<body>
+<div class="card">
+  <a href="/" class="logo">Repu<span>Guard</span></a>
+  <h1>Connexion</h1>
+  <p class="subtitle">Accédez à votre dashboard de surveillance.</p>
+
+  <div class="error" id="errorMsg"></div>
+  <div class="success" id="successMsg"></div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="vous@exemple.com" autocomplete="email">
+  </div>
+  <div class="form-group">
+    <label>Mot de passe</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+
+  <button class="btn" id="loginBtn" onclick="handleLogin()">
+    <span id="btnText">Se connecter</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="links">
+    Pas encore de compte ? <a href="/signup">Créer un compte</a><br><br>
+    <a href="/">← Retour au site</a>
+  </div>
+</div>
+
+<script>
+// Init theme
+(function(){
+  var saved=localStorage.getItem('rg-theme');
+  var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme=saved||(systemDark?'dark':'light');
+  document.documentElement.setAttribute('data-theme',theme);
+})();
+
+async function handleLogin() {
+  var email = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var errorDiv = document.getElementById('errorMsg');
+  var btn = document.getElementById('loginBtn');
+  var btnText = document.getElementById('btnText');
+  var spinner = document.getElementById('spinner');
+
+  errorDiv.classList.remove('show');
+
+  if (!email || !password) {
+    errorDiv.textContent = 'Veuillez remplir tous les champs.';
+    errorDiv.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btnText.style.display = 'none';
+  spinner.style.display = 'block';
+
+  try {
+    var res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', email, password })
+    });
+
+    var data = await res.json();
+
+    if (data.error) {
+      errorDiv.textContent = data.error;
+      errorDiv.classList.add('show');
+      btn.disabled = false;
+      btnText.style.display = 'block';
+      spinner.style.display = 'none';
+      return;
+    }
+
+    // Save token and user info
+    localStorage.setItem('rg-token', data.token);
+    localStorage.setItem('rg-user', JSON.stringify(data.user));
+
+    // Redirect to dashboard
+    window.location.href = '/dashboard';
+
+  } catch(err) {
+    errorDiv.textContent = 'Erreur de connexion. Réessayez.';
+    errorDiv.classList.add('show');
+    btn.disabled = false;
+    btnText.style.display = 'block';
+    spinner.style.display = 'none';
+  }
+}
+
+// Allow Enter key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleLogin();
+});
+</script>
+
+</body>
+</html>
