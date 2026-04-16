@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -9,625 +8,624 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-–bg: #07080f;
-–surface: #0e1018;
-–surface2: #13151f;
-–border: rgba(255,255,255,0.06);
-–border2: rgba(255,255,255,0.1);
-–accent: #6366f1;
-–accent2: #818cf8;
-–accent-glow: rgba(99,102,241,0.15);
-–accent-dim: rgba(99,102,241,0.08);
-–violet: #a78bfa;
-–green: #34d399;
-–red: #f87171;
-–orange: #fb923c;
-–yellow: #fbbf24;
-–text: #f1f5f9;
-–text2: #94a3b8;
-–text3: #475569;
-–sidebar-w: 240px;
-}
-
-html, body { height: 100%; background: var(–bg); color: var(–text); font-family: ‘DM Sans’, sans-serif; font-size: 14px; line-height: 1.5; overflow: hidden; }
-
-/* LAYOUT */
-.layout { display: flex; height: 100vh; }
-
-/* SIDEBAR */
-.sidebar {
-width: var(–sidebar-w);
-min-width: var(–sidebar-w);
-background: var(–surface);
-border-right: 1px solid var(–border);
-display: flex;
-flex-direction: column;
-padding: 0;
-overflow-y: auto;
-position: relative;
-z-index: 10;
-}
-
-.sidebar::after {
-content: ‘’;
-position: absolute;
-top: 0; right: 0;
-width: 1px; height: 100%;
-background: linear-gradient(to bottom, transparent, var(–accent), transparent);
-opacity: 0.3;
-}
-
-.logo-area {
-padding: 24px 20px 20px;
-border-bottom: 1px solid var(–border);
-}
-
-.logo {
-font-family: ‘Syne’, sans-serif;
-font-weight: 800;
-font-size: 20px;
-letter-spacing: -0.5px;
-color: var(–text);
-}
-
-.logo span { color: var(–accent2); }
-
-.business-selector {
-margin-top: 14px;
-background: var(–surface2);
-border: 1px solid var(–border2);
-border-radius: 10px;
-padding: 10px 12px;
-display: flex;
-align-items: center;
-gap: 10px;
-cursor: pointer;
-transition: border-color 0.2s;
-}
-
-.business-selector:hover { border-color: var(–accent); }
-
-.biz-icon {
-width: 32px; height: 32px;
-background: var(–accent-dim);
-border: 1px solid rgba(99,102,241,0.3);
-border-radius: 8px;
-display: flex; align-items: center; justify-content: center;
-font-size: 15px;
-}
-
-.biz-info { flex: 1; min-width: 0; }
-.biz-name { font-size: 13px; font-weight: 500; color: var(–text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.biz-type { font-size: 11px; color: var(–text3); }
-.biz-arrow { color: var(–text3); font-size: 10px; }
-
-.nav-section { padding: 20px 12px 8px; }
-.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: var(–text3); text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
-
-.nav-item {
-display: flex;
-align-items: center;
-gap: 10px;
-padding: 9px 10px;
-border-radius: 8px;
-color: var(–text2);
-font-size: 13.5px;
-font-weight: 400;
-cursor: pointer;
-transition: all 0.15s;
-text-decoration: none;
-position: relative;
-}
-
-.nav-item:hover { background: var(–surface2); color: var(–text); }
-
-.nav-item.active {
-background: var(–accent-dim);
-color: var(–accent2);
-font-weight: 500;
-}
-
-.nav-item.active::before {
-content: ‘’;
-position: absolute;
-left: 0; top: 50%;
-transform: translateY(-50%);
-width: 3px; height: 18px;
-background: var(–accent);
-border-radius: 0 3px 3px 0;
-}
-
-.nav-icon { width: 18px; text-align: center; font-size: 15px; opacity: 0.85; }
-.nav-badge { margin-left: auto; background: var(–red); color: white; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
-.nav-badge.blue { background: var(–accent); }
-
-.sidebar-footer {
-margin-top: auto;
-padding: 16px 12px;
-border-top: 1px solid var(–border);
-}
-
-.plan-badge {
-background: linear-gradient(135deg, var(–accent-dim), rgba(167,139,250,0.08));
-border: 1px solid rgba(99,102,241,0.25);
-border-radius: 10px;
-padding: 12px;
-margin-bottom: 12px;
-}
-
-.plan-name { font-size: 11px; color: var(–accent2); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
-.plan-desc { font-size: 11px; color: var(–text3); }
-
-.user-area {
-display: flex;
-align-items: center;
-gap: 10px;
-padding: 8px 10px;
-border-radius: 8px;
-cursor: pointer;
-}
-
-.user-area:hover { background: var(–surface2); }
-
-.avatar {
-width: 30px; height: 30px;
-background: linear-gradient(135deg, var(–accent), var(–violet));
-border-radius: 8px;
-display: flex; align-items: center; justify-content: center;
-font-size: 12px; font-weight: 700; color: white;
-font-family: ‘Syne’, sans-serif;
-}
-
-.user-name { font-size: 13px; font-weight: 500; flex: 1; }
-.user-action { font-size: 12px; color: var(–text3); }
-
-/* MAIN */
-.main {
-flex: 1;
-display: flex;
-flex-direction: column;
-overflow: hidden;
-background: var(–bg);
-background-image: radial-gradient(ellipse 60% 40% at 70% 0%, rgba(99,102,241,0.06) 0%, transparent 70%);
-}
-
-/* TOPBAR */
-.topbar {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 0 28px;
-height: 60px;
-border-bottom: 1px solid var(–border);
-flex-shrink: 0;
-background: rgba(7,8,15,0.8);
-backdrop-filter: blur(12px);
-}
-
-.page-title {
-font-family: ‘Syne’, sans-serif;
-font-size: 16px;
-font-weight: 700;
-color: var(–text);
-}
-
-.topbar-right { display: flex; align-items: center; gap: 16px; }
-
-.last-update {
-font-size: 12px;
-color: var(–text3);
-display: flex;
-align-items: center;
-gap: 6px;
-}
-
-.status-dot {
-width: 7px; height: 7px;
-background: var(–green);
-border-radius: 50%;
-box-shadow: 0 0 6px var(–green);
-animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-0%, 100% { opacity: 1; }
-50% { opacity: 0.4; }
-}
-
-.topbar-btn {
-width: 34px; height: 34px;
-background: var(–surface2);
-border: 1px solid var(–border2);
-border-radius: 8px;
-display: flex; align-items: center; justify-content: center;
-cursor: pointer;
-font-size: 14px;
-color: var(–text2);
-transition: all 0.15s;
-position: relative;
-}
-
-.topbar-btn:hover { border-color: var(–accent); color: var(–accent2); }
-
-.notif-dot {
-position: absolute;
-top: 6px; right: 6px;
-width: 6px; height: 6px;
-background: var(–red);
-border-radius: 50%;
-border: 1px solid var(–bg);
-}
-
-/* CONTENT */
-.content {
-flex: 1;
-overflow-y: auto;
-padding: 24px 28px;
-display: flex;
-flex-direction: column;
-gap: 20px;
-}
-
-.content::-webkit-scrollbar { width: 4px; }
-.content::-webkit-scrollbar-track { background: transparent; }
-.content::-webkit-scrollbar-thumb { background: var(–border2); border-radius: 4px; }
-
-/* KPI CARDS */
-.kpi-grid {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 14px;
-}
-
-.kpi-card {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 14px;
-padding: 18px 20px;
-position: relative;
-overflow: hidden;
-transition: border-color 0.2s, transform 0.2s;
-}
-
-.kpi-card:hover { border-color: var(–border2); transform: translateY(-1px); }
-
-.kpi-card::before {
-content: ‘’;
-position: absolute;
-top: 0; left: 0; right: 0;
-height: 2px;
-background: linear-gradient(90deg, transparent, var(–accent), transparent);
-opacity: 0;
-transition: opacity 0.3s;
-}
-
-.kpi-card:hover::before { opacity: 1; }
-
-.kpi-label { font-size: 11.5px; color: var(–text3); font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-.kpi-icon { font-size: 13px; }
-
-.kpi-value {
-font-family: ‘Syne’, sans-serif;
-font-size: 28px;
-font-weight: 800;
-color: var(–text);
-line-height: 1;
-margin-bottom: 8px;
-}
-
-.kpi-value.accent { color: var(–accent2); }
-.kpi-value.green { color: var(–green); }
-.kpi-value.red { color: var(–red); }
-.kpi-value.orange { color: var(–orange); }
-
-.kpi-delta {
-font-size: 11.5px;
-display: flex;
-align-items: center;
-gap: 4px;
-color: var(–text3);
-}
-
-.kpi-delta.up { color: var(–green); }
-.kpi-delta.down { color: var(–red); }
-.kpi-delta.warn { color: var(–orange); }
-
-/* TWO COL */
-.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 14px; }
-
-/* CARD */
-.card {
-background: var(–surface);
-border: 1px solid var(–border);
-border-radius: 14px;
-overflow: hidden;
-}
-
-.card-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 16px 20px;
-border-bottom: 1px solid var(–border);
-}
-
-.card-title {
-font-family: ‘Syne’, sans-serif;
-font-size: 14px;
-font-weight: 700;
-color: var(–text);
-display: flex;
-align-items: center;
-gap: 8px;
-}
-
-.card-title-icon { font-size: 14px; }
-
-.card-action {
-font-size: 12px;
-color: var(–accent2);
-cursor: pointer;
-text-decoration: none;
-transition: color 0.15s;
-}
-
-.card-action:hover { color: var(–violet); }
-
-/* ALERTS */
-.alert-tabs {
-display: flex;
-gap: 4px;
-padding: 12px 20px;
-border-bottom: 1px solid var(–border);
-}
-
-.alert-tab {
-padding: 5px 12px;
-border-radius: 6px;
-font-size: 12px;
-font-weight: 500;
-cursor: pointer;
-color: var(–text3);
-transition: all 0.15s;
-}
-
-.alert-tab.active { background: var(–accent-dim); color: var(–accent2); }
-.alert-tab:hover:not(.active) { color: var(–text2); }
-
-.alert-count {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-width: 17px; height: 17px;
-background: var(–red);
-color: white;
-font-size: 10px;
-font-weight: 700;
-border-radius: 50%;
-margin-left: 5px;
-vertical-align: middle;
-}
-
-.alert-count.blue { background: var(–accent); }
-
-.alerts-list { padding: 8px 0; }
-
-.alert-item {
-padding: 14px 20px;
-border-bottom: 1px solid var(–border);
-transition: background 0.15s;
-}
-
-.alert-item:last-child { border-bottom: none; }
-.alert-item:hover { background: var(–surface2); }
-
-.alert-meta {
-display: flex;
-align-items: center;
-gap: 8px;
-margin-bottom: 6px;
-}
-
-.platform-badge {
-font-size: 10px;
-font-weight: 700;
-letter-spacing: 0.05em;
-text-transform: uppercase;
-padding: 2px 7px;
-border-radius: 4px;
-background: var(–surface2);
-color: var(–text2);
-border: 1px solid var(–border2);
-}
-
-.platform-badge.google { border-color: rgba(234,67,53,0.3); color: #f87171; }
-.platform-badge.twitter { border-color: rgba(29,161,242,0.3); color: #60a5fa; }
-.platform-badge.tripadvisor { border-color: rgba(52,211,153,0.3); color: #34d399; }
-
-.severity {
-font-size: 10px;
-font-weight: 600;
-padding: 2px 7px;
-border-radius: 4px;
-}
-
-.severity.critical { background: rgba(248,113,113,0.12); color: var(–red); border: 1px solid rgba(248,113,113,0.2); }
-.severity.moderate { background: rgba(251,146,60,0.1); color: var(–orange); border: 1px solid rgba(251,146,60,0.2); }
-
-.alert-time { font-size: 11px; color: var(–text3); margin-left: auto; }
-
-.alert-text { font-size: 13px; color: var(–text2); margin-bottom: 4px; line-height: 1.4; }
-.alert-text strong { color: var(–text); }
-
-.alert-detail { font-size: 11px; color: var(–text3); margin-bottom: 10px; }
-
-.alert-actions { display: flex; gap: 8px; }
-
-.btn-sm {
-padding: 5px 12px;
-border-radius: 6px;
-font-size: 12px;
-font-weight: 500;
-cursor: pointer;
-transition: all 0.15s;
-border: none;
-font-family: ‘DM Sans’, sans-serif;
-}
-
-.btn-primary { background: var(–accent); color: white; }
-.btn-primary:hover { background: var(–accent2); }
-.btn-ghost { background: transparent; color: var(–text3); border: 1px solid var(–border2); }
-.btn-ghost:hover { color: var(–text); border-color: var(–border2); background: var(–surface2); }
-
-/* RIGHT PANEL */
-.right-panel { display: flex; flex-direction: column; gap: 14px; }
-
-/* PLATFORM SCORES */
-.platform-list { padding: 8px 0; }
-
-.platform-item {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 12px 20px;
-transition: background 0.15s;
-cursor: pointer;
-}
-
-.platform-item:hover { background: var(–surface2); }
-
-.platform-logo {
-width: 34px; height: 34px;
-border-radius: 8px;
-display: flex; align-items: center; justify-content: center;
-font-size: 13px;
-font-weight: 700;
-font-family: ‘Syne’, sans-serif;
-flex-shrink: 0;
-}
-
-.platform-logo.g { background: rgba(234,67,53,0.1); color: #f87171; border: 1px solid rgba(234,67,53,0.2); }
-.platform-logo.ta { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
-.platform-logo.fb { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
-.platform-logo.tp { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
-
-.platform-name { font-size: 13px; font-weight: 500; color: var(–text); }
-.platform-stars { font-size: 10px; color: var(–text3); margin-top: 1px; }
-
-.platform-score {
-margin-left: auto;
-font-family: ‘Syne’, sans-serif;
-font-size: 16px;
-font-weight: 800;
-color: var(–text);
-}
-
-.score-bar-wrap { width: 60px; height: 4px; background: var(–surface2); border-radius: 2px; margin-top: 4px; }
-.score-bar { height: 100%; border-radius: 2px; background: var(–accent); }
-.score-bar.warn { background: var(–orange); }
-
-/* ACTIVITY */
-.activity-list { padding: 8px 0; }
-
-.activity-item {
-display: flex;
-gap: 12px;
-padding: 10px 20px;
-}
-
-.activity-dot {
-width: 8px; height: 8px;
-border-radius: 50%;
-margin-top: 5px;
-flex-shrink: 0;
-}
-
-.activity-dot.green { background: var(–green); box-shadow: 0 0 6px var(–green); }
-.activity-dot.blue { background: var(–accent2); }
-.activity-dot.orange { background: var(–orange); }
-.activity-dot.red { background: var(–red); }
-
-.activity-text { font-size: 12.5px; color: var(–text2); line-height: 1.4; }
-.activity-text strong { color: var(–text); font-weight: 500; }
-.activity-when { font-size: 11px; color: var(–text3); margin-top: 2px; }
-
-/* CHART AREA */
-.chart-wrap { padding: 16px 20px; }
-
-.chart-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
-
-.chart-tab {
-padding: 4px 10px;
-border-radius: 5px;
-font-size: 11.5px;
-font-weight: 500;
-cursor: pointer;
-color: var(–text3);
-transition: all 0.15s;
-}
-
-.chart-tab.active { background: var(–accent-dim); color: var(–accent2); }
-
-.chart-svg-wrap { position: relative; }
-
-svg.chart { width: 100%; height: 120px; overflow: visible; }
-
-.chart-grid line { stroke: var(–border); stroke-width: 1; }
-.chart-line { fill: none; stroke: var(–accent2); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.chart-area { fill: url(#chartGrad); }
-.chart-dot { fill: var(–accent); stroke: var(–bg); stroke-width: 2; }
-
-/* SCORE BIG */
-.score-big-wrap {
-display: flex;
-align-items: center;
-gap: 20px;
-padding: 16px 20px;
-border-bottom: 1px solid var(–border);
-}
-
-.score-circle {
-width: 64px; height: 64px;
-border-radius: 50%;
-background: conic-gradient(var(–accent2) 0% 82%, var(–surface2) 82% 100%);
-display: flex; align-items: center; justify-content: center;
-position: relative;
-flex-shrink: 0;
-}
-
-.score-circle-inner {
-width: 48px; height: 48px;
-background: var(–surface);
-border-radius: 50%;
-display: flex; align-items: center; justify-content: center;
-font-family: ‘Syne’, sans-serif;
-font-size: 15px;
-font-weight: 800;
-color: var(–accent2);
-}
-
-.score-info { flex: 1; }
-.score-label { font-size: 12px; color: var(–text3); margin-bottom: 4px; }
-.score-trend { font-size: 22px; font-family: ‘Syne’, sans-serif; font-weight: 800; color: var(–text); }
-.score-sub { font-size: 12px; color: var(–green); margin-top: 2px; }
-
-/* RESPONSIVE adjustments for iPad */
-@media (max-width: 1024px) {
-:root { –sidebar-w: 200px; }
-.kpi-grid { grid-template-columns: repeat(2, 1fr); }
-.two-col { grid-template-columns: 1fr; }
-.right-panel { display: grid; grid-template-columns: repeat(2, 1fr); }
-}
+  :root {
+    --bg: #07080f;
+    --surface: #0e1018;
+    --surface2: #13151f;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent-glow: rgba(99,102,241,0.15);
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fb923c;
+    --yellow: #fbbf24;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --sidebar-w: 240px;
+  }
+
+  html, body { height: 100%; background: #07080f !important; background-color: #07080f !important; color: #f1f5f9 !important; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; overflow: hidden; }
+
+  /* LAYOUT */
+  .layout { display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: #0e1018 !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow-y: auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 1px; height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+    opacity: 0.3;
+  }
+
+  .logo-area {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .business-selector {
+    margin-top: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .business-selector:hover { border-color: var(--accent); }
+
+  .biz-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+
+  .biz-info { flex: 1; min-width: 0; }
+  .biz-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .biz-type { font-size: 11px; color: var(--text3); }
+  .biz-arrow { color: var(--text3); font-size: 10px; }
+
+  .nav-section { padding: 20px 12px 8px; }
+  .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: var(--text3); text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    color: var(--text2);
+    font-size: 13.5px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    position: relative;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--accent-dim);
+    color: var(--accent2);
+    font-weight: 500;
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 18px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+
+  .nav-icon { width: 18px; text-align: center; font-size: 15px; opacity: 0.85; }
+  .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+  .nav-badge.blue { background: var(--accent); }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .plan-badge {
+    background: linear-gradient(135deg, var(--accent-dim), rgba(167,139,250,0.08));
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .plan-name { font-size: 11px; color: var(--accent2); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .plan-desc { font-size: 11px; color: var(--text3); }
+
+  .user-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .user-area:hover { background: var(--surface2); }
+
+  .avatar {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), var(--violet));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .user-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .user-action { font-size: 12px; color: var(--text3); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #07080f !important;
+    background-image: radial-gradient(ellipse 60% 40% at 70% 0%, rgba(99,102,241,0.06) 0%, transparent 70%);
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 60px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    background: rgba(7,8,15,0.95) !important;
+    backdrop-filter: blur(12px);
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+  .last-update {
+    font-size: 12px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .topbar-btn {
+    width: 34px; height: 34px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text2);
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .topbar-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  .notif-dot {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    border: 1px solid var(--bg);
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #07080f !important;
+  }
+
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .kpi-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .kpi-card:hover::before { opacity: 1; }
+
+  .kpi-label { font-size: 11.5px; color: var(--text3); font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .kpi-icon { font-size: 13px; }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value.accent { color: var(--accent2); }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.red { color: var(--red); }
+  .kpi-value.orange { color: var(--orange); }
+
+  .kpi-delta {
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text3);
+  }
+
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta.warn { color: var(--orange); }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 340px; gap: 14px; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title-icon { font-size: 14px; }
+
+  .card-action {
+    font-size: 12px;
+    color: var(--accent2);
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .card-action:hover { color: var(--violet); }
+
+  /* ALERTS */
+  .alert-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .alert-tab {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+
+  .alert-tab.active { background: var(--accent-dim); color: var(--accent2); }
+  .alert-tab:hover:not(.active) { color: var(--text2); }
+
+  .alert-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px; height: 17px;
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  .alert-count.blue { background: var(--accent); }
+
+  .alerts-list { padding: 8px 0; }
+
+  .alert-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .alert-item:last-child { border-bottom: none; }
+  .alert-item:hover { background: var(--surface2); }
+
+  .alert-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .platform-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+
+  .platform-badge.google { border-color: rgba(234,67,53,0.3); color: #f87171; }
+  .platform-badge.twitter { border-color: rgba(29,161,242,0.3); color: #60a5fa; }
+  .platform-badge.tripadvisor { border-color: rgba(52,211,153,0.3); color: #34d399; }
+
+  .severity {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .severity.critical { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .severity.moderate { background: rgba(251,146,60,0.1); color: var(--orange); border: 1px solid rgba(251,146,60,0.2); }
+
+  .alert-time { font-size: 11px; color: var(--text3); margin-left: auto; }
+
+  .alert-text { font-size: 13px; color: var(--text2); margin-bottom: 4px; line-height: 1.4; }
+  .alert-text strong { color: var(--text); }
+
+  .alert-detail { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+
+  .alert-actions { display: flex; gap: 8px; }
+
+  .btn-sm {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: transparent; color: var(--text3); border: 1px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+  /* RIGHT PANEL */
+  .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+  /* PLATFORM SCORES */
+  .platform-list { padding: 8px 0; }
+
+  .platform-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .platform-item:hover { background: var(--surface2); }
+
+  .platform-logo {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .platform-logo.g { background: rgba(234,67,53,0.1); color: #f87171; border: 1px solid rgba(234,67,53,0.2); }
+  .platform-logo.ta { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .platform-logo.fb { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+  .platform-logo.tp { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+
+  .platform-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .platform-stars { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+  .platform-score {
+    margin-left: auto;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .score-bar-wrap { width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 4px; }
+  .score-bar { height: 100%; border-radius: 2px; background: var(--accent); }
+  .score-bar.warn { background: var(--orange); }
+
+  /* ACTIVITY */
+  .activity-list { padding: 8px 0; }
+
+  .activity-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 20px;
+  }
+
+  .activity-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .activity-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .activity-dot.blue { background: var(--accent2); }
+  .activity-dot.orange { background: var(--orange); }
+  .activity-dot.red { background: var(--red); }
+
+  .activity-text { font-size: 12.5px; color: var(--text2); line-height: 1.4; }
+  .activity-text strong { color: var(--text); font-weight: 500; }
+  .activity-when { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* CHART AREA */
+  .chart-wrap { padding: 16px 20px; }
+
+  .chart-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+
+  .chart-tab {
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+
+  .chart-tab.active { background: var(--accent-dim); color: var(--accent2); }
+
+  .chart-svg-wrap { position: relative; }
+
+  svg.chart { width: 100%; height: 120px; overflow: visible; }
+
+  .chart-grid line { stroke: var(--border); stroke-width: 1; }
+  .chart-line { fill: none; stroke: var(--accent2); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .chart-area { fill: url(#chartGrad); }
+  .chart-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+
+  /* SCORE BIG */
+  .score-big-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .score-circle {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent2) 0% 82%, var(--surface2) 82% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .score-circle-inner {
+    width: 48px; height: 48px;
+    background: var(--surface);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+
+  .score-info { flex: 1; }
+  .score-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .score-trend { font-size: 22px; font-family: 'Syne', sans-serif; font-weight: 800; color: var(--text); }
+  .score-sub { font-size: 12px; color: var(--green); margin-top: 2px; }
+
+  /* RESPONSIVE adjustments for iPad */
+  @media (max-width: 1024px) {
+    :root { --sidebar-w: 200px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .right-panel { display: grid; grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
-
 </head>
 <body>
 
 <div class="layout">
 
   <!-- SIDEBAR -->
-
   <aside class="sidebar">
     <div class="logo-area">
       <div class="logo">Repu<span>Guard</span></div>
@@ -641,316 +639,310 @@ color: var(–accent2);
       </div>
     </div>
 
-<div class="nav-section">
-  <div class="nav-label">Principal</div>
-  <a class="nav-item active" href="#">
-    <span class="nav-icon">⬡</span> Vue d'ensemble
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">🔔</span> Alertes
-    <span class="nav-badge">3</span>
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">✦</span> Réponses IA
-    <span class="nav-badge blue">2</span>
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">◈</span> Score & Tendances
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">≡</span> Toutes les mentions
-  </a>
-</div>
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <a class="nav-item active" href="#">
+        <span class="nav-icon">⬡</span> Vue d'ensemble
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">🔔</span> Alertes
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">✦</span> Réponses IA
+        <span class="nav-badge blue">2</span>
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">◈</span> Score & Tendances
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">≡</span> Toutes les mentions
+      </a>
+    </div>
 
-<div class="nav-section">
-  <div class="nav-label">Configuration</div>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">⬡</span> Plateformes
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">🔔</span> Notifications
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">📄</span> Rapports
-  </a>
-</div>
+    <div class="nav-section">
+      <div class="nav-label">Configuration</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⬡</span> Plateformes
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">🔔</span> Notifications
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">📄</span> Rapports
+      </a>
+    </div>
 
-<div class="nav-section">
-  <div class="nav-label">Compte</div>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">💳</span> Abonnement
-  </a>
-  <a class="nav-item" href="#">
-    <span class="nav-icon">⚙</span> Paramètres
-  </a>
-</div>
+    <div class="nav-section">
+      <div class="nav-label">Compte</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">💳</span> Abonnement
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">⚙</span> Paramètres
+      </a>
+    </div>
 
-<div class="sidebar-footer">
-  <div class="plan-badge">
-    <div class="plan-name">✦ Plan Pro</div>
-    <div class="plan-desc">Surveillance active · 4 plateformes</div>
-  </div>
-  <div class="user-area">
-    <div class="avatar">LP</div>
-    <div class="user-name">Le Provençal</div>
-    <div class="user-action">↗</div>
-  </div>
-</div>
-
-
+    <div class="sidebar-footer">
+      <div class="plan-badge">
+        <div class="plan-name">✦ Plan Pro</div>
+        <div class="plan-desc">Surveillance active · 4 plateformes</div>
+      </div>
+      <div class="user-area">
+        <div class="avatar">LP</div>
+        <div class="user-name">Le Provençal</div>
+        <div class="user-action">↗</div>
+      </div>
+    </div>
   </aside>
 
   <!-- MAIN -->
-
   <main class="main">
 
-
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="page-title">Vue d'ensemble</div>
-  <div class="topbar-right">
-    <div class="last-update">
-      <div class="status-dot"></div>
-      Dernière analyse il y a 4 min
-    </div>
-    <div class="topbar-btn">
-      🔔
-      <div class="notif-dot"></div>
-    </div>
-    <div class="topbar-btn">?</div>
-  </div>
-</div>
-
-<!-- CONTENT -->
-<div class="content">
-
-  <!-- KPI GRID -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-label"><span class="kpi-icon">📊</span> Score global</div>
-      <div class="kpi-value accent">4.5</div>
-      <div class="kpi-delta up">↑ +0.2 cette semaine</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label"><span class="kpi-icon">💬</span> Avis analysés</div>
-      <div class="kpi-value">847</div>
-      <div class="kpi-delta up">↑ +12 cette semaine</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label"><span class="kpi-icon">✦</span> Réponses IA en attente</div>
-      <div class="kpi-value orange">2</div>
-      <div class="kpi-delta warn">À valider</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label"><span class="kpi-icon">📡</span> Mentions ce mois</div>
-      <div class="kpi-value">124</div>
-      <div class="kpi-delta up">↑ +8% vs mois dernier</div>
-    </div>
-  </div>
-
-  <!-- TWO COL -->
-  <div class="two-col">
-
-    <!-- LEFT: ALERTS + CHART -->
-    <div style="display:flex;flex-direction:column;gap:14px;">
-
-      <!-- CHART CARD -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><span class="card-title-icon">◈</span> Évolution du score</div>
-          <div style="display:flex;gap:6px;">
-            <span class="chart-tab active">30j</span>
-            <span class="chart-tab">7j</span>
-            <span class="chart-tab">90j</span>
-          </div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-title">Vue d'ensemble</div>
+      <div class="topbar-right">
+        <div class="last-update">
+          <div class="status-dot"></div>
+          Dernière analyse il y a 4 min
         </div>
-        <div class="score-big-wrap">
-          <div class="score-circle">
-            <div class="score-circle-inner">4.5</div>
-          </div>
-          <div class="score-info">
-            <div class="score-label">Score moyen global</div>
-            <div class="score-trend">En hausse</div>
-            <div class="score-sub">↑ +0.2 pts sur 30 jours</div>
-          </div>
+        <div class="topbar-btn">
+          🔔
+          <div class="notif-dot"></div>
         </div>
-        <div class="chart-wrap">
-          <svg class="chart" viewBox="0 0 600 120" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g class="chart-grid">
-              <line x1="0" y1="30" x2="600" y2="30"/>
-              <line x1="0" y1="60" x2="600" y2="60"/>
-              <line x1="0" y1="90" x2="600" y2="90"/>
-            </g>
-            <path class="chart-area" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20 L600,120 L0,120 Z"/>
-            <path class="chart-line" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20"/>
-            <circle class="chart-dot" cx="180" cy="70" r="5"/>
-            <circle class="chart-dot" cx="360" cy="50" r="5"/>
-            <circle class="chart-dot" cx="600" cy="20" r="5"/>
-          </svg>
+        <div class="topbar-btn">?</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- KPI GRID -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label"><span class="kpi-icon">📊</span> Score global</div>
+          <div class="kpi-value accent">4.5</div>
+          <div class="kpi-delta up">↑ +0.2 cette semaine</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><span class="kpi-icon">💬</span> Avis analysés</div>
+          <div class="kpi-value">847</div>
+          <div class="kpi-delta up">↑ +12 cette semaine</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><span class="kpi-icon">✦</span> Réponses IA en attente</div>
+          <div class="kpi-value orange">2</div>
+          <div class="kpi-delta warn">À valider</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label"><span class="kpi-icon">📡</span> Mentions ce mois</div>
+          <div class="kpi-value">124</div>
+          <div class="kpi-delta up">↑ +8% vs mois dernier</div>
         </div>
       </div>
 
-      <!-- ALERTS CARD -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><span class="card-title-icon">🔔</span> Alertes récentes</div>
-          <a class="card-action" href="#">Voir tout →</a>
+      <!-- TWO COL -->
+      <div class="two-col">
+
+        <!-- LEFT: ALERTS + CHART -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+
+          <!-- CHART CARD -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="card-title-icon">◈</span> Évolution du score</div>
+              <div style="display:flex;gap:6px;">
+                <span class="chart-tab active">30j</span>
+                <span class="chart-tab">7j</span>
+                <span class="chart-tab">90j</span>
+              </div>
+            </div>
+            <div class="score-big-wrap">
+              <div class="score-circle">
+                <div class="score-circle-inner">4.5</div>
+              </div>
+              <div class="score-info">
+                <div class="score-label">Score moyen global</div>
+                <div class="score-trend">En hausse</div>
+                <div class="score-sub">↑ +0.2 pts sur 30 jours</div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <svg class="chart" viewBox="0 0 600 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <g class="chart-grid">
+                  <line x1="0" y1="30" x2="600" y2="30"/>
+                  <line x1="0" y1="60" x2="600" y2="60"/>
+                  <line x1="0" y1="90" x2="600" y2="90"/>
+                </g>
+                <path class="chart-area" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20 L600,120 L0,120 Z"/>
+                <path class="chart-line" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20"/>
+                <circle class="chart-dot" cx="180" cy="70" r="5"/>
+                <circle class="chart-dot" cx="360" cy="50" r="5"/>
+                <circle class="chart-dot" cx="600" cy="20" r="5"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- ALERTS CARD -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="card-title-icon">🔔</span> Alertes récentes</div>
+              <a class="card-action" href="#">Voir tout →</a>
+            </div>
+            <div class="alert-tabs">
+              <div class="alert-tab active">Toutes <span class="alert-count">8</span></div>
+              <div class="alert-tab">Critiques <span class="alert-count">3</span></div>
+              <div class="alert-tab">À traiter <span class="alert-count blue">3</span></div>
+            </div>
+            <div class="alerts-list">
+              <div class="alert-item">
+                <div class="alert-meta">
+                  <span class="platform-badge google">Google</span>
+                  <span class="severity critical">Critique 9/10</span>
+                  <span class="alert-time">il y a 12 min</span>
+                </div>
+                <div class="alert-text">"Service catastrophique ce soir, attente de 45 min..."</div>
+                <div class="alert-detail">Note : 1★ · Auteur : @pierreM</div>
+                <div class="alert-actions">
+                  <button class="btn-sm btn-primary">✦ Voir réponse IA</button>
+                  <button class="btn-sm btn-ghost">Ignorer</button>
+                </div>
+              </div>
+              <div class="alert-item">
+                <div class="alert-meta">
+                  <span class="platform-badge twitter">Twitter / X</span>
+                  <span class="severity critical">Critique 8/10</span>
+                  <span class="alert-time">il y a 38 min</span>
+                </div>
+                <div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong> · "Évitez ce restaurant..."</div>
+                <div class="alert-detail">Gravité : 8/10 · Portée élevée</div>
+                <div class="alert-actions">
+                  <button class="btn-sm btn-primary">✦ Voir réponse IA</button>
+                  <button class="btn-sm btn-ghost">Marquer lu</button>
+                </div>
+              </div>
+              <div class="alert-item">
+                <div class="alert-meta">
+                  <span class="platform-badge tripadvisor">TripAdvisor</span>
+                  <span class="severity moderate">Modéré 5/10</span>
+                  <span class="alert-time">il y a 2h</span>
+                </div>
+                <div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div>
+                <div class="alert-detail">Note : 2★</div>
+                <div class="alert-actions">
+                  <button class="btn-sm btn-primary">✦ Répondre avec IA</button>
+                  <button class="btn-sm btn-ghost">Marquer lu</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
-        <div class="alert-tabs">
-          <div class="alert-tab active">Toutes <span class="alert-count">8</span></div>
-          <div class="alert-tab">Critiques <span class="alert-count">3</span></div>
-          <div class="alert-tab">À traiter <span class="alert-count blue">3</span></div>
-        </div>
-        <div class="alerts-list">
-          <div class="alert-item">
-            <div class="alert-meta">
-              <span class="platform-badge google">Google</span>
-              <span class="severity critical">Critique 9/10</span>
-              <span class="alert-time">il y a 12 min</span>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+
+          <!-- PLATFORM SCORES -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="card-title-icon">◈</span> Par plateforme</div>
             </div>
-            <div class="alert-text">"Service catastrophique ce soir, attente de 45 min..."</div>
-            <div class="alert-detail">Note : 1★ · Auteur : @pierreM</div>
-            <div class="alert-actions">
-              <button class="btn-sm btn-primary">✦ Voir réponse IA</button>
-              <button class="btn-sm btn-ghost">Ignorer</button>
+            <div class="platform-list">
+              <div class="platform-item">
+                <div class="platform-logo g">G</div>
+                <div>
+                  <div class="platform-name">Google</div>
+                  <div class="platform-stars">★★★★½</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                  <div class="platform-score">4.6</div>
+                  <div class="score-bar-wrap"><div class="score-bar" style="width:92%"></div></div>
+                </div>
+              </div>
+              <div class="platform-item">
+                <div class="platform-logo ta">TA</div>
+                <div>
+                  <div class="platform-name">TripAdvisor</div>
+                  <div class="platform-stars">★★★★½</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                  <div class="platform-score">4.4</div>
+                  <div class="score-bar-wrap"><div class="score-bar" style="width:88%"></div></div>
+                </div>
+              </div>
+              <div class="platform-item">
+                <div class="platform-logo fb">f</div>
+                <div>
+                  <div class="platform-name">Facebook</div>
+                  <div class="platform-stars">★★★★</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                  <div class="platform-score" style="color:var(--orange)">3.9</div>
+                  <div class="score-bar-wrap"><div class="score-bar warn" style="width:78%"></div></div>
+                </div>
+              </div>
+              <div class="platform-item">
+                <div class="platform-logo tp">TP</div>
+                <div>
+                  <div class="platform-name">Trustpilot</div>
+                  <div class="platform-stars">★★★★★</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                  <div class="platform-score">4.7</div>
+                  <div class="score-bar-wrap"><div class="score-bar" style="width:94%"></div></div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="alert-item">
-            <div class="alert-meta">
-              <span class="platform-badge twitter">Twitter / X</span>
-              <span class="severity critical">Critique 8/10</span>
-              <span class="alert-time">il y a 38 min</span>
+
+          <!-- ACTIVITY -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span class="card-title-icon">⚡</span> Activité récente</div>
             </div>
-            <div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong> · "Évitez ce restaurant..."</div>
-            <div class="alert-detail">Gravité : 8/10 · Portée élevée</div>
-            <div class="alert-actions">
-              <button class="btn-sm btn-primary">✦ Voir réponse IA</button>
-              <button class="btn-sm btn-ghost">Marquer lu</button>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-dot green"></div>
+                <div>
+                  <div class="activity-text">Réponse publiée sur <strong>Google</strong> · Avis de Claire B.</div>
+                  <div class="activity-when">il y a 1h</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot blue"></div>
+                <div>
+                  <div class="activity-text"><strong>Rapport hebdomadaire</strong> envoyé par email</div>
+                  <div class="activity-when">Lundi 08:00</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot orange"></div>
+                <div>
+                  <div class="activity-text">Nouvelle plateforme détectée : <strong>Yelp France</strong></div>
+                  <div class="activity-when">Dimanche</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot red"></div>
+                <div>
+                  <div class="activity-text">Score <strong>Facebook</strong> en baisse de 0.2 points</div>
+                  <div class="activity-when">Samedi</div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="alert-item">
-            <div class="alert-meta">
-              <span class="platform-badge tripadvisor">TripAdvisor</span>
-              <span class="severity moderate">Modéré 5/10</span>
-              <span class="alert-time">il y a 2h</span>
-            </div>
-            <div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div>
-            <div class="alert-detail">Note : 2★</div>
-            <div class="alert-actions">
-              <button class="btn-sm btn-primary">✦ Répondre avec IA</button>
-              <button class="btn-sm btn-ghost">Marquer lu</button>
-            </div>
-          </div>
+
         </div>
       </div>
 
     </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="right-panel">
-
-      <!-- PLATFORM SCORES -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><span class="card-title-icon">◈</span> Par plateforme</div>
-        </div>
-        <div class="platform-list">
-          <div class="platform-item">
-            <div class="platform-logo g">G</div>
-            <div>
-              <div class="platform-name">Google</div>
-              <div class="platform-stars">★★★★½</div>
-            </div>
-            <div style="margin-left:auto;text-align:right;">
-              <div class="platform-score">4.6</div>
-              <div class="score-bar-wrap"><div class="score-bar" style="width:92%"></div></div>
-            </div>
-          </div>
-          <div class="platform-item">
-            <div class="platform-logo ta">TA</div>
-            <div>
-              <div class="platform-name">TripAdvisor</div>
-              <div class="platform-stars">★★★★½</div>
-            </div>
-            <div style="margin-left:auto;text-align:right;">
-              <div class="platform-score">4.4</div>
-              <div class="score-bar-wrap"><div class="score-bar" style="width:88%"></div></div>
-            </div>
-          </div>
-          <div class="platform-item">
-            <div class="platform-logo fb">f</div>
-            <div>
-              <div class="platform-name">Facebook</div>
-              <div class="platform-stars">★★★★</div>
-            </div>
-            <div style="margin-left:auto;text-align:right;">
-              <div class="platform-score" style="color:var(--orange)">3.9</div>
-              <div class="score-bar-wrap"><div class="score-bar warn" style="width:78%"></div></div>
-            </div>
-          </div>
-          <div class="platform-item">
-            <div class="platform-logo tp">TP</div>
-            <div>
-              <div class="platform-name">Trustpilot</div>
-              <div class="platform-stars">★★★★★</div>
-            </div>
-            <div style="margin-left:auto;text-align:right;">
-              <div class="platform-score">4.7</div>
-              <div class="score-bar-wrap"><div class="score-bar" style="width:94%"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACTIVITY -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><span class="card-title-icon">⚡</span> Activité récente</div>
-        </div>
-        <div class="activity-list">
-          <div class="activity-item">
-            <div class="activity-dot green"></div>
-            <div>
-              <div class="activity-text">Réponse publiée sur <strong>Google</strong> · Avis de Claire B.</div>
-              <div class="activity-when">il y a 1h</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot blue"></div>
-            <div>
-              <div class="activity-text"><strong>Rapport hebdomadaire</strong> envoyé par email</div>
-              <div class="activity-when">Lundi 08:00</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot orange"></div>
-            <div>
-              <div class="activity-text">Nouvelle plateforme détectée : <strong>Yelp France</strong></div>
-              <div class="activity-when">Dimanche</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-dot red"></div>
-            <div>
-              <div class="activity-text">Score <strong>Facebook</strong> en baisse de 0.2 points</div>
-              <div class="activity-when">Samedi</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-```
-
   </main>
 </div>
 
