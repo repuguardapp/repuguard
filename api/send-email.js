@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { type, email, firstName, businessName, plan } = req.body;
+    const { type, email, firstName, businessName, plan, review } = req.body;
 
     if (!email || !type) {
       return res.status(400).json({ error: 'Paramètres manquants' });
@@ -16,109 +16,159 @@ module.exports = async function handler(req, res) {
 
     let subject, html;
 
+    // ══════════════════════════════════
+    // EMAIL DE BIENVENUE
+    // ══════════════════════════════════
     if (type === 'welcome') {
       subject = `Bienvenue sur RepuGuard, ${firstName} !`;
       html = `
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bienvenue sur RepuGuard</title>
-</head>
-<body style="margin:0;padding:0;background:#07080f;font-family:'DM Sans',Arial,sans-serif;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
-          
-          <!-- HEADER -->
-          <tr>
-            <td style="background:linear-gradient(135deg,#0e1018,#13151f);padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
-              <div style="font-family:Arial,sans-serif;font-weight:900;font-size:28px;color:#f1f5f9;letter-spacing:-1px;">
-                Repu<span style="color:#818cf8;">Guard</span>
-              </div>
-              <div style="margin-top:8px;font-size:13px;color:#475569;">Surveillance de réputation en ligne</div>
-            </td>
-          </tr>
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+        
+        <tr>
+          <td style="background:#0e1018;padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="font-weight:900;font-size:28px;color:#f1f5f9;letter-spacing:-1px;">Repu<span style="color:#818cf8;">Guard</span></div>
+            <div style="margin-top:8px;font-size:13px;color:#475569;">Surveillance de réputation en ligne</div>
+          </td>
+        </tr>
 
-          <!-- BODY -->
-          <tr>
-            <td style="padding:40px;">
-              <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#f1f5f9;line-height:1.3;">
-                Bienvenue, ${firstName} ! 🎉
-              </h1>
-              <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">
-                Votre compte RepuGuard est activé. Votre réputation en ligne est maintenant surveillée 24h/24, 7j/7.
-              </p>
+        <tr>
+          <td style="padding:40px;">
+            <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#f1f5f9;">Bienvenue, ${firstName} ! 🎉</h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">Votre compte RepuGuard est activé. Votre réputation en ligne est maintenant surveillée 24h/24, 7j/7.</p>
 
-              <!-- PLAN BADGE -->
-              <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:28px;">
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:6px;">✦ Votre plan</div>
-                <div style="font-size:18px;font-weight:800;color:#f1f5f9;">${plan || 'Pro'}</div>
-                <div style="font-size:12px;color:#475569;margin-top:2px;">14 jours d'essai gratuit — aucun débit aujourd'hui</div>
-              </div>
+            <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:28px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:6px;">✦ Votre plan</div>
+              <div style="font-size:18px;font-weight:800;color:#f1f5f9;">${plan || 'Pro'}</div>
+              <div style="font-size:12px;color:#475569;margin-top:2px;">14 jours d'essai gratuit — aucun débit aujourd'hui</div>
+            </div>
 
-              <!-- BUSINESS -->
-              ${businessName ? `
-              <div style="background:#13151f;border-radius:10px;padding:16px 20px;margin-bottom:28px;">
-                <div style="font-size:11px;color:#475569;margin-bottom:4px;">Établissement surveillé</div>
-                <div style="font-size:16px;font-weight:700;color:#f1f5f9;">${businessName}</div>
-              </div>
-              ` : ''}
+            ${businessName ? `
+            <div style="background:#13151f;border-radius:10px;padding:16px 20px;margin-bottom:28px;">
+              <div style="font-size:11px;color:#475569;margin-bottom:4px;">Établissement surveillé</div>
+              <div style="font-size:16px;font-weight:700;color:#f1f5f9;">${businessName}</div>
+            </div>
+            ` : ''}
 
-              <!-- NEXT STEPS -->
-              <div style="margin-bottom:28px;">
-                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:16px;">Prochaines étapes</div>
-                
-                <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
-                  <div style="width:24px;height:24px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;margin-right:12px;flex-shrink:0;text-align:center;line-height:24px;">1</div>
-                  <div style="font-size:13px;color:#94a3b8;line-height:1.5;padding-top:3px;">Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div>
-                </div>
-                
-                <div style="display:flex;align-items:flex-start;margin-bottom:14px;">
-                  <div style="width:24px;height:24px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;margin-right:12px;flex-shrink:0;text-align:center;line-height:24px;">2</div>
-                  <div style="font-size:13px;color:#94a3b8;line-height:1.5;padding-top:3px;">Configurez vos préférences d'alerte (email, fréquence)</div>
-                </div>
+            <div style="margin-bottom:28px;">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:16px;">Prochaines étapes</div>
+              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">1.</span> Accédez à votre dashboard et vérifiez vos profils</div>
+              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">2.</span> Configurez vos préférences d'alerte</div>
+              <div style="font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">3.</span> Attendez votre première alerte — nous surveillons déjà</div>
+            </div>
 
-                <div style="display:flex;align-items:flex-start;">
-                  <div style="width:24px;height:24px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#818cf8;margin-right:12px;flex-shrink:0;text-align:center;line-height:24px;">3</div>
-                  <div style="font-size:13px;color:#94a3b8;line-height:1.5;padding-top:3px;">Attendez votre première alerte — nous surveillons déjà</div>
-                </div>
-              </div>
+            <div style="text-align:center;margin-bottom:28px;">
+              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">Accéder à mon dashboard →</a>
+            </div>
 
-              <!-- CTA -->
-              <div style="text-align:center;margin-bottom:28px;">
-                <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;letter-spacing:-0.01em;">
-                  Accéder à mon dashboard →
-                </a>
-              </div>
+            <p style="margin:0;font-size:13px;color:#475569;text-align:center;">Des questions ? Répondez à cet email. Notre équipe vous répond sous 24h.</p>
+          </td>
+        </tr>
 
-              <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;text-align:center;">
-                Des questions ? Répondez directement à cet email.<br>
-                Notre équipe vous répond sous 24h.
-              </p>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-              <p style="margin:0;font-size:11px;color:#334155;line-height:1.6;">
-                RepuGuard · repuguard.app<br>
-                Vous recevez cet email car vous venez de créer un compte.<br>
-                <a href="https://repuguard.app" style="color:#475569;">Se désabonner</a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
+        <tr>
+          <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
   </table>
 </body>
-</html>
-      `;
+</html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL D'ALERTE AVIS NÉGATIF
+    // ══════════════════════════════════
+    if (type === 'alert' && review) {
+      const stars = '★'.repeat(review.rating || 0) + '☆'.repeat(5 - (review.rating || 0));
+      const gravityScore = Math.round((5 - (review.rating || 0)) * 2);
+
+      subject = `🚨 Avis négatif détecté — ${review.platform} — Action requise`;
+      html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+
+        <!-- HEADER ALERTE -->
+        <tr>
+          <td style="background:rgba(248,113,113,0.08);border-bottom:1px solid rgba(248,113,113,0.2);padding:28px 40px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-weight:900;font-size:22px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
+            </div>
+            <div style="margin-top:12px;">
+              <span style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:#f87171;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;">🚨 Alerte critique</span>
+            </div>
+            <h1 style="margin:12px 0 0;font-size:20px;font-weight:800;color:#f1f5f9;">Avis négatif détecté</h1>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 40px;">
+
+            <!-- INFO ALERTE -->
+            <div style="background:#13151f;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:12px;color:#475569;">Plateforme</span>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;">${review.platform}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:12px;color:#475569;">Auteur</span>
+                <span style="font-size:12px;font-weight:700;color:#f1f5f9;">${review.author || 'Anonyme'}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:12px;color:#475569;">Note</span>
+                <span style="font-size:14px;color:#f87171;font-weight:700;">${stars} ${review.rating}/5</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:12px;color:#475569;">Gravité</span>
+                <span style="font-size:12px;font-weight:700;color:#f87171;">${gravityScore}/10</span>
+              </div>
+            </div>
+
+            <!-- TEXTE DE L'AVIS -->
+            <div style="margin-bottom:20px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:8px;">Avis</div>
+              <div style="background:#13151f;border-left:3px solid #f87171;border-radius:0 8px 8px 0;padding:14px 16px;font-size:13px;color:#94a3b8;line-height:1.6;font-style:italic;">
+                "${review.text || 'Aucun texte'}"
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <div style="text-align:center;margin-bottom:24px;">
+              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">✦ Voir la réponse IA générée →</a>
+            </div>
+
+            <p style="margin:0;font-size:12px;color:#475569;text-align:center;line-height:1.6;">
+              RepuGuard a automatiquement généré une réponse professionnelle.<br>
+              Connectez-vous pour la valider et la publier en 1 clic.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="https://repuguard.app" style="color:#475569;">Se désabonner</a></p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+    }
+
+    if (!subject || !html) {
+      return res.status(400).json({ error: 'Type email non reconnu' });
     }
 
     const { data, error } = await resend.emails.send({
