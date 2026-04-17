@@ -18,127 +18,68 @@ module.exports = async function handler(req, res) {
     // 1. Authentification DataForSEO en Base64
     const credentials = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
 
-    // 2. Récupérer les avis Google via DataForSEO
-    const searchResponse = await fetch('https://api.dataforseo.com/v3/business_data/google/reviews/live', {
+    // 2. Chercher l'établissement sur Google Maps
+    const searchResponse = await fetch('https://api.dataforseo.com/v3/business_data/google/my_business_info/live', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${credentials}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify([{
-        keyword: businessName,
-        location_name: location || 'France',
+        keyword: businessName + ' ' + (location || 'France'),
         language_name: 'French',
-        depth: 20,
-        sort_by: 'newest'
+        location_name: location || 'France',
       }])
     });
 
     const searchData = await searchResponse.json();
 
+    // Log pour debug
+    console.log('DataForSEO response:', JSON.stringify(searchData?.tasks?.[0]?.status_message));
+
     if (!searchData.tasks || searchData.tasks[0].status_code !== 20000) {
-      return res.status(400).json({ 
-        error: 'Erreur DataForSEO',
-        details: searchData.tasks?.[0]?.status_message 
-      });
-    }
-
-    const reviews = searchData.tasks[0].result?.[0]?.items || [];
-
-    if (reviews.length === 0) {
-      return res.status(200).json({ success: true, reviews: [], count: 0 });
-    }
-
-    // 3. Calculer le score moyen
-    const ratings = reviews.filter(r => r.rating?.value).map(r => r.rating.value);
-    const avgScore = ratings.length > 0 
-      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 
-      : 0;
-
-    // 4. Détecter les avis négatifs (≤2 étoiles)
-    const negativeReviews = reviews.filter(r => r.rating?.value <= 2);
-
-    // 5. Sauvegarder les avis dans Supabase
-    for (const review of reviews) {
-      await fetch(SUPABASE_URL + '/rest/v1/reviews', {
+      // Essayer l'endpoint alternatif pour les avis
+      const reviewsResponse = await fetch('https://api.dataforseo.com/v3/business_data/google/reviews/live', {
         method: 'POST',
         headers: {
+          'Authorization': `Basic ${credentials}`,
           'Content-Type': 'application/json',
-          'apikey': SUPABASE_SECRET_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
-          'Prefer': 'return=minimal,resolution=ignore-duplicates',
         },
-        body: JSON.stringify({
-          client_id: clientId,
-          platform: 'google',
-          review_id: review.review_id || review.url,
-          author: review.author_title || 'Anonyme',
-          rating: review.rating?.value || 0,
-          text: review.review_text || '',
-          date: review.time_ago || new Date().toISOString(),
-          is_negative: (review.rating?.value || 0) <= 2,
-          needs_response: (review.rating?.value || 0) <= 2,
-        }),
+        body: JSON.stringify([{
+          keyword: businessName,
+          location_code: 2250, // France
+          language_code: 'fr',
+          depth: 10,
+        }])
       });
-    }
 
-    // 6. Mettre à jour le score du client dans Supabase
-    await fetch(SUPABASE_URL + '/rest/v1/clients?id=eq.' + clientId, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_SECRET_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({
-        google_score: avgScore,
-        total_reviews: reviews.length,
-        last_sync: new Date().toISOString(),
-      }),
-    });
+      const reviewsData = await reviewsResponse.json();
+      console.log('Reviews response:', JSON.stringify(reviewsData?.tasks?.[0]?.status_message));
 
-    // 7. Envoyer des alertes pour les avis négatifs
-    if (negativeReviews.length > 0) {
-      // Récupérer l'email du client
-      const clientRes = await fetch(SUPABASE_URL + '/rest/v1/clients?id=eq.' + clientId + '&select=email,first_name,business_name', {
-        headers: {
-          'apikey': SUPABASE_SECRET_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
-        }
-      });
-      const clients = await clientRes.json();
-      
-      if (clients.length > 0) {
-        const client = clients[0];
-        for (const review of negativeReviews) {
-          // Envoyer email d'alerte
-          await fetch('https://repuguard.app/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'alert',
-              email: client.email,
-              firstName: client.first_name,
-              businessName: client.business_name,
-              review: {
-                platform: 'Google',
-                author: review.author_title,
-                rating: review.rating?.value,
-                text: review.review_text,
-              }
-            }),
-          });
-        }
+      if (!reviewsData.tasks || reviewsData.tasks[0].status_code !== 20000) {
+        return res.status(400).json({
+          error: 'DataForSEO API error',
+          status: reviewsData.tasks?.[0]?.status_code,
+          message: reviewsData.tasks?.[0]?.status_message
+        });
       }
+
+      const reviews = reviewsData.tasks[0].result?.[0]?.items || [];
+      return res.status(200).json({ success: true, count: reviews.length, reviews });
     }
+
+    const result = searchData.tasks[0].result?.[0] || {};
+    const reviews = result.reviews || [];
 
     return res.status(200).json({
       success: true,
       count: reviews.length,
-      avgScore,
-      negativeCount: negativeReviews.length,
-      reviews: reviews.slice(0, 5) // Retourner les 5 premiers pour preview
+      businessInfo: {
+        name: result.title,
+        rating: result.rating,
+        reviews_count: result.reviews_count,
+      },
+      reviews: reviews.slice(0, 10)
     });
 
   } catch (error) {
