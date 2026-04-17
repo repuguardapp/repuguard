@@ -18,6 +18,7 @@ export default async function handler(req) {
     const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
     if (action === 'signup') {
+      // 1. Créer le compte Supabase Auth
       const authRes = await fetch(SUPABASE_URL + '/auth/v1/signup', {
         method: 'POST',
         headers: {
@@ -30,6 +31,8 @@ export default async function handler(req) {
       const authData = await authRes.json();
       if (authData.error) return new Response(JSON.stringify({ error: authData.error.message || authData.msg }), { status: 400, headers });
       const userId = authData.user ? authData.user.id : authData.id;
+
+      // 2. Créer le profil client dans Supabase
       await fetch(SUPABASE_URL + '/rest/v1/clients', {
         method: 'POST',
         headers: {
@@ -51,6 +54,25 @@ export default async function handler(req) {
           active: true,
         }),
       });
+
+      // 3. Envoyer l'email de bienvenue automatiquement
+      try {
+        await fetch('https://repuguard.app/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'welcome',
+            email: email,
+            firstName: firstName,
+            businessName: businessName,
+            plan: plan || 'pro',
+          }),
+        });
+      } catch (emailErr) {
+        console.error('Email welcome error:', emailErr);
+        // On ne bloque pas l'inscription si l'email échoue
+      }
+
       return new Response(JSON.stringify({ success: true, userId: userId }), { status: 200, headers });
     }
 
