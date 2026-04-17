@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+const Stripe = require('stripe');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -8,22 +8,16 @@ const PRICE_IDS = {
   business: 'price_1TJfPU4AfFLajYNsJtTIsjl3'
 };
 
-export default async function handler(req) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { paymentMethodId, priceId, email, name } = await req.json();
+    const { paymentMethodId, priceId, email, name } = req.body;
 
     if (!paymentMethodId || !priceId || !email) {
-      return new Response(JSON.stringify({ error: 'Paramètres manquants' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return res.status(400).json({ error: 'Paramètres manquants' });
     }
 
     // 1. Créer ou récupérer le client Stripe
@@ -32,7 +26,6 @@ export default async function handler(req) {
 
     if (existingCustomers.data.length > 0) {
       customer = existingCustomers.data[0];
-      // Attacher le nouveau moyen de paiement
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
     } else {
       customer = await stripe.customers.create({
@@ -59,26 +52,18 @@ export default async function handler(req) {
       expand: ['latest_invoice.payment_intent']
     });
 
-    return new Response(JSON.stringify({
+    return res.status(200).json({
       success: true,
       subscriptionId: subscription.id,
       customerId: customer.id,
       status: subscription.status,
       trialEnd: subscription.trial_end
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Stripe error:', error);
-    return new Response(JSON.stringify({
+    return res.status(500).json({
       error: error.message || 'Une erreur est survenue'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
     });
   }
-}
-
-export const config = { runtime: 'edge' };
+};
