@@ -14,44 +14,56 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Paramètres manquants' });
     }
 
-    // 1. Chercher l'établissement via Google Places Text Search
-    const searchQuery = encodeURIComponent(`${businessName} ${location || ''}`);
-    const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${GOOGLE_API_KEY}&language=fr`;
+    // 1. Chercher l'établissement via Places API (New) - Text Search
+    const textSearchUrl = 'https://places.googleapis.com/v1/places:searchText';
+    
+    const searchRes = await fetch(textSearchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress',
+      },
+      body: JSON.stringify({
+        textQuery: `${businessName} ${location || ''}`,
+        languageCode: 'fr',
+      })
+    });
 
-    const searchRes = await fetch(searchUrl);
     const searchData = await searchRes.json();
 
-    if (!searchData.results || searchData.results.length === 0) {
-      return res.status(404).json({ error: 'Établissement non trouvé sur Google' });
-    }
-
-    const place = searchData.results[0];
-    const placeId = place.place_id;
-    const placeName = place.name;
-    const placeRating = place.rating || 0;
-    const placeReviewCount = place.user_ratings_total || 0;
-
-    // 2. Récupérer les détails et avis via Google Places Details
-    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${GOOGLE_API_KEY}&language=fr&reviews_sort=newest`;
-
-    const detailsRes = await fetch(detailsUrl);
-    const detailsData = await detailsRes.json();
-
-    if (detailsData.status !== 'OK') {
-      return res.status(400).json({
-        error: 'Erreur Google Places Details',
-        status: detailsData.status
+    if (!searchData.places || searchData.places.length === 0) {
+      return res.status(404).json({ 
+        error: 'Établissement non trouvé sur Google',
+        query: `${businessName} ${location || ''}`
       });
     }
 
-    const reviews = detailsData.result.reviews || [];
-    const avgRating = detailsData.result.rating || placeRating;
-    const totalReviews = detailsData.result.user_ratings_total || placeReviewCount;
+    const place = searchData.places[0];
+    const placeId = place.id;
+    const placeName = place.displayName?.text || businessName;
+    const avgRating = place.rating || 0;
+    const totalReviews = place.userRatingCount || 0;
 
-    // 3. Détecter les avis négatifs (≤2 étoiles)
+    // 2. Récupérer les avis via Places API (New) - Place Details
+    const detailsUrl = `https://places.googleapis.com/v1/places/${placeId}`;
+    
+    const detailsRes = await fetch(detailsUrl, {
+      method: 'GET',
+      headers: {
+        'X-Goog-Api-Key': GOOGLE_API_KEY,
+        'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
+        'Accept-Language': 'fr',
+      }
+    });
+
+    const detailsData = await detailsRes.json();
+    const reviews = detailsData.reviews || [];
+
+    // 3. Détecter les avis négatifs
     const negativeReviews = reviews.filter(r => r.rating <= 2);
 
-    // 4. Sauvegarder les avis dans Supabase
+    // 4. Sauvegarder dans Supabase
     for (const review of reviews) {
       await fetch(SUPABASE_URL + '/rest/v1/reviews', {
         method: 'POST',
@@ -64,19 +76,19 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({
           client_id: clientId,
           platform: 'google',
-          review_id: `google_${placeId}_${review.time}`,
-          author: review.author_name || 'Anonyme',
+          review_id: `google_${placeId}_${review.publishTime}`,
+          author: review.authorAttribution?.displayName || 'Anonyme',
           rating: review.rating || 0,
-          text: review.text || '',
-          date: new Date(review.time * 1000).toISOString(),
-          is_negative: review.rating <= 2,
-          needs_response: review.rating <= 2,
+          text: review.text?.text || '',
+          date: review.publishTime || new Date().toISOString(),
+          is_negative: (review.rating || 0) <= 2,
+          needs_response: (review.rating || 0) <= 2,
           place_id: placeId,
         }),
       });
     }
 
-    // 5. Mettre à jour le score du client dans Supabase
+    // 5. Mettre à jour le score client dans Supabase
     await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}`, {
       method: 'PATCH',
       headers: {
@@ -93,8 +105,8 @@ module.exports = async function handler(req, res) {
       }),
     });
 
-    // 6. Envoyer alertes email pour avis négatifs
-    if (negativeReviews.length > 0) {
+    // 6. Alertes email pour avis négatifs
+    if (negativeReviews.length > 0 && clientId !== 'test') {
       const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name`, {
         headers: {
           'apikey': SUPABASE_SECRET_KEY,
@@ -116,9 +128,9 @@ module.exports = async function handler(req, res) {
               businessName: client.business_name,
               review: {
                 platform: 'Google',
-                author: review.author_name,
+                author: review.authorAttribution?.displayName,
                 rating: review.rating,
-                text: review.text,
+                text: review.text?.text,
               }
             }),
           });
