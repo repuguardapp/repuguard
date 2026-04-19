@@ -1,5 +1,7 @@
 export const config = { runtime: 'edge' };
 
+const DAILY_LIMITS = { starter: 50, pro: 200, business: 99999 };
+
 export default async function handler(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -17,6 +19,7 @@ export default async function handler(req) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  const base = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
 
   try {
     // Verify JWT
@@ -26,21 +29,45 @@ export default async function handler(req) {
     const user = await userRes.json();
     if (!user.id) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
-    const { reviewText, rating, author, platform, businessName } = await req.json();
+    // Fetch client to check plan and daily usage
+    const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}&select=plan,responses_today,responses_date`, { headers: base });
+    const clients = await clientRes.json();
+    if (!clients.length) return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers });
+    const client = clients[0];
 
-    const prompt = `Tu es le responsable de "${businessName || 'notre établissement'}". Rédige une réponse professionnelle, chaleureuse et constructive à cet avis ${platform || 'Google'} en français.
+    const plan = client.plan || 'pro';
+    const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.pro;
+    const today = new Date().toISOString().slice(0, 10);
+    const isNewDay = client.responses_date !== today;
+    const usedToday = isNewDay ? 0 : (client.responses_today || 0);
 
-Avis de ${author || 'un client'} (${rating || 1}★/5) :
-"${reviewText || ''}"
+    if (usedToday >= limit) {
+      return new Response(JSON.stringify({
+        error: `Limite journalière atteinte (${limit} réponses/${plan}). Revenez demain ou passez au plan supérieur.`
+      }), { status: 429, headers });
+    }
 
-Règles :
-- 2-4 phrases maximum
-- Ton professionnel mais humain
-- Reconnaître le problème soulevé
-- Proposer une solution ou inviter à recontacter
-- Signer au nom de l'établissement
-- Ne pas mentionner de remboursement ou compensation directement
-- Répondre UNIQUEMENT avec le texte de la réponse, sans guillemets ni introduction`;
+    const body = await req.json();
+    const { reviewText, rating, author, platform, businessName } = body;
+
+    if (!reviewText) return new Response(JSON.stringify({ error: 'reviewText requis' }), { status: 400, headers });
+
+    // Sanitize inputs to prevent prompt injection
+    const safeText = String(reviewText).slice(0, 1000).replace(/[`<>]/g, '');
+    const safeAuthor = String(author || '').slice(0, 100).replace(/[`<>]/g, '');
+    const safeBusiness = String(businessName || '').slice(0, 200).replace(/[`<>]/g, '');
+    const safePlatform = String(platform || 'Google').slice(0, 50).replace(/[`<>]/g, '');
+
+    const prompt = `Tu es responsable de la relation client pour "${safeBusiness}". Rédige une réponse professionnelle en français à cet avis ${safePlatform} (${rating || 1}★/5) de ${safeAuthor || 'un client'}.
+
+Avis : "${safeText}"
+
+Consignes strictes :
+- 2 à 4 phrases maximum
+- Ton professionnel et humain, jamais défensif
+- Reconnaître le retour, proposer une suite concrète
+- Signer au nom de l'équipe
+- Répondre UNIQUEMENT avec le texte de la réponse, sans guillemets`;
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -59,7 +86,18 @@ Règles :
     const data = await res.json();
     const response = data.content?.[0]?.text?.trim() || '';
 
-    return new Response(JSON.stringify({ response }), { status: 200, headers });
+    // Increment daily counter (fire and forget)
+    fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { ...base, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        responses_today: isNewDay ? 1 : usedToday + 1,
+        responses_date: today,
+      }),
+    });
+
+    return new Response(JSON.stringify({ response, remaining: limit - usedToday - 1 }), { status: 200, headers });
+
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
   }
