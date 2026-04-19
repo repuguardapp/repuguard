@@ -532,9 +532,9 @@
           </div>
         </div>
         <div class="plan-grid">
-          <div class="plan-card"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;">Rétrograder</button></div>
-          <div class="plan-card current"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;">Plan actuel</button></div>
-          <div class="plan-card"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;">Passer au Business</button></div>
+          <div class="plan-card" data-plan="starter"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;">Rétrograder</button></div>
+          <div class="plan-card current" data-plan="pro"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;">Plan actuel</button></div>
+          <div class="plan-card" data-plan="business"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;">Passer au Business</button></div>
         </div>
       </div>
 
@@ -658,6 +658,46 @@
     renderResponses(pendingResponses);
     renderList('#sec-mentions .alerts-list', reviews, false);
 
+    // Subscription section — dynamic plan display
+    const subSec = document.getElementById('sec-abonnement');
+    if (subSec) {
+      const planBanner = subSec.querySelector('.plan-badge');
+      if (planBanner) {
+        planBanner.querySelector('.plan-name').textContent = '✦ Votre plan actuel : ' + plan.toUpperCase();
+        if (client.trial_ends) {
+          const trialDate = new Date(client.trial_ends);
+          if (trialDate > new Date()) {
+            const days = Math.ceil((trialDate - new Date()) / 86400000);
+            planBanner.querySelector('.plan-desc').textContent = `Période d'essai — ${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`;
+          } else {
+            planBanner.querySelector('.plan-desc').textContent = 'Abonnement actif';
+          }
+        }
+      }
+      subSec.querySelectorAll('.plan-card[data-plan]').forEach(card => {
+        const cardPlan = card.dataset.plan;
+        const isCurrent = cardPlan === plan;
+        card.classList.toggle('current', isCurrent);
+        const pill = card.querySelector('.plan-pill');
+        if (pill) pill.textContent = cardPlan.charAt(0).toUpperCase() + cardPlan.slice(1) + (isCurrent ? ' ✦ Actuel' : '');
+        const btn = card.querySelector('.btn-lg');
+        if (btn) { btn.style.opacity = isCurrent ? '0.5' : ''; btn.style.cursor = isCurrent ? 'default' : ''; if (isCurrent) btn.textContent = 'Plan actuel'; }
+      });
+    }
+
+    // Alert tab counts
+    function setTabCounts(tabsEl, items) {
+      const tbs = tabsEl.querySelectorAll('.alert-tab');
+      const toCount = (c) => { if (!c) return; const el = c.querySelector('.alert-count'); if (el) el.textContent = c.dataset.count || ''; };
+      if (tbs[0]) { const c = tbs[0].querySelector('.alert-count'); if (c) c.textContent = items.length; }
+      if (tbs[1]) { const c = tbs[1].querySelector('.alert-count'); if (c) c.textContent = items.filter(r => (r.rating||0) <= 2).length; }
+      if (tbs[2]) { const c = tbs[2].querySelector('.alert-count'); if (c) c.textContent = items.filter(r => r.needs_response).length; }
+    }
+    const ot = document.querySelector('#sec-overview .alert-tabs');
+    if (ot) setTabCounts(ot, recentAlerts || []);
+    const at = document.querySelector('#sec-alertes .alert-tabs');
+    if (at) setTabCounts(at, allAlerts || []);
+
     // Settings
     const sb = document.getElementById('settingBusinessName');
     const se = document.getElementById('settingEmail');
@@ -685,11 +725,11 @@
     </div>`;
   }
 
-  function renderList(sel, items, withActions) {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    if (!items?.length) { el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">${t('no_items')}</div>`; return; }
-    el.innerHTML = items.map(r => reviewHTML(r, withActions)).join('');
+  function renderList(sel, items, withActions, el) {
+    const container = el || (sel ? document.querySelector(sel) : null);
+    if (!container) return;
+    if (!items?.length) { container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">${t('no_items')}</div>`; return; }
+    container.innerHTML = items.map(r => reviewHTML(r, withActions)).join('');
   }
 
   function renderResponses(pending) {
@@ -859,10 +899,24 @@
   }
 
   document.querySelectorAll('.nav-item[data-section]').forEach(el => el.addEventListener('click', () => navigate(el.dataset.section)));
+
+  // Alert tabs with real filtering
   document.querySelectorAll('.alert-tabs').forEach(tabs => {
-    tabs.querySelectorAll('.alert-tab').forEach(tab => tab.addEventListener('click', () => { tabs.querySelectorAll('.alert-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); }));
+    const alertsList = tabs.closest('.card')?.querySelector('.alerts-list');
+    const isOverview = !!tabs.closest('#sec-overview');
+    tabs.querySelectorAll('.alert-tab').forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        tabs.querySelectorAll('.alert-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (!alertsList || !RG.data) return;
+        const items = isOverview ? (RG.data.recentAlerts || []) : (RG.data.allAlerts || []);
+        const filtered = idx === 1 ? items.filter(r => (r.rating||0) <= 2)
+                       : idx === 2 ? items.filter(r => r.needs_response)
+                       : items;
+        renderList(null, filtered, true, alertsList);
+      });
+    });
   });
-  document.querySelectorAll('.chart-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); }));
 
   loadDashboard();
 </script>

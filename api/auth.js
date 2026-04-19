@@ -107,6 +107,21 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ success: true, token: loginData.access_token, user: loginData.user }), { status: 200, headers });
     }
 
+    if (action === 'forgot_password') {
+      if (!email) return new Response(JSON.stringify({ error: 'Email requis' }), { status: 400, headers });
+      await fetch(SUPABASE_URL + '/auth/v1/recover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_SECRET_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
+        },
+        body: JSON.stringify({ email }),
+      });
+      // Always return success to avoid user enumeration
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers });
 
   } catch (err) {
