@@ -698,24 +698,25 @@
     const spin = document.getElementById('spinPayment');
     const errDiv = document.getElementById('paymentError');
 
+    if (!stripe || !cardNumber) {
+      errDiv.textContent = 'Le module de paiement sécurisé n\'a pas pu se charger. Veuillez rafraîchir la page.';
+      errDiv.style.display = 'block';
+      return;
+    }
+
     btn.disabled = true; txt.style.display = 'none'; spin.style.display = 'block'; errDiv.style.display = 'none';
 
     try {
-      if (!stripe || !cardNumber) {
-        await new Promise(r => setTimeout(r, 1500));
-        try {
-          await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, plan:selectedPlan.id }) });
-        } catch(e) {}
-        showSuccess(); return;
-      }
-
       const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:document.getElementById('email').value } });
       if (error) { errDiv.textContent = error.message; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const res = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:document.getElementById('email').value, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
-      const data = await res.json();
+      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:document.getElementById('email').value, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
+      const subData = await subRes.json();
+      if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      if (data.error) { errDiv.textContent = data.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
+      const authData = await authRes.json();
+      if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
       showSuccess();
     } catch(err) {

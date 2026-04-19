@@ -1,6 +1,17 @@
 const { Resend } = require('resend');
+const crypto = require('crypto');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
+
+// Emails transactionnels toujours envoyés (paiement, sécurité)
+const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled'];
+
+function unsubLink(email) {
+  const sig = crypto.createHmac('sha256', SUPABASE_KEY).update(email.toLowerCase()).digest('hex');
+  return `https://repuguard.app/api/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,6 +23,19 @@ module.exports = async function handler(req, res) {
 
     if (!email || !type) {
       return res.status(400).json({ error: 'Paramètres manquants' });
+    }
+
+    // Vérification désabonnement pour les emails non-transactionnels
+    if (!TRANSACTIONAL.includes(type) && SUPABASE_URL && SUPABASE_KEY) {
+      try {
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?email=eq.${encodeURIComponent(email)}&select=email_unsubscribed`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+        });
+        const rows = await checkRes.json();
+        if (rows[0]?.email_unsubscribed) {
+          return res.status(200).json({ success: true, skipped: 'unsubscribed' });
+        }
+      } catch (_) { /* non-bloquant */ }
     }
 
     let subject, html;
@@ -72,7 +96,7 @@ module.exports = async function handler(req, res) {
 
         <tr>
           <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app</p>
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">Se désabonner</a></p>
           </td>
         </tr>
       </table>
@@ -157,7 +181,7 @@ module.exports = async function handler(req, res) {
 
         <tr>
           <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="https://repuguard.app" style="color:#475569;">Se désabonner</a></p>
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app</p>
           </td>
         </tr>
       </table>
@@ -253,7 +277,7 @@ module.exports = async function handler(req, res) {
 
         <tr>
           <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="https://repuguard.app/dashboard#notifications" style="color:#475569;">Gérer les notifications</a></p>
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">Se désabonner</a></p>
           </td>
         </tr>
       </table>

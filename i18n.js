@@ -542,4 +542,3 @@ function initI18n() {
   applyLang(lang);
 }
 
-if (typeof module !== 'undefined') module.exports = { TRANSLATIONS, t, applyLang, detectLang, initI18n, SUPPORTED_LANGS };

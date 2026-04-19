@@ -5,6 +5,27 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
+async function isDuplicate(eventId) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events?id=eq.${eventId}`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+  });
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function markProcessed(eventId) {
+  await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ id: eventId }),
+  });
+}
+
 async function patchClient(filter, data) {
   await fetch(`${SUPABASE_URL}/rest/v1/clients?${filter}`, {
     method: 'PATCH',
@@ -51,6 +72,11 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
   }
 
+  // Déduplication — ignore les événements déjà traités
+  if (await isDuplicate(event.id)) {
+    return res.status(200).json({ received: true, duplicate: true });
+  }
+
   try {
     switch (event.type) {
 
@@ -59,11 +85,12 @@ module.exports = async function handler(req, res) {
         const customer = await stripe.customers.retrieve(invoice.customer);
         const client = await getClientByEmail(customer.email);
         if (client) {
-          await patchClient(`email=eq.${encodeURIComponent(customer.email)}`, {
-            active: true,
-            subscription_status: 'active',
-            stripe_customer_id: invoice.customer,
-          });
+          const patch = { active: true, subscription_status: 'active', stripe_customer_id: invoice.customer };
+          if (invoice.subscription) {
+            const sub = await stripe.subscriptions.retrieve(invoice.subscription);
+            if (sub?.current_period_end) patch.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+          }
+          await patchClient(`email=eq.${encodeURIComponent(customer.email)}`, patch);
         }
         break;
       }
@@ -113,11 +140,13 @@ module.exports = async function handler(req, res) {
         await patchClient(`email=eq.${encodeURIComponent(customer.email)}`, {
           subscription_status: sub.status,
           active: sub.status === 'active' || sub.status === 'trialing',
+          current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
         });
         break;
       }
     }
 
+    await markProcessed(event.id);
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('Webhook handler error:', err);

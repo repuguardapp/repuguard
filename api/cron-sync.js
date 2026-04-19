@@ -1,20 +1,21 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
+const THROTTLE_MS = 2000; // 2s between each client to respect Google Places rate limits
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  // Protect against unauthorized calls
-  const authHeader = req.headers['authorization'];
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (CRON_SECRET) {
+    const auth = req.headers['authorization'] || '';
+    if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    // Fetch all active clients with a Google Place ID
     const clientsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,google_place_id`,
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     const clients = await clientsRes.json();
@@ -23,28 +24,28 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ synced: 0, message: 'No clients to sync' });
     }
 
+    console.log(`Cron sync starting: ${clients.length} clients`);
     const results = [];
 
     for (const client of clients) {
       try {
-        const syncRes = await fetch('https://repuguard.app/api/fetch-reviews', {
+        const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessName: client.business_name,
-            location: client.country,
-            clientId: client.id,
-          }),
+          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id }),
         });
         const data = await syncRes.json();
-        results.push({ clientId: client.id, success: true, reviewsFetched: data.reviewsFetched });
+        results.push({ clientId: client.id, success: true, reviewsFetched: data.reviewsFetched || 0 });
       } catch (err) {
         results.push({ clientId: client.id, success: false, error: err.message });
       }
+
+      // Throttle to avoid hitting Google Places API rate limits
+      await sleep(THROTTLE_MS);
     }
 
     const succeeded = results.filter(r => r.success).length;
-    console.log(`Cron sync complete: ${succeeded}/${clients.length} clients synced`);
+    console.log(`Cron sync done: ${succeeded}/${clients.length}`);
 
     return res.status(200).json({ synced: succeeded, total: clients.length, results });
   } catch (err) {

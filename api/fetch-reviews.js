@@ -106,7 +106,7 @@ module.exports = async function handler(req, res) {
     });
 
     // 6. Alertes email pour avis négatifs
-    if (negativeReviews.length > 0 && clientId !== 'test') {
+    if (negativeReviews.length > 0) {
       const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name`, {
         headers: {
           'apikey': SUPABASE_SECRET_KEY,

@@ -28,9 +28,11 @@ export default async function handler(req) {
     const { reviewId, action } = await req.json();
     if (!reviewId || !action) return new Response(JSON.stringify({ error: 'Missing params' }), { status: 400, headers });
 
+    // validate: responded to the review, keep it as negative for stats
+    // dismiss: user ignores it, remove from alert queue entirely
     const patch = action === 'validate'
       ? { needs_response: false }
-      : { needs_response: false };
+      : { needs_response: false, is_negative: false };
 
     await fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${reviewId}&client_id=eq.${user.id}`, {
       method: 'PATCH',
