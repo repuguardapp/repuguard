@@ -5,7 +5,7 @@ const THROTTLE_MS = 2000; // 2s between each client to respect Google Places rat
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
   if (CRON_SECRET) {
