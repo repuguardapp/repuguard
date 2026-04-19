@@ -664,15 +664,17 @@
       const planBanner = subSec.querySelector('.plan-badge');
       if (planBanner) {
         planBanner.querySelector('.plan-name').textContent = '✦ Votre plan actuel : ' + plan.toUpperCase();
-        if (client.trial_ends) {
-          const trialDate = new Date(client.trial_ends);
-          if (trialDate > new Date()) {
-            const days = Math.ceil((trialDate - new Date()) / 86400000);
-            planBanner.querySelector('.plan-desc').textContent = `Période d'essai — ${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`;
-          } else {
-            planBanner.querySelector('.plan-desc').textContent = 'Abonnement actif';
-          }
+        const now = new Date();
+        const trialDate = client.trial_ends ? new Date(client.trial_ends) : null;
+        const renewDate = client.current_period_end ? new Date(client.current_period_end) : null;
+        let desc = 'Abonnement actif';
+        if (trialDate && trialDate > now) {
+          const days = Math.ceil((trialDate - now) / 86400000);
+          desc = `Période d'essai — ${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`;
+        } else if (renewDate) {
+          desc = `Prochain renouvellement le ${renewDate.toLocaleDateString('fr-FR')}`;
         }
+        planBanner.querySelector('.plan-desc').textContent = desc;
       }
       subSec.querySelectorAll('.plan-card[data-plan]').forEach(card => {
         const cardPlan = card.dataset.plan;
