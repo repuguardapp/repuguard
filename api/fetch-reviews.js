@@ -1,6 +1,23 @@
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
+const CRON_SECRET = process.env.CRON_SECRET;
+
+async function authenticate(req) {
+  const auth = (req.headers['authorization'] || '');
+  // Appels internes (cron, signup) — secret partagé
+  if (CRON_SECRET && auth === `Bearer ${CRON_SECRET}`) return { ok: true, userId: null };
+  // Appels utilisateur — JWT Supabase
+  if (auth.startsWith('Bearer ')) {
+    const token = auth.slice(7);
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { 'apikey': SUPABASE_SECRET_KEY, 'Authorization': 'Bearer ' + token }
+    });
+    const u = await r.json();
+    if (u.id) return { ok: true, userId: u.id };
+  }
+  return { ok: false };
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,10 +25,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    const auth = await authenticate(req);
+    if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' });
+
     const { businessName, location, clientId } = req.body;
 
     if (!businessName || !clientId) {
       return res.status(400).json({ error: 'Paramètres manquants' });
+    }
+
+    // Vérifier que l'utilisateur JWT ne peut sync que son propre clientId
+    if (auth.userId && auth.userId !== clientId) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     // 1. Chercher l'établissement via Places API (New) - Text Search

@@ -16,6 +16,7 @@ export default async function handler(req) {
     const { action, email, password, firstName, lastName, businessName, sector, country, plan } = body;
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
+    const CRON_SECRET = process.env.CRON_SECRET;
 
     if (action === 'signup') {
       // 1. Créer le compte Supabase Auth
@@ -76,7 +77,7 @@ export default async function handler(req) {
         postSignupTasks.push(
           fetch('https://repuguard.app/api/fetch-reviews', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
             body: JSON.stringify({
               businessName: businessName,
               location: country || '',

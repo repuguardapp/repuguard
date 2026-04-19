@@ -876,7 +876,7 @@
     try {
       await fetch('/api/fetch-reviews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
         body: JSON.stringify({ businessName: RG.data.client.business_name, location: RG.data.client.country, clientId: RG.data.client.id })
       });
       await loadDashboard();

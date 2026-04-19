@@ -8,10 +8,10 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  if (CRON_SECRET) {
-    const auth = req.headers['authorization'] || '';
-    if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
-  }
+  // CRON_SECRET obligatoire en production
+  if (!CRON_SECRET) return res.status(500).json({ error: 'CRON_SECRET not configured' });
+  const auth = req.headers['authorization'] || '';
+  if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     const clientsRes = await fetch(
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       try {
         const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
           body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id }),
         });
         const data = await syncRes.json();
