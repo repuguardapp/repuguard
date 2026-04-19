@@ -3,5 +3,11 @@
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/login", "destination": "/login.html" },
     { "source": "/signup", "destination": "/signup.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-sync",
+      "schedule": "0 */6 * * *"
+    }
   ]
 }

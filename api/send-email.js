@@ -263,6 +263,88 @@ module.exports = async function handler(req, res) {
 </html>`;
     }
 
+    // ══════════════════════════════════
+    // EMAIL ÉCHEC DE PAIEMENT
+    // ══════════════════════════════════
+    if (type === 'payment_failed') {
+      subject = `⚠️ Problème de paiement — Votre abonnement RepuGuard`;
+      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:32px 40px;">
+        <div style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.25);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:#fb923c;">⚠ Paiement échoué</div>
+        </div>
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Nous n'avons pas pu débiter votre carte pour votre abonnement RepuGuard. Votre surveillance continue pour l'instant, mais veuillez mettre à jour vos informations de paiement rapidement pour éviter toute interruption.</p>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Mettre à jour le paiement →</a>
+        </div>
+        <p style="font-size:12px;color:#475569;text-align:center;">Des questions ? Répondez à cet email.</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL ANNULATION ABONNEMENT
+    // ══════════════════════════════════
+    if (type === 'cancelled') {
+      subject = `Votre abonnement RepuGuard a été annulé`;
+      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:32px 40px;">
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Votre abonnement RepuGuard a bien été annulé. Votre réputation ne sera plus surveillée. Vous pouvez vous réabonner à tout moment depuis votre dashboard.</p>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/signup" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Se réabonner →</a>
+        </div>
+        <p style="font-size:12px;color:#475569;text-align:center;">Merci d'avoir utilisé RepuGuard.</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL FIN D'ESSAI IMMINENTE
+    // ══════════════════════════════════
+    if (type === 'trial_ending') {
+      const trialEnd = req.body.trialEnd || '';
+      subject = `Votre essai gratuit RepuGuard se termine bientôt`;
+      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:32px 40px;">
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center;">
+          <div style="font-size:12px;color:#818cf8;font-weight:700;margin-bottom:4px;">⏳ Essai gratuit</div>
+          <div style="font-size:18px;font-weight:800;color:#f1f5f9;">Se termine le ${trialEnd}</div>
+        </div>
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Votre essai gratuit de 14 jours se termine bientôt. Pour continuer à surveiller la réputation de <strong style="color:#f1f5f9;">${businessName}</strong> sans interruption, votre abonnement sera activé automatiquement.</p>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Gérer mon abonnement →</a>
+        </div>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
     if (!subject || !html) {
       return res.status(400).json({ error: 'Type email non reconnu' });
     }
