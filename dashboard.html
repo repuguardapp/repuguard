@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RepuGuard — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="/i18n.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -261,24 +262,36 @@
 
     <div class="nav-section">
       <div class="nav-label">Principal</div>
-      <div class="nav-item active" data-section="overview"><span class="nav-icon">⬡</span> Vue d'ensemble</div>
-      <div class="nav-item" data-section="alertes"><span class="nav-icon">🔔</span> Alertes<span class="nav-badge">3</span></div>
-      <div class="nav-item" data-section="reponses"><span class="nav-icon">✦</span> Réponses IA<span class="nav-badge blue">2</span></div>
-      <div class="nav-item" data-section="score"><span class="nav-icon">◈</span> Score &amp; Tendances</div>
-      <div class="nav-item" data-section="mentions"><span class="nav-icon">≡</span> Toutes les mentions</div>
+      <div class="nav-item active" data-section="overview"><span class="nav-icon">⬡</span> <span data-i18n="nav_overview">Vue d'ensemble</span></div>
+      <div class="nav-item" data-section="alertes"><span class="nav-icon">🔔</span> <span data-i18n="nav_alerts">Alertes</span><span class="nav-badge">3</span></div>
+      <div class="nav-item" data-section="reponses"><span class="nav-icon">✦</span> <span data-i18n="nav_responses">Réponses IA</span><span class="nav-badge blue">2</span></div>
+      <div class="nav-item" data-section="score"><span class="nav-icon">◈</span> <span data-i18n="nav_score">Score &amp; Tendances</span></div>
+      <div class="nav-item" data-section="mentions"><span class="nav-icon">≡</span> <span data-i18n="nav_mentions">Toutes les mentions</span></div>
     </div>
 
     <div class="nav-section">
       <div class="nav-label">Configuration</div>
-      <div class="nav-item" data-section="plateformes"><span class="nav-icon">⬡</span> Plateformes</div>
-      <div class="nav-item" data-section="notifications"><span class="nav-icon">🔔</span> Notifications</div>
-      <div class="nav-item" data-section="rapports"><span class="nav-icon">📄</span> Rapports</div>
+      <div class="nav-item" data-section="plateformes"><span class="nav-icon">⬡</span> <span data-i18n="nav_platforms">Plateformes</span></div>
+      <div class="nav-item" data-section="notifications"><span class="nav-icon">🔔</span> <span data-i18n="nav_notifications">Notifications</span></div>
+      <div class="nav-item" data-section="rapports"><span class="nav-icon">📄</span> <span data-i18n="nav_reports">Rapports</span></div>
     </div>
 
     <div class="nav-section">
       <div class="nav-label">Compte</div>
-      <div class="nav-item" data-section="abonnement"><span class="nav-icon">💳</span> Abonnement</div>
-      <div class="nav-item" data-section="parametres"><span class="nav-icon">⚙</span> Paramètres</div>
+      <div class="nav-item" data-section="abonnement"><span class="nav-icon">💳</span> <span data-i18n="nav_subscription">Abonnement</span></div>
+      <div class="nav-item" data-section="parametres"><span class="nav-icon">⚙</span> <span data-i18n="nav_settings">Paramètres</span></div>
+    </div>
+
+    <!-- LANGUAGE SELECTOR -->
+    <div style="padding:8px 12px 4px;">
+      <select id="langSelector" onchange="switchLang(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text2);padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;">
+        <option value="fr">🇫🇷 Français</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="ar">🇸🇦 العربية</option>
+      </select>
     </div>
 
     <div class="sidebar-footer">
@@ -299,9 +312,10 @@
     <div class="topbar">
       <div class="page-title" id="pageTitle">Vue d'ensemble</div>
       <div class="topbar-right">
-        <div class="last-update"><div class="status-dot"></div>Dernière analyse il y a 4 min</div>
+        <div class="last-update" id="lastUpdate"><div class="status-dot"></div>Dernière analyse il y a 4 min</div>
+        <button id="syncBtn" class="topbar-btn" onclick="syncReviews()" title="Synchroniser les avis" style="font-size:16px;">↻</button>
         <div class="topbar-btn">🔔<div class="notif-dot"></div></div>
-        <div class="topbar-btn">?</div>
+        <div class="topbar-btn" onclick="logout()" title="Se déconnecter" style="cursor:pointer;">↗</div>
       </div>
     </div>
 
@@ -409,7 +423,7 @@
 
       <!-- RÉPONSES IA -->
       <div class="section" id="sec-reponses">
-        <div style="display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;color:var(--text3);">2 réponses générées · En attente de validation</span><button class="btn-lg primary">✦ Tout valider</button></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;"><span id="responsesCounter" style="font-size:13px;color:var(--text3);">2 réponses générées · En attente de validation</span><button class="btn-lg primary" onclick="validateAll()">✦ Tout valider</button></div>
         <div class="ia-card">
           <div class="ia-header"><div class="ia-source"><span class="ia-badge google">Google</span><div><div style="font-size:13px;font-weight:500;color:var(--text);">Avis de @pierreM</div><div class="ia-rating">Note : 1★ · il y a 12 min · Critique 9/10</div></div></div><span class="severity critical">À valider</span></div>
           <div class="ia-label">Avis original</div>
@@ -528,13 +542,13 @@
       <div class="section" id="sec-parametres">
         <div class="card">
           <div class="settings-title">Informations du compte</div>
-          <div class="settings-row"><div><div class="settings-label">Nom de l'établissement</div></div><input class="settings-input" type="text" value="Le Provençal"></div>
-          <div class="settings-row"><div><div class="settings-label">Email de contact</div></div><input class="settings-input" type="email" value="contact@leprovencal.fr"></div>
-          <div class="settings-row"><div><div class="settings-label">Ville</div></div><input class="settings-input" type="text" value="Lyon, France"></div>
+          <div class="settings-row"><div><div class="settings-label">Nom de l'établissement</div></div><input class="settings-input" type="text" id="settingBusinessName" value="Le Provençal"></div>
+          <div class="settings-row"><div><div class="settings-label">Email de contact</div></div><input class="settings-input" type="email" id="settingEmail" value="contact@leprovencal.fr"></div>
+          <div class="settings-row"><div><div class="settings-label">Ville</div></div><input class="settings-input" type="text" id="settingCity" value="Lyon, France"></div>
           <div class="settings-title">Sécurité</div>
           <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Dernière modification il y a 30 jours</div></div><button class="btn-sm btn-ghost">Modifier</button></div>
           <div class="settings-row"><div><div class="settings-label">Authentification deux facteurs</div><div class="settings-sub">Non activé</div></div><button class="btn-sm btn-primary">Activer</button></div>
-          <div style="padding:16px 20px;border-top:1px solid var(--border);"><button class="btn-lg primary">Enregistrer les modifications</button></div>
+          <div style="padding:16px 20px;border-top:1px solid var(--border);"><button class="btn-lg primary" onclick="saveSettings()">Enregistrer les modifications</button></div>
         </div>
         <div class="card" style="border-color:rgba(248,113,113,0.2);">
           <div class="settings-title" style="color:var(--red);">Zone de danger</div>
@@ -547,22 +561,310 @@
 </div>
 
 <script>
-  const titles = { overview:"Vue d'ensemble", alertes:"Alertes", reponses:"Réponses IA", score:"Score & Tendances", mentions:"Toutes les mentions", plateformes:"Plateformes", notifications:"Notifications", rapports:"Rapports", abonnement:"Abonnement", parametres:"Paramètres" };
+  // AUTH GUARD
+  (function() { if (!localStorage.getItem('rg-token')) window.location.href = '/login'; })();
+
+  // I18N
+  initI18n();
+  const langSel = document.getElementById('langSelector');
+  if (langSel) langSel.value = window.RG_LANG || 'fr';
+
+  function switchLang(lang) {
+    applyLang(lang);
+    if (langSel) langSel.value = lang;
+    // Re-render dynamic content if data loaded
+    if (RG.data) render(RG.data);
+  }
+
+  // STATE
+  const RG = { token: localStorage.getItem('rg-token'), data: null };
+
+  // HELPERS
+  function fmt(d) {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const m = Math.round(ms/60000), h = Math.round(ms/3600000), j = Math.round(ms/86400000);
+    if (m < 60) return `il y a ${m} min`;
+    if (h < 24) return `il y a ${h}h`;
+    if (j === 1) return 'Hier';
+    return `il y a ${j} jours`;
+  }
+  function stars(n) { return '★'.repeat(n||0)+'☆'.repeat(5-(n||0)); }
+  function sevBadge(r) {
+    const s = Math.round((5-(r||0))*2);
+    return `<span class="severity ${s>=7?'critical':'moderate'}">${s>=7?t('severity_critical'):t('severity_moderate')} ${s}/10</span>`;
+  }
+  function platBadge(p) {
+    const n = (p||'google').toLowerCase();
+    return `<span class="platform-badge ${n==='google'?'google':n==='twitter'?'twitter':n==='tripadvisor'?'tripadvisor':''}">${n.charAt(0).toUpperCase()+n.slice(1)}</span>`;
+  }
+
+  // LOAD
+  async function loadDashboard() {
+    try {
+      const res = await fetch('/api/get-dashboard', { headers: { 'Authorization': 'Bearer ' + RG.token } });
+      if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+      RG.data = await res.json();
+      render(RG.data);
+    } catch(e) { console.error('Dashboard error:', e); }
+  }
+
+  // RENDER
+  function render(d) {
+    const { client, stats, recentAlerts, allAlerts, pendingResponses, reviews } = d;
+
+    // Sidebar
+    document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';
+    document.querySelector('.biz-type').textContent = [client.sector, client.country].filter(Boolean).join(' · ');
+    const plan = client.plan || 'pro';
+    document.querySelector('.plan-name').textContent = '✦ Plan ' + plan[0].toUpperCase() + plan.slice(1);
+    const name = [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email;
+    document.querySelector('.user-name').textContent = name;
+    document.querySelector('.avatar').textContent = [(client.first_name||'')[0],(client.last_name||'')[0]].join('').toUpperCase() || '?';
+
+    // Nav badges
+    const rb = document.querySelector('.nav-item[data-section="reponses"] .nav-badge');
+    if (rb) { rb.textContent = stats.pendingResponses; rb.style.display = stats.pendingResponses ? '' : 'none'; }
+    const ab = document.querySelector('.nav-item[data-section="alertes"] .nav-badge');
+    if (ab) ab.textContent = stats.negativeCount || 0;
+
+    // KPI
+    const k = document.querySelectorAll('.kpi-card');
+    if (k[0]) k[0].querySelector('.kpi-value').textContent = stats.avgRating ? stats.avgRating.toFixed(1) : '—';
+    if (k[1]) k[1].querySelector('.kpi-value').textContent = stats.totalReviews || 0;
+    if (k[2]) k[2].querySelector('.kpi-value').textContent = stats.pendingResponses || 0;
+    if (k[3]) k[3].querySelector('.kpi-value').textContent = stats.newThisWeek || 0;
+
+    // Score circle
+    if (stats.avgRating) {
+      const pct = Math.round((stats.avgRating/5)*100);
+      const sc = document.querySelector('.score-circle');
+      if (sc) sc.style.background = `conic-gradient(var(--accent2) 0% ${pct}%,#13151f ${pct}% 100%)`;
+      const si = document.querySelector('.score-circle-inner');
+      if (si) si.textContent = stats.avgRating.toFixed(1);
+      const st = document.querySelector('.score-trend');
+      if (st) st.textContent = stats.avgRating >= 4.5 ? 'Excellent' : stats.avgRating >= 4 ? 'En hausse' : stats.avgRating >= 3 ? 'Correct' : 'À améliorer';
+    }
+
+    // Last sync
+    if (client.last_sync) {
+      const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
+      const lu = document.getElementById('lastUpdate');
+      if (lu) lu.innerHTML = `<div class="status-dot"></div>Dernière analyse il y a ${diff} min`;
+    }
+
+    renderList('#sec-overview .alerts-list', recentAlerts, true);
+    renderList('#sec-alertes .alerts-list', allAlerts, true);
+    renderResponses(pendingResponses);
+    renderList('#sec-mentions .alerts-list', reviews, false);
+
+    // Settings
+    const sb = document.getElementById('settingBusinessName');
+    const se = document.getElementById('settingEmail');
+    const sc2 = document.getElementById('settingCity');
+    if (sb) sb.value = client.business_name || '';
+    if (se) se.value = client.email || '';
+    if (sc2) sc2.value = client.country || '';
+  }
+
+  function reviewHTML(r, withActions) {
+    const isPos = (r.rating||0) >= 4;
+    return `<div class="alert-item" data-review-id="${r.id}">
+      <div class="alert-meta">${platBadge(r.platform)}
+        ${isPos ? `<span style="font-size:11px;color:var(--green);">${stars(r.rating)} Positif</span>` : sevBadge(r.rating)}
+        <span class="alert-time">${fmt(r.date)}</span>
+      </div>
+      <div class="alert-text">"${(r.text||'Aucun commentaire').substring(0,180)}"</div>
+      <div class="alert-detail">Note : ${r.rating||0}★ · Auteur : ${r.author||'Anonyme'}</div>
+      ${withActions && r.is_negative ? `<div class="alert-actions">
+        <button class="btn-sm btn-primary" onclick="navigate('reponses')">${t('btn_see_ai')}</button>
+        <button class="btn-sm btn-ghost" onclick="dismissReview(${r.id},this)">${t('btn_ignore')}</button>
+      </div>` : withActions ? `<div class="alert-actions">
+        <button class="btn-sm btn-ghost" onclick="markRead(${r.id},this)">${t('btn_mark_read')}</button>
+      </div>` : ''}
+    </div>`;
+  }
+
+  function renderList(sel, items, withActions) {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    if (!items?.length) { el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">${t('no_items')}</div>`; return; }
+    el.innerHTML = items.map(r => reviewHTML(r, withActions)).join('');
+  }
+
+  function renderResponses(pending) {
+    const sec = document.getElementById('sec-reponses');
+    if (!sec) return;
+    const ctr = document.getElementById('responsesCounter');
+    if (ctr) ctr.textContent = `${pending.length} réponse${pending.length!==1?'s':''} en attente de validation`;
+    sec.querySelectorAll('.ia-card').forEach(el => el.remove());
+    sec.querySelectorAll('div[style*="text-align:center"]').forEach(el => el.remove());
+
+    if (!pending.length) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:40px;color:var(--text3);font-size:13px;';
+      empty.textContent = t('no_pending');
+      sec.appendChild(empty);
+      return;
+    }
+
+    pending.forEach(r => {
+      const platName = r.platform || 'google';
+      const card = document.createElement('div');
+      card.className = 'ia-card';
+      card.dataset.reviewId = r.id;
+      card.innerHTML = `
+        <div class="ia-header">
+          <div class="ia-source">
+            <span class="ia-badge ${platName}">${platName.charAt(0).toUpperCase()+platName.slice(1)}</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);">Avis de ${r.author||'Anonyme'}</div>
+              <div class="ia-rating">Note : ${r.rating||0}★ · ${fmt(r.date)}</div>
+            </div>
+          </div>
+          <span class="severity critical" id="status-${r.id}">À valider</span>
+        </div>
+        <div class="ia-label">Avis original</div>
+        <div class="ia-original">"${(r.text||'Aucun commentaire').substring(0,300)}"</div>
+        <div class="ia-label">Réponse générée par IA</div>
+        <div class="ia-response" id="resp-${r.id}" style="color:var(--text3);font-style:italic;font-size:12px;">${t('click_to_generate')}</div>
+        <div class="ia-actions" id="actions-${r.id}">
+          <button class="btn-lg primary" onclick="generateResponse(${r.id},this)">${t('btn_generate')}</button>
+          <button class="btn-lg ghost" onclick="dismissReview(${r.id},this)">${t('btn_refuse')}</button>
+        </div>`;
+      sec.appendChild(card);
+    });
+  }
+
+  // ACTIONS
+  async function apiPost(url, body) {
+    return fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+RG.token}, body:JSON.stringify(body) });
+  }
+
+  async function dismissReview(id, btn) {
+    btn.disabled = true;
+    await apiPost('/api/update-review', { reviewId: id, action: 'dismiss' });
+    const item = btn.closest('.alert-item') || btn.closest('.ia-card');
+    if (item) { item.style.opacity = '0.4'; item.style.pointerEvents = 'none'; }
+  }
+
+  async function markRead(id, btn) {
+    btn.disabled = true; btn.textContent = 'Lu ✓';
+    await apiPost('/api/update-review', { reviewId: id, action: 'dismiss' });
+  }
+
+  async function validateResponse(id, btn) {
+    btn.disabled = true; btn.textContent = 'Publication...';
+    await apiPost('/api/update-review', { reviewId: id, action: 'validate' });
+    btn.textContent = '✓ Publié';
+    const s = document.getElementById('status-' + id);
+    if (s) { s.textContent = 'Validé ✓'; s.className = 'severity moderate'; }
+  }
+
+  async function generateResponse(id, btn) {
+    const review = RG.data?.pendingResponses?.find(r => r.id === id);
+    if (!review) return;
+    btn.disabled = true;
+    btn.textContent = t('generating');
+    try {
+      const res = await apiPost('/api/generate-response', {
+        reviewText: review.text, rating: review.rating, author: review.author,
+        platform: review.platform, businessName: RG.data?.client?.business_name
+      });
+      const data = await res.json();
+      const respDiv = document.getElementById('resp-' + id);
+      if (respDiv && data.response) {
+        respDiv.style.color = ''; respDiv.style.fontStyle = '';
+        respDiv.textContent = data.response;
+      }
+      const actDiv = document.getElementById('actions-' + id);
+      if (actDiv) actDiv.innerHTML = `
+        <button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>
+        <button class="btn-lg ghost" onclick="editResponse(${id})">${t('btn_edit')}</button>
+        <button class="btn-lg ghost" onclick="dismissReview(${id},this)">${t('btn_refuse')}</button>`;
+    } catch(e) {
+      btn.textContent = t('retry'); btn.disabled = false;
+    }
+  }
+
+  function editResponse(id) {
+    const div = document.getElementById('resp-' + id);
+    if (!div) return;
+    div.contentEditable = 'true';
+    div.style.outline = '1px solid var(--accent)';
+    div.focus();
+    div.addEventListener('blur', () => { div.contentEditable='false'; div.style.outline=''; }, { once: true });
+  }
+
+  async function validateAll() {
+    const cards = document.querySelectorAll('#sec-reponses .ia-card');
+    for (const card of cards) {
+      const id = parseInt(card.dataset.reviewId);
+      if (!id) continue;
+      const resp = document.getElementById('resp-' + id);
+      if (!resp || resp.style.fontStyle === 'italic') {
+        const genBtn = card.querySelector('.btn-lg.primary');
+        if (genBtn && !genBtn.disabled) await generateResponse(id, genBtn);
+      }
+      const valBtn = card.querySelector('.btn-lg.primary');
+      if (valBtn && !valBtn.disabled) await validateResponse(id, valBtn);
+    }
+  }
+
+  async function saveSettings() {
+    const biz = document.getElementById('settingBusinessName')?.value?.trim();
+    const email = document.getElementById('settingEmail')?.value?.trim();
+    const city = document.getElementById('settingCity')?.value?.trim();
+    const btn = document.querySelector('#sec-parametres .btn-lg.primary');
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = t('saving'); btn.disabled = true;
+    try {
+      await apiPost('/api/update-client', { business_name: biz, email, country: city });
+      btn.textContent = t('btn_saved');
+      if (biz) document.querySelector('.biz-name').textContent = biz;
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+    } catch(e) { btn.textContent = t('error_retry'); btn.disabled = false; }
+  }
+
+  async function syncReviews() {
+    if (!RG.data?.client) return;
+    const btn = document.getElementById('syncBtn');
+    if (btn) { btn.style.opacity = '0.4'; btn.disabled = true; }
+    try {
+      await fetch('/api/fetch-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName: RG.data.client.business_name, location: RG.data.client.country, clientId: RG.data.client.id })
+      });
+      await loadDashboard();
+    } catch(e) { console.error(e); }
+    if (btn) { btn.style.opacity = ''; btn.disabled = false; }
+  }
+
+  function logout() {
+    localStorage.removeItem('rg-token');
+    localStorage.removeItem('rg-user');
+    window.location.href = '/login';
+  }
+
+  // NAVIGATION
+  const titleKeys = { overview:'nav_overview', alertes:'nav_alerts', reponses:'nav_responses', score:'nav_score', mentions:'nav_mentions', plateformes:'nav_platforms', notifications:'nav_notifications', rapports:'nav_reports', abonnement:'nav_subscription', parametres:'nav_settings' };
 
   function navigate(section) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.section === section));
     document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'sec-' + section));
-    document.getElementById('pageTitle').textContent = titles[section] || section;
+    document.getElementById('pageTitle').textContent = t(titleKeys[section] || section);
     document.querySelector('.content').scrollTop = 0;
   }
 
   document.querySelectorAll('.nav-item[data-section]').forEach(el => el.addEventListener('click', () => navigate(el.dataset.section)));
-
   document.querySelectorAll('.alert-tabs').forEach(tabs => {
     tabs.querySelectorAll('.alert-tab').forEach(tab => tab.addEventListener('click', () => { tabs.querySelectorAll('.alert-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); }));
   });
-
   document.querySelectorAll('.chart-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); }));
+
+  loadDashboard();
 </script>
 </body>
 </html>

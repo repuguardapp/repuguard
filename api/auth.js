@@ -55,9 +55,11 @@ export default async function handler(req) {
         }),
       });
 
-      // 3. Envoyer l'email de bienvenue automatiquement
-      try {
-        await fetch('https://repuguard.app/api/send-email', {
+      // 3. Envoyer l'email de bienvenue + premier sync en parallèle (non bloquant)
+      const postSignupTasks = [];
+
+      postSignupTasks.push(
+        fetch('https://repuguard.app/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -67,11 +69,25 @@ export default async function handler(req) {
             businessName: businessName,
             plan: plan || 'pro',
           }),
-        });
-      } catch (emailErr) {
-        console.error('Email welcome error:', emailErr);
-        // On ne bloque pas l'inscription si l'email échoue
+        }).catch(e => console.error('Email welcome error:', e))
+      );
+
+      if (businessName) {
+        postSignupTasks.push(
+          fetch('https://repuguard.app/api/fetch-reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessName: businessName,
+              location: country || '',
+              clientId: userId,
+            }),
+          }).catch(e => console.error('First sync error:', e))
+        );
       }
+
+      // Fire and forget — ne bloque pas la réponse
+      Promise.all(postSignupTasks);
 
       return new Response(JSON.stringify({ success: true, userId: userId }), { status: 200, headers });
     }
