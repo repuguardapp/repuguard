@@ -27,6 +27,7 @@ export default async function handler(req) {
 
     const { reviewId, action } = await req.json();
     if (!reviewId || !action) return new Response(JSON.stringify({ error: 'Missing params' }), { status: 400, headers });
+    if (!['validate', 'dismiss'].includes(action)) return new Response(JSON.stringify({ error: 'Action invalide' }), { status: 400, headers });
 
     // validate: responded to the review, keep it as negative for stats
     // dismiss: user ignores it, remove from alert queue entirely

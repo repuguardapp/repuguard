@@ -1,16 +1,17 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
-const THROTTLE_MS = 2000; // 2s between each client to respect Google Places rate limits
+const THROTTLE_MS = 2000;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  if (CRON_SECRET) {
-    const auth = req.headers['authorization'] || '';
-    if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
+  // Always require CRON_SECRET — never allow unauthenticated access
+  const auth = req.headers['authorization'] || '';
+  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
@@ -26,12 +27,16 @@ export default async function handler(req, res) {
 
     console.log(`Cron sync starting: ${clients.length} clients`);
     const results = [];
+    const baseUrl = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app';
 
     for (const client of clients) {
       try {
-        const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
+        const syncRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${CRON_SECRET}`,
+          },
           body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id }),
         });
         const data = await syncRes.json();
@@ -40,16 +45,15 @@ export default async function handler(req, res) {
         results.push({ clientId: client.id, success: false, error: err.message });
       }
 
-      // Throttle to avoid hitting Google Places API rate limits
       await sleep(THROTTLE_MS);
     }
 
     const succeeded = results.filter(r => r.success).length;
     console.log(`Cron sync done: ${succeeded}/${clients.length}`);
-
     return res.status(200).json({ synced: succeeded, total: clients.length, results });
+
   } catch (err) {
     console.error('Cron sync error:', err);
     return res.status(500).json({ error: err.message });
   }
-};
+}

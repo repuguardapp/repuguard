@@ -1,4 +1,4 @@
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -8,10 +8,10 @@ const PRICE_IDS = {
   business: 'price_1TJfPU4AfFLajYNsJtTIsjl3'
 };
 
-module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+const VALID_PRICE_IDS = new Set(Object.values(PRICE_IDS));
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { paymentMethodId, priceId, email, name } = req.body;
@@ -20,7 +20,11 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Paramètres manquants' });
     }
 
-    // 1. Créer ou récupérer le client Stripe
+    if (!VALID_PRICE_IDS.has(priceId)) {
+      return res.status(400).json({ error: 'Plan invalide' });
+    }
+
+    // Créer ou récupérer le client Stripe
     const existingCustomers = await stripe.customers.list({ email, limit: 1 });
     let customer;
 
@@ -28,19 +32,13 @@ module.exports = async function handler(req, res) {
       customer = existingCustomers.data[0];
       await stripe.paymentMethods.attach(paymentMethodId, { customer: customer.id });
     } else {
-      customer = await stripe.customers.create({
-        email,
-        name,
-        payment_method: paymentMethodId,
-      });
+      customer = await stripe.customers.create({ email, name, payment_method: paymentMethodId });
     }
 
-    // 2. Définir le moyen de paiement par défaut
     await stripe.customers.update(customer.id, {
       invoice_settings: { default_payment_method: paymentMethodId }
     });
 
-    // 3. Créer l'abonnement avec 14 jours d'essai gratuit
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
@@ -62,8 +60,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Stripe error:', error);
-    return res.status(500).json({
-      error: error.message || 'Une erreur est survenue'
-    });
+    return res.status(500).json({ error: error.message || 'Une erreur est survenue' });
   }
-};
+}
