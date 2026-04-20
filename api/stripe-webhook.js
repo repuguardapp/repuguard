@@ -52,7 +52,7 @@ async function sendEmail(type, client, extra = {}) {
     await fetch('https://repuguard.app/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, email: client.email, firstName: client.first_name, businessName: client.business_name, ...extra }),
+      body: JSON.stringify({ type, email: client.email, firstName: client.first_name, businessName: client.business_name, lang: client.lang || 'fr', ...extra }),
     });
   } catch (e) {
     console.error('Email error:', e);
@@ -65,8 +65,12 @@ export default async function handler(req, res) {
   const sig = req.headers['stripe-signature'];
   let event;
 
+  // Vercel provides req.rawBody (Buffer) for serverless functions — required for Stripe HMAC
+  const rawBody = req.rawBody;
+  if (!rawBody) return res.status(400).json({ error: 'Raw body unavailable' });
+
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(rawBody, sig, WEBHOOK_SECRET);
   } catch (err) {
     console.error('Webhook signature error:', err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });

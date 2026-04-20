@@ -4,30 +4,23 @@ import crypto from 'crypto';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email translations (FR default, EN/ES/DE/PT/AR supported)
-const FR_LANGS = ['fr'];
-function eT(lang, key, vars = {}) {
-  const s = EMAIL_STRINGS[FR_LANGS.includes(lang) ? 'fr' : (EMAIL_STRINGS[lang] ? lang : 'en')];
-  let str = s[key] || EMAIL_STRINGS['en'][key] || key;
-  Object.entries(vars).forEach(([k, v]) => { str = str.replace(`{${k}}`, v); });
-  return str;
-}
 const EMAIL_STRINGS = {
   fr: {
     welcome_subject: 'Bienvenue sur RepuGuard, {name} !',
     welcome_title: 'Bienvenue, {name} ! 🎉',
-    welcome_body: '' + eT(lang,'welcome_body') + '',
-    welcome_plan_label: '' + eT(lang,'welcome_plan_label') + '',
-    welcome_trial: "' + eT(lang,'welcome_trial') + '",
-    welcome_monitored: '' + eT(lang,'welcome_monitored') + '',
-    welcome_next_steps: '' + eT(lang,'welcome_next_steps') + '',
-    welcome_step1: '' + eT(lang,'welcome_step1') + '',
-    welcome_step2: "' + eT(lang,'welcome_step2') + '",
-    welcome_step3: '' + eT(lang,'welcome_step3') + '',
-    welcome_cta: '' + eT(lang,'welcome_cta') + '',
-    welcome_support: "' + eT(lang,'welcome_support') + '",
-    unsubscribe: '' + eT(lang,'unsubscribe') + '',
+    welcome_body: 'Votre compte RepuGuard est activé. Votre réputation en ligne est surveillée 24h/24.',
+    welcome_plan_label: '✦ Votre plan',
+    welcome_trial: "Période d'essai de 14 jours — aucune facturation aujourd'hui",
+    welcome_monitored: 'Établissement surveillé',
+    welcome_next_steps: 'Prochaines étapes',
+    welcome_step1: 'Accédez à votre dashboard et vérifiez vos profils',
+    welcome_step2: "Configurez vos préférences d'alerte",
+    welcome_step3: "Attendez votre première alerte — nous surveillons déjà",
+    welcome_cta: 'Accéder à mon dashboard →',
+    welcome_support: "Des questions ? Répondez à cet email. Notre équipe répond sous 24h.",
+    unsubscribe: 'Se désabonner',
     alert_subject: '🚨 Avis négatif détecté — {platform} — Action requise',
-    alert_badge: '' + eT(lang,'alert_badge') + '',
+    alert_badge: '🚨 Alerte critique',
     alert_title: 'Avis négatif détecté',
     alert_platform: 'Plateforme',
     alert_author: 'Auteur',
@@ -36,9 +29,9 @@ const EMAIL_STRINGS = {
     alert_review_label: 'Avis',
     alert_no_text: 'Aucun texte',
     alert_anonymous: 'Anonyme',
-    alert_cta: '' + eT(lang,'alert_cta') + '',
+    alert_cta: '✦ Voir la réponse IA générée →',
     alert_footer1: 'RepuGuard a automatiquement généré une réponse professionnelle.',
-    alert_footer2: '' + eT(lang,'alert_footer2') + '',
+    alert_footer2: 'Connectez-vous pour la valider et la publier en 1 clic.',
     monitoring: 'Surveillance de réputation en ligne',
     payment_failed_subject: '⚠️ Problème de paiement — Votre abonnement RepuGuard',
     payment_failed_badge: '⚠ Paiement échoué',
@@ -278,6 +271,14 @@ const EMAIL_STRINGS = {
   },
 };
 
+const FR_LANGS = ['fr'];
+function eT(lang, key, vars = {}) {
+  const s = EMAIL_STRINGS[FR_LANGS.includes(lang) ? 'fr' : (EMAIL_STRINGS[lang] ? lang : 'en')];
+  let str = (s && s[key]) || (EMAIL_STRINGS['en'] && EMAIL_STRINGS['en'][key]) || key;
+  Object.entries(vars).forEach(([k, v]) => { str = str.replace(`{${k}}`, v); });
+  return str;
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 
@@ -334,46 +335,46 @@ export default async function handler(req, res) {
         <tr>
           <td style="background:#0e1018;padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
             <div style="font-weight:900;font-size:28px;color:#f1f5f9;letter-spacing:-1px;">Repu<span style="color:#818cf8;">Guard</span></div>
-            <div style="margin-top:8px;font-size:13px;color:#475569;">' + eT(lang,'monitoring') + '</div>
+            <div style="margin-top:8px;font-size:13px;color:#475569;">${eT(lang,'monitoring')}</div>
           </td>
         </tr>
 
         <tr>
           <td style="padding:40px;">
-            <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#f1f5f9;">' + eT(lang,'welcome_title',{name:firstName}) + '</h1>
-            <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">' + eT(lang,'welcome_body') + '</p>
+            <h1 style="margin:0 0 16px;font-size:24px;font-weight:800;color:#f1f5f9;">${eT(lang,'welcome_title',{name:firstName})}</h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#94a3b8;line-height:1.6;">${eT(lang,'welcome_body')}</p>
 
             <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:28px;">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:6px;">' + eT(lang,'welcome_plan_label') + '</div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:6px;">${eT(lang,'welcome_plan_label')}</div>
               <div style="font-size:18px;font-weight:800;color:#f1f5f9;">${plan || 'Pro'}</div>
-              <div style="font-size:12px;color:#475569;margin-top:2px;">' + eT(lang,'welcome_trial') + '</div>
+              <div style="font-size:12px;color:#475569;margin-top:2px;">${eT(lang,'welcome_trial')}</div>
             </div>
 
             ${businessName ? `
             <div style="background:#13151f;border-radius:10px;padding:16px 20px;margin-bottom:28px;">
-              <div style="font-size:11px;color:#475569;margin-bottom:4px;">' + eT(lang,'welcome_monitored') + '</div>
+              <div style="font-size:11px;color:#475569;margin-bottom:4px;">${eT(lang,'welcome_monitored')}</div>
               <div style="font-size:16px;font-weight:700;color:#f1f5f9;">${businessName}</div>
             </div>
             ` : ''}
 
             <div style="margin-bottom:28px;">
-              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:16px;">' + eT(lang,'welcome_next_steps') + '</div>
-              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">1.</span> ' + eT(lang,'welcome_step1') + '</div>
-              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">2.</span> ' + eT(lang,'welcome_step2') + '</div>
-              <div style="font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">3.</span> ' + eT(lang,'welcome_step3') + '</div>
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:16px;">${eT(lang,'welcome_next_steps')}</div>
+              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">1.</span> ${eT(lang,'welcome_step1')}</div>
+              <div style="margin-bottom:12px;font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">2.</span> ${eT(lang,'welcome_step2')}</div>
+              <div style="font-size:13px;color:#94a3b8;"><span style="color:#818cf8;font-weight:700;">3.</span> ${eT(lang,'welcome_step3')}</div>
             </div>
 
             <div style="text-align:center;margin-bottom:28px;">
-              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">' + eT(lang,'welcome_cta') + '</a>
+              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'welcome_cta')}</a>
             </div>
 
-            <p style="margin:0;font-size:13px;color:#475569;text-align:center;">' + eT(lang,'welcome_support') + '</p>
+            <p style="margin:0;font-size:13px;color:#475569;text-align:center;">${eT(lang,'welcome_support')}</p>
           </td>
         </tr>
 
         <tr>
           <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">' + eT(lang,'unsubscribe') + '</a></p>
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
           </td>
         </tr>
       </table>
@@ -407,9 +408,9 @@ export default async function handler(req, res) {
               <div style="font-weight:900;font-size:22px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
             </div>
             <div style="margin-top:12px;">
-              <span style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:#f87171;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;">' + eT(lang,'alert_badge') + '</span>
+              <span style="background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:#f87171;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:0.06em;">${eT(lang,'alert_badge')}</span>
             </div>
-            <h1 style="margin:12px 0 0;font-size:20px;font-weight:800;color:#f1f5f9;">' + eT(lang,'alert_title') + '</h1>
+            <h1 style="margin:12px 0 0;font-size:20px;font-weight:800;color:#f1f5f9;">${eT(lang,'alert_title')}</h1>
           </td>
         </tr>
 
@@ -419,19 +420,19 @@ export default async function handler(req, res) {
             <!-- INFO ALERTE -->
             <div style="background:#13151f;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
               <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <span style="font-size:12px;color:#475569;">' + eT(lang,'alert_platform') + '</span>
+                <span style="font-size:12px;color:#475569;">${eT(lang,'alert_platform')}</span>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;">${review.platform}</span>
               </div>
               <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <span style="font-size:12px;color:#475569;">' + eT(lang,'alert_author') + '</span>
+                <span style="font-size:12px;color:#475569;">${eT(lang,'alert_author')}</span>
                 <span style="font-size:12px;font-weight:700;color:#f1f5f9;">${review.author || eT(lang,'alert_anonymous')}</span>
               </div>
               <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-                <span style="font-size:12px;color:#475569;">' + eT(lang,'alert_rating') + '</span>
+                <span style="font-size:12px;color:#475569;">${eT(lang,'alert_rating')}</span>
                 <span style="font-size:14px;color:#f87171;font-weight:700;">${stars} ${review.rating}/5</span>
               </div>
               <div style="display:flex;justify-content:space-between;">
-                <span style="font-size:12px;color:#475569;">' + eT(lang,'alert_severity') + '</span>
+                <span style="font-size:12px;color:#475569;">${eT(lang,'alert_severity')}</span>
                 <span style="font-size:12px;font-weight:700;color:#f87171;">${gravityScore}/10</span>
               </div>
             </div>
@@ -446,12 +447,12 @@ export default async function handler(req, res) {
 
             <!-- CTA -->
             <div style="text-align:center;margin-bottom:24px;">
-              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">' + eT(lang,'alert_cta') + '</a>
+              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">${eT(lang,'alert_cta')}</a>
             </div>
 
             <p style="margin:0;font-size:12px;color:#475569;text-align:center;line-height:1.6;">
-              ' + eT(lang,'alert_footer1') + '<br>
-              ' + eT(lang,'alert_footer2') + '
+              ${eT(lang,'alert_footer1')}<br>
+              ${eT(lang,'alert_footer2')}
             </p>
           </td>
         </tr>
@@ -554,7 +555,7 @@ export default async function handler(req, res) {
 
         <tr>
           <td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">' + eT(lang,'unsubscribe') + '</a></p>
+            <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
           </td>
         </tr>
       </table>
