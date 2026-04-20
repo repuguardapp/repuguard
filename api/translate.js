@@ -1,8 +1,5 @@
 export const config = { runtime: 'edge' };
 
-const SUPPORTED_LANGS = ['en', 'es', 'de', 'pt', 'ar'];
-const LANG_NAMES = { en: 'English', es: 'Spanish', de: 'German', pt: 'Portuguese', ar: 'Arabic' };
-
 export default async function handler(req) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -14,34 +11,20 @@ export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
-  const auth = req.headers.get('Authorization');
-  if (!auth?.startsWith('Bearer ')) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
   try {
-    // Vérification JWT
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': auth }
-    });
-    const user = await userRes.json();
-    if (!user.id) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
-
     const body = await req.json();
-    const { lang, texts } = body;
+    // Accepte 'lang' ou 'targetLang' (landing page envoie targetLang)
+    const lang = body.lang || body.targetLang;
+    const langName = body.langName || lang;
+    const texts = body.texts;
 
-    // Validation stricte
-    if (!lang || !SUPPORTED_LANGS.includes(lang)) {
-      return new Response(JSON.stringify({ error: 'Langue non supportée' }), { status: 400, headers });
-    }
-    if (!texts || typeof texts !== 'object' || Array.isArray(texts) || Object.keys(texts).length > 100) {
-      return new Response(JSON.stringify({ error: 'Paramètre texts invalide' }), { status: 400, headers });
+    if (!lang || !texts || typeof texts !== 'object' || Array.isArray(texts) || Object.keys(texts).length > 150) {
+      return new Response(JSON.stringify({ error: 'Paramètres invalides' }), { status: 400, headers });
     }
 
-    const langName = LANG_NAMES[lang];
-    const prompt = `Translate these JSON values from French to ${langName}. Keep all keys unchanged. Return ONLY valid JSON with no markdown:\n${JSON.stringify(texts)}`;
+    const prompt = `Translate these JSON values from French to ${langName} (language code: ${lang}). Keep all keys unchanged. Return ONLY valid JSON with no markdown:\n${JSON.stringify(texts)}`;
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
