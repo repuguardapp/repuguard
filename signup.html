@@ -359,7 +359,7 @@
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Starter</div>
-            <div class="plan-desc">1 établissement · 8 plateformes</div>
+            <div class="plan-desc" data-i18n="plan_starter_desc">1 établissement · 8 plateformes</div>
           </div>
         </div>
         <div class="plan-price">29€<span>/mois</span></div>
@@ -369,7 +369,7 @@
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Pro ✦</div>
-            <div class="plan-desc">3 établissements · 15+ plateformes</div>
+            <div class="plan-desc" data-i18n="plan_pro_desc">3 établissements · 15+ plateformes</div>
           </div>
         </div>
         <div class="plan-price">69€<span>/mois</span></div>
@@ -379,7 +379,7 @@
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Business</div>
-            <div class="plan-desc">10 établissements · API · White-label</div>
+            <div class="plan-desc" data-i18n="plan_business_desc">10 établissements · API · White-label</div>
           </div>
         </div>
         <div class="plan-price">149€<span>/mois</span></div>
@@ -388,18 +388,18 @@
 
     <div class="section-label" data-i18n="plan_included">Inclus dans tous les plans</div>
     <div class="benefits">
-      <div class="benefit-item"><span class="benefit-icon">✓</span> 14 jours d'essai gratuit — aucune carte débitée avant</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Surveillance 24h/24, 7j/7 sans interruption</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Réponses IA générées automatiquement</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Alertes email + SMS en temps réel</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Annulation à tout moment, sans pénalité</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Support client 7j/7</div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_trial">14 jours d'essai gratuit — aucune carte débitée avant</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_monitoring">Surveillance 24h/24, 7j/7 sans interruption</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_ai">Réponses IA générées automatiquement</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_alerts">Alertes email + SMS en temps réel</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_cancel">Annulation à tout moment, sans pénalité</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_support">Support client 7j/7</span></div>
     </div>
 
     <div class="trust-badges">
-      <div class="trust-badge">🔒 Paiement SSL sécurisé</div>
-      <div class="trust-badge">🇪🇺 Données hébergées en Europe</div>
-      <div class="trust-badge">✓ Conforme RGPD</div>
+      <div class="trust-badge" data-i18n="trust_ssl">🔒 Paiement SSL sécurisé</div>
+      <div class="trust-badge" data-i18n="trust_eu">🇪🇺 Données hébergées en Europe</div>
+      <div class="trust-badge" data-i18n="trust_gdpr">✓ Conforme RGPD</div>
     </div>
   </div>
 
@@ -452,7 +452,7 @@
         </div>
         <div class="form-group">
           <label>
-            Mot de passe
+            <span data-i18n="field_password_label">Mot de passe</span>
             <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box">Min. 8 caractères, 1 majuscule, 1 chiffre</div></div>
           </label>
           <input type="password" id="password" placeholder="••••••••" oninput="checkPwStrength(this.value)">
@@ -463,17 +463,17 @@
           <div class="error-msg" id="err-password">Minimum 8 caractères requis</div>
         </div>
         <div class="form-group">
-          <label>Confirmer le mot de passe</label>
+          <label data-i18n="field_confirm_pw">Confirmer le mot de passe</label>
           <input type="password" id="passwordConfirm" placeholder="••••••••">
           <div class="error-msg" id="err-passwordConfirm">Les mots de passe ne correspondent pas</div>
         </div>
         <div class="btn-row">
           <button class="btn-submit" onclick="goStep2()">
-            <span>Continuer</span><span>→</span>
+            <span data-i18n="btn_continue">Continuer</span><span>→</span>
           </button>
         </div>
-        <div class="divider"><div class="divider-line"></div><div class="divider-text">ou</div><div class="divider-line"></div></div>
-        <p style="text-align:center;font-size:13px;color:var(--text3)">Déjà un compte ? <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500">Se connecter</a></p>
+        <div class="divider"><div class="divider-line"></div><div class="divider-text" data-i18n="or_divider">ou</div><div class="divider-line"></div></div>
+        <p style="text-align:center;font-size:13px;color:var(--text3)"><span data-i18n="already_account">Déjà un compte ?</span> <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500" data-i18n="login_link">Se connecter</a></p>
       </div>
 
       <!-- STEP 2 -->
@@ -535,9 +535,9 @@
           </div>
         </div>
         <div class="btn-row">
-          <button class="btn-back" onclick="goStep(1)">← Retour</button>
+          <button class="btn-back" onclick="goStep(1)" data-i18n="btn_back">← Retour</button>
           <button class="btn-submit" onclick="goStep3()">
-            <span>Continuer vers le paiement</span><span>→</span>
+            <span data-i18n="btn_continue_payment">Continuer vers le paiement</span><span>→</span>
           </button>
         </div>
       </div>
@@ -588,7 +588,7 @@
         <div class="payment-error" id="paymentError"></div>
 
         <div class="btn-row">
-          <button class="btn-back" onclick="goStep(2)">← Retour</button>
+          <button class="btn-back" onclick="goStep(2)" data-i18n="btn_back">← Retour</button>
           <button class="btn-submit" id="submitBtn" onclick="handlePayment()">
             <span id="submitText">🔒 Démarrer gratuitement</span>
             <div class="spinner" id="spinPayment"></div>
