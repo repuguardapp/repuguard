@@ -13,7 +13,7 @@ export default async function handler(req) {
 
   try {
     const body = await req.json();
-    const { action, email, password, firstName, lastName, businessName, sector, country, plan } = body;
+    const { action, email, password, firstName, lastName, businessName, sector, country, plan, lang } = body;
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
     const CRON_SECRET = process.env.CRON_SECRET;
@@ -53,6 +53,7 @@ export default async function handler(req) {
           plan: plan || 'pro',
           trial_ends: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           active: true,
+          lang: lang || 'fr',
         }),
       });
 

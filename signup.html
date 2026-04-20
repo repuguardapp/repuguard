@@ -308,6 +308,7 @@
     .right-panel { padding: 32px 24px; justify-content: flex-start; }
   }
 </style>
+<script src="/i18n.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
@@ -317,7 +318,7 @@
   <div class="left-panel">
     <a href="/" class="logo">Repu<span>Guard</span></a>
 
-    <div class="section-label">Choisissez votre plan</div>
+    <div class="section-label" data-i18n="plan_choose">Choisissez votre plan</div>
     <div class="plan-options">
       <div class="plan-option" onclick="selectPlan(this,'starter',29,'Starter')" id="plan-starter">
         <div class="plan-left">
@@ -351,7 +352,7 @@
       </div>
     </div>
 
-    <div class="section-label">Inclus dans tous les plans</div>
+    <div class="section-label" data-i18n="plan_included">Inclus dans tous les plans</div>
     <div class="benefits">
       <div class="benefit-item"><span class="benefit-icon">✓</span> 14 jours d'essai gratuit — aucune carte débitée avant</div>
       <div class="benefit-item"><span class="benefit-icon">✓</span> Surveillance 24h/24, 7j/7 sans interruption</div>
@@ -372,11 +373,12 @@
   <div class="right-panel">
     <div id="mainForm">
 
-      <div class="trial-badge">🎁 14 jours gratuits — aucun débit aujourd'hui</div>
+      <div style="text-align:right;margin-bottom:.5rem;"><select onchange="switchLang(this.value)" id="langSel" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:.75rem;cursor:pointer;outline:none;"><option value="fr">🇫🇷 FR</option><option value="en">🇬🇧 EN</option><option value="es">🇪🇸 ES</option><option value="de">🇩🇪 DE</option><option value="pt">🇵🇹 PT</option><option value="ar">🇸🇦 AR</option></select></div>
+      <div class="trial-badge" data-i18n="signup_trial_badge">🎁 14 jours gratuits — aucun débit aujourd'hui</div>
 
       <div class="form-header">
-        <h1>Créer votre compte</h1>
-        <p>Votre réputation sera surveillée dans moins de 5 minutes.</p>
+        <h1 data-i18n="signup_title">Créer votre compte</h1>
+        <p data-i18n="signup_subtitle">Votre réputation sera surveillée dans moins de 5 minutes.</p>
       </div>
 
       <!-- STEP INDICATOR -->
@@ -389,9 +391,9 @@
           <div class="step-dot pending" id="dot-3">3</div>
         </div>
         <div class="steps-labels">
-          <div class="step-lbl active" id="lbl-1">Votre compte</div>
-          <div class="step-lbl" id="lbl-2">Votre business</div>
-          <div class="step-lbl" id="lbl-3">Paiement</div>
+          <div class="step-lbl active" id="lbl-1" data-i18n="step1_label">Votre compte</div>
+          <div class="step-lbl" id="lbl-2" data-i18n="step2_label">Votre business</div>
+          <div class="step-lbl" id="lbl-3" data-i18n="step3_label">Paiement</div>
         </div>
       </div>
 
@@ -399,18 +401,18 @@
       <div class="form-step active" id="step-1">
         <div class="form-row">
           <div class="form-group">
-            <label>Prénom</label>
+            <label data-i18n="field_firstname">Prénom</label>
             <input type="text" id="firstName" placeholder="Marie" autocomplete="given-name">
             <div class="error-msg" id="err-firstName">Prénom requis</div>
           </div>
           <div class="form-group">
-            <label>Nom</label>
+            <label data-i18n="field_lastname">Nom</label>
             <input type="text" id="lastName" placeholder="Dupont" autocomplete="family-name">
             <div class="error-msg" id="err-lastName">Nom requis</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Adresse email</label>
+          <label>Email</label>
           <input type="email" id="email" placeholder="marie@monentreprise.fr" autocomplete="email">
           <div class="error-msg" id="err-email">Email valide requis</div>
         </div>
@@ -443,12 +445,12 @@
       <!-- STEP 2 -->
       <div class="form-step" id="step-2">
         <div class="form-group">
-          <label>Nom de votre établissement / marque</label>
+          <label data-i18n="field_business">Nom de votre établissement / marque</label>
           <input type="text" id="businessName" placeholder="Restaurant Le Provençal">
           <div class="error-msg" id="err-businessName">Nom requis</div>
         </div>
         <div class="form-group">
-          <label>Secteur d'activité</label>
+          <label data-i18n="field_sector">Secteur d'activité</label>
           <select id="sector">
             <option value="">Sélectionner votre secteur...</option>
             <option value="restaurant">Restaurant / Café / Bar</option>
@@ -465,11 +467,11 @@
           <div class="error-msg" id="err-sector">Secteur requis</div>
         </div>
         <div class="form-group">
-          <label>Site web ou profil Google (optionnel)</label>
+          <label data-i18n="field_website">Site web ou profil Google (optionnel)</label>
           <input type="text" id="website" placeholder="https://monrestaurant.fr">
         </div>
         <div class="form-group">
-          <label>Pays</label>
+          <label data-i18n="field_country">Pays</label>
           <select id="country">
             <option value="FR">🇫🇷 France</option>
             <option value="BE">🇧🇪 Belgique</option>
@@ -510,21 +512,21 @@
       <div class="form-step" id="step-3">
         <div class="order-summary">
           <div class="order-row">
-            <span class="order-label">Plan sélectionné</span>
+            <span class="order-label" data-i18n="plan_selected_label">Plan sélectionné</span>
             <span class="order-value" id="summaryPlan">Pro — 69€/mois</span>
           </div>
           <div class="order-row">
-            <span class="order-label">Essai gratuit (14 jours)</span>
+            <span class="order-label" data-i18n="trial_label">Essai gratuit (14 jours)</span>
             <span class="order-free">Offert</span>
           </div>
           <div class="order-row">
-            <span class="order-label">Dû aujourd'hui</span>
+            <span class="order-label" data-i18n="due_today_label">Dû aujourd'hui</span>
             <span class="order-value" style="color:var(--green)">0,00 €</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Numéro de carte</label>
+          <label data-i18n="field_card_number">Numéro de carte</label>
           <div id="cardNumber" class="stripe-field"></div>
           <div class="card-icons">
             <div class="card-icon">VISA</div>
@@ -535,7 +537,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Date d'expiration</label>
+            <label data-i18n="field_card_expiry">Date d'expiration</label>
             <div id="cardExpiry" class="stripe-field"></div>
           </div>
           <div class="form-group">
@@ -544,7 +546,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Nom sur la carte</label>
+          <label data-i18n="field_card_name">Nom sur la carte</label>
           <input type="text" id="cardName" placeholder="MARIE DUPONT" style="text-transform:uppercase">
           <div class="error-msg" id="err-cardName">Nom requis</div>
         </div>
@@ -570,7 +572,7 @@
     <!-- SUCCESS -->
     <div class="success-screen" id="successScreen">
       <div class="success-icon">🎉</div>
-      <h2>Bienvenue sur RepuGuard !</h2>
+      <h2 data-i18n="success_title">Bienvenue sur RepuGuard !</h2>
       <p>Votre compte est créé. Votre réputation est maintenant surveillée.<br>Vérifiez votre email pour confirmer votre adresse.</p>
       <div class="success-steps">
         <div class="success-step"><div class="success-step-num">1</div><div>Confirmez votre email — un lien vous a été envoyé à <strong id="confirmedEmail"></strong></div></div>
@@ -625,10 +627,10 @@
     if (/[0-9]/.test(val)) score++;
     if (/[^A-Za-z0-9]/.test(val)) score++;
     const levels = [
-      { pct:'25%', color:'#f87171', label:'Très faible' },
-      { pct:'50%', color:'#fb923c', label:'Faible' },
-      { pct:'75%', color:'#818cf8', label:'Bon' },
-      { pct:'100%', color:'#34d399', label:'Excellent' },
+      { pct:'25%', color:'#f87171', label:t('pw_very_weak') },
+      { pct:'50%', color:'#fb923c', label:t('pw_weak') },
+      { pct:'75%', color:'#818cf8', label:t('pw_good') },
+      { pct:'100%', color:'#34d399', label:t('pw_excellent') },
     ];
     const lvl = levels[Math.max(score-1,0)];
     fill.style.width = score > 0 ? lvl.pct : '0';
@@ -715,7 +717,7 @@
       const subData = await subRes.json();
       if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
       const authData = await authRes.json();
       if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
@@ -732,7 +734,11 @@
     document.getElementById('confirmedEmail').textContent = document.getElementById('email').value;
   }
 
+  function switchLang(lang) { applyLang(lang); document.getElementById('langSel').value = lang; }
+
   document.addEventListener('DOMContentLoaded', () => {
+    initI18n();
+    var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
     document.querySelectorAll('input, select').forEach(el => {
       el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });
     });

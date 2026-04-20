@@ -11,7 +11,7 @@
 [data-theme="light"]{--bg:#f5f6fa;--card:#ffffff;--border:rgba(0,0,0,0.08);--accent:#1a56e8;--text:#0f1117;--muted:#6b7280;--red:#dc2626;--btn-text:#ffffff;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;transition:background .3s,color .3s;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;position:relative;}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--text);text-decoration:none;display:block;margin-bottom:2rem;}
 .logo span{color:var(--accent);}
 h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-bottom:.4rem;}
@@ -31,14 +31,25 @@ input:focus{border-color:var(--accent);}
 @keyframes spin{to{transform:rotate(360deg);}}
 .success{background:rgba(82,255,170,.08);border:1px solid rgba(82,255,170,.2);color:#52ffaa;padding:.8rem 1rem;border-radius:8px;font-size:.85rem;margin-bottom:1rem;display:none;}
 .success.show{display:block;}
+.lang-sel{position:absolute;top:1rem;right:1rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:3px 6px;font-size:.75rem;cursor:pointer;outline:none;}
 </style>
+<script src="/i18n.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <div class="card">
+  <select class="lang-sel" id="langSel" onchange="switchLang(this.value)">
+    <option value="fr">🇫🇷 FR</option>
+    <option value="en">🇬🇧 EN</option>
+    <option value="es">🇪🇸 ES</option>
+    <option value="de">🇩🇪 DE</option>
+    <option value="pt">🇵🇹 PT</option>
+    <option value="ar">🇸🇦 AR</option>
+  </select>
+
   <a href="/" class="logo">Repu<span>Guard</span></a>
-  <h1>Connexion</h1>
-  <p class="subtitle">Accédez à votre dashboard de surveillance.</p>
+  <h1 data-i18n="login_title">Connexion</h1>
+  <p class="subtitle" data-i18n="login_subtitle">Accédez à votre dashboard de surveillance.</p>
 
   <div class="error" id="errorMsg"></div>
   <div class="success" id="successMsg"></div>
@@ -48,47 +59,55 @@ input:focus{border-color:var(--accent);}
     <input type="email" id="email" placeholder="vous@exemple.com" autocomplete="email">
   </div>
   <div class="form-group">
-    <label>Mot de passe</label>
+    <label data-i18n="field_password_label">Mot de passe</label>
     <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
   </div>
 
   <button class="btn" id="loginBtn" onclick="handleLogin()">
-    <span id="btnText">Se connecter</span>
+    <span id="btnText" data-i18n="login_btn">Se connecter</span>
     <div class="spinner" id="spinner"></div>
   </button>
 
   <div class="links" id="loginLinks">
-    <a href="#" onclick="showForgot();return false;">Mot de passe oublié ?</a><br><br>
-    Pas encore de compte ? <a href="/signup">Créer un compte</a><br><br>
-    <a href="/">← Retour au site</a>
+    <a href="#" onclick="showForgot();return false;" data-i18n="login_forgot_link">Mot de passe oublié ?</a><br><br>
+    <span data-i18n="login_no_account">Pas encore de compte ?</span> <a href="/signup" data-i18n="login_create_account">Créer un compte</a><br><br>
+    <a href="/" data-i18n="login_back_site">← Retour au site</a>
   </div>
 
-  <!-- Forgot password panel (hidden by default) -->
   <div id="forgotPanel" style="display:none;">
     <hr style="border-color:var(--border);margin:1.5rem 0;">
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;">Entrez votre email pour recevoir un lien de réinitialisation.</p>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem;" data-i18n="forgot_desc">Entrez votre email pour recevoir un lien de réinitialisation.</p>
     <div class="form-group">
       <label>Email</label>
       <input type="email" id="forgotEmail" placeholder="vous@exemple.com" autocomplete="email">
     </div>
     <button class="btn" id="forgotBtn" onclick="handleForgot()">
-      <span id="forgotBtnText">Envoyer le lien</span>
+      <span id="forgotBtnText" data-i18n="forgot_send_btn">Envoyer le lien</span>
       <div class="spinner" id="forgotSpinner"></div>
     </button>
     <div class="links" style="margin-top:1rem;">
-      <a href="#" onclick="hideForgot();return false;">← Retour à la connexion</a>
+      <a href="#" onclick="hideForgot();return false;" data-i18n="forgot_back">← Retour à la connexion</a>
     </div>
   </div>
 </div>
 
 <script>
-// Init theme
 (function(){
   var saved=localStorage.getItem('rg-theme');
   var systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
   var theme=saved||(systemDark?'dark':'light');
   document.documentElement.setAttribute('data-theme',theme);
 })();
+
+function switchLang(lang) {
+  applyLang(lang);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initI18n();
+  var sel = document.getElementById('langSel');
+  if (sel) sel.value = window.RG_LANG || 'fr';
+});
 
 async function handleLogin() {
   var email = document.getElementById('email').value.trim();
@@ -101,7 +120,7 @@ async function handleLogin() {
   errorDiv.classList.remove('show');
 
   if (!email || !password) {
-    errorDiv.textContent = 'Veuillez remplir tous les champs.';
+    errorDiv.textContent = t('error_fill_all');
     errorDiv.classList.add('show');
     return;
   }
@@ -128,15 +147,12 @@ async function handleLogin() {
       return;
     }
 
-    // Save token and user info
     localStorage.setItem('rg-token', data.token);
     localStorage.setItem('rg-user', JSON.stringify(data.user));
-
-    // Redirect to dashboard
     window.location.href = '/dashboard';
 
   } catch(err) {
-    errorDiv.textContent = 'Erreur de connexion. Réessayez.';
+    errorDiv.textContent = t('error_connection');
     errorDiv.classList.add('show');
     btn.disabled = false;
     btnText.style.display = 'block';
@@ -171,7 +187,7 @@ async function handleForgot() {
   successDiv.classList.remove('show');
 
   if (!email) {
-    errorDiv.textContent = 'Veuillez entrer votre email.';
+    errorDiv.textContent = t('error_enter_email');
     errorDiv.classList.add('show');
     return;
   }
@@ -186,10 +202,10 @@ async function handleForgot() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'forgot_password', email })
     });
-    successDiv.textContent = 'Si un compte existe pour cet email, un lien de réinitialisation a été envoyé.';
+    successDiv.textContent = t('forgot_success_msg');
     successDiv.classList.add('show');
   } catch(err) {
-    errorDiv.textContent = 'Erreur. Réessayez.';
+    errorDiv.textContent = t('error_generic');
     errorDiv.classList.add('show');
   }
 
@@ -198,7 +214,6 @@ async function handleForgot() {
   spinner.style.display = 'none';
 }
 
-// Allow Enter key
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     if (document.getElementById('forgotPanel').style.display !== 'none') handleForgot();

@@ -132,7 +132,7 @@ export default async function handler(req, res) {
 
     // 6. Alertes email pour avis négatifs
     if (negativeReviews.length > 0) {
-      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name`, {
+      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name,lang`, {
         headers: {
           'apikey': SUPABASE_SECRET_KEY,
           'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
@@ -151,6 +151,7 @@ export default async function handler(req, res) {
               email: client.email,
               firstName: client.first_name,
               businessName: client.business_name,
+              lang: client.lang || 'fr',
               review: {
                 platform: 'Google',
                 author: review.authorAttribution?.displayName,
