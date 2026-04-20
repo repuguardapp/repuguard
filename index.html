@@ -455,9 +455,17 @@ document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 
 initTheme();
 buildLangList('');
-  
 
-// Language: manual selection only
+function initLang() {
+  var saved = localStorage.getItem('rg-lang');
+  var browser = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
+  var code = saved || browser.split('-')[0];
+  // Try exact match first, then prefix match
+  var match = LANGUAGES.find(function(l){ return l.code === (saved || browser); })
+            || LANGUAGES.find(function(l){ return l.code === code; });
+  if (match && match.code !== 'fr') selectLang(match);
+}
+initLang();
 </script>
 
 </body>
