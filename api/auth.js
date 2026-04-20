@@ -118,9 +118,26 @@ export default async function handler(req) {
           'apikey': SUPABASE_SECRET_KEY,
           'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, redirectTo: 'https://repuguard.app/reset-password' }),
       });
       // Always return success to avoid user enumeration
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
+    }
+
+    if (action === 'reset_password') {
+      const { token, password } = body;
+      if (!token || !password) return new Response(JSON.stringify({ error: 'Paramètres manquants' }), { status: 400, headers });
+      const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_SECRET_KEY,
+          'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.error) return new Response(JSON.stringify({ error: data.error.message || 'Erreur' }), { status: 400, headers });
       return new Response(JSON.stringify({ success: true }), { status: 200, headers });
     }
 
