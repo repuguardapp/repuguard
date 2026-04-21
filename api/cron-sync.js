@@ -48,7 +48,26 @@ export default async function handler(req, res) {
     const succeeded = results.filter(r => r.success).length;
     console.log(`Cron sync done: ${succeeded}/${clients.length}`);
 
-    return res.status(200).json({ synced: succeeded, total: clients.length, results });
+    // J3 onboarding emails — find trialing users on day 3 (trial_ends in 3.5–4.5 days)
+    const j3Start = new Date(Date.now() + 3.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j3End   = new Date(Date.now() + 4.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j3Res = await fetch(
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&trial_ends=gte.${j3Start}&trial_ends=lte.${j3End}&select=email,first_name,business_name,lang`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    const j3Clients = await j3Res.json();
+    if (Array.isArray(j3Clients) && j3Clients.length > 0) {
+      console.log(`Sending J3 onboarding email to ${j3Clients.length} clients`);
+      for (const c of j3Clients) {
+        fetch(`${baseUrl}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'onboarding_j3', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+        }).catch(e => console.error('J3 email error:', e.message));
+      }
+    }
+
+    return res.status(200).json({ synced: succeeded, total: clients.length, results, j3_emails: Array.isArray(j3Clients) ? j3Clients.length : 0 });
 
   } catch (err) {
     console.error('Cron sync error:', err);

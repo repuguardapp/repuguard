@@ -50,6 +50,16 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gérer mon abonnement →',
     hello: 'Bonjour {name},',
     questions: 'Des questions ? Répondez à cet email.',
+    j3_subject: 'Jour 3 de votre essai — votre réputation est surveillée 🔍',
+    j3_title: 'RepuGuard surveille {business} 24h/24',
+    j3_tip1_title: 'Répondez en 24h',
+    j3_tip1: 'Les clients qui reçoivent une réponse reviennent 3× plus souvent. Votre réponse IA est déjà prête dans le dashboard.',
+    j3_tip2_title: 'Score mis à jour chaque jour',
+    j3_tip2: 'Votre score de réputation global évolue en temps réel — suivez votre progression semaine après semaine.',
+    j3_tip3_title: 'Réponses IA en attente',
+    j3_tip3: 'Chaque alerte génère automatiquement une réponse professionnelle — 1 clic pour la valider et la publier.',
+    j3_upgrade: 'Votre essai se termine dans 4 jours. Activez votre plan maintenant pour continuer la surveillance sans interruption.',
+    j3_cta: 'Voir mon dashboard →',
   },
   en: {
     welcome_subject: 'Welcome to RepuGuard, {name}!',
@@ -94,6 +104,16 @@ const EMAIL_STRINGS = {
     trial_cta: 'Manage my subscription →',
     hello: 'Hello {name},',
     questions: 'Questions? Reply to this email.',
+    j3_subject: 'Day 3 of your trial — your reputation is being monitored 🔍',
+    j3_title: 'RepuGuard is monitoring {business} 24/7',
+    j3_tip1_title: 'Respond within 24h',
+    j3_tip1: 'Customers who receive a reply come back 3× more often. Your AI response is already ready in the dashboard.',
+    j3_tip2_title: 'Score updated daily',
+    j3_tip2: 'Your global reputation score evolves in real time — track your progress week after week.',
+    j3_tip3_title: 'AI responses waiting',
+    j3_tip3: 'Each alert automatically generates a professional response — 1 click to validate and publish.',
+    j3_upgrade: 'Your trial ends in 4 days. Activate your plan now to keep monitoring without interruption.',
+    j3_cta: 'View my dashboard →',
   },
   es: {
     welcome_subject: '¡Bienvenido a RepuGuard, {name}!',
@@ -282,7 +302,7 @@ function eT(lang, key, vars = {}) {
 }
 
 // Emails transactionnels toujours envoyés (paiement, sécurité)
-const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled'];
+const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled', 'trial_ending'];
 
 function unsubLink(email) {
   const sig = crypto.createHmac('sha256', SUPABASE_KEY).update(email.toLowerCase()).digest('hex');
@@ -640,6 +660,52 @@ export default async function handler(req, res) {
         <div style="text-align:center;margin-bottom:24px;">
           <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Gérer mon abonnement →</a>
         </div>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL ONBOARDING J3
+    // ══════════════════════════════════
+    if (type === 'onboarding_j3') {
+      subject = eT(lang, 'j3_subject');
+      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;letter-spacing:-0.5px;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:40px;">
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang,'j3_title',{business:businessName||'votre établissement'})}</h1>
+        <p style="margin:0 0 32px;font-size:14px;color:#475569;">${eT(lang,'hello',{name:firstName})}</p>
+
+        <div style="margin-bottom:16px;background:#13151f;border-radius:10px;padding:18px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:6px;">💬 ${eT(lang,'j3_tip1_title')}</div>
+          <div style="font-size:13px;color:#94a3b8;line-height:1.5;">${eT(lang,'j3_tip1')}</div>
+        </div>
+        <div style="margin-bottom:16px;background:#13151f;border-radius:10px;padding:18px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:6px;">📊 ${eT(lang,'j3_tip2_title')}</div>
+          <div style="font-size:13px;color:#94a3b8;line-height:1.5;">${eT(lang,'j3_tip2')}</div>
+        </div>
+        <div style="margin-bottom:32px;background:#13151f;border-radius:10px;padding:18px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:6px;">✅ ${eT(lang,'j3_tip3_title')}</div>
+          <div style="font-size:13px;color:#94a3b8;line-height:1.5;">${eT(lang,'j3_tip3')}</div>
+        </div>
+
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:28px;">
+          <div style="font-size:13px;color:#a5b4fc;line-height:1.5;">⏳ ${eT(lang,'j3_upgrade')}</div>
+        </div>
+
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j3_cta')}</a>
+        </div>
+        <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
+      </td></tr>
+      <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
       </td></tr>
     </table>
   </td></tr></table>
