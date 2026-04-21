@@ -281,9 +281,6 @@ function eT(lang, key, vars = {}) {
   return str;
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
-
 // Emails transactionnels toujours envoyés (paiement, sécurité)
 const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled'];
 
