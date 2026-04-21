@@ -4,7 +4,7 @@ const DAILY_LIMITS = { starter: 50, pro: 200, business: 99999 };
 
 export default async function handler(req) {
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://repuguard.app',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',

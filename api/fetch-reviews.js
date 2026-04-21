@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const auth = await authenticate(req);
     if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { businessName, location, clientId } = req.body;
+    const { businessName, location, clientId, lang } = req.body;
 
     if (!businessName || !clientId) {
       return res.status(400).json({ error: 'Paramètres manquants' });
@@ -38,6 +38,8 @@ export default async function handler(req, res) {
     if (auth.userId && auth.userId !== clientId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
+
+    const reviewLang = lang || 'fr';
 
     // 1. Chercher l'établissement via Places API (New) - Text Search
     const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -49,7 +51,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         textQuery: `${businessName} ${location || ''}`,
-        languageCode: 'fr',
+        languageCode: reviewLang,
       })
     });
 
@@ -71,7 +73,7 @@ export default async function handler(req, res) {
       headers: {
         'X-Goog-Api-Key': GOOGLE_API_KEY,
         'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
-        'Accept-Language': 'fr',
+        'Accept-Language': reviewLang,
       }
     });
 

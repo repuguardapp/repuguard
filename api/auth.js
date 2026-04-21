@@ -2,7 +2,7 @@ export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://repuguard.app',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
@@ -83,6 +83,7 @@ export default async function handler(req) {
               businessName: businessName,
               location: country || '',
               clientId: userId,
+              lang: lang || 'fr',
             }),
           }).catch(e => console.error('First sync error:', e))
         );
