@@ -897,8 +897,8 @@ const RTL_LANGS = ['ar'];
 function detectLang() {
   const saved = localStorage.getItem('rg-lang');
   if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
-  const browser = (navigator.language || navigator.userLanguage || 'fr').split('-')[0].toLowerCase();
-  return SUPPORTED_LANGS.includes(browser) ? browser : 'fr';
+  const browser = (navigator.language || navigator.userLanguage || 'en').split('-')[0].toLowerCase();
+  return SUPPORTED_LANGS.includes(browser) ? browser : 'en';
 }
 
 function t(key) {
