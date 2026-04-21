@@ -69,6 +69,25 @@ Consignes strictes :
 - Signer au nom de l'équipe
 - Répondre UNIQUEMENT avec le texte de la réponse, sans guillemets`;
 
+    if (!reviewText) return new Response(JSON.stringify({ error: 'reviewText requis' }), { status: 400, headers });
+
+    // Sanitize inputs to prevent prompt injection
+    const safeText = String(reviewText).slice(0, 1000).replace(/[`<>]/g, '');
+    const safeAuthor = String(author || '').slice(0, 100).replace(/[`<>]/g, '');
+    const safeBusiness = String(businessName || '').slice(0, 200).replace(/[`<>]/g, '');
+    const safePlatform = String(platform || 'Google').slice(0, 50).replace(/[`<>]/g, '');
+
+    const prompt = `Tu es responsable de la relation client pour "${safeBusiness}". Rédige une réponse professionnelle en français à cet avis ${safePlatform} (${rating || 1}★/5) de ${safeAuthor || 'un client'}.
+
+Avis : "${safeText}"
+
+Consignes strictes :
+- 2 à 4 phrases maximum
+- Ton professionnel et humain, jamais défensif
+- Reconnaître le retour, proposer une suite concrète
+- Signer au nom de l'équipe
+- Répondre UNIQUEMENT avec le texte de la réponse, sans guillemets`;
+
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -91,6 +110,18 @@ Consignes strictes :
     const data = await aiRes.json();
     const response = data.content?.[0]?.text?.trim();
     if (!response) return new Response(JSON.stringify({ error: 'Réponse IA vide' }), { status: 502, headers });
+
+    // Increment daily counter (fire and forget)
+    fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { ...base, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        responses_today: isNewDay ? 1 : usedToday + 1,
+        responses_date: today,
+      }),
+    });
+
+    return new Response(JSON.stringify({ response, remaining: limit - usedToday - 1 }), { status: 200, headers });
 
     // Increment daily counter (fire and forget)
     fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {

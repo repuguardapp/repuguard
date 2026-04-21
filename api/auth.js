@@ -13,7 +13,7 @@ export default async function handler(req) {
 
   try {
     const body = await req.json();
-    const { action, email, password, firstName, lastName, businessName, sector, country, plan } = body;
+    const { action, email, password, firstName, lastName, businessName, sector, country, plan, lang } = body;
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
     const CRON_SECRET = process.env.CRON_SECRET;
@@ -53,6 +53,7 @@ export default async function handler(req) {
           plan: plan || 'pro',
           trial_ends: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           active: true,
+          lang: lang || 'fr',
         }),
       });
 
@@ -77,7 +78,7 @@ export default async function handler(req) {
         postSignupTasks.push(
           fetch('https://repuguard.app/api/fetch-reviews', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${CRON_SECRET}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
             body: JSON.stringify({
               businessName: businessName,
               location: country || '',
@@ -117,28 +118,26 @@ export default async function handler(req) {
           'apikey': SUPABASE_SECRET_KEY,
           'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, redirectTo: 'https://repuguard.app/reset-password' }),
       });
       // Always return success to avoid user enumeration
       return new Response(JSON.stringify({ success: true }), { status: 200, headers });
     }
 
     if (action === 'reset_password') {
-      const { accessToken, password: newPassword } = body;
-      if (!accessToken || !newPassword || newPassword.length < 8) {
-        return new Response(JSON.stringify({ error: 'Paramètres invalides' }), { status: 400, headers });
-      }
-      const updateRes = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      const { token, password } = body;
+      if (!token || !password) return new Response(JSON.stringify({ error: 'Paramètres manquants' }), { status: 400, headers });
+      const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'apikey': SUPABASE_SECRET_KEY,
-          'Authorization': 'Bearer ' + accessToken,
+          'Authorization': 'Bearer ' + token,
         },
-        body: JSON.stringify({ password: newPassword }),
+        body: JSON.stringify({ password }),
       });
-      const updateData = await updateRes.json();
-      if (updateData.error) return new Response(JSON.stringify({ error: updateData.error.message || 'Erreur de mise à jour' }), { status: 400, headers });
+      const data = await res.json();
+      if (data.error) return new Response(JSON.stringify({ error: data.error.message || 'Erreur' }), { status: 400, headers });
       return new Response(JSON.stringify({ success: true }), { status: 200, headers });
     }
 

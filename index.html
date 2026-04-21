@@ -5,6 +5,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RepuGuard — Protégez votre réputation en ligne</title>
+<meta name="description" content="RepuGuard surveille votre réputation en ligne 24h/24. Alertes instantanées sur Google, TripAdvisor et les réseaux sociaux. Réponses IA professionnelles prêtes à envoyer.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://repuguard.app">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://repuguard.app">
+<meta property="og:title" content="RepuGuard — Protégez votre réputation en ligne">
+<meta property="og:description" content="Surveillance 24h/24 · Alertes instantanées · Réponses IA prêtes à envoyer. Essai gratuit 14 jours.">
+<meta property="og:image" content="https://repuguard.app/og-image.png">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="RepuGuard">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RepuGuard — Protégez votre réputation en ligne">
+<meta name="twitter:description" content="Surveillance 24h/24 · Alertes instantanées · Réponses IA prêtes à envoyer.">
+<meta name="twitter:image" content="https://repuguard.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root, [data-theme="dark"] {
@@ -160,6 +174,7 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 @media(max-width:600px){.nav-links{display:none;}.hero{padding:7rem 5% 3rem;}}
 </style>
 
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <div class="trans-bar" id="transBar"></div>
@@ -457,9 +472,17 @@ document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
 
 initTheme();
 buildLangList('');
-  
 
-// Language: manual selection only
+function initLang() {
+  var saved = localStorage.getItem('rg-lang');
+  var browser = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
+  var code = saved || browser.split('-')[0];
+  // Try exact match first, then prefix match
+  var match = LANGUAGES.find(function(l){ return l.code === (saved || browser); })
+            || LANGUAGES.find(function(l){ return l.code === code; });
+  if (match && match.code !== 'fr') selectLang(match);
+}
+initLang();
 </script>
 
 </body>

@@ -1,18 +1,17 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
-const THROTTLE_MS = 2000;
+const THROTTLE_MS = 2000; // 2s between each client to respect Google Places rate limits
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
-  // Always require CRON_SECRET — never allow unauthenticated access
+  // CRON_SECRET obligatoire en production
+  if (!CRON_SECRET) return res.status(500).json({ error: 'CRON_SECRET not configured' });
   const auth = req.headers['authorization'] || '';
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (auth !== `Bearer ${CRON_SECRET}`) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     const clientsRes = await fetch(
@@ -31,12 +30,9 @@ export default async function handler(req, res) {
 
     for (const client of clients) {
       try {
-        const syncRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
+        const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${CRON_SECRET}`,
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
           body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id }),
         });
         const data = await syncRes.json();
@@ -45,11 +41,13 @@ export default async function handler(req, res) {
         results.push({ clientId: client.id, success: false, error: err.message });
       }
 
+      // Throttle to avoid hitting Google Places API rate limits
       await sleep(THROTTLE_MS);
     }
 
     const succeeded = results.filter(r => r.success).length;
     console.log(`Cron sync done: ${succeeded}/${clients.length}`);
+
     return res.status(200).json({ synced: succeeded, total: clients.length, results });
 
   } catch (err) {

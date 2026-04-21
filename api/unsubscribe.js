@@ -50,9 +50,10 @@ export default async function handler(req, res) {
   // Comparaison en temps constant pour prévenir les attaques par timing
   let valid = false;
   try {
-    const sigBuf = Buffer.from(sig.padEnd(64, '0').slice(0, 64), 'hex');
-    const expBuf = Buffer.from(expected, 'hex');
-    valid = sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+    // SHA-256 hex = exactement 64 caractères — tout autre longueur est invalide
+    if (sig.length === 64 && expected.length === 64) {
+      valid = crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'));
+    }
   } catch (_) {
     valid = false;
   }

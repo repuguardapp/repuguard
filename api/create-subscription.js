@@ -4,10 +4,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICE_IDS = {
   starter: 'price_1TJfMs4AfFLajYNswedRcOT5',
-  pro: 'price_1TJfOW4AfFLajYNsmOvVBxGj',
-  business: 'price_1TJfPU4AfFLajYNsJtTIsjl3'
+  pro:     'price_1TJfOW4AfFLajYNsmOvVBxGj',
+  business:'price_1TJfPU4AfFLajYNsJtTIsjl3',
 };
-
 const VALID_PRICE_IDS = new Set(Object.values(PRICE_IDS));
 
 export default async function handler(req, res) {
@@ -20,6 +19,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Paramètres manquants' });
     }
 
+    // Whitelist stricte des price IDs — empêche toute manipulation
     if (!VALID_PRICE_IDS.has(priceId)) {
       return res.status(400).json({ error: 'Plan invalide' });
     }
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     }
 
     await stripe.customers.update(customer.id, {
-      invoice_settings: { default_payment_method: paymentMethodId }
+      invoice_settings: { default_payment_method: paymentMethodId },
     });
 
     const subscription = await stripe.subscriptions.create({
@@ -45,9 +45,9 @@ export default async function handler(req, res) {
       trial_period_days: 14,
       payment_settings: {
         payment_method_types: ['card'],
-        save_default_payment_method: 'on_subscription'
+        save_default_payment_method: 'on_subscription',
       },
-      expand: ['latest_invoice.payment_intent']
+      expand: ['latest_invoice.payment_intent'],
     });
 
     return res.status(200).json({
@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       subscriptionId: subscription.id,
       customerId: customer.id,
       status: subscription.status,
-      trialEnd: subscription.trial_end
+      trialEnd: subscription.trial_end,
     });
 
   } catch (error) {

@@ -9,7 +9,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
+  :root, [data-theme="dark"] {
     --bg: #07080f;
     --surface: #0e1018;
     --surface2: #13151f;
@@ -25,16 +25,43 @@
     --text: #f1f5f9;
     --text2: #94a3b8;
     --text3: #475569;
+    --dot-active-bg: #ffffff;
+    --dot-active-text: #07080f;
+    --tip-bg: #f1f5f9;
+    --tip-text: #07080f;
+    --select-option-bg: #0e1018;
+  }
+  [data-theme="light"] {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #eef0f8;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --accent: #6366f1;
+    --accent2: #4f46e5;
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #7c3aed;
+    --green: #059669;
+    --red: #dc2626;
+    --orange: #d97706;
+    --text: #0f1117;
+    --text2: #4b5563;
+    --text3: #6b7280;
+    --dot-active-bg: var(--accent);
+    --dot-active-text: #ffffff;
+    --tip-bg: #0f1117;
+    --tip-text: #ffffff;
+    --select-option-bg: #ffffff;
   }
 
-  html, body { min-height: 100vh; background: #07080f !important; color: #f1f5f9 !important; font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+  html, body { min-height: 100vh; background: var(--bg) !important; color: var(--text) !important; font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
 
   /* LAYOUT */
   .page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
 
   /* LEFT PANEL */
   .left-panel {
-    background: #0e1018 !important;
+    background: var(--surface) !important;
     border-right: 1px solid var(--border);
     padding: 48px 40px;
     display: flex;
@@ -138,7 +165,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: #07080f !important;
+    background: var(--bg) !important;
   }
 
   .trial-badge {
@@ -165,7 +192,7 @@
   .steps-bar { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
   .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: all 0.3s; font-family: 'Syne', sans-serif; }
   .step-dot.done { background: var(--accent); color: white; }
-  .step-dot.active { background: white; color: #07080f; }
+  .step-dot.active { background: var(--dot-active-bg); color: var(--dot-active-text); }
   .step-dot.pending { background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
   .step-line { flex: 1; height: 2px; background: var(--border2); transition: background 0.3s; }
   .step-line.done { background: var(--accent); }
@@ -194,7 +221,7 @@
   input[type="password"],
   select {
     width: 100%;
-    background: #0e1018 !important;
+    background: var(--surface) !important;
     border: 1px solid var(--border2);
     border-radius: 8px;
     color: var(--text) !important;
@@ -213,7 +240,7 @@
   .error-msg { font-size: 11.5px; color: var(--red); margin-top: 4px; display: none; }
   .error-msg.show { display: block; }
 
-  select option { background: #0e1018; color: var(--text); }
+  select option { background: var(--select-option-bg); color: var(--text); }
 
   /* PASSWORD STRENGTH */
   .pw-strength { margin-top: 6px; display: none; }
@@ -228,7 +255,7 @@
   .platform-tag:hover { border-color: var(--border2); color: var(--text); }
 
   /* STRIPE */
-  .stripe-field { background: #0e1018 !important; border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; transition: border-color 0.2s; }
+  .stripe-field { background: var(--surface) !important; border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; transition: border-color 0.2s; }
   .stripe-field.StripeElement--focus { border-color: var(--accent); }
   .stripe-field.StripeElement--invalid { border-color: var(--red); }
   .card-icons { display: flex; gap: 6px; margin-top: 6px; }
@@ -298,7 +325,7 @@
   /* TOOLTIP */
   .tip-wrap { position: relative; display: inline-flex; align-items: center; }
   .tip-icon { width: 14px; height: 14px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); font-size: 9px; display: inline-flex; align-items: center; justify-content: center; cursor: help; margin-left: 5px; }
-  .tip-box { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--text); color: #07080f; font-size: 11px; padding: 5px 10px; border-radius: 6px; white-space: nowrap; display: none; z-index: 10; pointer-events: none; }
+  .tip-box { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--tip-bg); color: var(--tip-text); font-size: 11px; padding: 5px 10px; border-radius: 6px; white-space: nowrap; display: none; z-index: 10; pointer-events: none; }
   .tip-wrap:hover .tip-box { display: block; }
 
   /* RESPONSIVE */
@@ -308,6 +335,15 @@
     .right-panel { padding: 32px 24px; justify-content: flex-start; }
   }
 </style>
+<script>
+(function(){
+  var s=localStorage.getItem('rg-theme');
+  var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', s||(d?'dark':'light'));
+})();
+</script>
+<script src="/i18n.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 <div class="page">
@@ -316,14 +352,14 @@
   <div class="left-panel">
     <a href="/" class="logo">Repu<span>Guard</span></a>
 
-    <div class="section-label">Choisissez votre plan</div>
+    <div class="section-label" data-i18n="plan_choose">Choisissez votre plan</div>
     <div class="plan-options">
       <div class="plan-option" onclick="selectPlan(this,'starter',29,'Starter')" id="plan-starter">
         <div class="plan-left">
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Starter</div>
-            <div class="plan-desc">1 établissement · 8 plateformes</div>
+            <div class="plan-desc" data-i18n="plan_starter_desc">1 établissement · 8 plateformes</div>
           </div>
         </div>
         <div class="plan-price">29€<span>/mois</span></div>
@@ -333,7 +369,7 @@
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Pro ✦</div>
-            <div class="plan-desc">3 établissements · 15+ plateformes</div>
+            <div class="plan-desc" data-i18n="plan_pro_desc">3 établissements · 15+ plateformes</div>
           </div>
         </div>
         <div class="plan-price">69€<span>/mois</span></div>
@@ -343,27 +379,27 @@
           <div class="plan-radio"></div>
           <div>
             <div class="plan-name">Business</div>
-            <div class="plan-desc">10 établissements · API · White-label</div>
+            <div class="plan-desc" data-i18n="plan_business_desc">10 établissements · API · White-label</div>
           </div>
         </div>
         <div class="plan-price">149€<span>/mois</span></div>
       </div>
     </div>
 
-    <div class="section-label">Inclus dans tous les plans</div>
+    <div class="section-label" data-i18n="plan_included">Inclus dans tous les plans</div>
     <div class="benefits">
-      <div class="benefit-item"><span class="benefit-icon">✓</span> 14 jours d'essai gratuit — aucune carte débitée avant</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Surveillance 24h/24, 7j/7 sans interruption</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Réponses IA générées automatiquement</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Alertes email + SMS en temps réel</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Annulation à tout moment, sans pénalité</div>
-      <div class="benefit-item"><span class="benefit-icon">✓</span> Support client 7j/7</div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_trial">14 jours d'essai gratuit — aucune carte débitée avant</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_monitoring">Surveillance 24h/24, 7j/7 sans interruption</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_ai">Réponses IA générées automatiquement</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_alerts">Alertes email + SMS en temps réel</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_cancel">Annulation à tout moment, sans pénalité</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_support">Support client 7j/7</span></div>
     </div>
 
     <div class="trust-badges">
-      <div class="trust-badge">🔒 Paiement SSL sécurisé</div>
-      <div class="trust-badge">🇪🇺 Données hébergées en Europe</div>
-      <div class="trust-badge">✓ Conforme RGPD</div>
+      <div class="trust-badge" data-i18n="trust_ssl">🔒 Paiement SSL sécurisé</div>
+      <div class="trust-badge" data-i18n="trust_eu">🇪🇺 Données hébergées en Europe</div>
+      <div class="trust-badge" data-i18n="trust_gdpr">✓ Conforme RGPD</div>
     </div>
   </div>
 
@@ -371,11 +407,12 @@
   <div class="right-panel">
     <div id="mainForm">
 
-      <div class="trial-badge">🎁 14 jours gratuits — aucun débit aujourd'hui</div>
+      <div style="text-align:right;margin-bottom:.5rem;"><select onchange="switchLang(this.value)" id="langSel" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:.75rem;cursor:pointer;outline:none;"><option value="fr">🇫🇷 FR</option><option value="en">🇬🇧 EN</option><option value="es">🇪🇸 ES</option><option value="de">🇩🇪 DE</option><option value="pt">🇵🇹 PT</option><option value="ar">🇸🇦 AR</option></select></div>
+      <div class="trial-badge" data-i18n="signup_trial_badge">🎁 14 jours gratuits — aucun débit aujourd'hui</div>
 
       <div class="form-header">
-        <h1>Créer votre compte</h1>
-        <p>Votre réputation sera surveillée dans moins de 5 minutes.</p>
+        <h1 data-i18n="signup_title">Créer votre compte</h1>
+        <p data-i18n="signup_subtitle">Votre réputation sera surveillée dans moins de 5 minutes.</p>
       </div>
 
       <!-- STEP INDICATOR -->
@@ -388,9 +425,9 @@
           <div class="step-dot pending" id="dot-3">3</div>
         </div>
         <div class="steps-labels">
-          <div class="step-lbl active" id="lbl-1">Votre compte</div>
-          <div class="step-lbl" id="lbl-2">Votre business</div>
-          <div class="step-lbl" id="lbl-3">Paiement</div>
+          <div class="step-lbl active" id="lbl-1" data-i18n="step1_label">Votre compte</div>
+          <div class="step-lbl" id="lbl-2" data-i18n="step2_label">Votre business</div>
+          <div class="step-lbl" id="lbl-3" data-i18n="step3_label">Paiement</div>
         </div>
       </div>
 
@@ -398,24 +435,24 @@
       <div class="form-step active" id="step-1">
         <div class="form-row">
           <div class="form-group">
-            <label>Prénom</label>
+            <label data-i18n="field_firstname">Prénom</label>
             <input type="text" id="firstName" placeholder="Marie" autocomplete="given-name">
             <div class="error-msg" id="err-firstName">Prénom requis</div>
           </div>
           <div class="form-group">
-            <label>Nom</label>
+            <label data-i18n="field_lastname">Nom</label>
             <input type="text" id="lastName" placeholder="Dupont" autocomplete="family-name">
             <div class="error-msg" id="err-lastName">Nom requis</div>
           </div>
         </div>
         <div class="form-group">
-          <label>Adresse email</label>
+          <label>Email</label>
           <input type="email" id="email" placeholder="marie@monentreprise.fr" autocomplete="email">
           <div class="error-msg" id="err-email">Email valide requis</div>
         </div>
         <div class="form-group">
           <label>
-            Mot de passe
+            <span data-i18n="field_password_label">Mot de passe</span>
             <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box">Min. 8 caractères, 1 majuscule, 1 chiffre</div></div>
           </label>
           <input type="password" id="password" placeholder="••••••••" oninput="checkPwStrength(this.value)">
@@ -426,28 +463,28 @@
           <div class="error-msg" id="err-password">Minimum 8 caractères requis</div>
         </div>
         <div class="form-group">
-          <label>Confirmer le mot de passe</label>
+          <label data-i18n="field_confirm_pw">Confirmer le mot de passe</label>
           <input type="password" id="passwordConfirm" placeholder="••••••••">
           <div class="error-msg" id="err-passwordConfirm">Les mots de passe ne correspondent pas</div>
         </div>
         <div class="btn-row">
           <button class="btn-submit" onclick="goStep2()">
-            <span>Continuer</span><span>→</span>
+            <span data-i18n="btn_continue">Continuer</span><span>→</span>
           </button>
         </div>
-        <div class="divider"><div class="divider-line"></div><div class="divider-text">ou</div><div class="divider-line"></div></div>
-        <p style="text-align:center;font-size:13px;color:var(--text3)">Déjà un compte ? <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500">Se connecter</a></p>
+        <div class="divider"><div class="divider-line"></div><div class="divider-text" data-i18n="or_divider">ou</div><div class="divider-line"></div></div>
+        <p style="text-align:center;font-size:13px;color:var(--text3)"><span data-i18n="already_account">Déjà un compte ?</span> <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500" data-i18n="login_link">Se connecter</a></p>
       </div>
 
       <!-- STEP 2 -->
       <div class="form-step" id="step-2">
         <div class="form-group">
-          <label>Nom de votre établissement / marque</label>
+          <label data-i18n="field_business">Nom de votre établissement / marque</label>
           <input type="text" id="businessName" placeholder="Restaurant Le Provençal">
           <div class="error-msg" id="err-businessName">Nom requis</div>
         </div>
         <div class="form-group">
-          <label>Secteur d'activité</label>
+          <label data-i18n="field_sector">Secteur d'activité</label>
           <select id="sector">
             <option value="">Sélectionner votre secteur...</option>
             <option value="restaurant">Restaurant / Café / Bar</option>
@@ -464,11 +501,11 @@
           <div class="error-msg" id="err-sector">Secteur requis</div>
         </div>
         <div class="form-group">
-          <label>Site web ou profil Google (optionnel)</label>
+          <label data-i18n="field_website">Site web ou profil Google (optionnel)</label>
           <input type="text" id="website" placeholder="https://monrestaurant.fr">
         </div>
         <div class="form-group">
-          <label>Pays</label>
+          <label data-i18n="field_country">Pays</label>
           <select id="country">
             <option value="FR">🇫🇷 France</option>
             <option value="BE">🇧🇪 Belgique</option>
@@ -498,9 +535,9 @@
           </div>
         </div>
         <div class="btn-row">
-          <button class="btn-back" onclick="goStep(1)">← Retour</button>
+          <button class="btn-back" onclick="goStep(1)" data-i18n="btn_back">← Retour</button>
           <button class="btn-submit" onclick="goStep3()">
-            <span>Continuer vers le paiement</span><span>→</span>
+            <span data-i18n="btn_continue_payment">Continuer vers le paiement</span><span>→</span>
           </button>
         </div>
       </div>
@@ -509,21 +546,21 @@
       <div class="form-step" id="step-3">
         <div class="order-summary">
           <div class="order-row">
-            <span class="order-label">Plan sélectionné</span>
+            <span class="order-label" data-i18n="plan_selected_label">Plan sélectionné</span>
             <span class="order-value" id="summaryPlan">Pro — 69€/mois</span>
           </div>
           <div class="order-row">
-            <span class="order-label">Essai gratuit (14 jours)</span>
+            <span class="order-label" data-i18n="trial_label">Essai gratuit (14 jours)</span>
             <span class="order-free">Offert</span>
           </div>
           <div class="order-row">
-            <span class="order-label">Dû aujourd'hui</span>
+            <span class="order-label" data-i18n="due_today_label">Dû aujourd'hui</span>
             <span class="order-value" style="color:var(--green)">0,00 €</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Numéro de carte</label>
+          <label data-i18n="field_card_number">Numéro de carte</label>
           <div id="cardNumber" class="stripe-field"></div>
           <div class="card-icons">
             <div class="card-icon">VISA</div>
@@ -534,7 +571,7 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Date d'expiration</label>
+            <label data-i18n="field_card_expiry">Date d'expiration</label>
             <div id="cardExpiry" class="stripe-field"></div>
           </div>
           <div class="form-group">
@@ -543,7 +580,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Nom sur la carte</label>
+          <label data-i18n="field_card_name">Nom sur la carte</label>
           <input type="text" id="cardName" placeholder="MARIE DUPONT" style="text-transform:uppercase">
           <div class="error-msg" id="err-cardName">Nom requis</div>
         </div>
@@ -551,7 +588,7 @@
         <div class="payment-error" id="paymentError"></div>
 
         <div class="btn-row">
-          <button class="btn-back" onclick="goStep(2)">← Retour</button>
+          <button class="btn-back" onclick="goStep(2)" data-i18n="btn_back">← Retour</button>
           <button class="btn-submit" id="submitBtn" onclick="handlePayment()">
             <span id="submitText">🔒 Démarrer gratuitement</span>
             <div class="spinner" id="spinPayment"></div>
@@ -569,7 +606,7 @@
     <!-- SUCCESS -->
     <div class="success-screen" id="successScreen">
       <div class="success-icon">🎉</div>
-      <h2>Bienvenue sur RepuGuard !</h2>
+      <h2 data-i18n="success_title">Bienvenue sur RepuGuard !</h2>
       <p>Votre compte est créé. Votre réputation est maintenant surveillée.<br>Vérifiez votre email pour confirmer votre adresse.</p>
       <div class="success-steps">
         <div class="success-step"><div class="success-step-num">1</div><div>Confirmez votre email — un lien vous a été envoyé à <strong id="confirmedEmail"></strong></div></div>
@@ -624,10 +661,10 @@
     if (/[0-9]/.test(val)) score++;
     if (/[^A-Za-z0-9]/.test(val)) score++;
     const levels = [
-      { pct:'25%', color:'#f87171', label:'Très faible' },
-      { pct:'50%', color:'#fb923c', label:'Faible' },
-      { pct:'75%', color:'#818cf8', label:'Bon' },
-      { pct:'100%', color:'#34d399', label:'Excellent' },
+      { pct:'25%', color:'#f87171', label:t('pw_very_weak') },
+      { pct:'50%', color:'#fb923c', label:t('pw_weak') },
+      { pct:'75%', color:'#818cf8', label:t('pw_good') },
+      { pct:'100%', color:'#34d399', label:t('pw_excellent') },
     ];
     const lvl = levels[Math.max(score-1,0)];
     fill.style.width = score > 0 ? lvl.pct : '0';
@@ -714,7 +751,7 @@
       const subData = await subRes.json();
       if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
       const authData = await authRes.json();
       if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
@@ -731,7 +768,11 @@
     document.getElementById('confirmedEmail').textContent = document.getElementById('email').value;
   }
 
+  function switchLang(lang) { applyLang(lang); document.getElementById('langSel').value = lang; }
+
   document.addEventListener('DOMContentLoaded', () => {
+    initI18n();
+    var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
     document.querySelectorAll('input, select').forEach(el => {
       el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });
     });
