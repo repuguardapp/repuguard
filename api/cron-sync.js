@@ -1,7 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const CRON_SECRET = process.env.CRON_SECRET;
-const THROTTLE_MS = 2000; // 2s between each client to respect Google Places rate limits
+const THROTTLE_MS = 2000; // 2s between clients to respect API rate limits
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const clientsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country`,
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,lang,trustpilot_business_id`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     const clients = await clientsRes.json();
@@ -46,7 +46,25 @@ export default async function handler(req, res) {
     }
 
     const succeeded = results.filter(r => r.success).length;
-    console.log(`Cron sync done: ${succeeded}/${clients.length}`);
+    console.log(`Cron sync Google done: ${succeeded}/${clients.length}`);
+
+    // Trustpilot sync — only for clients who have connected their account
+    const tpClients = clients.filter(c => c.trustpilot_business_id);
+    const tpResults = [];
+    for (const client of tpClients) {
+      try {
+        const tpRes = await fetch(`${baseUrl}/api/fetch-reviews-trustpilot`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
+          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+        });
+        const tpData = await tpRes.json();
+        tpResults.push({ clientId: client.id, success: true, reviewsFetched: tpData.reviewsFetched || 0 });
+      } catch (err) {
+        tpResults.push({ clientId: client.id, success: false, error: err.message });
+      }
+      await sleep(THROTTLE_MS);
+    }
 
     // J3 onboarding emails — find trialing users on day 3 (trial_ends in 3.5–4.5 days)
     const j3Start = new Date(Date.now() + 3.5 * 24 * 60 * 60 * 1000).toISOString();
@@ -67,7 +85,12 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ synced: succeeded, total: clients.length, results, j3_emails: Array.isArray(j3Clients) ? j3Clients.length : 0 });
+    return res.status(200).json({
+      google: { synced: succeeded, total: clients.length },
+      trustpilot: { synced: tpResults.filter(r => r.success).length, total: tpClients.length },
+      results,
+      j3_emails: Array.isArray(j3Clients) ? j3Clients.length : 0,
+    });
 
   } catch (err) {
     console.error('Cron sync error:', err);

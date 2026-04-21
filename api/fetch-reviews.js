@@ -125,7 +125,7 @@ export default async function handler(req, res) {
 
     // 6. Alertes email pour avis négatifs
     if (negativeReviews.length > 0) {
-      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name,lang`, {
+      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name,lang,webhook_url,webhook_enabled`, {
         headers: {
           'apikey': SUPABASE_SECRET_KEY,
           'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
@@ -136,23 +136,37 @@ export default async function handler(req, res) {
       if (clients.length > 0) {
         const client = clients[0];
         for (const review of negativeReviews) {
-          await fetch('https://repuguard.app/api/send-email', {
+          const reviewPayload = {
+            platform: 'Google',
+            author:   review.authorAttribution?.displayName,
+            rating:   review.rating,
+            text:     review.text?.text,
+          };
+
+          fetch('https://repuguard.app/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'alert',
-              email: client.email,
-              firstName: client.first_name,
+              type:         'alert',
+              email:        client.email,
+              firstName:    client.first_name,
               businessName: client.business_name,
-              lang: client.lang || 'fr',
-              review: {
-                platform: 'Google',
-                author: review.authorAttribution?.displayName,
-                rating: review.rating,
-                text: review.text?.text,
-              }
+              lang:         client.lang || 'fr',
+              review:       reviewPayload,
             }),
-          });
+          }).catch(e => console.error('Alert email error:', e.message));
+
+          if (client.webhook_enabled && client.webhook_url) {
+            fetch('https://repuguard.app/api/send-webhook', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
+              body: JSON.stringify({
+                webhookUrl:   client.webhook_url,
+                businessName: client.business_name,
+                review:       reviewPayload,
+              }),
+            }).catch(e => console.error('Webhook error:', e.message));
+          }
         }
       }
     }
