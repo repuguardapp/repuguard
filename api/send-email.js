@@ -2,6 +2,8 @@ import { Resend } from 'resend';
 import crypto from 'crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 
 // Email translations (FR default, EN/ES/DE/PT/AR supported)
 const EMAIL_STRINGS = {
@@ -278,9 +280,6 @@ function eT(lang, key, vars = {}) {
   Object.entries(vars).forEach(([k, v]) => { str = str.replace(`{${k}}`, v); });
   return str;
 }
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 
 // Emails transactionnels toujours envoyés (paiement, sécurité)
 const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled'];

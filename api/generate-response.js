@@ -69,7 +69,7 @@ Consignes strictes :
 - Signer au nom de l'équipe
 - Répondre UNIQUEMENT avec le texte de la réponse, sans guillemets`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,8 +83,14 @@ Consignes strictes :
       }),
     });
 
-    const data = await res.json();
-    const response = data.content?.[0]?.text?.trim() || '';
+    if (!aiRes.ok) {
+      const errData = await aiRes.json().catch(() => ({}));
+      return new Response(JSON.stringify({ error: errData.error?.message || 'Erreur API IA' }), { status: 502, headers });
+    }
+
+    const data = await aiRes.json();
+    const response = data.content?.[0]?.text?.trim();
+    if (!response) return new Response(JSON.stringify({ error: 'Réponse IA vide' }), { status: 502, headers });
 
     // Increment daily counter (fire and forget)
     fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {

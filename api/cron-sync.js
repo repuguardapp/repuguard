@@ -26,6 +26,7 @@ export default async function handler(req, res) {
 
     console.log(`Cron sync starting: ${clients.length} clients`);
     const results = [];
+    const baseUrl = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app';
 
     for (const client of clients) {
       try {
@@ -48,8 +49,9 @@ export default async function handler(req, res) {
     console.log(`Cron sync done: ${succeeded}/${clients.length}`);
 
     return res.status(200).json({ synced: succeeded, total: clients.length, results });
+
   } catch (err) {
     console.error('Cron sync error:', err);
     return res.status(500).json({ error: err.message });
   }
-};
+}
