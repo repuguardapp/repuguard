@@ -123,6 +123,25 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ success: true }), { status: 200, headers });
     }
 
+    if (action === 'reset_password') {
+      const { accessToken, password: newPassword } = body;
+      if (!accessToken || !newPassword || newPassword.length < 8) {
+        return new Response(JSON.stringify({ error: 'Paramètres invalides' }), { status: 400, headers });
+      }
+      const updateRes = await fetch(SUPABASE_URL + '/auth/v1/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_SECRET_KEY,
+          'Authorization': 'Bearer ' + accessToken,
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const updateData = await updateRes.json();
+      if (updateData.error) return new Response(JSON.stringify({ error: updateData.error.message || 'Erreur de mise à jour' }), { status: 400, headers });
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers });
 
   } catch (err) {

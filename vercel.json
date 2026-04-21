@@ -2,7 +2,8 @@
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/login", "destination": "/login.html" },
-    { "source": "/signup", "destination": "/signup.html" }
+    { "source": "/signup", "destination": "/signup.html" },
+    { "source": "/reset-password", "destination": "/reset-password.html" }
   ],
   "crons": [
     {
