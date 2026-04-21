@@ -171,7 +171,17 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
 @media(max-width:1280px){.alert-demo{display:none;}h1{font-size:clamp(2.2rem,8vw,3.5rem);}.stats-band{gap:2rem;}}
-@media(max-width:600px){.nav-links{display:none;}.hero{padding:7rem 5% 3rem;}}
+.hamburger-btn{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px;flex-shrink:0;}
+.hamburger-btn span{display:block;width:22px;height:2px;background-color:var(--text);border-radius:2px;transition:all .3s;}
+.hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger-btn.open span:nth-child(2){opacity:0;}
+.hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-menu{display:none;position:fixed;top:61px;left:0;right:0;background-color:var(--bg);border-bottom:1px solid var(--border);padding:1rem 5% 1.5rem;z-index:99;flex-direction:column;gap:.25rem;}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{color:var(--muted2);text-decoration:none;font-size:.95rem;padding:.65rem 0;border-bottom:1px solid var(--border);transition:color .2s;}
+.mobile-menu a:last-child{border-bottom:none;margin-top:.5rem;text-align:center;}
+.mobile-menu a:hover{color:var(--text);}
+@media(max-width:600px){.nav-links{display:none;}.hamburger-btn{display:flex;}.hero{padding:7rem 5% 3rem;}}
 </style>
 
 <script defer src="/_vercel/insights/script.js"></script>
@@ -201,7 +211,17 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
       </div>
     </div>
   </div>
+  <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#how" data-t="nav_how" onclick="closeMobileMenu()">Comment ça marche</a>
+  <a href="#features" data-t="nav_features" onclick="closeMobileMenu()">Fonctionnalités</a>
+  <a href="#pricing" data-t="nav_pricing" onclick="closeMobileMenu()">Tarifs</a>
+  <a href="/signup" class="nav-cta" data-t="nav_cta">Essai gratuit</a>
+</div>
 
 <section class="hero">
   <div class="hero-glow"></div>
@@ -329,9 +349,9 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 <footer>
   <a href="#" class="logo">Repu<span>Guard</span></a>
   <ul class="footer-links">
-    <li><a href="#" data-t="footer_privacy">Confidentialité</a></li>
-    <li><a href="#" data-t="footer_terms">Conditions</a></li>
-    <li><a href="#">Contact</a></li>
+    <li><a href="/privacy" data-t="footer_privacy">Confidentialité</a></li>
+    <li><a href="/terms" data-t="footer_terms">Conditions</a></li>
+    <li><a href="mailto:contact@repuguard.app">Contact</a></li>
   </ul>
   <div class="footer-copy">© 2025 RepuGuard</div>
 </footer>
@@ -469,6 +489,24 @@ function toggleFaq(btn){
 
 var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.1});
 document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
+
+function toggleMobileMenu(){
+  var btn=document.getElementById('hamburgerBtn');
+  var menu=document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+function closeMobileMenu(){
+  document.getElementById('hamburgerBtn').classList.remove('open');
+  document.getElementById('mobileMenu').classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  var menu=document.getElementById('mobileMenu');
+  var btn=document.getElementById('hamburgerBtn');
+  if(menu.classList.contains('open')&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    closeMobileMenu();
+  }
+});
 
 initTheme();
 buildLangList('');
