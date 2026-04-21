@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
-      trial_period_days: 14,
+      trial_period_days: 7,
       payment_settings: {
         payment_method_types: ['card'],
         save_default_payment_method: 'on_subscription',

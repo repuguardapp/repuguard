@@ -51,7 +51,7 @@ export default async function handler(req) {
           sector: sector,
           country: country,
           plan: plan || 'pro',
-          trial_ends: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          trial_ends: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           active: true,
           lang: lang || 'fr',
         }),
