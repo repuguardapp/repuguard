@@ -272,7 +272,7 @@ async function submitForm(e) {
     showToast(t.contact_success, 'green');
     document.getElementById('contactForm').reset();
   } catch (err) {
-    showToast(t.contact_error, 'red');
+    showToast(err.message || t.contact_error, 'red');
   } finally {
     btn.disabled = false;
     btn.textContent = t.contact_send;
