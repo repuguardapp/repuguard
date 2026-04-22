@@ -244,6 +244,15 @@
   .settings-sub { font-size:11px; color:var(--text3); margin-top:2px; }
   .settings-input { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:7px 12px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; width:220px; outline:none; }
   .settings-input:focus { border-color:var(--accent); }
+
+  .onboarding-card{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05));border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;}
+  .onboarding-title{font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+  .onboarding-steps{display:flex;flex-direction:column;gap:.6rem;}
+  .onboarding-step{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted);}
+  .onboarding-step.done{color:var(--text);}
+  .onboarding-step .step-icon{width:22px;height:22px;border-radius:50%;border:2px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;color:#818cf8;}
+  .onboarding-step.done .step-icon{background:#6366f1;border-color:#6366f1;color:white;}
+  .onboarding-dismiss{font-size:.75rem;color:var(--muted2);cursor:pointer;margin-top:1rem;text-decoration:underline;display:inline-block;}
 </style>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -334,6 +343,24 @@
 
       <!-- VUE D'ENSEMBLE -->
       <div class="section active" id="sec-overview">
+        <div id="onboardingCard" style="display:none" class="onboarding-card">
+          <div class="onboarding-title">🚀 Démarrage rapide</div>
+          <div class="onboarding-steps">
+            <div class="onboarding-step done" data-step="account">
+              <div class="step-icon">✓</div>
+              <span>Compte créé et activé</span>
+            </div>
+            <div class="onboarding-step" data-step="google">
+              <div class="step-icon">2</div>
+              <span>Connecter votre profil Google Business</span>
+            </div>
+            <div class="onboarding-step" data-step="reviews">
+              <div class="step-icon">3</div>
+              <span>Recevoir votre première alerte avis</span>
+            </div>
+          </div>
+          <span class="onboarding-dismiss" onclick="localStorage.setItem('onboarding-dismissed','1');document.getElementById('onboardingCard').style.display='none'">Ne plus afficher</span>
+        </div>
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">📊 Score global</div><div class="kpi-value accent">4.5</div><div class="kpi-delta up">↑ +0.2 cette semaine</div></div>
           <div class="kpi-card"><div class="kpi-label">💬 Avis analysés</div><div class="kpi-value">847</div><div class="kpi-delta up">↑ +12 cette semaine</div></div>
@@ -663,6 +690,22 @@
         trialBanner.style.display = 'flex';
         const daysEl = document.getElementById('trialDaysLeft');
         if (daysEl) daysEl.textContent = daysLeft;
+      }
+    }
+
+    // Onboarding checklist
+    const onboardingCard = document.getElementById('onboardingCard');
+    if (onboardingCard) {
+      const createdAt = new Date(client.created_at || Date.now());
+      const isNew = (Date.now() - createdAt.getTime()) < 3 * 24 * 60 * 60 * 1000;
+      const hasReviews = reviews && reviews.length > 0;
+      const dismissed = localStorage.getItem('onboarding-dismissed');
+      if (isNew && !dismissed) {
+        onboardingCard.style.display = 'block';
+        // Marquer les étapes complétées
+        if (client.google_place_id) onboardingCard.querySelector('[data-step="google"]')?.classList.add('done');
+        if (hasReviews) onboardingCard.querySelector('[data-step="reviews"]')?.classList.add('done');
+        if (client.email) onboardingCard.querySelector('[data-step="account"]')?.classList.add('done');
       }
     }
 
