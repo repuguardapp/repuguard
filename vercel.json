@@ -9,7 +9,8 @@
     { "source": "/contact", "destination": "/contact.html" },
     { "source": "/restaurants", "destination": "/restaurants.html" },
     { "source": "/hotels", "destination": "/hotels.html" },
-    { "source": "/medecins", "destination": "/medecins.html" }
+    { "source": "/medecins", "destination": "/medecins.html" },
+    { "source": "/referral", "destination": "/referral.html" }
   ],
   "headers": [
     {

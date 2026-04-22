@@ -85,6 +85,25 @@ export default async function handler(req, res) {
       }
     }
 
+    // J1 onboarding emails — envoyé ~24h après l'inscription (trial_ends dans 5.5–6.5 jours)
+    const j1Start = new Date(Date.now() + 5.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j1End   = new Date(Date.now() + 6.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j1Res = await fetch(
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&trial_ends=gte.${j1Start}&trial_ends=lte.${j1End}&select=email,first_name,business_name,lang`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    const j1Clients = await j1Res.json();
+    if (Array.isArray(j1Clients) && j1Clients.length > 0) {
+      console.log(`Sending J1 onboarding email to ${j1Clients.length} clients`);
+      for (const c of j1Clients) {
+        await fetch(`${baseUrl}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'onboarding_j1', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+        });
+      }
+    }
+
     // J3 onboarding emails — find trialing users on day 3 (trial_ends in 3.5–4.5 days)
     const j3Start = new Date(Date.now() + 3.5 * 24 * 60 * 60 * 1000).toISOString();
     const j3End   = new Date(Date.now() + 4.5 * 24 * 60 * 60 * 1000).toISOString();
@@ -108,6 +127,7 @@ export default async function handler(req, res) {
       google: { synced: succeeded, total: clients.length },
       trustpilot: { synced: tpResults.filter(r => r.success).length, total: tpClients.length },
       results,
+      j1_emails: Array.isArray(j1Clients) ? j1Clients.length : 0,
       j3_emails: Array.isArray(j3Clients) ? j3Clients.length : 0,
       j7_emails: Array.isArray(j7Clients) ? j7Clients.length : 0,
     });

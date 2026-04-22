@@ -248,6 +248,10 @@
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+<div id="trialBanner" style="display:none;background:linear-gradient(90deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border-bottom:1px solid rgba(99,102,241,.25);padding:.65rem 5%;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+  <span style="font-size:.82rem;color:#a5b4fc;">⏳ Votre essai se termine dans <strong id="trialDaysLeft">7</strong> jours — Passez en annuel et économisez 20%</span>
+  <button onclick="manageSubscription()" style="background:#6366f1;color:white;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
+</div>
 <div class="layout">
 
   <!-- SIDEBAR -->
@@ -648,6 +652,19 @@
   // RENDER
   function render(d) {
     const { client, stats, recentAlerts, allAlerts, pendingResponses, reviews } = d;
+
+    // Bandeau trial
+    const trialBanner = document.getElementById('trialBanner');
+    if (trialBanner && RG.client.trial_ends) {
+      const trialEnd = new Date(RG.client.trial_ends);
+      const now = new Date();
+      const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+      if (daysLeft > 0) {
+        trialBanner.style.display = 'flex';
+        const daysEl = document.getElementById('trialDaysLeft');
+        if (daysEl) daysEl.textContent = daysLeft;
+      }
+    }
 
     // Sidebar
     document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';

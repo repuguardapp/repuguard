@@ -901,6 +901,44 @@ export default async function handler(req, res) {
     }
 
     // ══════════════════════════════════
+    // EMAIL ONBOARDING J1
+    // ══════════════════════════════════
+    if (type === 'onboarding_j1') {
+      subject = eT(lang, 'j1_subject', {business: businessName || 'votre établissement'});
+      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;letter-spacing:-0.5px;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:40px;">
+        <p style="margin:0 0 8px;font-size:15px;color:#f1f5f9;font-weight:600;">${eT(lang,'hello',{name:firstName})}</p>
+        <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang,'j1_title',{business:businessName||'votre établissement'})}</h1>
+
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#818cf8;margin-bottom:12px;">◈ ${eT(lang,'j1_ready')}</div>
+          <div style="margin-bottom:8px;font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check1')}</div>
+          <div style="margin-bottom:8px;font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check2')}</div>
+          <div style="font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check3')}</div>
+        </div>
+
+        <p style="font-size:14px;color:#94a3b8;line-height:1.7;margin:0 0 24px;">${eT(lang,'j1_body',{business:businessName||'votre établissement'})}</p>
+
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j1_cta')}</a>
+        </div>
+        <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
+      </td></tr>
+      <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
     // EMAIL ONBOARDING J3
     // ══════════════════════════════════
     if (type === 'onboarding_j3') {
