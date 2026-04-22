@@ -437,35 +437,35 @@
           <div class="form-group">
             <label data-i18n="field_firstname">Prénom</label>
             <input type="text" id="firstName" placeholder="Marie" autocomplete="given-name">
-            <div class="error-msg" id="err-firstName">Prénom requis</div>
+            <div class="error-msg" id="err-firstName" data-i18n="err_required">Prénom requis</div>
           </div>
           <div class="form-group">
             <label data-i18n="field_lastname">Nom</label>
             <input type="text" id="lastName" placeholder="Dupont" autocomplete="family-name">
-            <div class="error-msg" id="err-lastName">Nom requis</div>
+            <div class="error-msg" id="err-lastName" data-i18n="err_required">Nom requis</div>
           </div>
         </div>
         <div class="form-group">
           <label>Email</label>
           <input type="email" id="email" placeholder="marie@monentreprise.fr" autocomplete="email">
-          <div class="error-msg" id="err-email">Email valide requis</div>
+          <div class="error-msg" id="err-email" data-i18n="err_email_invalid">Email valide requis</div>
         </div>
         <div class="form-group">
           <label>
             <span data-i18n="field_password_label">Mot de passe</span>
-            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box">Min. 8 caractères, 1 majuscule, 1 chiffre</div></div>
+            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="pw_tooltip">Min. 8 caractères, 1 majuscule, 1 chiffre</div></div>
           </label>
           <input type="password" id="password" placeholder="••••••••" oninput="checkPwStrength(this.value)">
           <div class="pw-strength" id="pwStrength">
             <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
             <div class="strength-text" id="strengthText"></div>
           </div>
-          <div class="error-msg" id="err-password">Minimum 8 caractères requis</div>
+          <div class="error-msg" id="err-password" data-i18n="err_pw_min">Minimum 8 caractères requis</div>
         </div>
         <div class="form-group">
           <label data-i18n="field_confirm_pw">Confirmer le mot de passe</label>
           <input type="password" id="passwordConfirm" placeholder="••••••••">
-          <div class="error-msg" id="err-passwordConfirm">Les mots de passe ne correspondent pas</div>
+          <div class="error-msg" id="err-passwordConfirm" data-i18n="err_pw_mismatch">Les mots de passe ne correspondent pas</div>
         </div>
         <div class="btn-row">
           <button class="btn-submit" onclick="goStep2()">
@@ -481,24 +481,24 @@
         <div class="form-group">
           <label data-i18n="field_business">Nom de votre établissement / marque</label>
           <input type="text" id="businessName" placeholder="Restaurant Le Provençal">
-          <div class="error-msg" id="err-businessName">Nom requis</div>
+          <div class="error-msg" id="err-businessName" data-i18n="err_required">Nom requis</div>
         </div>
         <div class="form-group">
           <label data-i18n="field_sector">Secteur d'activité</label>
           <select id="sector">
-            <option value="">Sélectionner votre secteur...</option>
-            <option value="restaurant">Restaurant / Café / Bar</option>
-            <option value="hotel">Hôtel / Hébergement</option>
-            <option value="medical">Médical / Santé / Bien-être</option>
-            <option value="retail">Commerce / Boutique</option>
-            <option value="service">Services professionnels</option>
-            <option value="beauty">Beauté / Coiffure / Spa</option>
-            <option value="education">Éducation / Formation</option>
-            <option value="real-estate">Immobilier</option>
-            <option value="influencer">Créateur de contenu / Influenceur</option>
-            <option value="other">Autre</option>
+            <option value="" data-i18n="sector_placeholder">Sélectionner votre secteur...</option>
+            <option value="restaurant" data-i18n="sector_restaurant">Restaurant / Café / Bar</option>
+            <option value="hotel" data-i18n="sector_hotel">Hôtel / Hébergement</option>
+            <option value="medical" data-i18n="sector_medical">Médical / Santé / Bien-être</option>
+            <option value="retail" data-i18n="sector_retail">Commerce / Boutique</option>
+            <option value="service" data-i18n="sector_service">Services professionnels</option>
+            <option value="beauty" data-i18n="sector_beauty">Beauté / Coiffure / Spa</option>
+            <option value="education" data-i18n="sector_education">Éducation / Formation</option>
+            <option value="real-estate" data-i18n="sector_real_estate">Immobilier</option>
+            <option value="influencer" data-i18n="sector_influencer">Créateur de contenu / Influenceur</option>
+            <option value="other" data-i18n="sector_other">Autre</option>
           </select>
-          <div class="error-msg" id="err-sector">Secteur requis</div>
+          <div class="error-msg" id="err-sector" data-i18n="err_sector_required">Secteur requis</div>
         </div>
         <div class="form-group">
           <label data-i18n="field_website">Site web ou profil Google (optionnel)</label>
@@ -520,8 +520,8 @@
         </div>
         <div class="form-group">
           <label>
-            Plateformes à surveiller
-            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box">Vous pourrez en ajouter dans votre dashboard</div></div>
+            <span data-i18n="field_platforms">Plateformes à surveiller</span>
+            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="platforms_tooltip">Vous pourrez en ajouter dans votre dashboard</div></div>
           </label>
           <div class="platform-tags">
             <span class="platform-tag selected" onclick="this.classList.toggle('selected')">Google</span>
@@ -575,14 +575,14 @@
             <div id="cardExpiry" class="stripe-field"></div>
           </div>
           <div class="form-group">
-            <label>Code CVV <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box">3 chiffres au dos de votre carte</div></div></label>
+            <label>Code CVV <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="cvv_tooltip">3 chiffres au dos de votre carte</div></div></label>
             <div id="cardCvc" class="stripe-field"></div>
           </div>
         </div>
         <div class="form-group">
           <label data-i18n="field_card_name">Nom sur la carte</label>
           <input type="text" id="cardName" placeholder="MARIE DUPONT" style="text-transform:uppercase">
-          <div class="error-msg" id="err-cardName">Nom requis</div>
+          <div class="error-msg" id="err-cardName" data-i18n="err_required">Nom requis</div>
         </div>
 
         <div class="payment-error" id="paymentError"></div>
@@ -590,14 +590,14 @@
         <div class="btn-row">
           <button class="btn-back" onclick="goStep(2)" data-i18n="btn_back">← Retour</button>
           <button class="btn-submit" id="submitBtn" onclick="handlePayment()">
-            <span id="submitText">🔒 Démarrer gratuitement</span>
+            <span id="submitText" data-i18n="btn_start_free">🔒 Démarrer gratuitement</span>
             <div class="spinner" id="spinPayment"></div>
           </button>
         </div>
 
         <div class="legal-text">
-          En continuant, vous acceptez nos <a href="#">Conditions d'utilisation</a> et notre <a href="#">Politique de confidentialité</a>.<br>
-          Votre carte sera débitée de <strong id="legalAmount">69€</strong>/mois après 7 jours d'essai gratuit. Annulable à tout moment.
+          <span data-i18n="legal_continue">En continuant, vous acceptez nos</span> <a href="#" data-i18n="legal_terms">Conditions d'utilisation</a> <span data-i18n="legal_and">et notre</span> <a href="#" data-i18n="legal_privacy">Politique de confidentialité</a>.<br>
+          <span data-i18n="legal_charge_prefix">Votre carte sera débitée de</span> <strong id="legalAmount">69€</strong><span data-i18n="legal_charge_suffix">/mois après 7 jours d'essai gratuit. Annulable à tout moment.</span>
         </div>
       </div>
 
@@ -607,13 +607,13 @@
     <div class="success-screen" id="successScreen">
       <div class="success-icon">🎉</div>
       <h2 data-i18n="success_title">Bienvenue sur RepuGuard !</h2>
-      <p>Votre compte est créé. Votre réputation est maintenant surveillée.<br>Vérifiez votre email pour confirmer votre adresse.</p>
+      <p><span data-i18n="success_subtitle">Votre compte est créé. Votre réputation est maintenant surveillée.</span><br><span data-i18n="success_confirm_hint">Vérifiez votre email pour confirmer votre adresse.</span></p>
       <div class="success-steps">
-        <div class="success-step"><div class="success-step-num">1</div><div>Confirmez votre email — un lien vous a été envoyé à <strong id="confirmedEmail"></strong></div></div>
-        <div class="success-step"><div class="success-step-num">2</div><div>Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div></div>
-        <div class="success-step"><div class="success-step-num">3</div><div>Configurez vos préférences d'alerte (email, SMS, fréquence)</div></div>
+        <div class="success-step"><div class="success-step-num">1</div><div><span data-i18n="success_step1_prefix">Confirmez votre email — un lien vous a été envoyé à</span> <strong id="confirmedEmail"></strong></div></div>
+        <div class="success-step"><div class="success-step-num">2</div><div data-i18n="success_step2">Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div></div>
+        <div class="success-step"><div class="success-step-num">3</div><div data-i18n="success_step3">Configurez vos préférences d'alerte (email, SMS, fréquence)</div></div>
       </div>
-      <a href="/dashboard" class="btn-submit" style="text-decoration:none;justify-content:center">
+      <a href="/dashboard" class="btn-submit" style="text-decoration:none;justify-content:center" data-i18n="btn_go_dashboard">
         Accéder à mon dashboard →
       </a>
     </div>
@@ -646,7 +646,7 @@
     document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
     selectedPlan = { id, price, name };
-    document.getElementById('summaryPlan').textContent = name + ' — ' + price + '€/mois';
+    document.getElementById('summaryPlan').textContent = name + ' — ' + price + '€' + t('plan_month');
     document.getElementById('legalAmount').textContent = price + '€';
   }
 
@@ -690,17 +690,17 @@
     if (!document.getElementById('firstName').value.trim()) { showErr('firstName'); ok = false; }
     if (!document.getElementById('lastName').value.trim()) { showErr('lastName'); ok = false; }
     const email = document.getElementById('email').value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email','Email valide requis'); ok = false; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email'); ok = false; }
     const pw = document.getElementById('password').value;
-    if (pw.length < 8) { showErr('password','Minimum 8 caractères'); ok = false; }
-    if (pw !== document.getElementById('passwordConfirm').value) { showErr('passwordConfirm','Les mots de passe ne correspondent pas'); ok = false; }
+    if (pw.length < 8) { showErr('password'); ok = false; }
+    if (pw !== document.getElementById('passwordConfirm').value) { showErr('passwordConfirm'); ok = false; }
     return ok;
   }
 
   function validateStep2() {
     clearErrors(); let ok = true;
     if (!document.getElementById('businessName').value.trim()) { showErr('businessName'); ok = false; }
-    if (!document.getElementById('sector').value) { showErr('sector','Sélectionnez votre secteur'); ok = false; }
+    if (!document.getElementById('sector').value) { showErr('sector'); ok = false; }
     return ok;
   }
 
@@ -736,7 +736,7 @@
     const errDiv = document.getElementById('paymentError');
 
     if (!stripe || !cardNumber) {
-      errDiv.textContent = 'Le module de paiement sécurisé n\'a pas pu se charger. Veuillez rafraîchir la page.';
+      errDiv.textContent = t('stripe_load_error');
       errDiv.style.display = 'block';
       return;
     }
@@ -757,7 +757,7 @@
 
       showSuccess();
     } catch(err) {
-      errDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+      errDiv.textContent = t('error_payment_generic');
       errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none';
     }
   }
