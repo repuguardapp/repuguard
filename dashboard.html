@@ -258,7 +258,7 @@
 </head>
 <body>
 <div id="trialBanner" style="display:none;background:linear-gradient(90deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border-bottom:1px solid rgba(99,102,241,.25);padding:.65rem 5%;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
-  <span style="font-size:.82rem;color:#a5b4fc;">⏳ Votre essai se termine dans <strong id="trialDaysLeft">7</strong> jours — Passez en annuel et économisez 20%</span>
+  <span id="trialBannerMsg" style="font-size:.82rem;color:#a5b4fc;">⏳ Votre essai se termine dans <strong id="trialDaysLeft">7</strong> jours — Passez en annuel et économisez 20%</span>
   <button onclick="manageSubscription()" style="background:#6366f1;color:white;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
 </div>
 <div class="layout">
@@ -773,6 +773,18 @@
         trialBanner.style.display = 'flex';
         const daysEl = document.getElementById('trialDaysLeft');
         if (daysEl) daysEl.textContent = daysLeft;
+        const bannerMsg = document.getElementById('trialBannerMsg');
+        if (daysLeft <= 1) {
+          // Last day: red urgent
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(239,68,68,.25),rgba(220,38,38,.2))';
+          trialBanner.style.borderBottomColor = 'rgba(239,68,68,.5)';
+          if (bannerMsg) { bannerMsg.style.color = '#fca5a5'; bannerMsg.innerHTML = '🚨 <strong>Dernière chance</strong> — Votre essai expire dans ' + daysLeft + ' jour — Activez votre plan maintenant pour ne pas perdre vos données.'; }
+        } else if (daysLeft <= 2) {
+          // 2 days: orange warning
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(251,146,60,.2),rgba(245,158,11,.15))';
+          trialBanner.style.borderBottomColor = 'rgba(251,146,60,.4)';
+          if (bannerMsg) { bannerMsg.style.color = '#fdba74'; bannerMsg.innerHTML = '⚠️ Plus que <strong>' + daysLeft + ' jours</strong> d\'essai — Passez en annuel et économisez 20%.'; }
+        }
       }
     }
 
