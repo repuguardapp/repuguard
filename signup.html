@@ -745,7 +745,7 @@
       const subData = await subRes.json();
       if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referredBy:localStorage.getItem('rg-ref')||null }) });
       const authData = await authRes.json();
       if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
@@ -767,6 +767,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     initI18n();
     var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
+    // Capture referral code from URL
+    const refCode = new URLSearchParams(window.location.search).get('ref');
+    if (refCode) localStorage.setItem('rg-ref', refCode);
     document.querySelectorAll('input, select').forEach(el => {
       el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });
     });
