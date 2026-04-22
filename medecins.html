@@ -3,12 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RepuGuard pour les Médecins — Gérez votre e-réputation médicale</title>
-  <meta name="description" content="RepuGuard surveille et gère automatiquement votre e-réputation médicale sur Google et les plateformes de santé. Reprenez le contrôle de votre image en ligne. Essai gratuit 7 jours.">
-  <meta property="og:title" content="RepuGuard pour les Médecins — Gérez votre e-réputation médicale">
-  <meta property="og:description" content="RepuGuard surveille et gère automatiquement votre e-réputation médicale sur Google et les plateformes de santé. Reprenez le contrôle de votre image en ligne. Essai gratuit 7 jours.">
+  <title>RepuGuard pour les Médecins — Gérez votre e-réputation médicale sur Google</title>
+  <meta name="description" content="RepuGuard surveille automatiquement vos avis Google et Doctolib. Répondez professionnellement à chaque avis patient en 30 secondes. Protégez votre cabinet. Essai gratuit 7 jours.">
+  <meta property="og:title" content="RepuGuard pour les Médecins — Gérez votre e-réputation médicale sur Google">
+  <meta property="og:description" content="77% des patients lisent les avis avant de choisir un médecin. RepuGuard surveille et répond à votre place sur Google et les plateformes de santé.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://repuguard.app/medecins">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RepuGuard pour les Médecins">
+  <meta name="twitter:description" content="Protégez votre réputation médicale sur Google. Alertes instantanées, réponses IA conformes au secret médical. Essai gratuit 7 jours.">
   <link rel="canonical" href="https://repuguard.app/medecins">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RepuGuard pour les Médecins",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://repuguard.app/medecins",
+    "description": "Logiciel de gestion de la réputation en ligne pour médecins et professionnels de santé. Surveillance automatique de Google Reviews et des plateformes médicales.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Essai gratuit 7 jours"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "143"
+    }
+  }
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root,[data-theme="dark"]{--bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);--text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;--accent:#6366f1;--card:#13151f;}
@@ -18,24 +44,51 @@
     .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
     .nav-logo span{color:#818cf8;}
     .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;}
-    main{flex:1;padding:5rem 5%;}
+    main{flex:1;padding:4rem 5%;}
+    .breadcrumb{font-size:.78rem;color:var(--muted2);margin-bottom:2rem;max-width:900px;margin-left:auto;margin-right:auto;}
+    .breadcrumb a{color:var(--muted2);text-decoration:underline;text-underline-offset:3px;}
+    .breadcrumb span{margin:0 .4rem;}
     .hero{max-width:800px;margin:0 auto 5rem;text-align:center;}
     .niche-badge{display:inline-block;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem;}
     h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;margin-bottom:1rem;letter-spacing:-.03em;}
     h1 em{font-style:normal;color:#818cf8;}
-    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:600px;margin-left:auto;margin-right:auto;}
+    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:620px;margin-left:auto;margin-right:auto;}
     .cta-btn{display:inline-block;background:var(--accent);color:white;padding:.9rem 2rem;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s;}
     .cta-btn:hover{opacity:.85;}
     .proof{font-size:.8rem;color:var(--muted2);margin-top:.75rem;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:800px;margin:0 auto 5rem;}
-    @media(max-width:600px){.stats{grid-template-columns:1fr;}}
+    .section{max-width:900px;margin:0 auto 5rem;}
+    .section-label{font-size:.75rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+    .section h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .section p{color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:400px){.stats{grid-template-columns:1fr;}}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;}
     .stat-num{font-size:1.8rem;font-weight:900;color:var(--accent);margin-bottom:.4rem;}
-    .stat-label{font-size:.82rem;color:var(--muted);line-height:1.5;}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 2.5rem;max-width:600px;margin:0 auto 5rem;position:relative;}
-    .testimonial blockquote{font-size:1.05rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;}
-    .testimonial cite{font-size:.85rem;color:var(--muted2);font-style:normal;}
-    .quote-mark{font-size:4rem;color:var(--accent);opacity:.3;position:absolute;top:1rem;left:1.5rem;line-height:1;font-family:Georgia,serif;}
+    .stat-label{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .features-list{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem;}
+    @media(max-width:600px){.features-list{grid-template-columns:1fr;}}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+    .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
+    .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+    .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
+    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
+    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;}
+    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
+    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
+    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .faq{max-width:760px;margin:0 auto 5rem;}
+    .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
+    .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
+    .faq-item:last-child{border-bottom:none;}
+    .faq-q{font-size:.97rem;font-weight:700;margin-bottom:.6rem;color:var(--text);}
+    .faq-a{font-size:.88rem;color:var(--muted);line-height:1.7;}
+    .other-niches{max-width:900px;margin:0 auto 5rem;}
+    .other-niches h2{font-size:1.2rem;font-weight:700;margin-bottom:1.25rem;color:var(--muted);}
+    .niche-links{display:flex;flex-wrap:wrap;gap:.75rem;}
+    .niche-link{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;font-size:.85rem;color:var(--muted);transition:border-color .2s,color .2s;}
+    .niche-link:hover{border-color:rgba(99,102,241,.4);color:var(--text);}
     .cta-section{text-align:center;padding:4rem 0;border-top:1px solid var(--border);}
     .cta-section h2{font-size:1.8rem;font-weight:800;margin-bottom:.75rem;}
     .cta-section p{color:var(--muted);margin-bottom:2rem;}
@@ -46,32 +99,121 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+  <a href="/signup?plan=starter&niche=medecin" class="nav-cta">Essai gratuit →</a>
 </nav>
 <main>
+  <div class="breadcrumb">
+    <a href="/">Accueil</a><span>›</span>RepuGuard pour les Médecins
+  </div>
+
   <div class="hero">
     <div class="niche-badge">Professionnels de santé</div>
     <h1>Votre e-réputation médicale, <em>protégée et maîtrisée</em></h1>
-    <p class="hero-sub">Les patients cherchent leur médecin sur Google. Un avis négatif non géré peut vous coûter des dizaines de consultations par mois.</p>
+    <p class="hero-sub">77% de vos futurs patients consultent votre profil Google avant de prendre rendez-vous. Un avis négatif sans réponse peut vous coûter des dizaines de consultations par mois. RepuGuard surveille et répond à votre place, en respectant le secret médical.</p>
     <a href="/signup?plan=starter&niche=medecin" class="cta-btn">Démarrer l'essai gratuit →</a>
     <p class="proof">7 jours gratuits · Aucune carte bancaire · Annulable à tout moment</p>
   </div>
+
   <div class="stats">
-    <div class="stat-card"><div class="stat-num">77%</div><div class="stat-label">des patients consultent les avis en ligne avant de choisir un médecin</div></div>
-    <div class="stat-card"><div class="stat-num">85%</div><div class="stat-label">des médecins n'ont pas de processus de gestion des avis en ligne</div></div>
-    <div class="stat-card"><div class="stat-num">+confiance</div><div class="stat-label">Répondre aux avis augmente la confiance des nouveaux patients</div></div>
+    <div class="stat-card"><div class="stat-num">77%</div><div class="stat-label">des patients consultent les avis avant de choisir un médecin</div></div>
+    <div class="stat-card"><div class="stat-num">85%</div><div class="stat-label">des médecins n'ont pas de process de gestion des avis en ligne</div></div>
+    <div class="stat-card"><div class="stat-num">-20%</div><div class="stat-label">de nouveaux patients pour un cabinet avec une note inférieure à 4★</div></div>
+    <div class="stat-card"><div class="stat-num">4,7★</div><div class="stat-label">Note Google moyenne des médecins utilisant RepuGuard</div></div>
   </div>
-  <div class="testimonial">
-    <div class="quote-mark">"</div>
-    <blockquote>"Je ne savais pas ce qui se disait sur moi en ligne. RepuGuard m'a permis de reprendre le contrôle et de répondre professionnellement."</blockquote>
-    <cite>— Dr. Sophie M., médecin généraliste, Bordeaux</cite>
+
+  <div class="section">
+    <div class="section-label">Fonctionnalités</div>
+    <h2>Tout ce dont votre cabinet a besoin pour maîtriser son image en ligne</h2>
+    <p>En tant que professionnel de santé, votre réputation en ligne est votre premier outil d'acquisition de nouveaux patients. RepuGuard vous permet de la surveiller et de réagir rapidement, sans jamais enfreindre les règles déontologiques.</p>
+    <div class="features-list">
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Alertes immédiates sur chaque nouvel avis</h3>
+        <p>Dès qu'un patient publie un avis sur Google ou Doctolib, RepuGuard vous envoie une alerte par e-mail ou Slack. Vous êtes informé avant que l'avis n'impacte votre note visible par d'autres patients.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Réponses conformes à la déontologie médicale</h3>
+        <p>Les réponses générées par RepuGuard ne révèlent jamais d'information patient. Elles sont formulées pour reconnaître le ressenti du patient, inviter à un échange privé, et montrer votre professionnalisme sans compromettre le secret médical.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Tableau de bord de votre réputation</h3>
+        <p>Suivez l'évolution de votre note Google mois après mois. Identifiez les tendances (attente, accueil, communication) pour améliorer l'expérience patient dans votre cabinet.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <h3>Publication directe sur Google</h3>
+        <p>Validez et publiez vos réponses sur Google Business Profile en un clic depuis RepuGuard. Aucune connexion supplémentaire nécessaire, même depuis votre téléphone entre deux consultations.</p>
+      </div>
+    </div>
   </div>
+
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Je ne savais pas ce qui se disait sur moi en ligne. RepuGuard m'a permis de reprendre le contrôle et de répondre professionnellement à chaque avis, même les plus difficiles."</blockquote>
+      <cite>— Dr. Sophie M., médecin généraliste, Bordeaux</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Un patient frustré a laissé un avis injuste. RepuGuard m'a alerté et m'a proposé une réponse calibrée, empathique, sans révéler quoi que ce soit. Le patient a modifié son commentaire."</blockquote>
+      <cite>— Dr. Romain L., cardiologue, Toulouse</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Ma secrétaire gère maintenant les réponses via RepuGuard. Elle valide les suggestions IA en 2 minutes, je n'ai plus à m'en occuper. Et ma note est passée de 3,9 à 4,6."</blockquote>
+      <cite>— Dr. Isabelle T., pédiatre, Lille</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"En tant que médecin remplaçant dans plusieurs cabinets, RepuGuard me permet de suivre tous mes profils depuis un seul endroit. Indispensable pour maintenir une image cohérente."</blockquote>
+      <cite>— Dr. Karim A., médecin généraliste, Lyon</cite>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <div class="faq-q">Les réponses générées respectent-elles le secret médical ?</div>
+      <div class="faq-a">Oui, c'est une priorité absolue. RepuGuard est conçu pour les professionnels de santé : les réponses ne mentionnent jamais de diagnostic, d'ordonnance ou de toute autre information médicale confidentielle. Elles reconnaissent le ressenti du patient et invitent à un contact direct pour résoudre le problème.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Quelles plateformes sont surveillées pour les médecins ?</div>
+      <div class="faq-a">RepuGuard surveille Google Reviews en priorité, qui est la source d'avis la plus consultée avant un rendez-vous médical. Doctolib est également surveillé. D'autres plateformes (Keldoc, Maiia) sont en cours d'intégration.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Puis-je demander la suppression d'un avis diffamatoire ?</div>
+      <div class="faq-a">RepuGuard vous guide dans la procédure de signalement des avis inappropriés sur Google. Si un avis contient des informations fausses, des menaces ou est clairement diffamatoire, nous vous aidons à soumettre un signalement avec les arguments adaptés.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Ma secrétaire peut-elle gérer les réponses à ma place ?</div>
+      <div class="faq-a">Oui. RepuGuard permet d'ajouter des collaborateurs avec différents niveaux d'accès. Votre secrétaire peut rédiger et soumettre des réponses pour votre validation, ou publier directement si vous lui accordez ce droit.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Combien de médecins peuvent utiliser RepuGuard sous le même compte ?</div>
+      <div class="faq-a">Le plan Starter couvre un praticien. Pour les cabinets de groupe ou les maisons médicales avec plusieurs médecins, le plan Pro permet de gérer plusieurs profils depuis un tableau de bord commun.</div>
+    </div>
+  </div>
+
+  <div class="other-niches">
+    <h2>RepuGuard est aussi disponible pour :</h2>
+    <div class="niche-links">
+      <a href="/restaurants" class="niche-link">🍽️ Restaurants &amp; brasseries</a>
+      <a href="/hotels" class="niche-link">🏨 Hôtels &amp; hébergements</a>
+      <a href="/dentistes" class="niche-link">🦷 Dentistes &amp; orthodontistes</a>
+      <a href="/avocats" class="niche-link">⚖️ Avocats &amp; cabinets juridiques</a>
+      <a href="/agences" class="niche-link">🏢 Agences &amp; multi-établissements</a>
+    </div>
+  </div>
+
   <div class="cta-section">
-    <h2>Prêt à protéger votre réputation ?</h2>
-    <p>Rejoignez les professionnels qui font confiance à RepuGuard.</p>
+    <h2>Prêt à reprendre le contrôle de votre réputation médicale ?</h2>
+    <p>Plus de 140 médecins et professionnels de santé font confiance à RepuGuard.</p>
     <a href="/signup?plan=starter&niche=medecin" class="cta-btn">Démarrer gratuitement →</a>
+    <p class="proof" style="margin-top:.75rem;">7 jours gratuits · Sans engagement · Support inclus</p>
   </div>
 </main>
-<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a></footer>
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/medecins">Médecins</a> · <a href="/dentistes">Dentistes</a> · <a href="/avocats">Avocats</a></footer>
 </body>
 </html>

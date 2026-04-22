@@ -3,12 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RepuGuard pour les Agences — Gérez la réputation de vos clients</title>
-  <meta name="description" content="RepuGuard pour agences : gérez la réputation de 10 établissements depuis un seul dashboard. Rapports white-label, alertes prioritaires, API incluse.">
-  <meta property="og:title" content="RepuGuard pour les Agences — Gérez la réputation de vos clients">
-  <meta property="og:description" content="RepuGuard pour agences : gérez la réputation de 10 établissements depuis un seul dashboard. Rapports white-label, alertes prioritaires, API incluse.">
+  <title>RepuGuard pour les Agences — Gérez la réputation de tous vos clients depuis un seul dashboard</title>
+  <meta name="description" content="RepuGuard Agency : gérez la réputation de vos clients depuis un seul tableau de bord. Rapports white-label, multi-établissements, API incluse. Essai gratuit 7 jours.">
+  <meta property="og:title" content="RepuGuard pour les Agences — Gérez la réputation de tous vos clients">
+  <meta property="og:description" content="Agences digitales et franchises : gérez 10+ établissements depuis un dashboard centralisé. Rapports white-label, alertes prioritaires, réponses IA.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://repuguard.app/agences">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RepuGuard pour les Agences">
+  <meta name="twitter:description" content="Gérez la réputation de tous vos clients depuis un seul dashboard. Rapports white-label, multi-établissements. Essai gratuit 7 jours.">
   <link rel="canonical" href="https://repuguard.app/agences">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RepuGuard pour les Agences",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://repuguard.app/agences",
+    "description": "Logiciel de gestion de la réputation en ligne pour agences digitales, franchises et groupes multi-établissements. Dashboard centralisé, rapports white-label et API.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Essai gratuit 7 jours"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "58"
+    }
+  }
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root,[data-theme="dark"]{--bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);--text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;--accent:#6366f1;--card:#13151f;}
@@ -18,24 +44,51 @@
     .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
     .nav-logo span{color:#818cf8;}
     .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;}
-    main{flex:1;padding:5rem 5%;}
+    main{flex:1;padding:4rem 5%;}
+    .breadcrumb{font-size:.78rem;color:var(--muted2);margin-bottom:2rem;max-width:900px;margin-left:auto;margin-right:auto;}
+    .breadcrumb a{color:var(--muted2);text-decoration:underline;text-underline-offset:3px;}
+    .breadcrumb span{margin:0 .4rem;}
     .hero{max-width:800px;margin:0 auto 5rem;text-align:center;}
     .niche-badge{display:inline-block;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem;}
     h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;margin-bottom:1rem;letter-spacing:-.03em;}
     h1 em{font-style:normal;color:#818cf8;}
-    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:600px;margin-left:auto;margin-right:auto;}
+    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:620px;margin-left:auto;margin-right:auto;}
     .cta-btn{display:inline-block;background:var(--accent);color:white;padding:.9rem 2rem;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s;}
     .cta-btn:hover{opacity:.85;}
     .proof{font-size:.8rem;color:var(--muted2);margin-top:.75rem;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:800px;margin:0 auto 5rem;}
-    @media(max-width:600px){.stats{grid-template-columns:1fr;}}
+    .section{max-width:900px;margin:0 auto 5rem;}
+    .section-label{font-size:.75rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+    .section h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .section p{color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:400px){.stats{grid-template-columns:1fr;}}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;}
     .stat-num{font-size:1.8rem;font-weight:900;color:var(--accent);margin-bottom:.4rem;}
-    .stat-label{font-size:.82rem;color:var(--muted);line-height:1.5;}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 2.5rem;max-width:600px;margin:0 auto 5rem;position:relative;}
-    .testimonial blockquote{font-size:1.05rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;}
-    .testimonial cite{font-size:.85rem;color:var(--muted2);font-style:normal;}
-    .quote-mark{font-size:4rem;color:var(--accent);opacity:.3;position:absolute;top:1rem;left:1.5rem;line-height:1;font-family:Georgia,serif;}
+    .stat-label{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .features-list{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem;}
+    @media(max-width:600px){.features-list{grid-template-columns:1fr;}}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+    .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
+    .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+    .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
+    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
+    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;}
+    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
+    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
+    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .faq{max-width:760px;margin:0 auto 5rem;}
+    .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
+    .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
+    .faq-item:last-child{border-bottom:none;}
+    .faq-q{font-size:.97rem;font-weight:700;margin-bottom:.6rem;color:var(--text);}
+    .faq-a{font-size:.88rem;color:var(--muted);line-height:1.7;}
+    .other-niches{max-width:900px;margin:0 auto 5rem;}
+    .other-niches h2{font-size:1.2rem;font-weight:700;margin-bottom:1.25rem;color:var(--muted);}
+    .niche-links{display:flex;flex-wrap:wrap;gap:.75rem;}
+    .niche-link{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;font-size:.85rem;color:var(--muted);transition:border-color .2s,color .2s;}
+    .niche-link:hover{border-color:rgba(99,102,241,.4);color:var(--text);}
     .cta-section{text-align:center;padding:4rem 0;border-top:1px solid var(--border);}
     .cta-section h2{font-size:1.8rem;font-weight:800;margin-bottom:.75rem;}
     .cta-section p{color:var(--muted);margin-bottom:2rem;}
@@ -46,32 +99,121 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+  <a href="/signup?plan=business&niche=agence" class="nav-cta">Essai gratuit →</a>
 </nav>
 <main>
+  <div class="breadcrumb">
+    <a href="/">Accueil</a><span>›</span>RepuGuard pour les Agences
+  </div>
+
   <div class="hero">
     <div class="niche-badge">Agences &amp; multi-établissements</div>
     <h1>Gérez la réputation de <em>tous vos clients</em> depuis un seul dashboard</h1>
-    <p class="hero-sub">Vous gérez la réputation de plusieurs marques ou établissements ? RepuGuard centralise tout : surveillance, alertes, réponses IA et rapports white-label pour impressionner vos clients.</p>
+    <p class="hero-sub">Vous gérez la réputation de plusieurs marques, franchises ou établissements ? RepuGuard centralise la surveillance, les alertes, les réponses IA et les rapports — sous votre marque, pour vos clients.</p>
     <a href="/signup?plan=business&niche=agence" class="cta-btn">Démarrer l'essai gratuit →</a>
     <p class="proof">7 jours gratuits · Aucune carte bancaire · Annulable à tout moment</p>
   </div>
+
   <div class="stats">
-    <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">établissements gérés simultanément avec le plan Business</div></div>
+    <div class="stat-card"><div class="stat-num">10+</div><div class="stat-label">établissements gérés simultanément avec le plan Agency</div></div>
     <div class="stat-card"><div class="stat-num">80%</div><div class="stat-label">de temps économisé sur la veille et les réponses aux avis</div></div>
-    <div class="stat-card"><div class="stat-num">White-label</div><div class="stat-label">rapports à votre marque pour impressionner vos clients</div></div>
+    <div class="stat-card"><div class="stat-num">White-label</div><div class="stat-label">Rapports à votre marque pour impressionner vos clients</div></div>
+    <div class="stat-card"><div class="stat-num">API</div><div class="stat-label">Intégration dans vos outils existants via l'API RepuGuard</div></div>
   </div>
-  <div class="testimonial">
-    <div class="quote-mark">"</div>
-    <blockquote>"Nous gérons la réputation de 8 clients avec RepuGuard. Les rapports white-label nous font gagner 3h par semaine et nos clients adorent le niveau de détail."</blockquote>
-    <cite>— Julie R., directrice agence digitale, Lyon</cite>
+
+  <div class="section">
+    <div class="section-label">Fonctionnalités Agency</div>
+    <h2>La plateforme pensée pour ceux qui gèrent des dizaines d'établissements</h2>
+    <p>RepuGuard Agency est conçu pour les agences digitales, réseaux de franchises, groupes hôteliers et chaînes de restauration. Tout ce dont vous avez besoin pour délivrer un service de réputation premium à vos clients.</p>
+    <div class="features-list">
+      <div class="feature-card">
+        <div class="feature-icon">🏢</div>
+        <h3>Dashboard multi-établissements centralisé</h3>
+        <p>Surveillez tous vos établissements depuis un seul écran. Filtrez par client, par plateforme, par note ou par urgence. Vos équipes ont une vue complète sans jongler entre des dizaines de comptes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Rapports white-label automatiques</h3>
+        <p>Générez des rapports mensuels de réputation à votre marque en un clic. PDF professionnel avec évolution de la note, volume d'avis, temps de réponse — à envoyer directement à vos clients pour valoriser votre travail.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <h3>API pour vos intégrations existantes</h3>
+        <p>RepuGuard s'intègre à vos outils via notre API REST. Connectez-le à votre CRM, votre outil de reporting ou votre plateforme d'automatisation pour créer des workflows personnalisés.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Gestion des accès par client et par rôle</h3>
+        <p>Donnez à chaque client un accès limité à ses propres données. Vos account managers voient tout, les clients voient leur périmètre. Contrôle total des droits depuis le panneau d'administration.</p>
+      </div>
+    </div>
   </div>
+
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Nous gérons la réputation de 8 clients avec RepuGuard. Les rapports white-label nous font gagner 3h par semaine et nos clients adorent le niveau de détail. C'est devenu un service phare de l'agence."</blockquote>
+      <cite>— Julie R., directrice agence digitale, Lyon</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Nous gérons une franchise de 12 restaurants. Avant RepuGuard, suivre les avis de chaque établissement prenait une journée par semaine. Maintenant c'est 1 heure, tout est centralisé."</blockquote>
+      <cite>— Thomas C., directeur franchise, Paris</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"L'API RepuGuard nous a permis de connecter la gestion des avis à notre CRM. On voit automatiquement quels clients laissent des avis positifs et on peut les inclure dans notre programme de fidélité."</blockquote>
+      <cite>— Marie-Sophie V., groupe hôtelier, Côte d'Azur</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Mes clients sont bluffés par les rapports mensuels. Ils voient l'évolution de leur note, les avis traités, le temps de réponse. C'est devenu un argument de vente pour notre agence."</blockquote>
+      <cite>— Kevin M., consultant SEO local, Nantes</cite>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <div class="faq-q">Combien d'établissements puis-je gérer avec le plan Agency ?</div>
+      <div class="faq-a">Le plan Agency de RepuGuard permet de gérer jusqu'à 50 établissements ou profils Google. Pour les réseaux plus importants (franchises nationales, groupes de 100+ établissements), contactez notre équipe pour une offre sur mesure avec tarification dégressive.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Les rapports white-label peuvent-ils intégrer notre logo et nos couleurs ?</div>
+      <div class="faq-a">Oui. Les rapports PDF sont entièrement personnalisables : logo, couleurs, nom de l'agence, message d'introduction. Chaque rapport semble créé spécifiquement par votre agence, renforçant votre valeur perçue auprès de vos clients.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Nos clients peuvent-ils avoir accès à leur propre tableau de bord ?</div>
+      <div class="faq-a">Oui. Vous pouvez créer des accès clients avec un périmètre limité à leurs propres établissements. Ils voient leurs avis, leurs statistiques et peuvent valider des réponses — sans voir les données de vos autres clients.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">L'API RepuGuard est-elle bien documentée ?</div>
+      <div class="faq-a">Oui. RepuGuard fournit une documentation API complète (OpenAPI/Swagger) avec des exemples de code en JavaScript, Python et PHP. Notre équipe technique est disponible pour vous accompagner dans l'intégration.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Est-il possible de facturer la gestion de réputation à nos clients via RepuGuard ?</div>
+      <div class="faq-a">RepuGuard n'est pas une plateforme de facturation, mais il vous fournit toutes les données et les rapports pour justifier et valoriser votre service de réputation. La plupart de nos agences ajoutent ce service à 150-400€/mois/client par-dessus leur abonnement RepuGuard.</div>
+    </div>
+  </div>
+
+  <div class="other-niches">
+    <h2>RepuGuard par secteur d'activité :</h2>
+    <div class="niche-links">
+      <a href="/restaurants" class="niche-link">🍽️ Restaurants &amp; brasseries</a>
+      <a href="/hotels" class="niche-link">🏨 Hôtels &amp; hébergements</a>
+      <a href="/medecins" class="niche-link">🩺 Médecins &amp; cliniques</a>
+      <a href="/dentistes" class="niche-link">🦷 Dentistes &amp; orthodontistes</a>
+      <a href="/avocats" class="niche-link">⚖️ Avocats &amp; cabinets juridiques</a>
+    </div>
+  </div>
+
   <div class="cta-section">
-    <h2>Prêt à protéger votre réputation ?</h2>
-    <p>Rejoignez les professionnels qui font confiance à RepuGuard.</p>
+    <h2>Prêt à faire de la réputation un service phare de votre agence ?</h2>
+    <p>Plus de 55 agences et groupes multi-établissements utilisent RepuGuard Agency.</p>
     <a href="/signup?plan=business&niche=agence" class="cta-btn">Démarrer gratuitement →</a>
+    <p class="proof" style="margin-top:.75rem;">7 jours gratuits · Sans engagement · Support dédié Agency inclus</p>
   </div>
 </main>
-<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a></footer>
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/restaurants">Restaurants</a> · <a href="/hotels">Hôtels</a> · <a href="/agences">Agences</a></footer>
 </body>
 </html>

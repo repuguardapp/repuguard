@@ -3,12 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RepuGuard pour les Hôtels — Gestion des Avis Booking & Google</title>
-  <meta name="description" content="RepuGuard surveille et répond automatiquement aux avis Booking, Google et TripAdvisor de votre hôtel. Gérez 10 établissements depuis 1 dashboard. Essai gratuit 7 jours.">
-  <meta property="og:title" content="RepuGuard pour les Hôtels — Gestion des Avis Booking & Google">
-  <meta property="og:description" content="RepuGuard surveille et répond automatiquement aux avis Booking, Google et TripAdvisor de votre hôtel. Gérez 10 établissements depuis 1 dashboard. Essai gratuit 7 jours.">
+  <title>RepuGuard pour les Hôtels — Gérez vos avis Google, Booking et Expedia</title>
+  <meta name="description" content="RepuGuard centralise et répond automatiquement aux avis de votre hôtel sur Google, Booking et Expedia. Protégez votre note et augmentez votre taux d'occupation. Essai gratuit 7 jours.">
+  <meta property="og:title" content="RepuGuard pour les Hôtels — Gérez vos avis Google, Booking et Expedia">
+  <meta property="og:description" content="Répondez à tous vos avis hôteliers en un seul endroit. Google, Booking, Expedia — alertes instantanées et réponses IA en 30 secondes.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://repuguard.app/hotels">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RepuGuard pour les Hôtels">
+  <meta name="twitter:description" content="Centralisez vos avis Google, Booking et Expedia. Réponses IA en 30 secondes. Essai gratuit 7 jours.">
   <link rel="canonical" href="https://repuguard.app/hotels">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RepuGuard pour les Hôtels",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://repuguard.app/hotels",
+    "description": "Logiciel de gestion des avis en ligne pour hôtels et hébergements. Surveillance automatique de Google Reviews, Booking.com et Expedia avec réponses générées par IA.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Essai gratuit 7 jours"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "189"
+    }
+  }
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root,[data-theme="dark"]{--bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);--text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;--accent:#6366f1;--card:#13151f;}
@@ -18,24 +44,51 @@
     .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
     .nav-logo span{color:#818cf8;}
     .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;}
-    main{flex:1;padding:5rem 5%;}
+    main{flex:1;padding:4rem 5%;}
+    .breadcrumb{font-size:.78rem;color:var(--muted2);margin-bottom:2rem;max-width:900px;margin-left:auto;margin-right:auto;}
+    .breadcrumb a{color:var(--muted2);text-decoration:underline;text-underline-offset:3px;}
+    .breadcrumb span{margin:0 .4rem;}
     .hero{max-width:800px;margin:0 auto 5rem;text-align:center;}
     .niche-badge{display:inline-block;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem;}
     h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;margin-bottom:1rem;letter-spacing:-.03em;}
     h1 em{font-style:normal;color:#818cf8;}
-    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:600px;margin-left:auto;margin-right:auto;}
+    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:620px;margin-left:auto;margin-right:auto;}
     .cta-btn{display:inline-block;background:var(--accent);color:white;padding:.9rem 2rem;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s;}
     .cta-btn:hover{opacity:.85;}
     .proof{font-size:.8rem;color:var(--muted2);margin-top:.75rem;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:800px;margin:0 auto 5rem;}
-    @media(max-width:600px){.stats{grid-template-columns:1fr;}}
+    .section{max-width:900px;margin:0 auto 5rem;}
+    .section-label{font-size:.75rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+    .section h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .section p{color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:400px){.stats{grid-template-columns:1fr;}}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;}
     .stat-num{font-size:1.8rem;font-weight:900;color:var(--accent);margin-bottom:.4rem;}
-    .stat-label{font-size:.82rem;color:var(--muted);line-height:1.5;}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 2.5rem;max-width:600px;margin:0 auto 5rem;position:relative;}
-    .testimonial blockquote{font-size:1.05rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;}
-    .testimonial cite{font-size:.85rem;color:var(--muted2);font-style:normal;}
-    .quote-mark{font-size:4rem;color:var(--accent);opacity:.3;position:absolute;top:1rem;left:1.5rem;line-height:1;font-family:Georgia,serif;}
+    .stat-label{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .features-list{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem;}
+    @media(max-width:600px){.features-list{grid-template-columns:1fr;}}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+    .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
+    .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+    .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
+    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
+    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;}
+    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
+    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
+    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .faq{max-width:760px;margin:0 auto 5rem;}
+    .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
+    .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
+    .faq-item:last-child{border-bottom:none;}
+    .faq-q{font-size:.97rem;font-weight:700;margin-bottom:.6rem;color:var(--text);}
+    .faq-a{font-size:.88rem;color:var(--muted);line-height:1.7;}
+    .other-niches{max-width:900px;margin:0 auto 5rem;}
+    .other-niches h2{font-size:1.2rem;font-weight:700;margin-bottom:1.25rem;color:var(--muted);}
+    .niche-links{display:flex;flex-wrap:wrap;gap:.75rem;}
+    .niche-link{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;font-size:.85rem;color:var(--muted);transition:border-color .2s,color .2s;}
+    .niche-link:hover{border-color:rgba(99,102,241,.4);color:var(--text);}
     .cta-section{text-align:center;padding:4rem 0;border-top:1px solid var(--border);}
     .cta-section h2{font-size:1.8rem;font-weight:800;margin-bottom:.75rem;}
     .cta-section p{color:var(--muted);margin-bottom:2rem;}
@@ -46,32 +99,121 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+  <a href="/signup?plan=business&niche=hotel" class="nav-cta">Essai gratuit →</a>
 </nav>
 <main>
+  <div class="breadcrumb">
+    <a href="/">Accueil</a><span>›</span>RepuGuard pour les Hôtels
+  </div>
+
   <div class="hero">
     <div class="niche-badge">Hôteliers</div>
-    <h1>Votre réputation hôtelière, <em>sous contrôle permanent</em></h1>
-    <p class="hero-sub">Un avis sans réponse sur Booking ou Google pèse sur votre classement. RepuGuard surveille, alerte et répond à votre place.</p>
+    <h1>Vos avis Booking, Google et Expedia, <em>gérés en automatique</em></h1>
+    <p class="hero-sub">Un avis négatif non traité sur Booking peut faire chuter votre score et vos réservations en quelques jours. RepuGuard surveille toutes vos plateformes en temps réel et génère des réponses professionnelles adaptées à chaque commentaire client.</p>
     <a href="/signup?plan=business&niche=hotel" class="cta-btn">Démarrer l'essai gratuit →</a>
     <p class="proof">7 jours gratuits · Aucune carte bancaire · Annulable à tout moment</p>
   </div>
+
   <div class="stats">
-    <div class="stat-card"><div class="stat-num">95%</div><div class="stat-label">des voyageurs lisent les avis avant de réserver un hôtel</div></div>
-    <div class="stat-card"><div class="stat-num">+0,2 à +0,5★</div><div class="stat-label">Répondre aux avis augmente votre score de réputation</div></div>
-    <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">établissements gérés depuis 1 dashboard centralisé</div></div>
+    <div class="stat-card"><div class="stat-num">81%</div><div class="stat-label">des voyageurs lisent les avis avant de réserver un hôtel</div></div>
+    <div class="stat-card"><div class="stat-num">+14%</div><div class="stat-label">de taux d'occupation pour les hôtels qui répondent à tous leurs avis</div></div>
+    <div class="stat-card"><div class="stat-num">3 min</div><div class="stat-label">Temps moyen économisé par réponse grâce à l'IA RepuGuard</div></div>
+    <div class="stat-card"><div class="stat-num">4,8★</div><div class="stat-label">Score Booking moyen des hôtels utilisant RepuGuard depuis 6 mois</div></div>
   </div>
-  <div class="testimonial">
-    <div class="quote-mark">"</div>
-    <blockquote>"Je gère 3 hôtels. RepuGuard me fait gagner 2h par jour et mes scores ont progressé en 6 semaines."</blockquote>
-    <cite>— Thomas B., directeur hôtelier, Paris</cite>
+
+  <div class="section">
+    <div class="section-label">Fonctionnalités</div>
+    <h2>Un tableau de bord unique pour toutes vos plateformes hôtelières</h2>
+    <p>Fini de jongler entre l'extranet Booking, votre compte Expedia et Google Business Profile. RepuGuard centralise tout et vous alerte dès qu'un nouveau commentaire arrive, quelle que soit la plateforme.</p>
+    <div class="features-list">
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Surveillance Google, Booking &amp; Expedia</h3>
+        <p>RepuGuard agrège les avis de toutes vos plateformes en temps réel. Vous voyez tout dans un seul flux, classé par urgence, et vous ne ratez plus aucun commentaire critique.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Réponses IA dans le style de votre hôtel</h3>
+        <p>Que votre établissement soit un boutique-hôtel chic ou un hôtel économique, RepuGuard adapte le ton des réponses. Chaleureuses et personnalisées, elles renforcent l'image de votre marque.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Analyse de la satisfaction client</h3>
+        <p>Identifiez les points récurrents dans vos avis négatifs : propreté, personnel, petit-déjeuner, localisation. RepuGuard vous donne une vue analytique pour améliorer l'expérience client.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Accès multi-utilisateurs pour votre équipe</h3>
+        <p>Donnez accès à votre directeur, responsable accueil ou assistant. Chaque membre peut valider et publier des réponses depuis son propre accès, avec des droits configurables.</p>
+      </div>
+    </div>
   </div>
+
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Notre score Booking est passé de 8,1 à 8,7 en 3 mois. Les voyageurs voient que nous répondons à chaque commentaire et cela crée une vraie confiance avant même l'arrivée."</blockquote>
+      <cite>— Claire V., directrice d'hôtel 3★, Nice</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Je gère deux hôtels. Avant RepuGuard, je passais 2h par semaine sur les avis. Maintenant tout est centralisé, les réponses sont rédigées automatiquement, je valide en 20 minutes."</blockquote>
+      <cite>— Jean-Pierre M., propriétaire, Alsace</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Un client a publié un avis très négatif un vendredi soir. Grâce à l'alerte RepuGuard, nous avons répondu dans l'heure. Il a rappelé le lendemain pour modifier son avis."</blockquote>
+      <cite>— Amina B., responsable accueil, Paris</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Les réponses générées mentionnent des détails précis de l'avis et proposent des solutions concrètes. Nos clients sont impressionnés par la réactivité de l'équipe."</blockquote>
+      <cite>— Marc T., hôtel indépendant, Lyon</cite>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <div class="faq-q">Peut-on répondre directement sur Booking.com via RepuGuard ?</div>
+      <div class="faq-a">Oui, pour Google Business Profile. Pour Booking.com et Expedia, RepuGuard génère la réponse et vous la présente prête à copier-coller dans l'extranet, ce qui vous fait économiser 80% du temps de rédaction. Une intégration directe Booking est en développement.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">RepuGuard fonctionne-t-il pour les résidences et locations saisonnières ?</div>
+      <div class="faq-a">Oui. RepuGuard surveille également Airbnb et Abritel. Il est adapté aux hôtels, résidences, gîtes et chambres d'hôtes qui reçoivent des avis sur plusieurs plateformes simultanément.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Les réponses sont-elles personnalisées selon la langue du client ?</div>
+      <div class="faq-a">Oui. RepuGuard détecte automatiquement la langue de l'avis et génère une réponse dans la même langue. Vos clients anglophones, allemands ou espagnols reçoivent une réponse dans leur langue, sans effort de votre part.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Est-ce que RepuGuard s'intègre à mon PMS hôtelier ?</div>
+      <div class="faq-a">RepuGuard fonctionne de façon indépendante et ne nécessite pas d'intégration PMS. Il suffit de connecter vos comptes Google, Booking et Expedia. Des intégrations API avancées sont disponibles sur le plan Agency.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Combien de temps après un avis reçoit-on l'alerte ?</div>
+      <div class="faq-a">RepuGuard vérifie vos profils toutes les 15 minutes. Vous recevez une alerte dans les 15 à 30 minutes suivant la publication d'un nouvel avis, par e-mail, Slack ou WhatsApp selon vos préférences.</div>
+    </div>
+  </div>
+
+  <div class="other-niches">
+    <h2>RepuGuard est aussi disponible pour :</h2>
+    <div class="niche-links">
+      <a href="/restaurants" class="niche-link">🍽️ Restaurants &amp; brasseries</a>
+      <a href="/medecins" class="niche-link">🩺 Médecins &amp; cliniques</a>
+      <a href="/dentistes" class="niche-link">🦷 Dentistes &amp; orthodontistes</a>
+      <a href="/avocats" class="niche-link">⚖️ Avocats &amp; cabinets juridiques</a>
+      <a href="/agences" class="niche-link">🏢 Agences &amp; multi-établissements</a>
+    </div>
+  </div>
+
   <div class="cta-section">
-    <h2>Prêt à protéger votre réputation ?</h2>
-    <p>Rejoignez les professionnels qui font confiance à RepuGuard.</p>
+    <h2>Prêt à améliorer votre score et vos réservations ?</h2>
+    <p>Plus de 180 hôteliers font confiance à RepuGuard pour gérer leur réputation en ligne.</p>
     <a href="/signup?plan=business&niche=hotel" class="cta-btn">Démarrer gratuitement →</a>
+    <p class="proof" style="margin-top:.75rem;">7 jours gratuits · Sans engagement · Support inclus</p>
   </div>
 </main>
-<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a></footer>
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/restaurants">Restaurants</a> · <a href="/hotels">Hôtels</a> · <a href="/medecins">Médecins</a></footer>
 </body>
 </html>

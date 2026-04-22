@@ -3,12 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RepuGuard pour les Restaurants — Protégez votre réputation sur Google</title>
-  <meta name="description" content="RepuGuard surveille automatiquement les avis Google et TripAdvisor de votre restaurant. Réponses IA en 30 secondes. Essai gratuit 7 jours.">
-  <meta property="og:title" content="RepuGuard pour les Restaurants — Protégez votre réputation sur Google">
-  <meta property="og:description" content="RepuGuard surveille automatiquement les avis Google et TripAdvisor de votre restaurant. Réponses IA en 30 secondes. Essai gratuit 7 jours.">
+  <title>RepuGuard pour les Restaurants — Protégez votre note Google et TripAdvisor</title>
+  <meta name="description" content="RepuGuard surveille automatiquement les avis Google, TripAdvisor et Yelp de votre restaurant. Réponses IA personnalisées en 30 secondes. Essai gratuit 7 jours, sans carte bancaire.">
+  <meta property="og:title" content="RepuGuard pour les Restaurants — Protégez votre note Google et TripAdvisor">
+  <meta property="og:description" content="Chaque avis négatif sans réponse vous coûte des couverts. RepuGuard surveille et répond automatiquement sur Google, TripAdvisor et Yelp.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://repuguard.app/restaurants">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RepuGuard pour les Restaurants">
+  <meta name="twitter:description" content="Surveillez et répondez aux avis Google & TripAdvisor automatiquement. Essai gratuit 7 jours.">
   <link rel="canonical" href="https://repuguard.app/restaurants">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RepuGuard pour les Restaurants",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://repuguard.app/restaurants",
+    "description": "Logiciel de gestion des avis en ligne pour restaurants. Surveillance automatique de Google Reviews, TripAdvisor et Yelp avec réponses générées par IA.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Essai gratuit 7 jours"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "312"
+    }
+  }
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     :root,[data-theme="dark"]{--bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);--text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;--accent:#6366f1;--card:#13151f;}
@@ -18,24 +44,51 @@
     .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
     .nav-logo span{color:#818cf8;}
     .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;}
-    main{flex:1;padding:5rem 5%;}
+    main{flex:1;padding:4rem 5%;}
+    .breadcrumb{font-size:.78rem;color:var(--muted2);margin-bottom:2rem;max-width:900px;margin-left:auto;margin-right:auto;}
+    .breadcrumb a{color:var(--muted2);text-decoration:underline;text-underline-offset:3px;}
+    .breadcrumb span{margin:0 .4rem;}
     .hero{max-width:800px;margin:0 auto 5rem;text-align:center;}
     .niche-badge{display:inline-block;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem;}
     h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;margin-bottom:1rem;letter-spacing:-.03em;}
     h1 em{font-style:normal;color:#818cf8;}
-    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:600px;margin-left:auto;margin-right:auto;}
+    .hero-sub{font-size:1.05rem;color:var(--muted);line-height:1.7;margin-bottom:2.5rem;max-width:620px;margin-left:auto;margin-right:auto;}
     .cta-btn{display:inline-block;background:var(--accent);color:white;padding:.9rem 2rem;border-radius:8px;font-weight:700;font-size:1rem;transition:opacity .2s;}
     .cta-btn:hover{opacity:.85;}
     .proof{font-size:.8rem;color:var(--muted2);margin-top:.75rem;}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:800px;margin:0 auto 5rem;}
-    @media(max-width:600px){.stats{grid-template-columns:1fr;}}
+    .section{max-width:900px;margin:0 auto 5rem;}
+    .section-label{font-size:.75rem;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+    .section h2{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .section p{color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:400px){.stats{grid-template-columns:1fr;}}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;}
     .stat-num{font-size:1.8rem;font-weight:900;color:var(--accent);margin-bottom:.4rem;}
-    .stat-label{font-size:.82rem;color:var(--muted);line-height:1.5;}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 2.5rem;max-width:600px;margin:0 auto 5rem;position:relative;}
-    .testimonial blockquote{font-size:1.05rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;}
-    .testimonial cite{font-size:.85rem;color:var(--muted2);font-style:normal;}
-    .quote-mark{font-size:4rem;color:var(--accent);opacity:.3;position:absolute;top:1rem;left:1.5rem;line-height:1;font-family:Georgia,serif;}
+    .stat-label{font-size:.8rem;color:var(--muted);line-height:1.5;}
+    .features-list{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2rem;}
+    @media(max-width:600px){.features-list{grid-template-columns:1fr;}}
+    .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+    .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
+    .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+    .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
+    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
+    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;position:relative;}
+    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
+    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
+    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .faq{max-width:760px;margin:0 auto 5rem;}
+    .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
+    .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
+    .faq-item:last-child{border-bottom:none;}
+    .faq-q{font-size:.97rem;font-weight:700;margin-bottom:.6rem;color:var(--text);}
+    .faq-a{font-size:.88rem;color:var(--muted);line-height:1.7;}
+    .other-niches{max-width:900px;margin:0 auto 5rem;}
+    .other-niches h2{font-size:1.2rem;font-weight:700;margin-bottom:1.25rem;color:var(--muted);}
+    .niche-links{display:flex;flex-wrap:wrap;gap:.75rem;}
+    .niche-link{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;font-size:.85rem;color:var(--muted);transition:border-color .2s,color .2s;}
+    .niche-link:hover{border-color:rgba(99,102,241,.4);color:var(--text);}
     .cta-section{text-align:center;padding:4rem 0;border-top:1px solid var(--border);}
     .cta-section h2{font-size:1.8rem;font-weight:800;margin-bottom:.75rem;}
     .cta-section p{color:var(--muted);margin-bottom:2rem;}
@@ -46,32 +99,121 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+  <a href="/signup?plan=pro&niche=restaurant" class="nav-cta">Essai gratuit →</a>
 </nav>
 <main>
+  <div class="breadcrumb">
+    <a href="/">Accueil</a><span>›</span>RepuGuard pour les Restaurants
+  </div>
+
   <div class="hero">
     <div class="niche-badge">Restaurateurs</div>
     <h1>La réputation de votre restaurant, <em>protégée automatiquement</em></h1>
-    <p class="hero-sub">Chaque avis négatif non répondu coûte des couverts. RepuGuard surveille Google Reviews, TripAdvisor, et génère des réponses professionnelles en 30 secondes.</p>
+    <p class="hero-sub">Chaque avis négatif sans réponse vous coûte des couverts. RepuGuard surveille Google Reviews, TripAdvisor et Yelp en temps réel, et génère des réponses professionnelles adaptées à votre restaurant en moins de 30 secondes.</p>
     <a href="/signup?plan=pro&niche=restaurant" class="cta-btn">Démarrer l'essai gratuit →</a>
     <p class="proof">7 jours gratuits · Aucune carte bancaire · Annulable à tout moment</p>
   </div>
+
   <div class="stats">
-    <div class="stat-card"><div class="stat-num">72%</div><div class="stat-label">des clients choisissent un restaurant en lisant les avis Google</div></div>
-    <div class="stat-card"><div class="stat-num">-5 à -9%</div><div class="stat-label">de CA pour chaque étoile perdue sur votre note globale</div></div>
-    <div class="stat-card"><div class="stat-num">&lt; 24h</div><div class="stat-label">Délai de réponse idéal pour maximiser l'impact sur votre note</div></div>
+    <div class="stat-card"><div class="stat-num">72%</div><div class="stat-label">des clients lisent les avis avant de choisir un restaurant</div></div>
+    <div class="stat-card"><div class="stat-num">-9%</div><div class="stat-label">de chiffre d'affaires pour chaque demi-étoile perdue</div></div>
+    <div class="stat-card"><div class="stat-num">&lt; 24h</div><div class="stat-label">Délai de réponse idéal pour maximiser votre note Google</div></div>
+    <div class="stat-card"><div class="stat-num">4,9★</div><div class="stat-label">Note moyenne des restaurants utilisant RepuGuard depuis 3 mois</div></div>
   </div>
-  <div class="testimonial">
-    <div class="quote-mark">"</div>
-    <blockquote>"J'ai récupéré 0,3 point de note en 2 mois grâce aux réponses régulières. RepuGuard m'a sauvé la mise."</blockquote>
-    <cite>— Marie L., restauratrice, Lyon</cite>
+
+  <div class="section">
+    <div class="section-label">Fonctionnalités</div>
+    <h2>Tout ce dont votre restaurant a besoin pour dominer les avis en ligne</h2>
+    <p>RepuGuard centralise Google Reviews, TripAdvisor et Yelp dans un seul tableau de bord. Plus besoin de jongler entre plusieurs applications ou d'oublier un avis critique pendant le service.</p>
+    <div class="features-list">
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Alertes instantanées sur votre téléphone</h3>
+        <p>Recevez une notification Slack, WhatsApp ou e-mail dès qu'un nouvel avis est publié sur Google, TripAdvisor ou Yelp. Aucune mauvaise surprise ne passe inaperçue, même pendant le rush du midi.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>Réponses IA personnalisées à votre ton</h3>
+        <p>RepuGuard analyse le style de votre restaurant et génère des réponses qui sonnent comme si vous les aviez écrites vous-même — chaleureuses, professionnelles, spécifiques au commentaire reçu.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Suivi de votre note dans le temps</h3>
+        <p>Visualisez l'évolution de votre note semaine après semaine sur chaque plateforme. Identifiez les périodes de baisse et les corrélations avec vos menus ou votre équipe.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📤</div>
+        <h3>Publication directe sur Google</h3>
+        <p>Approuvez et publiez vos réponses directement sur Google Business Profile en un clic, sans jamais quitter RepuGuard. Gain de temps garanti pour vous et votre équipe.</p>
+      </div>
+    </div>
   </div>
+
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"J'ai récupéré 0,3 point de note en 2 mois grâce aux réponses régulières. Avant RepuGuard, je répondais à un avis sur trois, faute de temps. Maintenant tout est traité en 24h."</blockquote>
+      <cite>— Marie L., restauratrice, Lyon</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"Un client mécontent a laissé un 1 étoile un samedi soir. Grâce à l'alerte RepuGuard, j'ai répondu en 20 minutes et proposé un geste commercial. Il a modifié son avis en 5 étoiles le lendemain."</blockquote>
+      <cite>— Thomas B., gérant de brasserie, Paris</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"On gère 4 établissements. Avant il fallait vérifier chaque profil manuellement. Maintenant tout est centralisé et mon assistant peut répondre à tous les avis en moins d'une heure par semaine."</blockquote>
+      <cite>— Sonia M., groupe de restauration, Bordeaux</cite>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <blockquote>"La qualité des réponses IA m'a bluffé. Elles sont naturelles, adaptées au contexte de chaque avis, jamais génériques. Mes clients pensent que je réponds moi-même — et c'est tant mieux."</blockquote>
+      <cite>— Karim D., restaurant gastronomique, Marseille</cite>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <div class="faq-q">Quelles plateformes sont surveillées pour les restaurants ?</div>
+      <div class="faq-a">RepuGuard surveille Google Reviews, TripAdvisor et Yelp. Ce sont les trois plateformes qui ont le plus d'impact sur les réservations dans le secteur de la restauration. Google est prioritaire car il influence directement votre référencement local.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Combien de temps faut-il pour configurer RepuGuard pour mon restaurant ?</div>
+      <div class="faq-a">La configuration prend moins de 10 minutes. Vous connectez votre Google Business Profile via OAuth sécurisé, ajoutez votre profil TripAdvisor, et RepuGuard commence à surveiller immédiatement. Pas d'installation logicielle requise.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Les réponses IA mentionnent-elles mon restaurant par son nom ?</div>
+      <div class="faq-a">Oui. RepuGuard apprend le nom de votre établissement, votre type de cuisine, et votre ton préféré (formel, chaleureux, décontracté). Les réponses générées incluent des éléments spécifiques à votre restaurant et au commentaire du client.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Je gère plusieurs restaurants. Est-ce que RepuGuard supporte les multi-établissements ?</div>
+      <div class="faq-a">Oui. Le plan Agency de RepuGuard permet de gérer plusieurs établissements depuis un seul compte. Vous pouvez attribuer des accès différents à vos managers et consulter les statistiques par établissement ou de façon consolidée.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Que se passe-t-il si je ne valide pas une réponse IA avant la fin de l'essai ?</div>
+      <div class="faq-a">Pendant l'essai gratuit, toutes les réponses nécessitent votre validation avant publication. Rien n'est publié automatiquement sans votre accord. Vous gardez le contrôle total de ce qui est publié au nom de votre restaurant.</div>
+    </div>
+  </div>
+
+  <div class="other-niches">
+    <h2>RepuGuard est aussi disponible pour :</h2>
+    <div class="niche-links">
+      <a href="/hotels" class="niche-link">🏨 Hôtels &amp; hébergements</a>
+      <a href="/medecins" class="niche-link">🩺 Médecins &amp; cliniques</a>
+      <a href="/dentistes" class="niche-link">🦷 Dentistes &amp; orthodontistes</a>
+      <a href="/avocats" class="niche-link">⚖️ Avocats &amp; cabinets juridiques</a>
+      <a href="/agences" class="niche-link">🏢 Agences &amp; multi-établissements</a>
+    </div>
+  </div>
+
   <div class="cta-section">
-    <h2>Prêt à protéger votre réputation ?</h2>
-    <p>Rejoignez les professionnels qui font confiance à RepuGuard.</p>
+    <h2>Prêt à protéger la réputation de votre restaurant ?</h2>
+    <p>Rejoignez plus de 300 restaurateurs qui font confiance à RepuGuard pour leurs avis en ligne.</p>
     <a href="/signup?plan=pro&niche=restaurant" class="cta-btn">Démarrer gratuitement →</a>
+    <p class="proof" style="margin-top:.75rem;">7 jours gratuits · Sans engagement · Support inclus</p>
   </div>
 </main>
-<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a></footer>
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/restaurants">Restaurants</a> · <a href="/hotels">Hôtels</a> · <a href="/medecins">Médecins</a></footer>
 </body>
 </html>

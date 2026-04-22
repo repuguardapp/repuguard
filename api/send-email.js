@@ -50,14 +50,6 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gérer mon abonnement →',
     hello: 'Bonjour {name},',
     questions: 'Des questions ? Répondez à cet email.',
-    j1_subject: 'RepuGuard surveille {business} — vos premiers résultats arrivent',
-    j1_title: 'RepuGuard est actif sur {business} 🚀',
-    j1_ready: 'Prêt à démarrer',
-    j1_check1: 'Profil Google connecté et analysé',
-    j1_check2: 'Score de réputation calculé',
-    j1_check3: 'Surveillance activée — alertes configurées',
-    j1_body: 'Votre première analyse de {business} est terminée. Connectez-vous pour voir votre score de réputation, vos avis récents et les premières alertes détectées.',
-    j1_cta: 'Voir mes premiers résultats →',
     j3_subject: 'Jour 3 de votre essai — votre réputation est surveillée 🔍',
     j3_title: 'RepuGuard surveille {business} 24h/24',
     j3_tip1_title: 'Répondez en 24h',
@@ -68,6 +60,20 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Chaque alerte génère automatiquement une réponse professionnelle — 1 clic pour la valider et la publier.',
     j3_upgrade: 'Votre essai se termine dans 4 jours. Activez votre plan maintenant pour continuer la surveillance sans interruption.',
     j3_cta: 'Voir mon dashboard →',
+    report_subject: '📊 Votre rapport hebdomadaire RepuGuard — {period}',
+    report_period_label: 'Rapport hebdomadaire · {period}',
+    report_greeting: 'Bonjour {name} 👋',
+    report_intro: 'Voici le résumé de réputation de {business} pour cette semaine.',
+    report_score_label: '◈ Score global',
+    report_new_reviews: 'Nouveaux avis',
+    report_positive: 'Avis positifs',
+    report_negative: 'Avis négatifs',
+    report_negative_alert: '⚠ {count} avis négatif(s) détecté(s) cette semaine',
+    report_negative_alert_sub: 'Des réponses IA ont été générées — connectez-vous pour les valider.',
+    report_all_positive: '✓ Aucun avis négatif cette semaine',
+    report_all_positive_sub: 'Excellente semaine pour votre réputation !',
+    report_cta: 'Voir le dashboard complet →',
+    report_footer: 'Ce rapport est envoyé automatiquement chaque lundi à 08h00.',
   },
   en: {
     welcome_subject: 'Welcome to RepuGuard, {name}!',
@@ -112,14 +118,6 @@ const EMAIL_STRINGS = {
     trial_cta: 'Manage my subscription →',
     hello: 'Hello {name},',
     questions: 'Questions? Reply to this email.',
-    j1_subject: 'RepuGuard is monitoring {business} — your first results are in',
-    j1_title: 'RepuGuard is live on {business} 🚀',
-    j1_ready: 'Ready to go',
-    j1_check1: 'Google profile connected and analyzed',
-    j1_check2: 'Reputation score calculated',
-    j1_check3: 'Monitoring active — alerts configured',
-    j1_body: 'Your first analysis of {business} is complete. Log in to see your reputation score, recent reviews, and first detected alerts.',
-    j1_cta: 'See my first results →',
     j3_subject: 'Day 3 of your trial — your reputation is being monitored 🔍',
     j3_title: 'RepuGuard is monitoring {business} 24/7',
     j3_tip1_title: 'Respond within 24h',
@@ -130,6 +128,20 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Each alert automatically generates a professional response — 1 click to validate and publish.',
     j3_upgrade: 'Your trial ends in 4 days. Activate your plan now to keep monitoring without interruption.',
     j3_cta: 'View my dashboard →',
+    report_subject: '📊 Your weekly RepuGuard report — {period}',
+    report_period_label: 'Weekly report · {period}',
+    report_greeting: 'Hello {name} 👋',
+    report_intro: 'Here is your reputation summary for {business} this week.',
+    report_score_label: '◈ Global score',
+    report_new_reviews: 'New reviews',
+    report_positive: 'Positive reviews',
+    report_negative: 'Negative reviews',
+    report_negative_alert: '⚠ {count} negative review(s) detected this week',
+    report_negative_alert_sub: 'AI responses have been generated — sign in to validate them.',
+    report_all_positive: '✓ No negative reviews this week',
+    report_all_positive_sub: 'Excellent week for your reputation!',
+    report_cta: 'View full dashboard →',
+    report_footer: 'This report is sent automatically every Monday at 8:00 AM.',
   },
   es: {
     welcome_subject: '¡Bienvenido a RepuGuard, {name}!',
@@ -174,14 +186,20 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gestionar mi suscripción →',
     hello: 'Hola {name},',
     questions: '¿Preguntas? Responde este email.',
-    j1_subject: 'RepuGuard está monitoreando {business} — tus primeros resultados',
-    j1_title: 'RepuGuard está activo en {business} 🚀',
-    j1_ready: 'Listo para comenzar',
-    j1_check1: 'Perfil de Google conectado y analizado',
-    j1_check2: 'Puntuación de reputación calculada',
-    j1_check3: 'Monitoreo activo — alertas configuradas',
-    j1_body: 'Tu primer análisis de {business} está completo. Inicia sesión para ver tu puntuación de reputación, reseñas recientes y primeras alertas.',
-    j1_cta: 'Ver mis primeros resultados →',
+    report_subject: '📊 Tu informe semanal de RepuGuard — {period}',
+    report_period_label: 'Informe semanal · {period}',
+    report_greeting: 'Hola {name} 👋',
+    report_intro: 'Aquí está el resumen de reputación de {business} para esta semana.',
+    report_score_label: '◈ Puntuación global',
+    report_new_reviews: 'Nuevas reseñas',
+    report_positive: 'Reseñas positivas',
+    report_negative: 'Reseñas negativas',
+    report_negative_alert: '⚠ {count} reseña(s) negativa(s) detectada(s) esta semana',
+    report_negative_alert_sub: 'Se han generado respuestas de IA — inicia sesión para validarlas.',
+    report_all_positive: '✓ Sin reseñas negativas esta semana',
+    report_all_positive_sub: '¡Excelente semana para tu reputación!',
+    report_cta: 'Ver panel completo →',
+    report_footer: 'Este informe se envía automáticamente cada lunes a las 08:00.',
   },
   de: {
     welcome_subject: 'Willkommen bei RepuGuard, {name}!',
@@ -226,14 +244,20 @@ const EMAIL_STRINGS = {
     trial_cta: 'Mein Abonnement verwalten →',
     hello: 'Hallo {name},',
     questions: 'Fragen? Antworten Sie auf diese E-Mail.',
-    j1_subject: 'RepuGuard überwacht {business} — Ihre ersten Ergebnisse sind da',
-    j1_title: 'RepuGuard ist aktiv für {business} 🚀',
-    j1_ready: 'Startbereit',
-    j1_check1: 'Google-Profil verbunden und analysiert',
-    j1_check2: 'Reputationsscore berechnet',
-    j1_check3: 'Überwachung aktiv — Benachrichtigungen konfiguriert',
-    j1_body: 'Ihre erste Analyse von {business} ist abgeschlossen. Melden Sie sich an, um Ihren Reputationsscore und erste Erkenntnisse zu sehen.',
-    j1_cta: 'Erste Ergebnisse ansehen →',
+    report_subject: '📊 Ihr wöchentlicher RepuGuard-Bericht — {period}',
+    report_period_label: 'Wöchentlicher Bericht · {period}',
+    report_greeting: 'Hallo {name} 👋',
+    report_intro: 'Hier ist Ihre Reputationszusammenfassung für {business} dieser Woche.',
+    report_score_label: '◈ Globale Bewertung',
+    report_new_reviews: 'Neue Bewertungen',
+    report_positive: 'Positive Bewertungen',
+    report_negative: 'Negative Bewertungen',
+    report_negative_alert: '⚠ {count} negative Bewertung(en) diese Woche erkannt',
+    report_negative_alert_sub: 'KI-Antworten wurden generiert — melden Sie sich an, um sie zu validieren.',
+    report_all_positive: '✓ Keine negativen Bewertungen diese Woche',
+    report_all_positive_sub: 'Ausgezeichnete Woche für Ihre Reputation!',
+    report_cta: 'Vollständiges Dashboard anzeigen →',
+    report_footer: 'Dieser Bericht wird automatisch jeden Montag um 08:00 Uhr gesendet.',
   },
   pt: {
     welcome_subject: 'Bem-vindo ao RepuGuard, {name}!',
@@ -278,14 +302,20 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gerir a minha subscrição →',
     hello: 'Olá {name},',
     questions: 'Dúvidas? Responda a este email.',
-    j1_subject: 'RepuGuard está a monitorizar {business} — os seus primeiros resultados',
-    j1_title: 'RepuGuard está ativo em {business} 🚀',
-    j1_ready: 'Pronto para começar',
-    j1_check1: 'Perfil do Google ligado e analisado',
-    j1_check2: 'Pontuação de reputação calculada',
-    j1_check3: 'Monitorização ativa — alertas configurados',
-    j1_body: 'A sua primeira análise de {business} está concluída. Inicie sessão para ver a sua pontuação de reputação, avaliações recentes e primeiros alertas.',
-    j1_cta: 'Ver os meus primeiros resultados →',
+    report_subject: '📊 O seu relatório semanal RepuGuard — {period}',
+    report_period_label: 'Relatório semanal · {period}',
+    report_greeting: 'Olá {name} 👋',
+    report_intro: 'Aqui está o resumo de reputação de {business} para esta semana.',
+    report_score_label: '◈ Pontuação global',
+    report_new_reviews: 'Novas avaliações',
+    report_positive: 'Avaliações positivas',
+    report_negative: 'Avaliações negativas',
+    report_negative_alert: '⚠ {count} avaliação(ões) negativa(s) detetada(s) esta semana',
+    report_negative_alert_sub: 'Respostas IA foram geradas — inicie sessão para as validar.',
+    report_all_positive: '✓ Nenhuma avaliação negativa esta semana',
+    report_all_positive_sub: 'Excelente semana para a sua reputação!',
+    report_cta: 'Ver dashboard completo →',
+    report_footer: 'Este relatório é enviado automaticamente todas as segundas-feiras às 08h00.',
   },
   ar: {
     welcome_subject: 'مرحبًا بك في RepuGuard، {name}!',
@@ -330,14 +360,20 @@ const EMAIL_STRINGS = {
     trial_cta: 'إدارة اشتراكي →',
     hello: 'مرحبًا {name}،',
     questions: 'أسئلة؟ أجب على هذا البريد الإلكتروني.',
-    j1_subject: 'RepuGuard يراقب {business} — نتائجك الأولى جاهزة',
-    j1_title: 'RepuGuard نشط على {business} 🚀',
-    j1_ready: 'جاهز للانطلاق',
-    j1_check1: 'تم ربط ملف Google وتحليله',
-    j1_check2: 'تم احتساب درجة السمعة',
-    j1_check3: 'المراقبة نشطة — التنبيهات مُهيأة',
-    j1_body: 'اكتمل تحليلك الأول لـ {business}. سجّل الدخول لرؤية درجة سمعتك والتقييمات الأخيرة وأول التنبيهات المكتشفة.',
-    j1_cta: 'عرض أول نتائجي →',
+    report_subject: '📊 تقريرك الأسبوعي لـ RepuGuard — {period}',
+    report_period_label: 'التقرير الأسبوعي · {period}',
+    report_greeting: 'مرحبًا {name} 👋',
+    report_intro: 'إليك ملخص سمعة {business} لهذا الأسبوع.',
+    report_score_label: '◈ النقاط الإجمالية',
+    report_new_reviews: 'آراء جديدة',
+    report_positive: 'آراء إيجابية',
+    report_negative: 'آراء سلبية',
+    report_negative_alert: '⚠ تم اكتشاف {count} رأي سلبي هذا الأسبوع',
+    report_negative_alert_sub: 'تم إنشاء ردود الذكاء الاصطناعي — سجّل دخولك للتحقق منها.',
+    report_all_positive: '✓ لا آراء سلبية هذا الأسبوع',
+    report_all_positive_sub: 'أسبوع رائع لسمعتك!',
+    report_cta: '← عرض لوحة التحكم الكاملة',
+    report_footer: 'يُرسل هذا التقرير تلقائيًا كل يوم اثنين الساعة 08:00.',
   },
   it: {
     welcome_subject: 'Benvenuto su RepuGuard, {name}!',
@@ -382,14 +418,6 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gestisci il mio abbonamento →',
     hello: 'Ciao {name},',
     questions: 'Domande? Rispondi a questa email.',
-    j1_subject: 'RepuGuard sta monitorando {business} — i tuoi primi risultati sono pronti',
-    j1_title: 'RepuGuard è attivo su {business} 🚀',
-    j1_ready: 'Pronto a partire',
-    j1_check1: 'Profilo Google connesso e analizzato',
-    j1_check2: 'Punteggio di reputazione calcolato',
-    j1_check3: 'Monitoraggio attivo — avvisi configurati',
-    j1_body: 'La tua prima analisi di {business} è completa. Accedi per vedere il tuo punteggio di reputazione, le recensioni recenti e i primi avvisi rilevati.',
-    j1_cta: 'Vedere i miei primi risultati →',
     j3_subject: 'Giorno 3 del tuo periodo di prova — la tua reputazione è monitorata 🔍',
     j3_title: 'RepuGuard monitora {business} 24/7',
     j3_tip1_title: 'Rispondi entro 24h',
@@ -400,6 +428,20 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Ogni avviso genera automaticamente una risposta professionale — 1 clic per convalidarla e pubblicarla.',
     j3_upgrade: 'Il tuo periodo di prova scade tra 4 giorni. Attiva il tuo piano ora per continuare il monitoraggio senza interruzioni.',
     j3_cta: 'Vai alla mia dashboard →',
+    report_subject: '📊 Il tuo rapporto settimanale RepuGuard — {period}',
+    report_period_label: 'Rapporto settimanale · {period}',
+    report_greeting: 'Ciao {name} 👋',
+    report_intro: 'Ecco il riepilogo della reputazione di {business} per questa settimana.',
+    report_score_label: '◈ Punteggio globale',
+    report_new_reviews: 'Nuove recensioni',
+    report_positive: 'Recensioni positive',
+    report_negative: 'Recensioni negative',
+    report_negative_alert: '⚠ {count} recensione/i negativa/e rilevata/e questa settimana',
+    report_negative_alert_sub: 'Risposte IA sono state generate — accedi per convalidarle.',
+    report_all_positive: '✓ Nessuna recensione negativa questa settimana',
+    report_all_positive_sub: 'Ottima settimana per la tua reputazione!',
+    report_cta: 'Visualizza dashboard completa →',
+    report_footer: 'Questo rapporto viene inviato automaticamente ogni lunedì alle 08:00.',
   },
   nl: {
     welcome_subject: 'Welkom bij RepuGuard, {name}!',
@@ -444,14 +486,6 @@ const EMAIL_STRINGS = {
     trial_cta: 'Mijn abonnement beheren →',
     hello: 'Hallo {name},',
     questions: 'Vragen? Beantwoord deze e-mail.',
-    j1_subject: 'RepuGuard monitort {business} — uw eerste resultaten zijn er',
-    j1_title: 'RepuGuard is actief op {business} 🚀',
-    j1_ready: 'Klaar om te starten',
-    j1_check1: 'Google-profiel verbonden en geanalyseerd',
-    j1_check2: 'Reputatiescore berekend',
-    j1_check3: 'Monitoring actief — meldingen geconfigureerd',
-    j1_body: 'Uw eerste analyse van {business} is voltooid. Log in om uw reputatiescore, recente recensies en eerste meldingen te bekijken.',
-    j1_cta: 'Mijn eerste resultaten bekijken →',
     j3_subject: 'Dag 3 van uw proefperiode — uw reputatie wordt gemonitord 🔍',
     j3_title: 'RepuGuard monitort {business} 24/7',
     j3_tip1_title: 'Reageer binnen 24u',
@@ -462,6 +496,20 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Elke melding genereert automatisch een professioneel antwoord — 1 klik om het te valideren en te publiceren.',
     j3_upgrade: 'Uw proefperiode eindigt over 4 dagen. Activeer uw plan nu om monitoring zonder onderbreking voort te zetten.',
     j3_cta: 'Naar mijn dashboard →',
+    report_subject: '📊 Uw wekelijks RepuGuard-rapport — {period}',
+    report_period_label: 'Wekelijks rapport · {period}',
+    report_greeting: 'Hallo {name} 👋',
+    report_intro: 'Hier is uw reputatiesamenvatting voor {business} deze week.',
+    report_score_label: '◈ Globale score',
+    report_new_reviews: 'Nieuwe recensies',
+    report_positive: 'Positieve recensies',
+    report_negative: 'Negatieve recensies',
+    report_negative_alert: '⚠ {count} negatieve recensie(s) gedetecteerd deze week',
+    report_negative_alert_sub: 'AI-antwoorden zijn gegenereerd — log in om ze te valideren.',
+    report_all_positive: '✓ Geen negatieve recensies deze week',
+    report_all_positive_sub: 'Uitstekende week voor uw reputatie!',
+    report_cta: 'Volledig dashboard bekijken →',
+    report_footer: 'Dit rapport wordt automatisch elke maandag om 08:00 verstuurd.',
   },
   ru: {
     welcome_subject: 'Добро пожаловать в RepuGuard, {name}!',
@@ -506,14 +554,6 @@ const EMAIL_STRINGS = {
     trial_cta: 'Управление подпиской →',
     hello: 'Здравствуйте, {name},',
     questions: 'Вопросы? Ответьте на это письмо.',
-    j1_subject: 'RepuGuard отслеживает {business} — ваши первые результаты готовы',
-    j1_title: 'RepuGuard активен для {business} 🚀',
-    j1_ready: 'Готово к запуску',
-    j1_check1: 'Профиль Google подключён и проанализирован',
-    j1_check2: 'Рейтинг репутации рассчитан',
-    j1_check3: 'Мониторинг активен — уведомления настроены',
-    j1_body: 'Ваш первый анализ {business} завершён. Войдите, чтобы увидеть рейтинг репутации, последние отзывы и первые обнаруженные уведомления.',
-    j1_cta: 'Посмотреть мои первые результаты →',
     j3_subject: 'День 3 вашего пробного периода — ваша репутация отслеживается 🔍',
     j3_title: 'RepuGuard отслеживает {business} 24/7',
     j3_tip1_title: 'Отвечайте в течение 24ч',
@@ -524,6 +564,20 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Каждое уведомление автоматически генерирует профессиональный ответ — 1 клик для подтверждения и публикации.',
     j3_upgrade: 'Ваш пробный период заканчивается через 4 дня. Активируйте тариф сейчас, чтобы продолжить мониторинг без перерывов.',
     j3_cta: 'Перейти в мою панель →',
+    report_subject: '📊 Ваш еженедельный отчёт RepuGuard — {period}',
+    report_period_label: 'Еженедельный отчёт · {period}',
+    report_greeting: 'Привет, {name} 👋',
+    report_intro: 'Вот сводка репутации {business} за эту неделю.',
+    report_score_label: '◈ Глобальный рейтинг',
+    report_new_reviews: 'Новые отзывы',
+    report_positive: 'Положительные отзывы',
+    report_negative: 'Отрицательные отзывы',
+    report_negative_alert: '⚠ Обнаружено {count} негативных отзыв(а) за эту неделю',
+    report_negative_alert_sub: 'Были сгенерированы ответы ИИ — войдите, чтобы их подтвердить.',
+    report_all_positive: '✓ Негативных отзывов на этой неделе нет',
+    report_all_positive_sub: 'Отличная неделя для вашей репутации!',
+    report_cta: 'Открыть полную панель →',
+    report_footer: 'Этот отчёт отправляется автоматически каждый понедельник в 08:00.',
   },
 };
 
@@ -578,7 +632,7 @@ export default async function handler(req, res) {
       subject = eT(lang, 'welcome_subject', {name: firstName});
       html = `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
@@ -647,7 +701,7 @@ export default async function handler(req, res) {
       subject = eT(lang, 'alert_subject', {platform: review.platform});
       html = `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
@@ -692,7 +746,7 @@ export default async function handler(req, res) {
 
             <!-- TEXTE DE L'AVIS -->
             <div style="margin-bottom:20px;">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:8px;">Avis</div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#475569;margin-bottom:8px;">${eT(lang,'alert_review_label')}</div>
               <div style="background:#13151f;border-left:3px solid #f87171;border-radius:0 8px 8px 0;padding:14px 16px;font-size:13px;color:#94a3b8;line-height:1.6;font-style:italic;">
                 "${review.text || eT(lang,'alert_no_text')}"
               </div>
@@ -731,10 +785,10 @@ export default async function handler(req, res) {
       const negativeRate = totalReviews > 0 ? Math.round((negativeCount / totalReviews) * 100) : 0;
       const ratingStars = '★'.repeat(Math.round(avgRating || 0)) + '☆'.repeat(5 - Math.round(avgRating || 0));
 
-      subject = `📊 Votre rapport hebdomadaire RepuGuard — ${period || 'Cette semaine'}`;
+      subject = eT(lang, 'report_subject', {period: period || ''});
       html = `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
@@ -744,18 +798,18 @@ export default async function handler(req, res) {
         <tr>
           <td style="background:#0e1018;padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
             <div style="font-weight:900;font-size:28px;color:#f1f5f9;letter-spacing:-1px;">Repu<span style="color:#818cf8;">Guard</span></div>
-            <div style="margin-top:8px;font-size:13px;color:#475569;">Rapport hebdomadaire · ${period || 'Cette semaine'}</div>
+            <div style="margin-top:8px;font-size:13px;color:#475569;">${eT(lang, 'report_period_label', {period: period || ''})}</div>
           </td>
         </tr>
 
         <tr>
           <td style="padding:32px 40px;">
-            <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#f1f5f9;">Bonjour ${firstName} 👋</h1>
-            <p style="margin:0 0 28px;font-size:14px;color:#94a3b8;line-height:1.6;">Voici le résumé de réputation de <strong style="color:#f1f5f9;">${businessName}</strong> pour cette semaine.</p>
+            <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang, 'report_greeting', {name: firstName})}</h1>
+            <p style="margin:0 0 28px;font-size:14px;color:#94a3b8;line-height:1.6;">${eT(lang, 'report_intro', {business: businessName})}</p>
 
             <!-- SCORE GLOBAL -->
             <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:20px 24px;margin-bottom:24px;text-align:center;">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:8px;">◈ Score global</div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#818cf8;margin-bottom:8px;">${eT(lang, 'report_score_label')}</div>
               <div style="font-size:42px;font-weight:900;color:#f1f5f9;font-family:Arial,sans-serif;line-height:1;">${avgRating ? avgRating.toFixed(1) : '—'}</div>
               <div style="font-size:16px;color:#818cf8;margin-top:4px;">${ratingStars}</div>
             </div>
@@ -765,19 +819,19 @@ export default async function handler(req, res) {
               <tr>
                 <td width="33%" style="padding:0 6px 0 0;">
                   <div style="background:#13151f;border-radius:10px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">Nouveaux avis</div>
+                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">${eT(lang, 'report_new_reviews')}</div>
                     <div style="font-size:26px;font-weight:800;color:#f1f5f9;">${newReviews || 0}</div>
                   </div>
                 </td>
                 <td width="33%" style="padding:0 3px;">
                   <div style="background:#13151f;border-radius:10px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">Avis positifs</div>
+                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">${eT(lang, 'report_positive')}</div>
                     <div style="font-size:26px;font-weight:800;color:#34d399;">${positiveRate}%</div>
                   </div>
                 </td>
                 <td width="33%" style="padding:0 0 0 6px;">
                   <div style="background:#13151f;border-radius:10px;padding:16px;text-align:center;">
-                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">Avis négatifs</div>
+                    <div style="font-size:11px;color:#475569;margin-bottom:6px;">${eT(lang, 'report_negative')}</div>
                     <div style="font-size:26px;font-weight:800;color:${negativeCount > 0 ? '#f87171' : '#34d399'};">${negativeRate}%</div>
                   </div>
                 </td>
@@ -785,24 +839,22 @@ export default async function handler(req, res) {
             </table>
 
             ${negativeCount > 0 ? `
-            <!-- ALERTE AVIS NÉGATIFS -->
             <div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-              <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:4px;">⚠ ${negativeCount} avis négatif${negativeCount > 1 ? 's' : ''} détecté${negativeCount > 1 ? 's' : ''} cette semaine</div>
-              <div style="font-size:12px;color:#94a3b8;">Des réponses IA ont été générées — connectez-vous pour les valider.</div>
+              <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:4px;">${eT(lang, 'report_negative_alert', {count: negativeCount})}</div>
+              <div style="font-size:12px;color:#94a3b8;">${eT(lang, 'report_negative_alert_sub')}</div>
             </div>
             ` : `
-            <!-- AUCUN AVIS NÉGATIF -->
             <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-              <div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:4px;">✓ Aucun avis négatif cette semaine</div>
-              <div style="font-size:12px;color:#94a3b8;">Excellente semaine pour votre réputation !</div>
+              <div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:4px;">${eT(lang, 'report_all_positive')}</div>
+              <div style="font-size:12px;color:#94a3b8;">${eT(lang, 'report_all_positive_sub')}</div>
             </div>
             `}
 
             <div style="text-align:center;margin-bottom:28px;">
-              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">Voir le dashboard complet →</a>
+              <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang, 'report_cta')}</a>
             </div>
 
-            <p style="margin:0;font-size:12px;color:#475569;text-align:center;">Ce rapport est envoyé automatiquement chaque lundi à 08h00.</p>
+            <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang, 'report_footer')}</p>
           </td>
         </tr>
 
@@ -822,8 +874,8 @@ export default async function handler(req, res) {
     // EMAIL ÉCHEC DE PAIEMENT
     // ══════════════════════════════════
     if (type === 'payment_failed') {
-      subject = `⚠️ Problème de paiement — Votre abonnement RepuGuard`;
-      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+      subject = eT(lang, 'payment_failed_subject');
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
     <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
@@ -832,14 +884,14 @@ export default async function handler(req, res) {
       </td></tr>
       <tr><td style="padding:32px 40px;">
         <div style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.25);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-          <div style="font-size:13px;font-weight:700;color:#fb923c;">⚠ Paiement échoué</div>
+          <div style="font-size:13px;font-weight:700;color:#fb923c;">${eT(lang, 'payment_failed_badge')}</div>
         </div>
-        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
-        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Nous n'avons pas pu débiter votre carte pour votre abonnement RepuGuard. Votre surveillance continue pour l'instant, mais veuillez mettre à jour vos informations de paiement rapidement pour éviter toute interruption.</p>
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">${eT(lang, 'hello', {name: firstName})}</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">${eT(lang, 'payment_failed_body')}</p>
         <div style="text-align:center;margin-bottom:24px;">
-          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Mettre à jour le paiement →</a>
+          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">${eT(lang, 'payment_failed_cta')}</a>
         </div>
-        <p style="font-size:12px;color:#475569;text-align:center;">Des questions ? Répondez à cet email.</p>
+        <p style="font-size:12px;color:#475569;text-align:center;">${eT(lang, 'questions')}</p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -850,8 +902,8 @@ export default async function handler(req, res) {
     // EMAIL ANNULATION ABONNEMENT
     // ══════════════════════════════════
     if (type === 'cancelled') {
-      subject = `Votre abonnement RepuGuard a été annulé`;
-      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+      subject = eT(lang, 'cancelled_subject');
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
     <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
@@ -859,12 +911,12 @@ export default async function handler(req, res) {
         <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
       </td></tr>
       <tr><td style="padding:32px 40px;">
-        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
-        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Votre abonnement RepuGuard a bien été annulé. Votre réputation ne sera plus surveillée. Vous pouvez vous réabonner à tout moment depuis votre dashboard.</p>
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">${eT(lang, 'hello', {name: firstName})}</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">${eT(lang, 'cancelled_body')}</p>
         <div style="text-align:center;margin-bottom:24px;">
-          <a href="https://repuguard.app/signup" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Se réabonner →</a>
+          <a href="https://repuguard.app/signup" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">${eT(lang, 'cancelled_cta')}</a>
         </div>
-        <p style="font-size:12px;color:#475569;text-align:center;">Merci d'avoir utilisé RepuGuard.</p>
+        <p style="font-size:12px;color:#475569;text-align:center;">${eT(lang, 'cancelled_thanks')}</p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -875,85 +927,25 @@ export default async function handler(req, res) {
     // EMAIL FIN D'ESSAI IMMINENTE
     // ══════════════════════════════════
     if (type === 'trial_ending') {
-      const biz = businessName || 'votre établissement';
-      const lang = req.body.lang || 'fr';
-      const isEn = lang === 'en';
-      subject = isEn
-        ? `⚠️ ${firstName}, your RepuGuard trial ends in 24h`
-        : `⚠️ ${firstName}, votre essai RepuGuard se termine dans 24h`;
-      html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+      const trialEnd = req.body.trialEnd || '';
+      subject = eT(lang, 'trial_subject');
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
     <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
       <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
       </td></tr>
-      <tr><td style="padding:36px 40px;">
-        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px 20px;margin-bottom:28px;text-align:center;">
-          <div style="font-size:28px;margin-bottom:8px;">⏰</div>
-          <div style="font-size:16px;font-weight:800;color:#fca5a5;">${isEn ? 'Your trial ends in less than 24 hours' : 'Votre essai se termine dans moins de 24h'}</div>
+      <tr><td style="padding:32px 40px;">
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center;">
+          <div style="font-size:12px;color:#818cf8;font-weight:700;margin-bottom:4px;">${eT(lang, 'trial_badge')}</div>
+          <div style="font-size:18px;font-weight:800;color:#f1f5f9;">${eT(lang, 'trial_ending', {date: trialEnd})}</div>
         </div>
-        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">${isEn ? `Hello ${firstName},` : `Bonjour ${firstName},`}</p>
-        <p style="font-size:14px;color:#94a3b8;line-height:1.7;margin:0 0 20px;">${isEn
-          ? `Your 7-day free trial for <strong style="color:#f1f5f9;">${biz}</strong> ends soon. After that, monitoring will be paused and you risk missing negative reviews.`
-          : `Votre essai de 7 jours pour <strong style="color:#f1f5f9;">${biz}</strong> se termine demain. Après ça, la surveillance sera mise en pause et vous risquez de manquer des avis négatifs.`
-        }</p>
-        <div style="background:#13151f;border-radius:12px;padding:20px;margin-bottom:24px;">
-          <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">${isEn ? "What you'll lose without RepuGuard:" : "Ce que vous perdez sans RepuGuard :"}</div>
-          <div style="font-size:13px;color:#94a3b8;margin-bottom:6px;">❌ ${isEn ? 'Real-time negative review alerts' : 'Alertes en temps réel sur les avis négatifs'}</div>
-          <div style="font-size:13px;color:#94a3b8;margin-bottom:6px;">❌ ${isEn ? 'AI-generated professional responses' : 'Réponses professionnelles générées par IA'}</div>
-          <div style="font-size:13px;color:#94a3b8;">❌ ${isEn ? 'Your reputation score dashboard' : 'Votre dashboard de score de réputation'}</div>
-        </div>
-        <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;">
-          <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">${isEn ? '🎁 Annual plan — save 20%' : '🎁 Plan annuel — économisez 20%'}</div>
-          <div style="font-size:22px;font-weight:900;color:#f1f5f9;">23€<span style="font-size:13px;font-weight:400;color:#64748b;">/mo</span> <span style="font-size:13px;color:#64748b;text-decoration:line-through;">29€</span></div>
-          <div style="font-size:11px;color:#64748b;margin-top:4px;">${isEn ? 'Billed annually — cancel anytime' : 'Facturé annuellement — annulable à tout moment'}</div>
-        </div>
-        <div style="text-align:center;">
-          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px;">${isEn ? 'Activate my subscription →' : 'Activer mon abonnement →'}</a>
-        </div>
-        <p style="margin:20px 0 0;font-size:12px;color:#334155;text-align:center;">${isEn ? 'No action needed if you already subscribed.' : 'Aucune action requise si vous êtes déjà abonné.'}</p>
-      </td></tr>
-      <tr><td style="padding:16px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="https://repuguard.app/unsubscribe?email=${encodeURIComponent(email)}" style="color:#475569;">${isEn ? 'Unsubscribe' : 'Se désinscrire'}</a></p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
-    }
-
-    // ══════════════════════════════════
-    // EMAIL ONBOARDING J1
-    // ══════════════════════════════════
-    if (type === 'onboarding_j1') {
-      subject = eT(lang, 'j1_subject', {business: businessName || 'votre établissement'});
-      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
-      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="font-weight:900;font-size:24px;color:#f1f5f9;letter-spacing:-0.5px;">Repu<span style="color:#818cf8;">Guard</span></div>
-      </td></tr>
-      <tr><td style="padding:40px;">
-        <p style="margin:0 0 8px;font-size:15px;color:#f1f5f9;font-weight:600;">${eT(lang,'hello',{name:firstName})}</p>
-        <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang,'j1_title',{business:businessName||'votre établissement'})}</h1>
-
-        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#818cf8;margin-bottom:12px;">◈ ${eT(lang,'j1_ready')}</div>
-          <div style="margin-bottom:8px;font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check1')}</div>
-          <div style="margin-bottom:8px;font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check2')}</div>
-          <div style="font-size:13px;color:#94a3b8;">✓ ${eT(lang,'j1_check3')}</div>
-        </div>
-
-        <p style="font-size:14px;color:#94a3b8;line-height:1.7;margin:0 0 24px;">${eT(lang,'j1_body',{business:businessName||'votre établissement'})}</p>
-
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">${eT(lang, 'hello', {name: firstName})}</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">${eT(lang, 'trial_body', {business: businessName})}</p>
         <div style="text-align:center;margin-bottom:24px;">
-          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j1_cta')}</a>
+          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">${eT(lang, 'trial_cta')}</a>
         </div>
-        <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
-      </td></tr>
-      <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
       </td></tr>
     </table>
   </td></tr></table>
@@ -965,7 +957,7 @@ export default async function handler(req, res) {
     // ══════════════════════════════════
     if (type === 'onboarding_j3') {
       subject = eT(lang, 'j3_subject');
-      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
     <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">

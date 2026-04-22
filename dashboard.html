@@ -733,10 +733,10 @@
     if (!d) return '';
     const ms = Date.now() - new Date(d).getTime();
     const m = Math.round(ms/60000), h = Math.round(ms/3600000), j = Math.round(ms/86400000);
-    if (m < 60) return `il y a ${m} min`;
-    if (h < 24) return `il y a ${h}h`;
-    if (j === 1) return 'Hier';
-    return `il y a ${j} jours`;
+    if (m < 60) return [t('days_ago'), m, t('min')].filter(Boolean).join(' ');
+    if (h < 24) return [t('days_ago'), h + t('hours')].filter(Boolean).join(' ');
+    if (j === 1) return t('yesterday');
+    return [t('days_ago'), j, t('days')].filter(Boolean).join(' ');
   }
   function stars(n) { return '★'.repeat(n||0)+'☆'.repeat(5-(n||0)); }
   function sevBadge(r) {
@@ -834,14 +834,14 @@
       const si = document.querySelector('.score-circle-inner');
       if (si) si.textContent = stats.avgRating.toFixed(1);
       const st = document.querySelector('.score-trend');
-      if (st) st.textContent = stats.avgRating >= 4.5 ? 'Excellent' : stats.avgRating >= 4 ? 'En hausse' : stats.avgRating >= 3 ? 'Correct' : 'À améliorer';
+      if (st) st.textContent = stats.avgRating >= 4.5 ? t('score_excellent') : stats.avgRating >= 4 ? t('score_rising') : stats.avgRating >= 3 ? t('score_correct') : t('score_improve');
     }
 
     // Last sync
     if (client.last_sync) {
       const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
       const lu = document.getElementById('lastUpdate');
-      if (lu) lu.innerHTML = `<div class="status-dot"></div>Dernière analyse il y a ${diff} min`;
+      if (lu) lu.innerHTML = `<div class="status-dot"></div>${t('last_sync')} ${diff} ${t('min')}`;
     }
 
     renderList('#sec-overview .alerts-list', recentAlerts, true);
@@ -976,11 +976,11 @@
     const isPos = (r.rating||0) >= 4;
     return `<div class="alert-item" data-review-id="${r.id}">
       <div class="alert-meta">${platBadge(r.platform)}
-        ${isPos ? `<span style="font-size:11px;color:var(--green);">${stars(r.rating)} Positif</span>` : sevBadge(r.rating)}
+        ${isPos ? `<span style="font-size:11px;color:var(--green);">${stars(r.rating)} ${t('sentiment_positive')}</span>` : sevBadge(r.rating)}
         <span class="alert-time">${fmt(r.date)}</span>
       </div>
-      <div class="alert-text">"${(r.text||'Aucun commentaire').substring(0,180)}"</div>
-      <div class="alert-detail">Note : ${r.rating||0}★ · Auteur : ${r.author||'Anonyme'}</div>
+      <div class="alert-text">"${(r.text||t('no_comment')).substring(0,180)}"</div>
+      <div class="alert-detail">Note : ${r.rating||0}★ · Auteur : ${r.author||t('anonymous')}</div>
       ${withActions && r.is_negative ? `<div class="alert-actions">
         <button class="btn-sm btn-primary" onclick="navigate('reponses')">${t('btn_see_ai')}</button>
         <button class="btn-sm btn-ghost" onclick="dismissReview(${r.id},this)">${t('btn_ignore')}</button>
@@ -1001,7 +1001,7 @@
     const sec = document.getElementById('sec-reponses');
     if (!sec) return;
     const ctr = document.getElementById('responsesCounter');
-    if (ctr) ctr.textContent = `${pending.length} réponse${pending.length!==1?'s':''} en attente de validation`;
+    if (ctr) ctr.textContent = `${pending.length} ${t(pending.length !== 1 ? 'responses_pending_plural' : 'responses_pending')}`;
     sec.querySelectorAll('.ia-card').forEach(el => el.remove());
     sec.querySelectorAll('div[style*="text-align:center"]').forEach(el => el.remove());
 
@@ -1059,11 +1059,11 @@
   }
 
   async function validateResponse(id, btn) {
-    btn.disabled = true; btn.textContent = 'Publication...';
+    btn.disabled = true; btn.textContent = t('publish_loading');
     await apiPost('/api/update-review', { reviewId: id, action: 'validate' });
-    btn.textContent = '✓ Publié';
+    btn.textContent = '✓ ' + t('status_published');
     const s = document.getElementById('status-' + id);
-    if (s) { s.textContent = 'Validé ✓'; s.className = 'severity moderate'; }
+    if (s) { s.textContent = t('status_validated'); s.className = 'severity moderate'; }
   }
 
   async function generateResponse(id, btn) {
@@ -1087,7 +1087,7 @@
       const isGoogle = (review.platform || 'google') === 'google';
       if (actDiv) actDiv.innerHTML = `
         ${gbpConnected && isGoogle
-          ? `<button class="btn-lg primary" onclick="publishToGoogle(${id},this)">Publier sur Google →</button>`
+          ? `<button class="btn-lg primary" onclick="publishToGoogle(${id},this)">${t('btn_publish_google')}</button>`
           : `<button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>`}
         <button class="btn-lg ghost" onclick="editResponse(${id})">${t('btn_edit')}</button>
         <button class="btn-lg ghost" onclick="dismissReview(${id},this)">${t('btn_refuse')}</button>`;
@@ -1116,7 +1116,14 @@
         if (genBtn && !genBtn.disabled) await generateResponse(id, genBtn);
       }
       const valBtn = card.querySelector('.btn-lg.primary');
-      if (valBtn && !valBtn.disabled) await validateResponse(id, valBtn);
+      if (valBtn && !valBtn.disabled) {
+        const onclick = valBtn.getAttribute('onclick') || '';
+        if (onclick.includes('publishToGoogle')) {
+          await publishToGoogle(id, valBtn);
+        } else {
+          await validateResponse(id, valBtn);
+        }
+      }
     }
   }
 
@@ -1212,9 +1219,9 @@
     try {
       const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
       const d = await r.json();
-      if (!r.ok) { showToast(d.error || 'Erreur', 'red'); return; }
+      if (!r.ok) { showToast(d.error || t('error_generic'), 'red'); return; }
       if (d.url) window.location.href = d.url;
-    } catch(e) { showToast('Erreur de connexion', 'red'); }
+    } catch(e) { showToast(t('error_connection'), 'red'); }
   }
 
   function renderReferral(clientId, plan) {
@@ -1292,29 +1299,29 @@
     try {
       const r = await fetch('/api/google-oauth-init', { headers: { 'Authorization': 'Bearer ' + RG.token } });
       const d = await r.json();
-      if (!r.ok) { showToast(d.error || 'Erreur', 'red'); return; }
+      if (!r.ok) { showToast(d.error || t('error_generic'), 'red'); return; }
       if (d.url) window.location.href = d.url;
-    } catch(e) { showToast('Erreur de connexion', 'red'); }
+    } catch(e) { showToast(t('error_connection'), 'red'); }
   }
 
   async function publishToGoogle(id, btn) {
     const respDiv = document.getElementById('resp-' + id);
     const replyText = respDiv?.textContent?.trim();
     if (!replyText || respDiv?.style?.fontStyle === 'italic') {
-      showToast('Générez d\'abord la réponse IA avant de publier.', 'red'); return;
+      showToast(t('toast_generate_first'), 'red'); return;
     }
-    btn.disabled = true; btn.textContent = 'Publication sur Google...';
+    btn.disabled = true; btn.textContent = t('publish_loading');
     try {
       const r = await apiPost('/api/publish-review-reply', { reviewId: id, replyText });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Erreur');
-      btn.textContent = '✓ Publié sur Google';
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = '✓ ' + t('status_published') + ' Google';
       const s = document.getElementById('status-' + id);
-      if (s) { s.textContent = 'Publié ✓'; s.className = 'severity moderate'; }
-      showToast('Réponse publiée sur Google Business Profile !', 'green');
+      if (s) { s.textContent = t('status_published') + ' ✓'; s.className = 'severity moderate'; }
+      showToast(t('toast_published_google'), 'green');
     } catch(e) {
-      showToast('Erreur : ' + e.message, 'red');
-      btn.textContent = 'Publier sur Google →'; btn.disabled = false;
+      showToast(e.message, 'red');
+      btn.textContent = t('btn_publish_google'); btn.disabled = false;
     }
   }
 
@@ -1322,10 +1329,10 @@
   (function() {
     const p = new URLSearchParams(window.location.search);
     if (p.get('gbp') === 'connected') {
-      showToast('✓ Google Business Profile connecté — réponses directes activées !', 'green');
+      showToast(t('toast_gbp_connected'), 'green');
       history.replaceState({}, '', '/dashboard');
     } else if (p.get('gbp_error')) {
-      showToast('Erreur GBP : ' + p.get('gbp_error'), 'red');
+      showToast(t('error_generic') + ' : ' + p.get('gbp_error'), 'red');
       history.replaceState({}, '', '/dashboard');
     }
   })();
@@ -1352,7 +1359,7 @@
   }
 
   async function disconnectTrustpilot(btn) {
-    if (!confirm('Déconnecter Trustpilot ? Les avis existants seront conservés.')) return;
+    if (!confirm(t('confirm_disconnect_tp'))) return;
     btn.disabled = true;
     await apiPost('/api/update-client', { trustpilot_business_id: null });
     await loadDashboard();
@@ -1371,9 +1378,9 @@
     try {
       const r = await apiPost('/api/update-client', { webhook_url: url || '' });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Erreur');
-      btn.textContent = '✓ Enregistré';
-      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = 'URL enregistrée. Cliquez sur Tester pour vérifier.'; }
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = t('btn_saved');
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = t('webhook_url_saved'); }
       const testBtn = document.getElementById('webhookTestBtn');
       if (testBtn) testBtn.style.display = url ? '' : 'none';
       setTimeout(() => { btn.textContent = 'Enregistrer'; btn.disabled = false; }, 2000);
@@ -1395,9 +1402,9 @@
         body: JSON.stringify({ webhookUrl: url, businessName: RG.data?.client?.business_name, isTest: true }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Erreur');
-      btn.textContent = '✓ Envoyé';
-      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = 'Message de test envoyé avec succès !'; }
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = '✓';
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = t('webhook_test_success'); }
     } catch(e) {
       if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = 'Échec : ' + e.message; }
     }
