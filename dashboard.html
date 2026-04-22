@@ -129,9 +129,12 @@
   .alert-item:hover { background:var(--surface2); }
   .alert-meta { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
   .platform-badge { font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px; background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
-  .platform-badge.google { border-color:rgba(234,67,53,0.3); color:#f87171; }
+  .status-pill.gbp { background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.25); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e2030; border:1px solid var(--border2); border-radius:10px; padding:12px 20px; font-size:13px; font-weight:500; color:var(--text); z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.4); opacity:0; transition:opacity .3s; pointer-events:none; max-width:420px; text-align:center; }
+  .toast.show { opacity:1; }
   .platform-badge.twitter { border-color:rgba(96,165,250,0.3); color:#60a5fa; }
   .platform-badge.tripadvisor { border-color:rgba(52,211,153,0.3); color:#34d399; }
+  .platform-badge.trustpilot { border-color:rgba(251,191,36,0.3); color:#fbbf24; }
   .severity { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; }
   .severity.critical { background:rgba(248,113,113,0.12); color:var(--red); border:1px solid rgba(248,113,113,0.2); }
   .severity.moderate { background:rgba(251,146,60,0.1); color:var(--orange); border:1px solid rgba(251,146,60,0.2); }
@@ -493,13 +496,32 @@
       <!-- PLATEFORMES -->
       <div class="section" id="sec-plateformes">
         <div class="card">
-          <div class="card-header"><div class="card-title">⬡ Plateformes connectées</div><button class="btn-sm btn-primary">+ Ajouter</button></div>
+          <div class="card-header"><div class="card-title">⬡ Plateformes connectées</div></div>
           <div>
-            <div class="platform-full-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google Business</div><div class="platform-stars">Connecté · Synchro il y a 4 min</div></div><div class="platform-status"><span class="status-pill active">Actif</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
-            <div class="platform-full-item"><div class="platform-logo ta">TA</div><div><div class="platform-name">TripAdvisor</div><div class="platform-stars">Connecté · Synchro il y a 1h</div></div><div class="platform-status"><span class="status-pill active">Actif</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
-            <div class="platform-full-item"><div class="platform-logo fb">f</div><div><div class="platform-name">Facebook</div><div class="platform-stars">Connecté · Synchro il y a 2h</div></div><div class="platform-status"><span class="status-pill active">Actif</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
-            <div class="platform-full-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">Connecté · Synchro il y a 3h</div></div><div class="platform-status"><span class="status-pill active">Actif</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div></div>
-            <div class="platform-full-item"><div class="platform-logo" style="background:rgba(255,255,255,0.04);border:1px dashed var(--border2);color:var(--text3);">+</div><div><div class="platform-name" style="color:var(--text3);">Yelp, Pages Jaunes, Booking...</div><div class="platform-stars">Disponible sur Plan Business</div></div><div class="platform-status"><button class="btn-sm btn-ghost" onclick="navigate('abonnement')">Débloquer</button></div></div>
+            <!-- Google — always connected -->
+            <div class="platform-full-item">
+              <div class="platform-logo g">G</div>
+              <div>
+                <div class="platform-name">Google Business</div>
+                <div class="platform-stars" id="googlePlatformStatus">Actif · synchronisation automatique</div>
+              </div>
+              <div class="platform-status" id="googlePlatformActions"><span class="status-pill active">Actif</span></div>
+            </div>
+            <!-- Trustpilot — connect form or connected state -->
+            <div class="platform-full-item" id="trustpilotRow">
+              <div class="platform-logo tp">TP</div>
+              <div style="flex:1;">
+                <div class="platform-name">Trustpilot</div>
+                <div id="trustpilotStatus" class="platform-stars">Non connecté</div>
+                <div id="trustpilotForm" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;">
+                  <input id="tpBusinessName" class="settings-input" style="max-width:260px;margin:0;" type="text" placeholder="Nom de votre établissement">
+                  <button class="btn-sm btn-primary" onclick="connectTrustpilot(this)">Connecter →</button>
+                </div>
+              </div>
+              <div class="platform-status" id="trustpilotActions"></div>
+            </div>
+            <!-- Business plan placeholders -->
+            <div class="platform-full-item"><div class="platform-logo" style="background:rgba(255,255,255,0.04);border:1px dashed var(--border2);color:var(--text3);">+</div><div><div class="platform-name" style="color:var(--text3);">TripAdvisor, Yelp, Booking...</div><div class="platform-stars">Disponible sur Plan Business</div></div><div class="platform-status"><button class="btn-sm btn-ghost" onclick="navigate('abonnement')">Débloquer</button></div></div>
           </div>
         </div>
       </div>
@@ -513,6 +535,22 @@
           <div class="settings-row"><div><div class="settings-label">Mentions négatives virales</div><div class="settings-sub">Portée &gt; 1000 impressions</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
           <div class="settings-row"><div><div class="settings-label">Rapport hebdomadaire</div><div class="settings-sub">Chaque lundi à 08:00</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
           <div class="settings-row"><div><div class="settings-label">Nouveaux avis positifs</div><div class="settings-sub">Résumé quotidien</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Webhook sortant <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:6px;">Slack · Teams · Discord</span></div></div>
+          <div class="settings-row">
+            <div><div class="settings-label">Activer les notifications webhook</div><div class="settings-sub">Reçoit les alertes critiques dans votre workspace</div></div>
+            <div class="toggle" id="webhookToggle" onclick="toggleWebhook(this)"></div>
+          </div>
+          <div style="padding:0 20px 16px;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">URL du webhook (Slack / Teams / Discord)</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input id="webhookUrlInput" class="settings-input" style="flex:1;min-width:240px;margin:0;" type="url" placeholder="https://hooks.slack.com/services/...">
+              <button class="btn-sm btn-primary" onclick="saveWebhook(this)">Enregistrer</button>
+              <button class="btn-sm btn-ghost" id="webhookTestBtn" onclick="testWebhook(this)" style="display:none;">Tester →</button>
+            </div>
+            <div id="webhookMsg" style="font-size:12px;margin-top:8px;display:none;"></div>
+          </div>
         </div>
       </div>
 
@@ -549,6 +587,8 @@
           <div class="settings-row"><div><div class="settings-label">Nom de l'établissement</div></div><input class="settings-input" type="text" id="settingBusinessName" value="Le Provençal"></div>
           <div class="settings-row"><div><div class="settings-label">Email de contact</div></div><input class="settings-input" type="email" id="settingEmail" value="contact@leprovencal.fr"></div>
           <div class="settings-row"><div><div class="settings-label">Ville</div></div><input class="settings-input" type="text" id="settingCity" value="Lyon, France"></div>
+          <div class="settings-title">Automatisation</div>
+          <div class="settings-row"><div><div class="settings-label">Réponse automatique aux avis 5★</div><div class="settings-sub">Génère et valide silencieusement les réponses aux avis 5★ sans texte</div></div><div class="toggle" id="autoRespondToggle" onclick="toggleAutoRespond(this)"></div></div>
           <div class="settings-title">Sécurité</div>
           <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Dernière modification il y a 30 jours</div></div><button class="btn-sm btn-ghost">Modifier</button></div>
           <div class="settings-row"><div><div class="settings-label">Authentification deux facteurs</div><div class="settings-sub">Non activé</div></div><button class="btn-sm btn-primary">Activer</button></div>
@@ -563,6 +603,8 @@
     </div>
   </main>
 </div>
+
+<div class="toast" id="toastEl"></div>
 
 <script>
   // AUTH GUARD
@@ -600,7 +642,8 @@
   }
   function platBadge(p) {
     const n = (p||'google').toLowerCase();
-    return `<span class="platform-badge ${n==='google'?'google':n==='twitter'?'twitter':n==='tripadvisor'?'tripadvisor':''}">${n.charAt(0).toUpperCase()+n.slice(1)}</span>`;
+    const cls = {google:'google',twitter:'twitter',tripadvisor:'tripadvisor',trustpilot:'trustpilot'}[n] || '';
+    return `<span class="platform-badge ${cls}">${n.charAt(0).toUpperCase()+n.slice(1)}</span>`;
   }
 
   // LOAD
@@ -711,6 +754,43 @@
     if (sb) sb.value = client.business_name || '';
     if (se) se.value = client.email || '';
     if (sc2) sc2.value = client.country || '';
+
+    // Auto-respond toggle
+    const art = document.getElementById('autoRespondToggle');
+    if (art) art.classList.toggle('on', !!client.auto_respond_5star);
+
+    // Trustpilot platform row
+    const tpStatus = document.getElementById('trustpilotStatus');
+    const tpForm = document.getElementById('trustpilotForm');
+    const tpActions = document.getElementById('trustpilotActions');
+    if (client.trustpilot_business_id) {
+      if (tpStatus) tpStatus.textContent = `Connecté · Score ${client.trustpilot_score ? client.trustpilot_score.toFixed(1) : '—'}/5`;
+      if (tpForm) tpForm.style.display = 'none';
+      if (tpActions) tpActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-ghost" style="margin-left:8px;" onclick="disconnectTrustpilot(this)">Déconnecter</button>`;
+    } else {
+      if (tpStatus) tpStatus.textContent = 'Non connecté — ajoutez Trustpilot pour doubler vos sources';
+      if (tpForm) { tpForm.style.display = 'flex'; const tpInput = document.getElementById('tpBusinessName'); if (tpInput && client.business_name) tpInput.value = client.business_name; }
+      if (tpActions) tpActions.innerHTML = '';
+    }
+
+    // Webhook settings
+    const wToggle = document.getElementById('webhookToggle');
+    const wInput = document.getElementById('webhookUrlInput');
+    const wTestBtn = document.getElementById('webhookTestBtn');
+    if (wToggle) wToggle.classList.toggle('on', !!client.webhook_enabled);
+    if (wInput) wInput.value = client.webhook_url || '';
+    if (wTestBtn) wTestBtn.style.display = client.webhook_url ? '' : 'none';
+
+    // Google Business Profile OAuth status
+    const gActions = document.getElementById('googlePlatformActions');
+    const gStatus = document.getElementById('googlePlatformStatus');
+    if (client.gbp_location_name) {
+      if (gStatus) gStatus.textContent = 'Actif · Réponses directes Google activées ✓';
+      if (gActions) gActions.innerHTML = `<span class="status-pill gbp">Réponses ✓</span>`;
+    } else {
+      if (gStatus) gStatus.textContent = 'Actif · Lecture seule — activez les réponses directes';
+      if (gActions) gActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-primary" style="margin-left:8px;" onclick="connectGBP()">Activer les réponses →</button>`;
+    }
   }
 
   function reviewHTML(r, withActions) {
@@ -824,8 +904,12 @@
         respDiv.textContent = data.response;
       }
       const actDiv = document.getElementById('actions-' + id);
+      const gbpConnected = !!RG.data?.client?.gbp_location_name;
+      const isGoogle = (review.platform || 'google') === 'google';
       if (actDiv) actDiv.innerHTML = `
-        <button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>
+        ${gbpConnected && isGoogle
+          ? `<button class="btn-lg primary" onclick="publishToGoogle(${id},this)">Publier sur Google →</button>`
+          : `<button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>`}
         <button class="btn-lg ghost" onclick="editResponse(${id})">${t('btn_edit')}</button>
         <button class="btn-lg ghost" onclick="dismissReview(${id},this)">${t('btn_refuse')}</button>`;
     } catch(e) {
@@ -881,7 +965,7 @@
       await fetch('/api/fetch-reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
-        body: JSON.stringify({ businessName: RG.data.client.business_name, location: RG.data.client.country, clientId: RG.data.client.id })
+        body: JSON.stringify({ businessName: RG.data.client.business_name, location: RG.data.client.country, clientId: RG.data.client.id, lang: window.RG_LANG || 'fr' })
       });
       await loadDashboard();
     } catch(e) { console.error(e); }
@@ -923,6 +1007,140 @@
       });
     });
   });
+
+  // TOAST
+  function showToast(msg, color) {
+    const el = document.getElementById('toastEl');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.borderColor = color === 'green' ? 'rgba(52,211,153,0.3)' : color === 'red' ? 'rgba(248,113,113,0.3)' : 'var(--border2)';
+    el.style.color = color === 'green' ? '#34d399' : color === 'red' ? '#f87171' : 'var(--text)';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // GOOGLE BUSINESS PROFILE OAUTH
+  async function connectGBP() {
+    try {
+      const r = await fetch('/api/google-oauth-init', { headers: { 'Authorization': 'Bearer ' + RG.token } });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || 'Erreur', 'red'); return; }
+      if (d.url) window.location.href = d.url;
+    } catch(e) { showToast('Erreur de connexion', 'red'); }
+  }
+
+  async function publishToGoogle(id, btn) {
+    const respDiv = document.getElementById('resp-' + id);
+    const replyText = respDiv?.textContent?.trim();
+    if (!replyText || respDiv?.style?.fontStyle === 'italic') {
+      showToast('Générez d\'abord la réponse IA avant de publier.', 'red'); return;
+    }
+    btn.disabled = true; btn.textContent = 'Publication sur Google...';
+    try {
+      const r = await apiPost('/api/publish-review-reply', { reviewId: id, replyText });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Publié sur Google';
+      const s = document.getElementById('status-' + id);
+      if (s) { s.textContent = 'Publié ✓'; s.className = 'severity moderate'; }
+      showToast('Réponse publiée sur Google Business Profile !', 'green');
+    } catch(e) {
+      showToast('Erreur : ' + e.message, 'red');
+      btn.textContent = 'Publier sur Google →'; btn.disabled = false;
+    }
+  }
+
+  // Handle GBP OAuth callback result
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('gbp') === 'connected') {
+      showToast('✓ Google Business Profile connecté — réponses directes activées !', 'green');
+      history.replaceState({}, '', '/dashboard');
+    } else if (p.get('gbp_error')) {
+      showToast('Erreur GBP : ' + p.get('gbp_error'), 'red');
+      history.replaceState({}, '', '/dashboard');
+    }
+  })();
+
+  // TRUSTPILOT
+  async function connectTrustpilot(btn) {
+    const name = document.getElementById('tpBusinessName')?.value?.trim();
+    if (!name) return;
+    btn.disabled = true; btn.textContent = 'Recherche...';
+    try {
+      const r = await fetch('/api/fetch-reviews-trustpilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Connecté';
+      await loadDashboard();
+    } catch(e) {
+      btn.textContent = e.message;
+      setTimeout(() => { btn.textContent = 'Connecter →'; btn.disabled = false; }, 3000);
+    }
+  }
+
+  async function disconnectTrustpilot(btn) {
+    if (!confirm('Déconnecter Trustpilot ? Les avis existants seront conservés.')) return;
+    btn.disabled = true;
+    await apiPost('/api/update-client', { trustpilot_business_id: null });
+    await loadDashboard();
+  }
+
+  // WEBHOOK
+  function toggleWebhook(el) {
+    el.classList.toggle('on');
+    apiPost('/api/update-client', { webhook_enabled: el.classList.contains('on') });
+  }
+
+  async function saveWebhook(btn) {
+    const url = document.getElementById('webhookUrlInput')?.value?.trim();
+    btn.disabled = true; btn.textContent = 'Enregistrement...';
+    const msg = document.getElementById('webhookMsg');
+    try {
+      const r = await apiPost('/api/update-client', { webhook_url: url || '' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Enregistré';
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = 'URL enregistrée. Cliquez sur Tester pour vérifier.'; }
+      const testBtn = document.getElementById('webhookTestBtn');
+      if (testBtn) testBtn.style.display = url ? '' : 'none';
+      setTimeout(() => { btn.textContent = 'Enregistrer'; btn.disabled = false; }, 2000);
+    } catch(e) {
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = e.message; }
+      btn.textContent = 'Enregistrer'; btn.disabled = false;
+    }
+  }
+
+  async function testWebhook(btn) {
+    const url = document.getElementById('webhookUrlInput')?.value?.trim();
+    if (!url) return;
+    btn.disabled = true; btn.textContent = 'Envoi...';
+    const msg = document.getElementById('webhookMsg');
+    try {
+      const r = await fetch('/api/send-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ webhookUrl: url, businessName: RG.data?.client?.business_name, isTest: true }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Envoyé';
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = 'Message de test envoyé avec succès !'; }
+    } catch(e) {
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = 'Échec : ' + e.message; }
+    }
+    setTimeout(() => { btn.textContent = 'Tester →'; btn.disabled = false; }, 2000);
+  }
+
+  // AUTO-RESPOND
+  function toggleAutoRespond(el) {
+    el.classList.toggle('on');
+    apiPost('/api/update-client', { auto_respond_5star: el.classList.contains('on') });
+  }
 
   loadDashboard();
 </script>

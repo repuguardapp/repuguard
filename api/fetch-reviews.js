@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const auth = await authenticate(req);
     if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { businessName, location, clientId } = req.body;
+    const { businessName, location, clientId, lang, autoRespond5star } = req.body;
 
     if (!businessName || !clientId) {
       return res.status(400).json({ error: 'Paramètres manquants' });
@@ -38,6 +38,8 @@ export default async function handler(req, res) {
     if (auth.userId && auth.userId !== clientId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
+
+    const reviewLang = lang || 'fr';
 
     // 1. Chercher l'établissement via Places API (New) - Text Search
     const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -49,7 +51,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         textQuery: `${businessName} ${location || ''}`,
-        languageCode: 'fr',
+        languageCode: reviewLang,
       })
     });
 
@@ -71,7 +73,7 @@ export default async function handler(req, res) {
       headers: {
         'X-Goog-Api-Key': GOOGLE_API_KEY,
         'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
-        'Accept-Language': 'fr',
+        'Accept-Language': reviewLang,
       }
     });
 
@@ -98,7 +100,7 @@ export default async function handler(req, res) {
           text: review.text?.text || '',
           date: review.publishTime || new Date().toISOString(),
           is_negative: (review.rating || 0) <= 2,
-          needs_response: (review.rating || 0) <= 2,
+          needs_response: (review.rating || 0) <= 2 && !(autoRespond5star && (review.rating || 0) === 5),
           place_id: placeId,
         }),
       });
@@ -123,7 +125,7 @@ export default async function handler(req, res) {
 
     // 6. Alertes email pour avis négatifs
     if (negativeReviews.length > 0) {
-      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name,lang`, {
+      const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=email,first_name,business_name,lang,webhook_url,webhook_enabled`, {
         headers: {
           'apikey': SUPABASE_SECRET_KEY,
           'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY,
@@ -134,23 +136,37 @@ export default async function handler(req, res) {
       if (clients.length > 0) {
         const client = clients[0];
         for (const review of negativeReviews) {
-          await fetch('https://repuguard.app/api/send-email', {
+          const reviewPayload = {
+            platform: 'Google',
+            author:   review.authorAttribution?.displayName,
+            rating:   review.rating,
+            text:     review.text?.text,
+          };
+
+          fetch('https://repuguard.app/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'alert',
-              email: client.email,
-              firstName: client.first_name,
+              type:         'alert',
+              email:        client.email,
+              firstName:    client.first_name,
               businessName: client.business_name,
-              lang: client.lang || 'fr',
-              review: {
-                platform: 'Google',
-                author: review.authorAttribution?.displayName,
-                rating: review.rating,
-                text: review.text?.text,
-              }
+              lang:         client.lang || 'fr',
+              review:       reviewPayload,
             }),
-          });
+          }).catch(e => console.error('Alert email error:', e.message));
+
+          if (client.webhook_enabled && client.webhook_url) {
+            fetch('https://repuguard.app/api/send-webhook', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
+              body: JSON.stringify({
+                webhookUrl:   client.webhook_url,
+                businessName: client.business_name,
+                review:       reviewPayload,
+              }),
+            }).catch(e => console.error('Webhook error:', e.message));
+          }
         }
       }
     }

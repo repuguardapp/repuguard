@@ -13,18 +13,25 @@ export default async function handler(req) {
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
+  const SUPPORTED_LANGS = new Set(['fr','en','es','de','pt','ar','it','nl','ru','zh','ja','ko','hi','tr','pl','sv','da','fi','nb','cs','ro','hu']);
+  const LANG_NAMES = {fr:'French',en:'English',es:'Spanish',de:'German',pt:'Portuguese',ar:'Arabic',it:'Italian',nl:'Dutch',ru:'Russian',zh:'Chinese',ja:'Japanese',ko:'Korean',hi:'Hindi',tr:'Turkish',pl:'Polish',sv:'Swedish',da:'Danish',fi:'Finnish',nb:'Norwegian',cs:'Czech',ro:'Romanian',hu:'Hungarian'};
+
   try {
     const body = await req.json();
     // Accepte 'lang' ou 'targetLang' (landing page envoie targetLang)
     const lang = body.lang || body.targetLang;
-    const langName = body.langName || lang;
     const texts = body.texts;
 
-    if (!lang || !texts || typeof texts !== 'object' || Array.isArray(texts) || Object.keys(texts).length > 150) {
+    if (!lang || !SUPPORTED_LANGS.has(lang)) {
+      return new Response(JSON.stringify({ error: 'Langue non supportée' }), { status: 400, headers });
+    }
+
+    if (!texts || typeof texts !== 'object' || Array.isArray(texts) || Object.keys(texts).length > 150) {
       return new Response(JSON.stringify({ error: 'Paramètres invalides' }), { status: 400, headers });
     }
 
-    const prompt = `Translate these JSON values from French to ${langName} (language code: ${lang}). Keep all keys unchanged. Return ONLY valid JSON with no markdown:\n${JSON.stringify(texts)}`;
+    const safeLangName = LANG_NAMES[lang];
+    const prompt = `Translate these JSON values from French to ${safeLangName} (language code: ${lang}). Keep all keys unchanged. Return ONLY valid JSON with no markdown:\n${JSON.stringify(texts)}`;
 
     const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
