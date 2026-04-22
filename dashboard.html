@@ -390,21 +390,11 @@
           <div class="right-panel">
             <div class="card">
               <div class="card-header"><div class="card-title">◈ Par plateforme</div></div>
-              <div class="platform-list">
-                <div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">★★★★½</div></div><div class="platform-score">4.6<div class="score-bar-wrap"><div class="score-bar" style="width:92%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo ta">TA</div><div><div class="platform-name">TripAdvisor</div><div class="platform-stars">★★★★½</div></div><div class="platform-score">4.4<div class="score-bar-wrap"><div class="score-bar" style="width:88%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo fb">f</div><div><div class="platform-name">Facebook</div><div class="platform-stars">★★★★</div></div><div class="platform-score" style="color:var(--orange)">3.9<div class="score-bar-wrap"><div class="score-bar warn" style="width:78%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">★★★★★</div></div><div class="platform-score">4.7<div class="score-bar-wrap"><div class="score-bar" style="width:94%"></div></div></div></div>
-              </div>
+              <div class="platform-list" id="platformList"></div>
             </div>
             <div class="card">
               <div class="card-header"><div class="card-title">⚡ Activité récente</div></div>
-              <div class="activity-list">
-                <div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée sur <strong>Google</strong> · Claire B.</div><div class="activity-when">il y a 1h</div></div></div>
-                <div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text"><strong>Rapport hebdomadaire</strong> envoyé</div><div class="activity-when">Lundi 08:00</div></div></div>
-                <div class="activity-item"><div class="activity-dot orange"></div><div><div class="activity-text">Nouvelle plateforme : <strong>Yelp France</strong></div><div class="activity-when">Dimanche</div></div></div>
-                <div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Score <strong>Facebook</strong> en baisse de 0.2 pts</div><div class="activity-when">Samedi</div></div></div>
-              </div>
+              <div class="activity-list" id="activityList"></div>
             </div>
           </div>
         </div>
@@ -590,8 +580,7 @@
           <div class="settings-title">Automatisation</div>
           <div class="settings-row"><div><div class="settings-label">Réponse automatique aux avis 5★</div><div class="settings-sub">Génère et valide silencieusement les réponses aux avis 5★ sans texte</div></div><div class="toggle" id="autoRespondToggle" onclick="toggleAutoRespond(this)"></div></div>
           <div class="settings-title">Sécurité</div>
-          <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Dernière modification il y a 30 jours</div></div><button class="btn-sm btn-ghost">Modifier</button></div>
-          <div class="settings-row"><div><div class="settings-label">Authentification deux facteurs</div><div class="settings-sub">Non activé</div></div><button class="btn-sm btn-primary">Activer</button></div>
+          <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Envoie un email de réinitialisation</div></div><button class="btn-sm btn-ghost" onclick="resetPassword(this)">Modifier</button></div>
           <div style="padding:16px 20px;border-top:1px solid var(--border);"><button class="btn-lg primary" onclick="saveSettings()">Enregistrer les modifications</button></div>
         </div>
         <div class="card" style="border-color:rgba(248,113,113,0.2);">
@@ -721,7 +710,9 @@
         } else if (renewDate) {
           desc = `Prochain renouvellement le ${renewDate.toLocaleDateString('fr-FR')}`;
         }
-        planBanner.querySelector('.plan-desc').textContent = desc;
+        const PLAN_PRICES = { starter: '29', pro: '69', business: '149' };
+        const priceStr = PLAN_PRICES[plan] ? ` · ${PLAN_PRICES[plan]}€/mois` : '';
+        planBanner.querySelector('.plan-desc').textContent = desc + (trialDate && trialDate > now ? '' : priceStr);
       }
       subSec.querySelectorAll('.plan-card[data-plan]').forEach(card => {
         const cardPlan = card.dataset.plan;
@@ -732,6 +723,35 @@
         const btn = card.querySelector('.btn-lg');
         if (btn) { btn.style.opacity = isCurrent ? '0.5' : ''; btn.style.cursor = isCurrent ? 'default' : ''; if (isCurrent) btn.textContent = 'Plan actuel'; }
       });
+    }
+
+    // Platform list — only connected platforms
+    const platList = document.getElementById('platformList');
+    if (platList) {
+      const platItems = [];
+      const gScore = client.google_score || 0;
+      platItems.push(`<div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">${stars(Math.round(gScore))}</div></div><div class="platform-score">${gScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(gScore/5*100)}%"></div></div></div></div>`);
+      if (client.trustpilot_business_id) {
+        const tpScore = client.trustpilot_score || 0;
+        platItems.push(`<div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">${stars(Math.round(tpScore))}</div></div><div class="platform-score">${tpScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(tpScore/5*100)}%"></div></div></div></div>`);
+      }
+      platList.innerHTML = platItems.join('');
+    }
+
+    // Activity feed — dynamic from real data
+    const actList = document.getElementById('activityList');
+    if (actList) {
+      const acts = [];
+      if (client.last_sync) {
+        const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
+        const when = diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.round(diff/60)}h` : `il y a ${Math.round(diff/1440)}j`;
+        acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>Google</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
+      }
+      const responded = (allReviews||[]).filter(r => r.responded_at).slice(0,2);
+      responded.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.responded_at)}</div></div></div>`));
+      const recentNegs = (allReviews||[]).filter(r => r.is_negative && !r.responded_at).slice(0,2);
+      recentNegs.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Avis négatif détecté · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.date)}</div></div></div>`));
+      actList.innerHTML = acts.length ? acts.join('') : `<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text" style="color:var(--text3)">Aucune activité récente</div></div></div>`;
     }
 
     // Alert tab counts
@@ -1020,6 +1040,15 @@
   }
 
   // GOOGLE BUSINESS PROFILE OAUTH
+  async function resetPassword(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      await fetch('/api/reset-password', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
+      showToast('Email de réinitialisation envoyé', 'green');
+    } catch(e) { showToast('Erreur', 'red'); }
+    if (btn) { btn.disabled = false; btn.textContent = 'Modifier'; }
+  }
+
   async function manageSubscription() {
     try {
       const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
