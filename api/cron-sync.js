@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const clientsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,lang,trustpilot_business_id`,
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,lang,trustpilot_business_id,auto_respond_5star`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     const clients = await clientsRes.json();
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
-          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr', autoRespond5star: !!client.auto_respond_5star }),
         });
         const data = await syncRes.json();
         results.push({ clientId: client.id, success: true, reviewsFetched: data.reviewsFetched || 0 });

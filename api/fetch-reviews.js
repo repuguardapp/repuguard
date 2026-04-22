@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const auth = await authenticate(req);
     if (!auth.ok) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { businessName, location, clientId, lang } = req.body;
+    const { businessName, location, clientId, lang, autoRespond5star } = req.body;
 
     if (!businessName || !clientId) {
       return res.status(400).json({ error: 'Paramètres manquants' });
@@ -100,7 +100,7 @@ export default async function handler(req, res) {
           text: review.text?.text || '',
           date: review.publishTime || new Date().toISOString(),
           is_negative: (review.rating || 0) <= 2,
-          needs_response: (review.rating || 0) <= 2,
+          needs_response: (review.rating || 0) <= 2 && !(autoRespond5star && (review.rating || 0) === 5),
           place_id: placeId,
         }),
       });
