@@ -129,7 +129,9 @@
   .alert-item:hover { background:var(--surface2); }
   .alert-meta { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
   .platform-badge { font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px; background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
-  .platform-badge.google { border-color:rgba(234,67,53,0.3); color:#f87171; }
+  .status-pill.gbp { background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.25); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e2030; border:1px solid var(--border2); border-radius:10px; padding:12px 20px; font-size:13px; font-weight:500; color:var(--text); z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.4); opacity:0; transition:opacity .3s; pointer-events:none; max-width:420px; text-align:center; }
+  .toast.show { opacity:1; }
   .platform-badge.twitter { border-color:rgba(96,165,250,0.3); color:#60a5fa; }
   .platform-badge.tripadvisor { border-color:rgba(52,211,153,0.3); color:#34d399; }
   .platform-badge.trustpilot { border-color:rgba(251,191,36,0.3); color:#fbbf24; }
@@ -503,7 +505,7 @@
                 <div class="platform-name">Google Business</div>
                 <div class="platform-stars" id="googlePlatformStatus">Actif · synchronisation automatique</div>
               </div>
-              <div class="platform-status"><span class="status-pill active">Actif</span></div>
+              <div class="platform-status" id="googlePlatformActions"><span class="status-pill active">Actif</span></div>
             </div>
             <!-- Trustpilot — connect form or connected state -->
             <div class="platform-full-item" id="trustpilotRow">
@@ -601,6 +603,8 @@
     </div>
   </main>
 </div>
+
+<div class="toast" id="toastEl"></div>
 
 <script>
   // AUTH GUARD
@@ -776,6 +780,17 @@
     if (wToggle) wToggle.classList.toggle('on', !!client.webhook_enabled);
     if (wInput) wInput.value = client.webhook_url || '';
     if (wTestBtn) wTestBtn.style.display = client.webhook_url ? '' : 'none';
+
+    // Google Business Profile OAuth status
+    const gActions = document.getElementById('googlePlatformActions');
+    const gStatus = document.getElementById('googlePlatformStatus');
+    if (client.gbp_location_name) {
+      if (gStatus) gStatus.textContent = 'Actif · Réponses directes Google activées ✓';
+      if (gActions) gActions.innerHTML = `<span class="status-pill gbp">Réponses ✓</span>`;
+    } else {
+      if (gStatus) gStatus.textContent = 'Actif · Lecture seule — activez les réponses directes';
+      if (gActions) gActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-primary" style="margin-left:8px;" onclick="connectGBP()">Activer les réponses →</button>`;
+    }
   }
 
   function reviewHTML(r, withActions) {
@@ -889,8 +904,12 @@
         respDiv.textContent = data.response;
       }
       const actDiv = document.getElementById('actions-' + id);
+      const gbpConnected = !!RG.data?.client?.gbp_location_name;
+      const isGoogle = (review.platform || 'google') === 'google';
       if (actDiv) actDiv.innerHTML = `
-        <button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>
+        ${gbpConnected && isGoogle
+          ? `<button class="btn-lg primary" onclick="publishToGoogle(${id},this)">Publier sur Google →</button>`
+          : `<button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>`}
         <button class="btn-lg ghost" onclick="editResponse(${id})">${t('btn_edit')}</button>
         <button class="btn-lg ghost" onclick="dismissReview(${id},this)">${t('btn_refuse')}</button>`;
     } catch(e) {
@@ -988,6 +1007,60 @@
       });
     });
   });
+
+  // TOAST
+  function showToast(msg, color) {
+    const el = document.getElementById('toastEl');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.borderColor = color === 'green' ? 'rgba(52,211,153,0.3)' : color === 'red' ? 'rgba(248,113,113,0.3)' : 'var(--border2)';
+    el.style.color = color === 'green' ? '#34d399' : color === 'red' ? '#f87171' : 'var(--text)';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // GOOGLE BUSINESS PROFILE OAUTH
+  async function connectGBP() {
+    try {
+      const r = await fetch('/api/google-oauth-init', { headers: { 'Authorization': 'Bearer ' + RG.token } });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || 'Erreur', 'red'); return; }
+      if (d.url) window.location.href = d.url;
+    } catch(e) { showToast('Erreur de connexion', 'red'); }
+  }
+
+  async function publishToGoogle(id, btn) {
+    const respDiv = document.getElementById('resp-' + id);
+    const replyText = respDiv?.textContent?.trim();
+    if (!replyText || respDiv?.style?.fontStyle === 'italic') {
+      showToast('Générez d\'abord la réponse IA avant de publier.', 'red'); return;
+    }
+    btn.disabled = true; btn.textContent = 'Publication sur Google...';
+    try {
+      const r = await apiPost('/api/publish-review-reply', { reviewId: id, replyText });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Publié sur Google';
+      const s = document.getElementById('status-' + id);
+      if (s) { s.textContent = 'Publié ✓'; s.className = 'severity moderate'; }
+      showToast('Réponse publiée sur Google Business Profile !', 'green');
+    } catch(e) {
+      showToast('Erreur : ' + e.message, 'red');
+      btn.textContent = 'Publier sur Google →'; btn.disabled = false;
+    }
+  }
+
+  // Handle GBP OAuth callback result
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('gbp') === 'connected') {
+      showToast('✓ Google Business Profile connecté — réponses directes activées !', 'green');
+      history.replaceState({}, '', '/dashboard');
+    } else if (p.get('gbp_error')) {
+      showToast('Erreur GBP : ' + p.get('gbp_error'), 'red');
+      history.replaceState({}, '', '/dashboard');
+    }
+  })();
 
   // TRUSTPILOT
   async function connectTrustpilot(btn) {
