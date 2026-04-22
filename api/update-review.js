@@ -32,7 +32,7 @@ export default async function handler(req) {
     // validate: responded to the review, keep it as negative for stats
     // dismiss: user ignores it, remove from alert queue entirely
     const patch = action === 'validate'
-      ? { needs_response: false }
+      ? { needs_response: false, responded_at: new Date().toISOString() }
       : { needs_response: false, is_negative: false };
 
     await fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${reviewId}&client_id=eq.${user.id}`, {

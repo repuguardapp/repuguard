@@ -570,7 +570,7 @@
         <div class="card" style="padding:20px;">
           <div style="display:flex;align-items:center;gap:16px;">
             <div class="plan-badge" style="margin:0;flex:1;"><div class="plan-name">✦ Votre plan actuel : PRO</div><div class="plan-desc">Prochain renouvellement le 16 mai 2026 · 69€/mois</div></div>
-            <button class="btn-lg ghost">Gérer l'abonnement</button>
+            <button class="btn-lg ghost" onclick="manageSubscription()">Gérer l'abonnement</button>
           </div>
         </div>
         <div class="plan-grid">
@@ -1020,6 +1020,15 @@
   }
 
   // GOOGLE BUSINESS PROFILE OAUTH
+  async function manageSubscription() {
+    try {
+      const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || 'Erreur', 'red'); return; }
+      if (d.url) window.location.href = d.url;
+    } catch(e) { showToast('Erreur de connexion', 'red'); }
+  }
+
   async function connectGBP() {
     try {
       const r = await fetch('/api/google-oauth-init', { headers: { 'Authorization': 'Bearer ' + RG.token } });

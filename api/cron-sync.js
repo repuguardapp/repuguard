@@ -66,6 +66,25 @@ export default async function handler(req, res) {
       await sleep(THROTTLE_MS);
     }
 
+    // J7 trial-ending emails — trial expires in less than 24h
+    const j7Start = new Date(Date.now() + 0.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j7End   = new Date(Date.now() + 1.5 * 24 * 60 * 60 * 1000).toISOString();
+    const j7Res = await fetch(
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&trial_ends=gte.${j7Start}&trial_ends=lte.${j7End}&select=email,first_name,business_name,lang`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    const j7Clients = await j7Res.json();
+    if (Array.isArray(j7Clients) && j7Clients.length > 0) {
+      console.log(`Sending J7 trial-ending email to ${j7Clients.length} clients`);
+      for (const c of j7Clients) {
+        fetch(`${baseUrl}/api/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'trial', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+        }).catch(e => console.error('J7 email error:', e.message));
+      }
+    }
+
     // J3 onboarding emails — find trialing users on day 3 (trial_ends in 3.5–4.5 days)
     const j3Start = new Date(Date.now() + 3.5 * 24 * 60 * 60 * 1000).toISOString();
     const j3End   = new Date(Date.now() + 4.5 * 24 * 60 * 60 * 1000).toISOString();
@@ -90,6 +109,7 @@ export default async function handler(req, res) {
       trustpilot: { synced: tpResults.filter(r => r.success).length, total: tpClients.length },
       results,
       j3_emails: Array.isArray(j3Clients) ? j3Clients.length : 0,
+      j7_emails: Array.isArray(j7Clients) ? j7Clients.length : 0,
     });
 
   } catch (err) {
