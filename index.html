@@ -471,7 +471,7 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 
 <section id="pricing">
   <div style="text-align:center;margin-bottom:1rem;">
-  <span style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);color:#818cf8;font-size:.8rem;font-weight:700;padding:6px 16px;border-radius:20px;">✦ Rejoignez 150+ établissements surveillés en Europe</span>
+  <span style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);color:#818cf8;font-size:.8rem;font-weight:700;padding:6px 16px;border-radius:20px;">✦ Rejoignez <span id="liveCounter">150</span>+ établissements surveillés en Europe</span>
 </div>
   <div class="section-label" style="text-align:center" data-t="price_label">Tarifs</div>
   <h2 style="text-align:center" data-t="price_h2">Simple. Transparent. Sans surprise.</h2>
@@ -578,7 +578,7 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
     <li><a href="/terms" data-t="footer_terms">Conditions</a></li>
     <li><a href="/contact" data-t="footer_contact">Contact</a></li>
   </ul>
-  <div class="footer-copy">© 2025 RepuGuard</div>
+  <div class="footer-copy">© 2026 RepuGuard</div>
 </footer>
 
 <a href="/contact" class="help-btn">💬 Aide</a>
@@ -817,6 +817,20 @@ initLang();
 function gdprAccept(){localStorage.setItem('gdpr','1');document.getElementById('gdprBar').classList.remove('show');}
 function gdprDecline(){localStorage.setItem('gdpr','0');document.getElementById('gdprBar').classList.remove('show');}
 (function(){if(!localStorage.getItem('gdpr')){setTimeout(function(){document.getElementById('gdprBar').classList.add('show');},2000);}})();
+
+// Animate live counter (subtle: 150 → 153 over 3s)
+(function() {
+  const el = document.getElementById('liveCounter');
+  if (!el) return;
+  const target = 153, start = 150, dur = 3000;
+  const t0 = performance.now();
+  function step(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    el.textContent = Math.floor(start + (target - start) * p);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  setTimeout(() => requestAnimationFrame(step), 1500);
+})();
 
 async function submitNewsletter(e) {
   e.preventDefault();
