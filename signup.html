@@ -607,6 +607,14 @@
         <div class="success-step"><div class="success-step-num">2</div><div>Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div></div>
         <div class="success-step"><div class="success-step-num">3</div><div>Configurez vos préférences d'alerte (email, SMS, fréquence)</div></div>
       </div>
+      <div id="successRefBlock" style="display:none;margin:20px 0;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:16px;text-align:left;">
+        <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:8px;">🎁 Gagnez 1 mois gratuit en parrainant un ami</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">Partagez votre lien — votre filleul et vous recevez chacun 1 mois offert à sa conversion.</div>
+        <div style="display:flex;gap:6px;">
+          <input id="successRefLink" type="text" readonly style="flex:1;background:#0e1018;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;color:#818cf8;font-size:11px;font-family:monospace;outline:none;" />
+          <button id="copySuccessRefBtn" onclick="copySuccessRef()" style="background:#6366f1;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;">📋 Copier</button>
+        </div>
+      </div>
       <a href="/dashboard" class="btn-submit" style="text-decoration:none;justify-content:center">
         Accéder à mon dashboard →
       </a>
@@ -749,17 +757,35 @@
       const authData = await authRes.json();
       if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      showSuccess();
+      localStorage.removeItem('rg-ref');
+      showSuccess(authData.userId);
     } catch(err) {
       errDiv.textContent = 'Une erreur est survenue. Veuillez réessayer.';
       errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none';
     }
   }
 
-  function showSuccess() {
+  function showSuccess(userId) {
     document.getElementById('mainForm').style.display = 'none';
     document.getElementById('successScreen').style.display = 'block';
     document.getElementById('confirmedEmail').textContent = document.getElementById('email').value;
+    if (userId) {
+      const code = userId.replace(/-/g, '').slice(0, 10).toUpperCase();
+      const refLink = `https://repuguard.app/signup?ref=${code}`;
+      const refEl = document.getElementById('successRefLink');
+      if (refEl) { refEl.value = refLink; refEl._url = refLink; }
+      const refBlock = document.getElementById('successRefBlock');
+      if (refBlock) refBlock.style.display = 'block';
+    }
+  }
+
+  function copySuccessRef() {
+    const inp = document.getElementById('successRefLink');
+    if (!inp || !inp._url) return;
+    navigator.clipboard.writeText(inp._url).then(() => {
+      const btn = document.getElementById('copySuccessRefBtn');
+      if (btn) { btn.textContent = '✓ Copié !'; setTimeout(() => { btn.textContent = '📋 Copier'; }, 2000); }
+    }).catch(() => { inp.select(); document.execCommand('copy'); });
   }
 
   function switchLang(lang) { applyLang(lang); document.getElementById('langSel').value = lang; }
