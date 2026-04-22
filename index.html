@@ -207,6 +207,14 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 .exit-popup .btn-exit:hover{opacity:.85;}
 .exit-popup .exit-skip{font-size:.78rem;color:var(--muted2,#475569);cursor:pointer;text-decoration:underline;}
 .exit-badge{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.25);color:#34d399;font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:1rem;}
+.help-btn{position:fixed;bottom:1.5rem;right:1.5rem;background:#6366f1;color:white;border:none;border-radius:50px;padding:.65rem 1.2rem;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,.4);z-index:800;display:flex;align-items:center;gap:.4rem;transition:transform .2s,box-shadow .2s;}
+.help-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,.5);}
+.gdpr-bar{position:fixed;bottom:0;left:0;right:0;background:#0e1018;border-top:1px solid rgba(255,255,255,0.08);padding:.85rem 5%;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;z-index:700;transform:translateY(100%);transition:transform .4s;}
+.gdpr-bar.show{transform:translateY(0);}
+.gdpr-bar p{font-size:.78rem;color:var(--muted2,#475569);line-height:1.5;flex:1;min-width:200px;}
+.gdpr-bar a{color:#818cf8;}
+.gdpr-accept{background:#6366f1;color:white;border:none;padding:.5rem 1.2rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+.gdpr-decline{background:none;border:1px solid rgba(255,255,255,0.1);color:var(--muted2,#475569);padding:.5rem 1rem;border-radius:6px;font-size:.78rem;cursor:pointer;white-space:nowrap;}
 </style>
 
 <script defer src="/_vercel/insights/script.js"></script>
@@ -406,6 +414,16 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
   </ul>
   <div class="footer-copy">© 2025 RepuGuard</div>
 </footer>
+
+<a href="/contact" class="help-btn">💬 Aide</a>
+
+<div class="gdpr-bar" id="gdprBar">
+  <p>Nous utilisons des cookies pour améliorer votre expérience. En continuant, vous acceptez notre <a href="/privacy">politique de confidentialité</a>.</p>
+  <div style="display:flex;gap:.5rem;flex-shrink:0;">
+    <button class="gdpr-decline" onclick="gdprDecline()">Refuser</button>
+    <button class="gdpr-accept" onclick="gdprAccept()">Accepter</button>
+  </div>
+</div>
 
 <div class="exit-overlay" id="exitOverlay" onclick="closeExitPopup(event)">
   <div class="exit-popup">
@@ -630,6 +648,9 @@ function initLang() {
   if (match && match.code !== 'fr') selectLang(match);
 }
 initLang();
+function gdprAccept(){localStorage.setItem('gdpr','1');document.getElementById('gdprBar').classList.remove('show');}
+function gdprDecline(){localStorage.setItem('gdpr','0');document.getElementById('gdprBar').classList.remove('show');}
+(function(){if(!localStorage.getItem('gdpr')){setTimeout(function(){document.getElementById('gdprBar').classList.add('show');},2000);}})();
 </script>
 
 </body>

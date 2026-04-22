@@ -10,7 +10,10 @@
     { "source": "/restaurants", "destination": "/restaurants.html" },
     { "source": "/hotels", "destination": "/hotels.html" },
     { "source": "/medecins", "destination": "/medecins.html" },
-    { "source": "/referral", "destination": "/referral.html" }
+    { "source": "/referral", "destination": "/referral.html" },
+    { "source": "/dentistes", "destination": "/dentistes.html" },
+    { "source": "/avocats", "destination": "/avocats.html" },
+    { "source": "/agences", "destination": "/agences.html" }
   ],
   "headers": [
     {
