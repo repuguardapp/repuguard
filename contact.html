@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — RepuGuard</title>
+  <meta name="description" content="Contactez l'équipe RepuGuard pour toute question sur notre solution de gestion de réputation.">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);
+      --text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;
+      --accent:#6366f1;--accent-hover:#4f51d8;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+    a{color:inherit;text-decoration:none;}
+
+    /* NAV */
+    nav{padding:1rem 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+    .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
+    .nav-logo span{color:#818cf8;}
+    .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;transition:background .2s;}
+    .nav-cta:hover{background:var(--accent-hover);}
+
+    /* MAIN */
+    main{flex:1;display:flex;align-items:center;justify-content:center;padding:4rem 1.5rem;}
+    .contact-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:520px;}
+    .contact-card h1{font-size:1.6rem;font-weight:800;margin-bottom:.5rem;}
+    .contact-card p{font-size:.9rem;color:var(--muted);margin-bottom:2rem;line-height:1.6;}
+
+    label{display:block;font-size:.8rem;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;}
+    input,textarea,select{
+      width:100%;background:#13151f;border:1px solid var(--border);border-radius:8px;
+      color:var(--text);font-size:.9rem;padding:.7rem 1rem;margin-bottom:1.25rem;
+      outline:none;transition:border-color .2s;font-family:inherit;
+    }
+    input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+    textarea{resize:vertical;min-height:120px;}
+    input::placeholder,textarea::placeholder{color:var(--muted2);}
+
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    @media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+
+    .btn{width:100%;background:var(--accent);color:white;border:none;padding:.85rem;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:background .2s;}
+    .btn:hover:not(:disabled){background:var(--accent-hover);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
+
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(1rem);background:#1e2030;border:1px solid var(--border);border-radius:10px;padding:.85rem 1.5rem;font-size:.85rem;font-weight:600;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap;z-index:999;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    .toast.green{border-color:rgba(52,211,153,.3);color:#34d399;}
+    .toast.red{border-color:rgba(248,113,113,.3);color:#f87171;}
+
+    /* FOOTER */
+    footer{padding:1.5rem 5%;text-align:center;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted2);}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Repu<span>Guard</span></a>
+  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+</nav>
+
+<main>
+  <div class="contact-card">
+    <h1>Contactez-nous</h1>
+    <p>Une question sur RepuGuard, besoin d'aide ou d'informations ? Nous répondons sous 24h.</p>
+
+    <form id="contactForm" onsubmit="submitForm(event)">
+      <div class="form-row">
+        <div>
+          <label for="name">Nom</label>
+          <input id="name" type="text" placeholder="Jean Dupont" required>
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="vous@exemple.com" required>
+        </div>
+      </div>
+
+      <label for="subject">Sujet</label>
+      <select id="subject">
+        <option value="">Choisir un sujet…</option>
+        <option value="Demande d'information">Demande d'information</option>
+        <option value="Problème technique">Problème technique</option>
+        <option value="Facturation">Facturation</option>
+        <option value="Partenariat">Partenariat</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <label for="message">Message</label>
+      <textarea id="message" placeholder="Décrivez votre demande…" required></textarea>
+
+      <button type="submit" class="btn" id="submitBtn">Envoyer le message</button>
+    </form>
+  </div>
+</main>
+
+<footer>© 2025 RepuGuard · <a href="/privacy" style="color:var(--muted2)">Confidentialité</a> · <a href="/terms" style="color:var(--muted2)">Conditions</a></footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+
+  const body = {
+    name: document.getElementById('name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    subject: document.getElementById('subject').value,
+    message: document.getElementById('message').value.trim(),
+  };
+
+  try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erreur');
+    showToast('Message envoyé ! Nous vous répondrons sous 24h.', 'green');
+    document.getElementById('contactForm').reset();
+  } catch (err) {
+    showToast('Erreur lors de l\'envoi. Réessayez.', 'red');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer le message';
+  }
+}
+</script>
+</body>
+</html>
