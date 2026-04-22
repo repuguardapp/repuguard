@@ -875,25 +875,47 @@ export default async function handler(req, res) {
     // EMAIL FIN D'ESSAI IMMINENTE
     // ══════════════════════════════════
     if (type === 'trial_ending') {
-      const trialEnd = req.body.trialEnd || '';
-      subject = `Votre essai gratuit RepuGuard se termine bientôt`;
-      html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+      const biz = businessName || 'votre établissement';
+      const lang = req.body.lang || 'fr';
+      const isEn = lang === 'en';
+      subject = isEn
+        ? `⚠️ ${firstName}, your RepuGuard trial ends in 24h`
+        : `⚠️ ${firstName}, votre essai RepuGuard se termine dans 24h`;
+      html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
     <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
       <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="font-weight:900;font-size:24px;color:#f1f5f9;">Repu<span style="color:#818cf8;">Guard</span></div>
       </td></tr>
-      <tr><td style="padding:32px 40px;">
-        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:center;">
-          <div style="font-size:12px;color:#818cf8;font-weight:700;margin-bottom:4px;">⏳ Essai gratuit</div>
-          <div style="font-size:18px;font-weight:800;color:#f1f5f9;">Se termine le ${trialEnd}</div>
+      <tr><td style="padding:36px 40px;">
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px 20px;margin-bottom:28px;text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">⏰</div>
+          <div style="font-size:16px;font-weight:800;color:#fca5a5;">${isEn ? 'Your trial ends in less than 24 hours' : 'Votre essai se termine dans moins de 24h'}</div>
         </div>
-        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">Bonjour ${firstName},</p>
-        <p style="font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px;">Votre essai gratuit de 7 jours se termine bientôt. Pour continuer à surveiller la réputation de <strong style="color:#f1f5f9;">${businessName}</strong> sans interruption, votre abonnement sera activé automatiquement.</p>
-        <div style="text-align:center;margin-bottom:24px;">
-          <a href="https://repuguard.app/dashboard#abonnement" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">Gérer mon abonnement →</a>
+        <p style="font-size:15px;color:#f1f5f9;margin:0 0 16px;">${isEn ? `Hello ${firstName},` : `Bonjour ${firstName},`}</p>
+        <p style="font-size:14px;color:#94a3b8;line-height:1.7;margin:0 0 20px;">${isEn
+          ? `Your 7-day free trial for <strong style="color:#f1f5f9;">${biz}</strong> ends soon. After that, monitoring will be paused and you risk missing negative reviews.`
+          : `Votre essai de 7 jours pour <strong style="color:#f1f5f9;">${biz}</strong> se termine demain. Après ça, la surveillance sera mise en pause et vous risquez de manquer des avis négatifs.`
+        }</p>
+        <div style="background:#13151f;border-radius:12px;padding:20px;margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">${isEn ? "What you'll lose without RepuGuard:" : "Ce que vous perdez sans RepuGuard :"}</div>
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:6px;">❌ ${isEn ? 'Real-time negative review alerts' : 'Alertes en temps réel sur les avis négatifs'}</div>
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:6px;">❌ ${isEn ? 'AI-generated professional responses' : 'Réponses professionnelles générées par IA'}</div>
+          <div style="font-size:13px;color:#94a3b8;">❌ ${isEn ? 'Your reputation score dashboard' : 'Votre dashboard de score de réputation'}</div>
         </div>
+        <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:20px;margin-bottom:24px;text-align:center;">
+          <div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">${isEn ? '🎁 Annual plan — save 20%' : '🎁 Plan annuel — économisez 20%'}</div>
+          <div style="font-size:22px;font-weight:900;color:#f1f5f9;">23€<span style="font-size:13px;font-weight:400;color:#64748b;">/mo</span> <span style="font-size:13px;color:#64748b;text-decoration:line-through;">29€</span></div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">${isEn ? 'Billed annually — cancel anytime' : 'Facturé annuellement — annulable à tout moment'}</div>
+        </div>
+        <div style="text-align:center;">
+          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px;">${isEn ? 'Activate my subscription →' : 'Activer mon abonnement →'}</a>
+        </div>
+        <p style="margin:20px 0 0;font-size:12px;color:#334155;text-align:center;">${isEn ? 'No action needed if you already subscribed.' : 'Aucune action requise si vous êtes déjà abonné.'}</p>
+      </td></tr>
+      <tr><td style="padding:16px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="https://repuguard.app/unsubscribe?email=${encodeURIComponent(email)}" style="color:#475569;">${isEn ? 'Unsubscribe' : 'Se désinscrire'}</a></p>
       </td></tr>
     </table>
   </td></tr></table>

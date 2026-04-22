@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'trial', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+          body: JSON.stringify({ type: 'trial_ending', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
         }).catch(e => console.error('J7 email error:', e.message));
       }
     }
