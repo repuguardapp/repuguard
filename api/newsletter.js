@@ -1,14 +1,26 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+export const config = { runtime: 'edge' };
 
-  const { email, lang } = req.body || {};
+const hdrs = {
+  'Access-Control-Allow-Origin': 'https://repuguard.app',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
+
+export default async function handler(req) {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: hdrs });
+  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: hdrs });
+
+  const body = await req.json().catch(() => ({}));
+  const { email, lang } = body;
+
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ error: 'Email invalide' });
+    return new Response(JSON.stringify({ error: 'Email invalide' }), { status: 400, headers: hdrs });
   }
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-  if (!RESEND_API_KEY) return res.status(500).json({ error: 'Config manquante' });
+  if (!RESEND_API_KEY) return new Response(JSON.stringify({ error: 'Config manquante' }), { status: 500, headers: hdrs });
 
   const isEn = lang === 'en';
   const subject = isEn
@@ -71,7 +83,7 @@ export default async function handler(req, res) {
         `}
         <div style="text-align:center;margin-top:24px;padding:20px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(129,140,248,.06));border:1px solid rgba(99,102,241,.2);border-radius:12px;">
           <div style="font-size:14px;color:#94a3b8;margin-bottom:12px;">${isEn ? 'Let RepuGuard automate all of this — 7-day free trial, no credit card required.' : 'Laissez RepuGuard automatiser tout ça — essai 7 jours gratuit, sans CB.'}</div>
-          <a href="https://repuguard.app/signup" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;">${isEn ? 'Start free trial →' : 'Démarrer l\'essai gratuit →'}</a>
+          <a href="https://repuguard.app/signup" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;">${isEn ? 'Start free trial →' : "Démarrer l'essai gratuit →"}</a>
         </div>
         <div style="margin-top:24px;font-size:11px;color:#334155;text-align:center;">
           ${isEn ? 'You received this because you subscribed on repuguard.app.' : 'Vous recevez cet email car vous vous êtes inscrit sur repuguard.app.'}<br>
@@ -84,21 +96,14 @@ export default async function handler(req, res) {
 </body></html>`;
 
   try {
-    // Send tips email to subscriber
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'RepuGuard <bonjour@repuguard.app>',
-        to: [email],
-        subject,
-        html,
-      }),
+      body: JSON.stringify({ from: 'RepuGuard <bonjour@repuguard.app>', to: [email], subject, html }),
     });
     const data = await r.json();
-    if (!r.ok) return res.status(400).json({ error: data.message || 'Erreur envoi email' });
+    if (!r.ok) return new Response(JSON.stringify({ error: data.message || 'Erreur envoi email' }), { status: 400, headers: hdrs });
 
-    // Notify admin (non-blocking)
     if (ADMIN_EMAIL) {
       fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -107,13 +112,13 @@ export default async function handler(req, res) {
           from: 'RepuGuard <bonjour@repuguard.app>',
           to: [ADMIN_EMAIL],
           subject: `[Lead] Nouvel abonné newsletter : ${email}`,
-          html: `<p style="font-family:Arial;color:#333;">Nouveau lead newsletter : <strong>${email}</strong> (lang: ${lang || 'fr'})</p>`,
+          html: `<p style="font-family:Arial;color:#333;">Nouveau lead : <strong>${email}</strong> (lang: ${lang || 'fr'})</p>`,
         }),
       }).catch(() => {});
     }
 
-    return res.status(200).json({ success: true });
+    return new Response(JSON.stringify({ success: true }), { status: 200, headers: hdrs });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: hdrs });
   }
 }
