@@ -5,7 +5,8 @@
     { "source": "/signup", "destination": "/signup.html" },
     { "source": "/reset-password", "destination": "/reset-password.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/terms", "destination": "/terms.html" }
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/contact", "destination": "/contact.html" }
   ],
   "headers": [
     {
