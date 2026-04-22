@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     await resend.emails.send({
       from: 'RepuGuard Contact <bonjour@repuguard.app>',
       to: ADMIN_EMAIL,
-      reply_to: email,
+      replyTo: email,
       subject: `[Contact RepuGuard] ${subject || 'Nouveau message'}`,
       html: `
 <!DOCTYPE html>
