@@ -546,6 +546,19 @@
             <div class="platform-full-item"><div class="platform-logo" style="background:rgba(255,255,255,0.04);border:1px dashed var(--border2);color:var(--text3);">+</div><div><div class="platform-name" style="color:var(--text3);">TripAdvisor, Yelp, Booking...</div><div class="platform-stars">Disponible sur Plan Business</div></div><div class="platform-status"><button class="btn-sm btn-ghost" onclick="navigate('abonnement')">Débloquer</button></div></div>
           </div>
         </div>
+        <!-- Review request generator -->
+        <div class="card" style="border-color:rgba(52,211,153,.2);background:rgba(52,211,153,.03);">
+          <div class="card-header"><div class="card-title">⭐ Demander un avis à vos clients</div></div>
+          <div style="padding:0 20px 20px;">
+            <p style="font-size:13px;color:#64748b;margin:0 0 16px;">Partagez ce lien avec vos clients pour les inviter à vous laisser un avis Google. Plus vous en avez, plus votre score monte.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="reviewRequestLink" type="text" readonly style="flex:1;min-width:200px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:#34d399;font-size:12px;font-family:monospace;outline:none;" value="Connectez Google Business pour obtenir votre lien" />
+              <button onclick="copyReviewLink()" id="copyReviewBtn" disabled style="background:#059669;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;opacity:.5;">📋 Copier</button>
+              <a id="shareReviewWhatsApp" href="#" onclick="return shareReviewWA(event)" style="display:flex;align-items:center;gap:4px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:#94a3b8;text-decoration:none;font-size:12px;">💬 WA</a>
+            </div>
+            <div id="reviewRequestTip" style="margin-top:12px;font-size:12px;color:#475569;display:none;">💡 Envoyez ce lien par SMS, email ou WhatsApp après chaque prestation. Les clients satisfaits ne pensent pas toujours à laisser un avis — un simple rappel suffit !</div>
+          </div>
+        </div>
       </div>
 
       <!-- NOTIFICATIONS -->
@@ -857,6 +870,7 @@
 
     // Referral section
     renderReferral(client.id, plan);
+    setupReviewRequestLink(client.google_place_id);
 
     // Platform list — only connected platforms
     const platList = document.getElementById('platformList');
@@ -1216,6 +1230,38 @@
     navigator.clipboard.writeText(inp.value).then(() => showToast('Lien copié !', 'green')).catch(() => {
       inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
     });
+  }
+
+  function setupReviewRequestLink(placeId) {
+    const inp = document.getElementById('reviewRequestLink');
+    const btn = document.getElementById('copyReviewBtn');
+    const tip = document.getElementById('reviewRequestTip');
+    const wa = document.getElementById('shareReviewWhatsApp');
+    if (!inp) return;
+    if (placeId) {
+      const url = `https://search.google.com/local/writereview?placeid=${placeId}`;
+      inp.value = url;
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (tip) tip.style.display = 'block';
+      if (wa) wa.href = '#';
+      inp._url = url;
+    }
+  }
+
+  function copyReviewLink() {
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    navigator.clipboard.writeText(inp._url).then(() => showToast('Lien copié !', 'green')).catch(() => {
+      inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
+    });
+  }
+
+  function shareReviewWA(e) {
+    e.preventDefault();
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    const msg = `Bonjour ! Si vous avez été satisfait(e) de notre service, nous vous serions très reconnaissants de nous laisser un avis Google (1 minute) : ${inp._url} Merci d'avance ! 🙏`;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
   }
 
   function shareRefWhatsApp(e) {
