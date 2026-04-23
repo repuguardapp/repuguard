@@ -26,11 +26,15 @@ export default async function handler(req, res) {
 
     if (!webhookUrl) return res.status(400).json({ error: 'webhookUrl requis' });
 
-    // Validate URL: must be https
+    // Validate URL: must be https and not a private/internal IP (SSRF protection)
     let parsedUrl;
     try {
       parsedUrl = new URL(webhookUrl);
       if (parsedUrl.protocol !== 'https:') throw new Error('HTTPS requis');
+      const h = parsedUrl.hostname.toLowerCase();
+      if (/^(localhost|127\.|0\.0\.0\.0|::1$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h)) {
+        throw new Error('URL invalide');
+      }
     } catch {
       return res.status(400).json({ error: 'URL webhook invalide (HTTPS requis)' });
     }

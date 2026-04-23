@@ -121,7 +121,8 @@ export default async function handler(req) {
       });
       const loginData = await loginRes.json();
       if (loginData.error) return new Response(JSON.stringify({ error: 'Email ou mot de passe incorrect' }), { status: 401, headers });
-      return new Response(JSON.stringify({ success: true, token: loginData.access_token, user: loginData.user }), { status: 200, headers });
+      const u = loginData.user || {};
+      return new Response(JSON.stringify({ success: true, token: loginData.access_token, user: { id: u.id, email: u.email, user_metadata: u.user_metadata } }), { status: 200, headers });
     }
 
     if (action === 'forgot_password') {

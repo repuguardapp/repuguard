@@ -5,25 +5,20 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
-async function isDuplicate(eventId) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events?id=eq.${eventId}`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
-  });
-  const rows = await res.json();
-  return Array.isArray(rows) && rows.length > 0;
-}
-
-async function markProcessed(eventId) {
-  await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events`, {
+// Atomically insert event id — returns true if newly inserted, false if duplicate
+async function claimEvent(eventId) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'apikey': SUPABASE_KEY,
       'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Prefer': 'return=minimal',
+      'Prefer': 'return=representation,resolution=ignore-duplicates',
     },
     body: JSON.stringify({ id: eventId }),
   });
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;
 }
 
 async function patchClient(filter, data) {
@@ -76,8 +71,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
   }
 
-  // Déduplication — ignore les événements déjà traités
-  if (await isDuplicate(event.id)) {
+  // Déduplication atomique — insert-or-skip via unique constraint
+  if (!(await claimEvent(event.id))) {
     return res.status(200).json({ received: true, duplicate: true });
   }
 
@@ -150,7 +145,6 @@ export default async function handler(req, res) {
       }
     }
 
-    await markProcessed(event.id);
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('Webhook handler error:', err);
