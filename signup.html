@@ -472,8 +472,7 @@
             <span data-i18n="btn_continue">Continuer</span><span>→</span>
           </button>
         </div>
-        <div class="divider"><div class="divider-line"></div><div class="divider-text" data-i18n="or_divider">ou</div><div class="divider-line"></div></div>
-        <p style="text-align:center;font-size:13px;color:var(--text3)"><span data-i18n="already_account">Déjà un compte ?</span> <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500" data-i18n="login_link">Se connecter</a></p>
+        <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:16px"><span data-i18n="already_account">Déjà un compte ?</span> <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500" data-i18n="login_link">Se connecter</a></p>
       </div>
 
       <!-- STEP 2 -->
@@ -596,7 +595,7 @@
         </div>
 
         <div class="legal-text">
-          <span data-i18n="legal_continue">En continuant, vous acceptez nos</span> <a href="#" data-i18n="legal_terms">Conditions d'utilisation</a> <span data-i18n="legal_and">et notre</span> <a href="#" data-i18n="legal_privacy">Politique de confidentialité</a>.<br>
+          <span data-i18n="legal_continue">En continuant, vous acceptez nos</span> <a href="/terms" data-i18n="legal_terms">Conditions d'utilisation</a> <span data-i18n="legal_and">et notre</span> <a href="/privacy" data-i18n="legal_privacy">Politique de confidentialité</a>.<br>
           <span data-i18n="legal_charge_prefix">Votre carte sera débitée de</span> <strong id="legalAmount">69€</strong><span data-i18n="legal_charge_suffix">/mois après 7 jours d'essai gratuit. Annulable à tout moment.</span>
         </div>
       </div>
@@ -628,11 +627,19 @@
   let stripe, cardNumber, cardExpiry, cardCvc;
   let selectedPlan = { id:'pro', price:69, name:'Pro' };
 
+  function getStripeStyle() {
+    var dark = document.documentElement.getAttribute('data-theme') !== 'light';
+    return {
+      base: { color: dark ? '#f1f5f9' : '#0f1117', fontFamily:"'DM Sans', sans-serif", fontSize:'14px', '::placeholder':{ color: dark ? '#475569' : '#9ca3af' } },
+      invalid: { color: dark ? '#f87171' : '#dc2626' }
+    };
+  }
+
   function initStripe() {
     try {
       stripe = Stripe(STRIPE_KEY);
       const elements = stripe.elements({ fonts:[{ cssSrc:'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400&display=swap' }] });
-      const style = { base:{ color:'#f1f5f9', fontFamily:"'DM Sans', sans-serif", fontSize:'14px', '::placeholder':{ color:'#475569' } }, invalid:{ color:'#f87171' } };
+      const style = getStripeStyle();
       cardNumber = elements.create('cardNumber', { style, showIcon:true });
       cardExpiry = elements.create('cardExpiry', { style });
       cardCvc = elements.create('cardCvc', { style });
@@ -751,7 +758,7 @@
       const subData = await subRes.json();
       if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId }) });
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referralCode:sessionStorage.getItem('rg-ref')||'' }) });
       const authData = await authRes.json();
       if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
@@ -770,8 +777,21 @@
 
   function switchLang(lang) { applyLang(lang); document.getElementById('langSel').value = lang; }
 
+  function initFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var plan = params.get('plan');
+    var ref = params.get('ref');
+    if (plan) {
+      var map = { starter:[29,'Starter'], pro:[69,'Pro'], business:[149,'Business'] };
+      var el = document.getElementById('plan-' + plan);
+      if (el && map[plan]) selectPlan(el, plan, map[plan][0], map[plan][1]);
+    }
+    if (ref) sessionStorage.setItem('rg-ref', ref);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     initI18n();
+    initFromUrl();
     var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
     document.querySelectorAll('input, select').forEach(el => {
       el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });
