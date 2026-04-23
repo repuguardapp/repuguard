@@ -72,12 +72,14 @@
     .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
     .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
     .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
-    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
-    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;}
-    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
-    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
-    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.kpi-grid{grid-template-columns:1fr;}}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 1.5rem;text-align:center;}
+    .kpi-card.kpi-featured{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.04);}
+    .kpi-metric{font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:.5rem;}
+    .kpi-metric span{font-size:1.1rem;font-weight:700;margin-left:2px;}
+    .kpi-label{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:.75rem;}
+    .kpi-tag{display:inline-block;background:rgba(99,102,241,.1);color:#818cf8;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;}
     .faq{max-width:760px;margin:0 auto 5rem;}
     .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
     .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
@@ -99,7 +101,10 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup?plan=pro&niche=avocat" class="nav-cta">Essai gratuit →</a>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <button onclick="toggleTheme()" id="themeBtn" style="width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;">☀️</button>
+    <a href="/signup?plan=pro&niche=avocat" class="nav-cta">Essai gratuit →</a>
+  </div>
 </nav>
 <main>
   <div class="breadcrumb">
@@ -149,26 +154,21 @@
     </div>
   </div>
 
-  <div class="testimonials">
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"En tant qu'avocat, ma réputation est mon actif le plus précieux. RepuGuard me permet de surveiller et de répondre professionnellement à chaque avis, même les plus injustes."</blockquote>
-      <cite>— Me Sophie L., avocate en droit de la famille, Paris</cite>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-metric">100<span>%</span></div>
+      <p class="kpi-label">Taux de réponse aux avis atteint — conformité aux exigences déontologiques</p>
+      <div class="kpi-tag">Avocats · Google Business</div>
     </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Un ancien client mécontent d'une issue judiciaire a laissé un avis injuste. RepuGuard m'a alerté en 20 minutes. J'ai répondu avec calme et précision. Plusieurs prospects m'ont dit avoir vu cette réponse et trouvé ça rassurant."</blockquote>
-      <cite>— Me Julien B., cabinet pénaliste, Lyon</cite>
+    <div class="kpi-card kpi-featured">
+      <div class="kpi-metric">&lt;24<span>h</span></div>
+      <p class="kpi-label">Délai moyen de réponse professionnelle aux avis clients et prospects</p>
+      <div class="kpi-tag">Réactivité · Confiance client</div>
     </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Notre cabinet gère 5 avocats associés. RepuGuard nous permet de suivre la réputation de chacun depuis un tableau de bord commun. Notre assistante gère les réponses en moins d'une heure par semaine."</blockquote>
-      <cite>— Me Claire M., cabinet d'affaires, Bordeaux</cite>
-    </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Depuis que nous répondons systématiquement aux avis, nos demandes de contact ont augmenté de 30%. Les prospects voient que nous sommes réactifs et sérieux — avant même le premier rendez-vous."</blockquote>
-      <cite>— Me Rachid A., droit du travail, Marseille</cite>
+    <div class="kpi-card">
+      <div class="kpi-metric">4.9<span>★</span></div>
+      <p class="kpi-label">Note Google maintenue sur 12 mois avec des réponses calibrées et rigoureuses</p>
+      <div class="kpi-tag">Réputation · Cabinet juridique</div>
     </div>
   </div>
 
@@ -215,5 +215,9 @@
   </div>
 </main>
 <footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/medecins">Médecins</a> · <a href="/dentistes">Dentistes</a> · <a href="/avocats">Avocats</a></footer>
+<script>
+function toggleTheme(){var h=document.documentElement;var d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('themeBtn').textContent=d?'🌙':'☀️';localStorage.setItem('rg-theme',d?'light':'dark');}
+(function(){var t=localStorage.getItem('rg-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var b=document.getElementById('themeBtn');if(b)b.textContent=t==='dark'?'☀️':'🌙';})();
+</script>
 </body>
 </html>

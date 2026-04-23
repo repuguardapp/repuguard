@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme de parrainage — RepuGuard</title>
+<meta name="description" content="Parrainez un ami, obtenez 1 mois gratuit chacun. Programme de parrainage RepuGuard — simple, immédiat, sans limite.">
+<link rel="canonical" href="https://repuguard.app/referral">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{--bg:#080910;--surface:#0f1117;--card:#151820;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#e8ff47;--accent-dim:rgba(232,255,71,0.08);--accent-border:rgba(232,255,71,0.2);--green:#52ffaa;--text:#eef0f8;--muted:#5a6078;--muted2:#8890a8;--btn-text:#080910;}
+[data-theme="light"]{--bg:#f5f6fa;--surface:#ffffff;--card:#eef0f8;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);--accent:#1a56e8;--accent-dim:rgba(26,86,232,0.08);--accent-border:rgba(26,86,232,0.25);--green:#16a34a;--text:#0f1117;--muted:#9098b0;--muted2:#6b7280;--btn-text:#ffffff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.6;transition:background-color .3s,color .3s;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-right{display:flex;align-items:center;gap:.6rem;}
+.theme-btn{width:34px;height:34px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;transition:border-color .2s;}
+.theme-btn:hover{border-color:var(--border2);}
+.btn-primary{background:var(--accent);color:var(--btn-text);padding:.9rem 2rem;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;text-decoration:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;transition:transform .2s,box-shadow .2s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,255,71,.25);}
+[data-theme="light"] .btn-primary:hover{box-shadow:0 8px 30px rgba(26,86,232,.25);}
+main{max-width:820px;margin:0 auto;padding:8rem 5% 5rem;}
+.page-badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.5rem;}
+h1{font-family:'Syne',sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:1rem;}
+h1 em{font-style:normal;color:var(--accent);}
+.hero-sub{font-size:1.05rem;color:var(--muted2);line-height:1.7;margin-bottom:3rem;max-width:560px;}
+.reward-banner{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:16px;padding:2rem;text-align:center;margin-bottom:3.5rem;}
+.reward-num{font-family:'Syne',sans-serif;font-size:3.5rem;font-weight:800;color:var(--accent);line-height:1;}
+.reward-label{font-size:1rem;color:var(--muted2);margin-top:.4rem;}
+.reward-sub{font-size:.85rem;color:var(--muted);margin-top:.3rem;}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:3.5rem;}
+@media(max-width:640px){.steps-grid{grid-template-columns:1fr;}}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;}
+.step-num{width:32px;height:32px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;color:var(--accent);margin-bottom:1rem;}
+.step-title{font-weight:700;margin-bottom:.4rem;font-size:.95rem;}
+.step-desc{font-size:.85rem;color:var(--muted2);line-height:1.6;}
+.link-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:3.5rem;}
+.link-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:.4rem;}
+.link-section-sub{font-size:.85rem;color:var(--muted2);margin-bottom:1.25rem;}
+.link-box{display:flex;gap:.75rem;align-items:center;}
+.link-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;font-size:.88rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
+.copy-btn{background:var(--accent);color:var(--btn-text);border:none;border-radius:8px;padding:.7rem 1.25rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap;transition:opacity .2s;}
+.copy-btn:hover{opacity:.85;}
+.copy-success{display:none;font-size:.82rem;color:var(--green);margin-top:.6rem;align-items:center;gap:.3rem;}
+.copy-success.show{display:flex;}
+.share-btns{display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;}
+.share-btn{display:inline-flex;align-items:center;gap:.4rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.55rem 1rem;font-size:.82rem;color:var(--muted2);cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s;}
+.share-btn:hover{border-color:var(--border2);color:var(--text);}
+.not-logged{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-top:1.25rem;}
+.not-logged-text{font-size:.88rem;color:var(--muted2);}
+.not-logged-link{font-size:.88rem;color:var(--accent);text-decoration:none;font-weight:600;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:3.5rem;}
+@media(max-width:640px){.stats-row{grid-template-columns:1fr;}}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:.3rem;}
+.stat-label{font-size:.8rem;color:var(--muted2);line-height:1.5;}
+.faq-section{margin-bottom:3.5rem;}
+.faq-section h2{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;}
+.faq-item{border-bottom:1px solid var(--border);padding:1.1rem 0;}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{font-weight:600;font-size:.95rem;margin-bottom:.4rem;}
+.faq-a{font-size:.88rem;color:var(--muted2);line-height:1.65;}
+.cta-bottom{text-align:center;padding:2.5rem;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:16px;margin-bottom:3rem;}
+.cta-bottom h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:.5rem;}
+.cta-bottom p{font-size:.9rem;color:var(--muted2);margin-bottom:1.5rem;}
+footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;}
+footer a{color:var(--muted2);text-decoration:none;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Repu<span>Guard</span></a>
+  <div class="nav-right">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+    <a href="/signup" class="btn-primary" style="padding:.45rem 1.1rem;font-size:.85rem;">Essai gratuit →</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-badge">🎁 Programme parrainage</div>
+  <h1>Parrainez un ami.<br><em>1 mois offert</em> chacun.</h1>
+  <p class="hero-sub">Pour chaque filleul qui s'abonne via votre lien, vous recevez tous les deux 1 mois gratuit. Aucune limite, aucune démarche compliquée.</p>
+
+  <div class="reward-banner">
+    <div class="reward-num">+1 mois</div>
+    <p class="reward-label">offert pour vous <strong>et</strong> votre filleul</p>
+    <p class="reward-sub">Cumulable · Aucune limite de filleuls · Crédité automatiquement</p>
+  </div>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-title">Copiez votre lien unique</div>
+      <p class="step-desc">Obtenez votre lien de parrainage personnalisé depuis votre dashboard ou directement ici si vous êtes connecté.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-title">Partagez-le</div>
+      <p class="step-desc">Envoyez-le par email, WhatsApp, LinkedIn ou partagez-le avec vos collègues et partenaires.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-title">Recevez votre mois</div>
+      <p class="step-desc">Dès que votre filleul active un abonnement payant, 1 mois est automatiquement crédité sur vos deux comptes.</p>
+    </div>
+  </div>
+
+  <div class="link-section">
+    <div class="link-section-title">Votre lien de parrainage</div>
+    <p class="link-section-sub">Connectez-vous pour obtenir votre lien personnalisé — ou partagez dès maintenant le lien général.</p>
+    <div class="link-box">
+      <input class="link-input" id="referralLink" type="text" value="https://repuguard.app/signup?ref=VOTRE_CODE" readonly>
+      <button class="copy-btn" onclick="copyLink()">Copier</button>
+    </div>
+    <div class="copy-success" id="copySuccess">✓ Lien copié dans le presse-papiers</div>
+    <div class="share-btns">
+      <a class="share-btn" id="shareWhatsapp" href="#" onclick="shareWhatsApp(event)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.109.55 4.09 1.513 5.813L.057 23.27a.75.75 0 00.916.916l5.457-1.456A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.86 0-3.614-.48-5.143-1.323l-.368-.214-3.804 1.016 1.016-3.804-.214-.368A9.947 9.947 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        WhatsApp
+      </a>
+      <a class="share-btn" id="shareLinkedin" href="#" onclick="shareLinkedIn(event)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+      <a class="share-btn" id="shareEmail" href="#" onclick="shareEmail(event)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        Email
+      </a>
+    </div>
+    <div class="not-logged" id="loginPrompt" style="display:none">
+      <span>🔒</span>
+      <div>
+        <p class="not-logged-text">Connectez-vous pour obtenir votre lien personnalisé avec votre code unique.</p>
+        <a href="/login" class="not-logged-link">Se connecter →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num">1 mois</div>
+      <div class="stat-label">offert pour vous et votre filleul à chaque parrainage validé</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">Nombre de filleuls illimité — cumulez autant de mois gratuits que vous voulez</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">Auto</div>
+      <div class="stat-label">Crédit appliqué automatiquement dès la confirmation de l'abonnement du filleul</div>
+    </div>
+  </div>
+
+  <div class="faq-section">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-item">
+      <div class="faq-q">Quand est-ce que je reçois mon mois gratuit ?</div>
+      <div class="faq-a">Le crédit d'un mois est appliqué automatiquement sur votre compte dès que votre filleul active un abonnement payant (après son essai gratuit de 7 jours). Vous recevez une notification par email à ce moment-là.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Mon filleul doit-il utiliser mon lien pour que le parrainage fonctionne ?</div>
+      <div class="faq-a">Oui, votre filleul doit s'inscrire via votre lien unique. Les inscriptions directes sans lien de parrainage ne sont pas éligibles. Le lien est valable 30 jours après sa génération.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Y a-t-il une limite au nombre de filleuls ?</div>
+      <div class="faq-a">Non, aucune limite. Chaque filleul qui s'abonne vous rapporte un mois gratuit. Vous pouvez accumuler plusieurs mois gratuits sur votre compte.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Le parrainage fonctionne-t-il pour tous les plans ?</div>
+      <div class="faq-a">Oui, pour les plans Starter, Pro et Business. Le mois offert correspond au plan de votre abonnement en cours (ou de celui de votre filleul pour lui).</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Que se passe-t-il si mon filleul résilie pendant l'essai ?</div>
+      <div class="faq-a">Si votre filleul résilie avant d'activer un abonnement payant, aucun crédit n'est appliqué. Le parrainage est validé uniquement lors de la première transaction réelle.</div>
+    </div>
+  </div>
+
+  <div class="cta-bottom">
+    <h2>Pas encore sur RepuGuard ?</h2>
+    <p>Démarrez votre essai gratuit de 7 jours, sans carte bancaire requise.</p>
+    <a href="/signup" class="btn-primary">Commencer gratuitement →</a>
+  </div>
+</main>
+
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/contact">Contact</a></footer>
+
+<script>
+function toggleTheme(){var h=document.documentElement;var d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('themeBtn').textContent=d?'🌙':'☀️';localStorage.setItem('rg-theme',d?'light':'dark');}
+(function(){var t=localStorage.getItem('rg-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';})();
+
+function getReferralLink(){
+  var code=null;
+  try{
+    var u=new URL(window.location.href);
+    code=u.searchParams.get('code');
+  }catch(e){}
+  if(!code){
+    fetch('/api/auth',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
+      if(d&&d.referral_code){
+        document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+d.referral_code;
+      } else {
+        document.getElementById('loginPrompt').style.display='flex';
+      }
+    }).catch(function(){
+      document.getElementById('loginPrompt').style.display='flex';
+    });
+  } else {
+    document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+code;
+  }
+}
+
+function copyLink(){
+  var inp=document.getElementById('referralLink');
+  var val=inp.value;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(val).then(function(){showCopied();});
+  } else {
+    inp.select();
+    document.execCommand('copy');
+    showCopied();
+  }
+}
+
+function showCopied(){
+  var el=document.getElementById('copySuccess');
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},3000);
+}
+
+function getLink(){return document.getElementById('referralLink').value;}
+
+function shareWhatsApp(e){
+  e.preventDefault();
+  var msg=encodeURIComponent('Essaie RepuGuard gratuitement — l\'outil IA qui surveille ta réputation en ligne 24h/24 : '+getLink());
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function shareLinkedIn(e){
+  e.preventDefault();
+  var url=encodeURIComponent(getLink());
+  window.open('https://www.linkedin.com/sharing/share-offsite/?url='+url,'_blank','width=600,height=600');
+}
+
+function shareEmail(e){
+  e.preventDefault();
+  var subject=encodeURIComponent('Je t\'invite à essayer RepuGuard gratuitement');
+  var body=encodeURIComponent('Salut,\n\nJe t\'invite à essayer RepuGuard, l\'outil qui surveille automatiquement ta réputation sur Google, TripAdvisor et les réseaux sociaux.\n\nTu peux démarrer un essai gratuit de 7 jours ici : '+getLink()+'\n\nEn t\'abonnant via ce lien, on reçoit tous les deux 1 mois offert.\n\nBonne découverte !');
+  window.location.href='mailto:?subject='+subject+'&body='+body;
+}
+
+getReferralLink();
+</script>
+</body>
+</html>

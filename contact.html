@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" dir="ltr" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,22 +7,28 @@
   <meta name="description" content="Contactez l'équipe RepuGuard pour toute question sur notre solution de gestion de réputation.">
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
-    :root{
+    :root,[data-theme="dark"]{
       --bg:#07080f;--surface:#0e1018;--border:rgba(255,255,255,0.06);
       --text:#f1f5f9;--muted:#94a3b8;--muted2:#475569;
-      --accent:#6366f1;--accent-hover:#4f51d8;
+      --accent:#6366f1;--accent-hover:#4f51d8;--card:#13151f;
     }
-    body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+    [data-theme="light"]{
+      --bg:#f8fafc;--surface:#ffffff;--border:rgba(0,0,0,0.08);
+      --text:#0f172a;--muted:#64748b;--muted2:#94a3b8;
+      --accent:#4f46e5;--accent-hover:#3730a3;--card:#f1f5f9;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column;transition:background .3s,color .3s;}
     a{color:inherit;text-decoration:none;}
 
-    /* NAV */
     nav{padding:1rem 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
     .nav-logo{font-weight:900;font-size:1.2rem;letter-spacing:-0.5px;}
     .nav-logo span{color:#818cf8;}
+    .nav-right{display:flex;align-items:center;gap:.75rem;}
     .nav-cta{background:var(--accent);color:white;padding:.5rem 1.2rem;border-radius:6px;font-size:.85rem;font-weight:600;transition:background .2s;}
     .nav-cta:hover{background:var(--accent-hover);}
+    .theme-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted2);padding:.4rem .65rem;cursor:pointer;font-size:.95rem;transition:border-color .2s;}
+    .theme-btn:hover{border-color:var(--muted2);}
 
-    /* MAIN */
     main{flex:1;display:flex;align-items:center;justify-content:center;padding:4rem 1.5rem;}
     .contact-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:520px;}
     .contact-card h1{font-size:1.6rem;font-weight:800;margin-bottom:.5rem;}
@@ -30,13 +36,14 @@
 
     label{display:block;font-size:.8rem;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;}
     input,textarea,select{
-      width:100%;background:#13151f;border:1px solid var(--border);border-radius:8px;
+      width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
       color:var(--text);font-size:.9rem;padding:.7rem 1rem;margin-bottom:1.25rem;
       outline:none;transition:border-color .2s;font-family:inherit;
     }
     input:focus,textarea:focus,select:focus{border-color:var(--accent);}
     textarea{resize:vertical;min-height:120px;}
     input::placeholder,textarea::placeholder{color:var(--muted2);}
+    select option{background:var(--surface);}
 
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
     @media(max-width:480px){.form-row{grid-template-columns:1fr;}}
@@ -45,76 +52,209 @@
     .btn:hover:not(:disabled){background:var(--accent-hover);}
     .btn:disabled{opacity:.6;cursor:not-allowed;}
 
-    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(1rem);background:#1e2030;border:1px solid var(--border);border-radius:10px;padding:.85rem 1.5rem;font-size:.85rem;font-weight:600;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap;z-index:999;}
+    .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(1rem);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.5rem;font-size:.85rem;font-weight:600;pointer-events:none;opacity:0;transition:all .3s;white-space:nowrap;z-index:999;}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
     .toast.green{border-color:rgba(52,211,153,.3);color:#34d399;}
     .toast.red{border-color:rgba(248,113,113,.3);color:#f87171;}
 
-    /* FOOTER */
     footer{padding:1.5rem 5%;text-align:center;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted2);}
+    footer a{color:var(--muted2);}
+    footer a:hover{color:var(--text);}
   </style>
 </head>
 <body>
 
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup" class="nav-cta">Essai gratuit →</a>
+  <div class="nav-right">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+    <a href="/signup" class="nav-cta" data-t="nav_cta">Essai gratuit →</a>
+  </div>
 </nav>
 
 <main>
   <div class="contact-card">
-    <h1>Contactez-nous</h1>
-    <p>Une question sur RepuGuard, besoin d'aide ou d'informations ? Nous répondons sous 24h.</p>
+    <h1 data-t="contact_h1">Contactez-nous</h1>
+    <p data-t="contact_sub">Une question sur RepuGuard, besoin d'aide ou d'informations ? Nous répondons sous 24h.</p>
 
     <form id="contactForm" onsubmit="submitForm(event)">
       <div class="form-row">
         <div>
-          <label for="name">Nom</label>
-          <input id="name" type="text" placeholder="Jean Dupont" required>
+          <label data-t="contact_name_label">NOM</label>
+          <input id="name" type="text" data-t-ph="contact_name_ph" placeholder="Jean Dupont" required>
         </div>
         <div>
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="vous@exemple.com" required>
+          <label data-t="contact_email_label">EMAIL</label>
+          <input id="email" type="email" data-t-ph="contact_email_ph" placeholder="vous@exemple.com" required>
         </div>
       </div>
 
-      <label for="subject">Sujet</label>
+      <label data-t="contact_subject_label">SUJET</label>
       <select id="subject">
-        <option value="">Choisir un sujet…</option>
-        <option value="Demande d'information">Demande d'information</option>
-        <option value="Problème technique">Problème technique</option>
-        <option value="Facturation">Facturation</option>
-        <option value="Partenariat">Partenariat</option>
-        <option value="Autre">Autre</option>
+        <option value="" data-t="contact_subject_opt0">Choisir un sujet…</option>
+        <option value="Demande d'information" data-t="contact_subject_opt1">Demande d'information</option>
+        <option value="Problème technique" data-t="contact_subject_opt2">Problème technique</option>
+        <option value="Facturation" data-t="contact_subject_opt3">Facturation</option>
+        <option value="Partenariat" data-t="contact_subject_opt4">Partenariat</option>
+        <option value="Autre" data-t="contact_subject_opt5">Autre</option>
       </select>
 
-      <label for="message">Message</label>
-      <textarea id="message" placeholder="Décrivez votre demande…" required></textarea>
+      <label data-t="contact_msg_label">MESSAGE</label>
+      <textarea id="message" data-t-ph="contact_msg_ph" placeholder="Décrivez votre demande…" required></textarea>
 
-      <button type="submit" class="btn" id="submitBtn">Envoyer le message</button>
+      <button type="submit" class="btn" id="submitBtn" data-t="contact_send">Envoyer le message</button>
     </form>
   </div>
 </main>
 
-<footer>© 2025 RepuGuard · <a href="/privacy" style="color:var(--muted2)">Confidentialité</a> · <a href="/terms" style="color:var(--muted2)">Conditions</a></footer>
+<footer>© 2026 RepuGuard · <a href="/privacy" data-t="footer_privacy">Confidentialité</a> · <a href="/terms" data-t="footer_terms">Conditions</a></footer>
 
 <div class="toast" id="toast"></div>
 
 <script>
+var CONTACT_TRANS = {
+  fr: {
+    contact_h1:'Contactez-nous', contact_sub:'Une question sur RepuGuard, besoin d\'aide ou d\'informations ? Nous répondons sous 24h.',
+    contact_name_label:'NOM', contact_name_ph:'Jean Dupont', contact_email_label:'EMAIL', contact_email_ph:'vous@exemple.com',
+    contact_subject_label:'SUJET', contact_subject_opt0:'Choisir un sujet…', contact_subject_opt1:'Demande d\'information',
+    contact_subject_opt2:'Problème technique', contact_subject_opt3:'Facturation', contact_subject_opt4:'Partenariat', contact_subject_opt5:'Autre',
+    contact_msg_label:'MESSAGE', contact_msg_ph:'Décrivez votre demande…', contact_send:'Envoyer le message',
+    contact_success:'Message envoyé ! Nous vous répondrons sous 24h.', contact_error:'Erreur lors de l\'envoi. Réessayez.',
+    nav_cta:'Essai gratuit →', footer_privacy:'Confidentialité', footer_terms:'Conditions',
+  },
+  en: {
+    contact_h1:'Contact us', contact_sub:'A question about RepuGuard, need help or information? We respond within 24h.',
+    contact_name_label:'NAME', contact_name_ph:'John Smith', contact_email_label:'EMAIL', contact_email_ph:'you@example.com',
+    contact_subject_label:'SUBJECT', contact_subject_opt0:'Choose a subject…', contact_subject_opt1:'Information request',
+    contact_subject_opt2:'Technical issue', contact_subject_opt3:'Billing', contact_subject_opt4:'Partnership', contact_subject_opt5:'Other',
+    contact_msg_label:'MESSAGE', contact_msg_ph:'Describe your request…', contact_send:'Send message',
+    contact_success:'Message sent! We\'ll get back to you within 24h.', contact_error:'Error sending. Please try again.',
+    nav_cta:'Free trial →', footer_privacy:'Privacy', footer_terms:'Terms',
+  },
+  es: {
+    contact_h1:'Contáctenos', contact_sub:'¿Una pregunta sobre RepuGuard, necesita ayuda? Respondemos en 24h.',
+    contact_name_label:'NOMBRE', contact_name_ph:'Juan García', contact_email_label:'EMAIL', contact_email_ph:'tú@ejemplo.com',
+    contact_subject_label:'ASUNTO', contact_subject_opt0:'Elige un asunto…', contact_subject_opt1:'Solicitud de información',
+    contact_subject_opt2:'Problema técnico', contact_subject_opt3:'Facturación', contact_subject_opt4:'Asociación', contact_subject_opt5:'Otro',
+    contact_msg_label:'MENSAJE', contact_msg_ph:'Describe tu solicitud…', contact_send:'Enviar mensaje',
+    contact_success:'¡Mensaje enviado! Te responderemos en 24h.', contact_error:'Error al enviar. Inténtalo de nuevo.',
+    nav_cta:'Prueba gratis →', footer_privacy:'Privacidad', footer_terms:'Términos',
+  },
+  de: {
+    contact_h1:'Kontaktieren Sie uns', contact_sub:'Eine Frage zu RepuGuard? Wir antworten innerhalb von 24h.',
+    contact_name_label:'NAME', contact_name_ph:'Max Müller', contact_email_label:'E-MAIL', contact_email_ph:'sie@beispiel.de',
+    contact_subject_label:'BETREFF', contact_subject_opt0:'Betreff auswählen…', contact_subject_opt1:'Informationsanfrage',
+    contact_subject_opt2:'Technisches Problem', contact_subject_opt3:'Abrechnung', contact_subject_opt4:'Partnerschaft', contact_subject_opt5:'Sonstiges',
+    contact_msg_label:'NACHRICHT', contact_msg_ph:'Beschreiben Sie Ihr Anliegen…', contact_send:'Nachricht senden',
+    contact_success:'Nachricht gesendet! Wir antworten innerhalb von 24h.', contact_error:'Fehler beim Senden. Bitte erneut versuchen.',
+    nav_cta:'Kostenlos testen →', footer_privacy:'Datenschutz', footer_terms:'AGB',
+  },
+  it: {
+    contact_h1:'Contattaci', contact_sub:'Una domanda su RepuGuard? Rispondiamo entro 24h.',
+    contact_name_label:'NOME', contact_name_ph:'Mario Rossi', contact_email_label:'EMAIL', contact_email_ph:'tu@esempio.it',
+    contact_subject_label:'OGGETTO', contact_subject_opt0:'Scegli un oggetto…', contact_subject_opt1:'Richiesta di informazioni',
+    contact_subject_opt2:'Problema tecnico', contact_subject_opt3:'Fatturazione', contact_subject_opt4:'Collaborazione', contact_subject_opt5:'Altro',
+    contact_msg_label:'MESSAGGIO', contact_msg_ph:'Descrivi la tua richiesta…', contact_send:'Invia messaggio',
+    contact_success:'Messaggio inviato! Ti risponderemo entro 24h.', contact_error:'Errore durante l\'invio. Riprova.',
+    nav_cta:'Prova gratuita →', footer_privacy:'Privacy', footer_terms:'Termini',
+  },
+  pt: {
+    contact_h1:'Contacte-nos', contact_sub:'Uma questão sobre o RepuGuard? Respondemos em 24h.',
+    contact_name_label:'NOME', contact_name_ph:'João Silva', contact_email_label:'EMAIL', contact_email_ph:'você@exemplo.pt',
+    contact_subject_label:'ASSUNTO', contact_subject_opt0:'Escolha um assunto…', contact_subject_opt1:'Pedido de informação',
+    contact_subject_opt2:'Problema técnico', contact_subject_opt3:'Faturação', contact_subject_opt4:'Parceria', contact_subject_opt5:'Outro',
+    contact_msg_label:'MENSAGEM', contact_msg_ph:'Descreva o seu pedido…', contact_send:'Enviar mensagem',
+    contact_success:'Mensagem enviada! Responderemos em 24h.', contact_error:'Erro ao enviar. Tente novamente.',
+    nav_cta:'Teste gratuito →', footer_privacy:'Privacidade', footer_terms:'Termos',
+  },
+  nl: {
+    contact_h1:'Neem contact op', contact_sub:'Een vraag over RepuGuard? Wij reageren binnen 24u.',
+    contact_name_label:'NAAM', contact_name_ph:'Jan Jansen', contact_email_label:'E-MAIL', contact_email_ph:'jij@voorbeeld.nl',
+    contact_subject_label:'ONDERWERP', contact_subject_opt0:'Kies een onderwerp…', contact_subject_opt1:'Informatieverzoek',
+    contact_subject_opt2:'Technisch probleem', contact_subject_opt3:'Facturering', contact_subject_opt4:'Samenwerking', contact_subject_opt5:'Anders',
+    contact_msg_label:'BERICHT', contact_msg_ph:'Beschrijf uw verzoek…', contact_send:'Bericht versturen',
+    contact_success:'Bericht verzonden! We reageren binnen 24u.', contact_error:'Fout bij verzenden. Probeer opnieuw.',
+    nav_cta:'Gratis proberen →', footer_privacy:'Privacy', footer_terms:'Voorwaarden',
+  },
+  ar: {
+    contact_h1:'تواصل معنا', contact_sub:'هل لديك سؤال حول RepuGuard؟ نرد خلال 24 ساعة.',
+    contact_name_label:'الاسم', contact_name_ph:'محمد علي', contact_email_label:'البريد الإلكتروني', contact_email_ph:'you@example.com',
+    contact_subject_label:'الموضوع', contact_subject_opt0:'اختر موضوعاً…', contact_subject_opt1:'طلب معلومات',
+    contact_subject_opt2:'مشكلة تقنية', contact_subject_opt3:'الفوترة', contact_subject_opt4:'شراكة', contact_subject_opt5:'أخرى',
+    contact_msg_label:'الرسالة', contact_msg_ph:'صف طلبك…', contact_send:'إرسال الرسالة',
+    contact_success:'تم إرسال الرسالة! سنرد خلال 24 ساعة.', contact_error:'خطأ في الإرسال. حاول مرة أخرى.',
+    nav_cta:'تجربة مجانية →', footer_privacy:'الخصوصية', footer_terms:'الشروط',
+  },
+  ru: {
+    contact_h1:'Свяжитесь с нами', contact_sub:'Вопрос о RepuGuard? Мы ответим в течение 24 часов.',
+    contact_name_label:'ИМЯ', contact_name_ph:'Иван Иванов', contact_email_label:'EMAIL', contact_email_ph:'вы@пример.ru',
+    contact_subject_label:'ТЕМА', contact_subject_opt0:'Выберите тему…', contact_subject_opt1:'Запрос информации',
+    contact_subject_opt2:'Техническая проблема', contact_subject_opt3:'Оплата', contact_subject_opt4:'Партнёрство', contact_subject_opt5:'Другое',
+    contact_msg_label:'СООБЩЕНИЕ', contact_msg_ph:'Опишите ваш запрос…', contact_send:'Отправить сообщение',
+    contact_success:'Сообщение отправлено! Мы ответим в течение 24 часов.', contact_error:'Ошибка при отправке. Повторите попытку.',
+    nav_cta:'Бесплатный пробный период →', footer_privacy:'Конфиденциальность', footer_terms:'Условия',
+  },
+};
+
+function getLang() {
+  var l = localStorage.getItem('rg-lang') || 'fr';
+  return CONTACT_TRANS[l] ? l : 'fr';
+}
+
+function applyTrans() {
+  var lang = getLang();
+  var t = CONTACT_TRANS[lang] || CONTACT_TRANS['fr'];
+  var dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.setAttribute('lang', lang);
+  document.documentElement.setAttribute('dir', dir);
+  document.querySelectorAll('[data-t]').forEach(function(el) {
+    var k = el.getAttribute('data-t');
+    if (t[k] !== undefined) el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-t-ph]').forEach(function(el) {
+    var k = el.getAttribute('data-t-ph');
+    if (t[k] !== undefined) el.placeholder = t[k];
+  });
+  // Translate select options value to match language
+  var sel = document.getElementById('subject');
+  var opts = sel.querySelectorAll('option[data-t]');
+  opts.forEach(function(opt) {
+    var k = opt.getAttribute('data-t');
+    if (t[k]) { opt.textContent = t[k]; opt.value = k !== 'contact_subject_opt0' ? t[k] : ''; }
+  });
+}
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('rg-theme', isDark ? 'light' : 'dark');
+}
+
+function initTheme() {
+  var saved = localStorage.getItem('rg-theme');
+  var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
 function showToast(msg, type) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show ' + type;
-  setTimeout(() => t.className = 'toast', 3500);
+  setTimeout(function() { t.className = 'toast'; }, 3500);
 }
 
 async function submitForm(e) {
   e.preventDefault();
-  const btn = document.getElementById('submitBtn');
+  var lang = getLang();
+  var t = CONTACT_TRANS[lang] || CONTACT_TRANS['fr'];
+  var btn = document.getElementById('submitBtn');
   btn.disabled = true;
-  btn.textContent = 'Envoi en cours…';
+  btn.textContent = '…';
 
-  const body = {
+  var body = {
     name: document.getElementById('name').value.trim(),
     email: document.getElementById('email').value.trim(),
     subject: document.getElementById('subject').value,
@@ -122,22 +262,25 @@ async function submitForm(e) {
   };
 
   try {
-    const res = await fetch('/api/contact', {
+    var res = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    var data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erreur');
-    showToast('Message envoyé ! Nous vous répondrons sous 24h.', 'green');
+    showToast(t.contact_success, 'green');
     document.getElementById('contactForm').reset();
   } catch (err) {
-    showToast('Erreur lors de l\'envoi. Réessayez.', 'red');
+    showToast(err.message || t.contact_error, 'red');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Envoyer le message';
+    btn.textContent = t.contact_send;
   }
 }
+
+initTheme();
+applyTrans();
 </script>
 </body>
 </html>

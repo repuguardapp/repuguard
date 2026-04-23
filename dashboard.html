@@ -280,10 +280,23 @@
   [data-theme="light"] .chart-grid line { stroke: var(--chart-grid); }
   [data-theme="light"] .toast { background: #ffffff; }
   [data-theme="light"] .sidebar::after { opacity: 0.15; }
+
+  .onboarding-card{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05));border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;}
+  .onboarding-title{font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+  .onboarding-steps{display:flex;flex-direction:column;gap:.6rem;}
+  .onboarding-step{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted);}
+  .onboarding-step.done{color:var(--text);}
+  .onboarding-step .step-icon{width:22px;height:22px;border-radius:50%;border:2px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;color:#818cf8;}
+  .onboarding-step.done .step-icon{background:#6366f1;border-color:#6366f1;color:white;}
+  .onboarding-dismiss{font-size:.75rem;color:var(--muted2);cursor:pointer;margin-top:1rem;text-decoration:underline;display:inline-block;}
 </style>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+<div id="trialBanner" style="display:none;background:linear-gradient(90deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border-bottom:1px solid rgba(99,102,241,.25);padding:.65rem 5%;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+  <span id="trialBannerMsg" style="font-size:.82rem;color:#a5b4fc;">⏳ Votre essai se termine dans <strong id="trialDaysLeft">7</strong> jours — Passez en annuel et économisez 20%</span>
+  <button onclick="manageSubscription()" style="background:#6366f1;color:white;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
+</div>
 <div class="layout">
 
   <!-- SIDEBAR -->
@@ -319,6 +332,7 @@
     <div class="nav-section">
       <div class="nav-label">Compte</div>
       <div class="nav-item" data-section="abonnement"><span class="nav-icon">💳</span> <span data-i18n="nav_subscription">Abonnement</span></div>
+      <div class="nav-item" data-section="parrainage"><span class="nav-icon">🎁</span> Parrainage</div>
       <div class="nav-item" data-section="parametres"><span class="nav-icon">⚙</span> <span data-i18n="nav_settings">Paramètres</span></div>
     </div>
 
@@ -367,6 +381,24 @@
 
       <!-- VUE D'ENSEMBLE -->
       <div class="section active" id="sec-overview">
+        <div id="onboardingCard" style="display:none" class="onboarding-card">
+          <div class="onboarding-title">🚀 Démarrage rapide</div>
+          <div class="onboarding-steps">
+            <div class="onboarding-step done" data-step="account">
+              <div class="step-icon">✓</div>
+              <span>Compte créé et activé</span>
+            </div>
+            <div class="onboarding-step" data-step="google">
+              <div class="step-icon">2</div>
+              <span>Connecter votre profil Google Business</span>
+            </div>
+            <div class="onboarding-step" data-step="reviews">
+              <div class="step-icon">3</div>
+              <span>Recevoir votre première alerte avis</span>
+            </div>
+          </div>
+          <span class="onboarding-dismiss" onclick="localStorage.setItem('onboarding-dismissed','1');document.getElementById('onboardingCard').style.display='none'">Ne plus afficher</span>
+        </div>
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">📊 Score global</div><div class="kpi-value accent">4.5</div><div class="kpi-delta up">↑ +0.2 cette semaine</div></div>
           <div class="kpi-card"><div class="kpi-label">💬 Avis analysés</div><div class="kpi-value">847</div><div class="kpi-delta up">↑ +12 cette semaine</div></div>
@@ -427,21 +459,11 @@
           <div class="right-panel">
             <div class="card">
               <div class="card-header"><div class="card-title">◈ Par plateforme</div></div>
-              <div class="platform-list">
-                <div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">★★★★½</div></div><div class="platform-score">4.6<div class="score-bar-wrap"><div class="score-bar" style="width:92%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo ta">TA</div><div><div class="platform-name">TripAdvisor</div><div class="platform-stars">★★★★½</div></div><div class="platform-score">4.4<div class="score-bar-wrap"><div class="score-bar" style="width:88%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo fb">f</div><div><div class="platform-name">Facebook</div><div class="platform-stars">★★★★</div></div><div class="platform-score" style="color:var(--orange)">3.9<div class="score-bar-wrap"><div class="score-bar warn" style="width:78%"></div></div></div></div>
-                <div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">★★★★★</div></div><div class="platform-score">4.7<div class="score-bar-wrap"><div class="score-bar" style="width:94%"></div></div></div></div>
-              </div>
+              <div class="platform-list" id="platformList"></div>
             </div>
             <div class="card">
               <div class="card-header"><div class="card-title">⚡ Activité récente</div></div>
-              <div class="activity-list">
-                <div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée sur <strong>Google</strong> · Claire B.</div><div class="activity-when">il y a 1h</div></div></div>
-                <div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text"><strong>Rapport hebdomadaire</strong> envoyé</div><div class="activity-when">Lundi 08:00</div></div></div>
-                <div class="activity-item"><div class="activity-dot orange"></div><div><div class="activity-text">Nouvelle plateforme : <strong>Yelp France</strong></div><div class="activity-when">Dimanche</div></div></div>
-                <div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Score <strong>Facebook</strong> en baisse de 0.2 pts</div><div class="activity-when">Samedi</div></div></div>
-              </div>
+              <div class="activity-list" id="activityList"></div>
             </div>
           </div>
         </div>
@@ -561,6 +583,19 @@
             <div class="platform-full-item"><div class="platform-logo" style="background:rgba(255,255,255,0.04);border:1px dashed var(--border2);color:var(--text3);">+</div><div><div class="platform-name" style="color:var(--text3);">TripAdvisor, Yelp, Booking...</div><div class="platform-stars">Disponible sur Plan Business</div></div><div class="platform-status"><button class="btn-sm btn-ghost" onclick="navigate('abonnement')">Débloquer</button></div></div>
           </div>
         </div>
+        <!-- Review request generator -->
+        <div class="card" style="border-color:rgba(52,211,153,.2);background:rgba(52,211,153,.03);">
+          <div class="card-header"><div class="card-title">⭐ Demander un avis à vos clients</div></div>
+          <div style="padding:0 20px 20px;">
+            <p style="font-size:13px;color:#64748b;margin:0 0 16px;">Partagez ce lien avec vos clients pour les inviter à vous laisser un avis Google. Plus vous en avez, plus votre score monte.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="reviewRequestLink" type="text" readonly style="flex:1;min-width:200px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:#34d399;font-size:12px;font-family:monospace;outline:none;" value="Connectez Google Business pour obtenir votre lien" />
+              <button onclick="copyReviewLink()" id="copyReviewBtn" disabled style="background:#059669;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;opacity:.5;">📋 Copier</button>
+              <a id="shareReviewWhatsApp" href="#" onclick="return shareReviewWA(event)" style="display:flex;align-items:center;gap:4px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:#94a3b8;text-decoration:none;font-size:12px;">💬 WA</a>
+            </div>
+            <div id="reviewRequestTip" style="margin-top:12px;font-size:12px;color:#475569;display:none;">💡 Envoyez ce lien par SMS, email ou WhatsApp après chaque prestation. Les clients satisfaits ne pensent pas toujours à laisser un avis — un simple rappel suffit !</div>
+          </div>
+        </div>
       </div>
 
       <!-- NOTIFICATIONS -->
@@ -610,10 +645,79 @@
             <button class="btn-lg ghost" onclick="manageSubscription()">Gérer l'abonnement</button>
           </div>
         </div>
+        <!-- Annual billing upsell -->
+        <div id="annualUpsell" style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(129,140,248,.06));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:700;font-size:14px;color:#f1f5f9;">💰 Économisez 20% avec la facturation annuelle</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Payez une fois par an et économisez 2 mois. Annulable à tout moment.</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Starter</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">23€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Pro</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">55€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Business</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">119€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <button onclick="manageSubscription()" style="background:#6366f1;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
+          </div>
+        </div>
         <div class="plan-grid">
           <div class="plan-card" data-plan="starter"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;">Rétrograder</button></div>
           <div class="plan-card current" data-plan="pro"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;">Plan actuel</button></div>
           <div class="plan-card" data-plan="business"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;">Passer au Business</button></div>
+        </div>
+      </div>
+
+      <!-- PARRAINAGE -->
+      <div class="section" id="sec-parrainage">
+        <div class="card" style="padding:28px 32px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(129,140,248,.04));border-color:rgba(99,102,241,.25);">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+            <div style="background:rgba(99,102,241,.15);border-radius:12px;padding:12px;font-size:28px;line-height:1;">🎁</div>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#f1f5f9;">Programme de parrainage</div>
+              <div style="font-size:13px;color:#64748b;margin-top:4px;">Invitez un collègue — gagnez chacun 1 mois offert</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#818cf8;" id="refCount">0</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">Filleuls parrainés</div>
+            </div>
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#34d399;" id="refSaved">0€</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">Économies générées</div>
+            </div>
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#fbbf24;">🎁</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">1 mois offert par filleul</div>
+            </div>
+          </div>
+          <div style="margin-bottom:24px;">
+            <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Votre lien de parrainage</div>
+            <div style="display:flex;gap:8px;">
+              <input id="refLink" type="text" readonly style="flex:1;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:#818cf8;font-size:13px;font-family:monospace;outline:none;" value="https://repuguard.app/signup?ref=..." />
+              <button onclick="copyRefLink()" style="background:#6366f1;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">📋 Copier</button>
+            </div>
+          </div>
+          <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:20px;">
+            <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Comment ça marche ?</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#6366f1;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">1</div><div style="font-size:13px;color:#94a3b8;">Partagez votre lien unique à un collègue restaurateur, hôtelier, médecin…</div></div>
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#6366f1;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">2</div><div style="font-size:13px;color:#94a3b8;">Il s'inscrit et démarre son essai gratuit de 7 jours via votre lien.</div></div>
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#34d399;color:#022c22;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">3</div><div style="font-size:13px;color:#94a3b8;">À sa conversion en client payant, vous recevez chacun <strong style="color:#f1f5f9;">1 mois gratuit</strong> automatiquement.</div></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="mailto:?subject=Essaie%20RepuGuard%20gratuitement&body=Je%20te%20recommande%20RepuGuard%20pour%20surveiller%20ta%20r%C3%A9putation%20en%20ligne.%20Essai%207j%20offert%20%3A%20" id="refMailShare" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">✉ Email</a>
+            <a href="#" onclick="shareRefWhatsApp(event)" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">💬 WhatsApp</a>
+            <a href="#" onclick="shareRefLinkedIn(event)" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">🔗 LinkedIn</a>
+          </div>
         </div>
       </div>
 
@@ -627,8 +731,7 @@
           <div class="settings-title">Automatisation</div>
           <div class="settings-row"><div><div class="settings-label">Réponse automatique aux avis 5★</div><div class="settings-sub">Génère et valide silencieusement les réponses aux avis 5★ sans texte</div></div><div class="toggle" id="autoRespondToggle" onclick="toggleAutoRespond(this)"></div></div>
           <div class="settings-title">Sécurité</div>
-          <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Dernière modification il y a 30 jours</div></div><button class="btn-sm btn-ghost">Modifier</button></div>
-          <div class="settings-row"><div><div class="settings-label">Authentification deux facteurs</div><div class="settings-sub">Non activé</div></div><button class="btn-sm btn-primary">Activer</button></div>
+          <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Envoie un email de réinitialisation</div></div><button class="btn-sm btn-ghost" onclick="resetPassword(this)">Modifier</button></div>
           <div style="padding:16px 20px;border-top:1px solid var(--border);"><button class="btn-lg primary" onclick="saveSettings()">Enregistrer les modifications</button></div>
         </div>
         <div class="card" style="border-color:rgba(248,113,113,0.2);">
@@ -697,6 +800,47 @@
   function render(d) {
     const { client, stats, recentAlerts, allAlerts, pendingResponses, reviews } = d;
 
+    // Bandeau trial
+    const trialBanner = document.getElementById('trialBanner');
+    if (trialBanner && RG.client.trial_ends) {
+      const trialEnd = new Date(RG.client.trial_ends);
+      const now = new Date();
+      const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+      if (daysLeft > 0) {
+        trialBanner.style.display = 'flex';
+        const daysEl = document.getElementById('trialDaysLeft');
+        if (daysEl) daysEl.textContent = daysLeft;
+        const bannerMsg = document.getElementById('trialBannerMsg');
+        if (daysLeft <= 1) {
+          // Last day: red urgent
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(239,68,68,.25),rgba(220,38,38,.2))';
+          trialBanner.style.borderBottomColor = 'rgba(239,68,68,.5)';
+          if (bannerMsg) { bannerMsg.style.color = '#fca5a5'; bannerMsg.innerHTML = '🚨 <strong>Dernière chance</strong> — Votre essai expire dans ' + daysLeft + ' jour — Activez votre plan maintenant pour ne pas perdre vos données.'; }
+        } else if (daysLeft <= 2) {
+          // 2 days: orange warning
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(251,146,60,.2),rgba(245,158,11,.15))';
+          trialBanner.style.borderBottomColor = 'rgba(251,146,60,.4)';
+          if (bannerMsg) { bannerMsg.style.color = '#fdba74'; bannerMsg.innerHTML = '⚠️ Plus que <strong>' + daysLeft + ' jours</strong> d\'essai — Passez en annuel et économisez 20%.'; }
+        }
+      }
+    }
+
+    // Onboarding checklist
+    const onboardingCard = document.getElementById('onboardingCard');
+    if (onboardingCard) {
+      const createdAt = new Date(client.created_at || Date.now());
+      const isNew = (Date.now() - createdAt.getTime()) < 3 * 24 * 60 * 60 * 1000;
+      const hasReviews = reviews && reviews.length > 0;
+      const dismissed = localStorage.getItem('onboarding-dismissed');
+      if (isNew && !dismissed) {
+        onboardingCard.style.display = 'block';
+        // Marquer les étapes complétées
+        if (client.google_place_id) onboardingCard.querySelector('[data-step="google"]')?.classList.add('done');
+        if (hasReviews) onboardingCard.querySelector('[data-step="reviews"]')?.classList.add('done');
+        if (client.email) onboardingCard.querySelector('[data-step="account"]')?.classList.add('done');
+      }
+    }
+
     // Sidebar
     document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';
     document.querySelector('.biz-type').textContent = [client.sector, client.country].filter(Boolean).join(' · ');
@@ -758,7 +902,9 @@
         } else if (renewDate) {
           desc = `Prochain renouvellement le ${renewDate.toLocaleDateString('fr-FR')}`;
         }
-        planBanner.querySelector('.plan-desc').textContent = desc;
+        const PLAN_PRICES = { starter: '29', pro: '69', business: '149' };
+        const priceStr = PLAN_PRICES[plan] ? ` · ${PLAN_PRICES[plan]}€/mois` : '';
+        planBanner.querySelector('.plan-desc').textContent = desc + (trialDate && trialDate > now ? '' : priceStr);
       }
       subSec.querySelectorAll('.plan-card[data-plan]').forEach(card => {
         const cardPlan = card.dataset.plan;
@@ -769,6 +915,39 @@
         const btn = card.querySelector('.btn-lg');
         if (btn) { btn.style.opacity = isCurrent ? '0.5' : ''; btn.style.cursor = isCurrent ? 'default' : ''; if (isCurrent) btn.textContent = 'Plan actuel'; }
       });
+    }
+
+    // Referral section
+    renderReferral(client.id, plan);
+    setupReviewRequestLink(client.google_place_id);
+
+    // Platform list — only connected platforms
+    const platList = document.getElementById('platformList');
+    if (platList) {
+      const platItems = [];
+      const gScore = client.google_score || 0;
+      platItems.push(`<div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">${stars(Math.round(gScore))}</div></div><div class="platform-score">${gScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(gScore/5*100)}%"></div></div></div></div>`);
+      if (client.trustpilot_business_id) {
+        const tpScore = client.trustpilot_score || 0;
+        platItems.push(`<div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">${stars(Math.round(tpScore))}</div></div><div class="platform-score">${tpScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(tpScore/5*100)}%"></div></div></div></div>`);
+      }
+      platList.innerHTML = platItems.join('');
+    }
+
+    // Activity feed — dynamic from real data
+    const actList = document.getElementById('activityList');
+    if (actList) {
+      const acts = [];
+      if (client.last_sync) {
+        const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
+        const when = diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.round(diff/60)}h` : `il y a ${Math.round(diff/1440)}j`;
+        acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>Google</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
+      }
+      const responded = (allReviews||[]).filter(r => r.responded_at).slice(0,2);
+      responded.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.responded_at)}</div></div></div>`));
+      const recentNegs = (allReviews||[]).filter(r => r.is_negative && !r.responded_at).slice(0,2);
+      recentNegs.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Avis négatif détecté · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.date)}</div></div></div>`));
+      actList.innerHTML = acts.length ? acts.join('') : `<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text" style="color:var(--text3)">Aucune activité récente</div></div></div>`;
     }
 
     // Alert tab counts
@@ -1064,6 +1243,15 @@
   }
 
   // GOOGLE BUSINESS PROFILE OAUTH
+  async function resetPassword(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      await fetch('/api/reset-password', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
+      showToast('Email de réinitialisation envoyé', 'green');
+    } catch(e) { showToast('Erreur', 'red'); }
+    if (btn) { btn.disabled = false; btn.textContent = 'Modifier'; }
+  }
+
   async function manageSubscription() {
     try {
       const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
@@ -1071,6 +1259,77 @@
       if (!r.ok) { showToast(d.error || t('error_generic'), 'red'); return; }
       if (d.url) window.location.href = d.url;
     } catch(e) { showToast(t('error_connection'), 'red'); }
+  }
+
+  function renderReferral(clientId, plan) {
+    const code = clientId ? clientId.replace(/-/g, '').slice(0, 10).toUpperCase() : 'XXXXXX';
+    const link = `https://repuguard.app/signup?ref=${code}`;
+    const refInput = document.getElementById('refLink');
+    if (refInput) refInput.value = link;
+    const mailA = document.getElementById('refMailShare');
+    if (mailA) mailA.href = `mailto:?subject=Essaie%20RepuGuard%20gratuitement&body=Je%20te%20recommande%20RepuGuard%20pour%20surveiller%20ta%20r%C3%A9putation%20en%20ligne.%20Essai%207j%20offert%20%3A%20${encodeURIComponent(link)}`;
+    const PLAN_PRICES = { starter: 29, pro: 69, business: 149 };
+    const price = PLAN_PRICES[plan] || 0;
+    const refCountEl = document.getElementById('refCount');
+    const refSavedEl = document.getElementById('refSaved');
+    const saved = (RG.data?.client?.referral_count || 0) * price;
+    if (refCountEl) refCountEl.textContent = RG.data?.client?.referral_count || 0;
+    if (refSavedEl) refSavedEl.textContent = saved + '€';
+    // Hide annual upsell if already on annual billing
+    const upsell = document.getElementById('annualUpsell');
+    if (upsell && RG.data?.client?.billing_interval === 'year') upsell.style.display = 'none';
+  }
+
+  function copyRefLink() {
+    const inp = document.getElementById('refLink');
+    if (!inp) return;
+    navigator.clipboard.writeText(inp.value).then(() => showToast('Lien copié !', 'green')).catch(() => {
+      inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
+    });
+  }
+
+  function setupReviewRequestLink(placeId) {
+    const inp = document.getElementById('reviewRequestLink');
+    const btn = document.getElementById('copyReviewBtn');
+    const tip = document.getElementById('reviewRequestTip');
+    const wa = document.getElementById('shareReviewWhatsApp');
+    if (!inp) return;
+    if (placeId) {
+      const url = `https://search.google.com/local/writereview?placeid=${placeId}`;
+      inp.value = url;
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (tip) tip.style.display = 'block';
+      if (wa) wa.href = '#';
+      inp._url = url;
+    }
+  }
+
+  function copyReviewLink() {
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    navigator.clipboard.writeText(inp._url).then(() => showToast('Lien copié !', 'green')).catch(() => {
+      inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
+    });
+  }
+
+  function shareReviewWA(e) {
+    e.preventDefault();
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    const msg = `Bonjour ! Si vous avez été satisfait(e) de notre service, nous vous serions très reconnaissants de nous laisser un avis Google (1 minute) : ${inp._url} Merci d'avance ! 🙏`;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  function shareRefWhatsApp(e) {
+    e.preventDefault();
+    const link = document.getElementById('refLink')?.value || '';
+    window.open('https://wa.me/?text=' + encodeURIComponent('Essaie RepuGuard gratuitement (7j offerts) : ' + link), '_blank');
+  }
+
+  function shareRefLinkedIn(e) {
+    e.preventDefault();
+    const link = document.getElementById('refLink')?.value || '';
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(link), '_blank');
   }
 
   async function connectGBP() {
