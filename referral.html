@@ -244,7 +244,7 @@ function shareLinkedIn(e){
 function shareEmail(e){
   e.preventDefault();
   var subject=encodeURIComponent('Je t\'invite à essayer RepuGuard gratuitement');
-  var body=encodeURIComponent('Salut,\n\nJe t\'invite à essayer RepuGuard, l\'outil qui surveille automatiquement ta réputation sur Google, TripAdvisor et les réseaux sociaux.\n\nTu peux démarrer un essai gratuit de 7 jours ici : '+getLink()+'\n\nEn t\'abonnant via ce lien, on reçoit tous les deux 1 mois offert.\n\nBonne découverte !');
+  var body=encodeURIComponent('Salut,\n\nJe t\'invite à essayer RepuGuard, l\'outil qui surveille automatiquement ta réputation sur Google Reviews, Trustpilot et TripAdvisor.\n\nTu peux démarrer un essai gratuit de 7 jours ici : '+getLink()+'\n\nEn t\'abonnant via ce lien, on reçoit tous les deux 1 mois offert.\n\nBonne découverte !');
   window.location.href='mailto:?subject='+subject+'&body='+body;
 }
 

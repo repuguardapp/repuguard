@@ -1,3 +1,7 @@
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -24,6 +28,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'ADMIN_EMAIL manquant' });
   }
 
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message);
+
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;">
@@ -35,13 +44,13 @@ export default async function handler(req, res) {
         </td></tr>
         <tr><td style="padding:32px 40px;">
           <p style="font-size:13px;color:#475569;margin:0 0 4px;">De</p>
-          <p style="font-size:16px;color:#f1f5f9;font-weight:700;margin:0 0 16px;">${name} &lt;<a href="mailto:${email}" style="color:#818cf8;">${email}</a>&gt;</p>
+          <p style="font-size:16px;color:#f1f5f9;font-weight:700;margin:0 0 16px;">${safeName} &lt;<a href="mailto:${safeEmail}" style="color:#818cf8;">${safeEmail}</a>&gt;</p>
           <p style="font-size:13px;color:#475569;margin:0 0 4px;">Sujet</p>
-          <p style="font-size:15px;color:#f1f5f9;margin:0 0 24px;">${subject || '—'}</p>
+          <p style="font-size:15px;color:#f1f5f9;margin:0 0 24px;">${safeSubject || '—'}</p>
           <p style="font-size:13px;color:#475569;margin:0 0 8px;">Message</p>
-          <div style="background:#13151f;border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:16px;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${message}</div>
+          <div style="background:#13151f;border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:16px;font-size:14px;color:#94a3b8;line-height:1.7;white-space:pre-wrap;">${safeMessage}</div>
           <div style="margin-top:24px;text-align:center;">
-            <a href="mailto:${email}" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;">R&eacute;pondre &agrave; ${name} &rarr;</a>
+            <a href="mailto:${safeEmail}" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:13px;">R&eacute;pondre &agrave; ${safeName} &rarr;</a>
           </div>
         </td></tr>
       </table>

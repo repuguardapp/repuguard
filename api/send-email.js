@@ -592,6 +592,10 @@ function eT(lang, key, vars = {}) {
 // Emails transactionnels toujours envoyés (paiement, sécurité)
 const TRANSACTIONAL = ['welcome', 'alert', 'payment_failed', 'cancelled', 'trial_ending'];
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
+
 function unsubLink(email) {
   const sig = crypto.createHmac('sha256', SUPABASE_KEY).update(email.toLowerCase()).digest('hex');
   return `https://repuguard.app/api/unsubscribe?email=${encodeURIComponent(email)}&sig=${sig}`;
@@ -603,8 +607,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { type, email, firstName, businessName, plan, review, lang: reqLang } = req.body;
+    const { type, email, firstName: _fn, businessName: _bn, plan, review: _rv, lang: reqLang } = req.body;
     const lang = reqLang || 'fr';
+    const firstName = escapeHtml(_fn);
+    const businessName = escapeHtml(_bn);
+    const review = _rv ? { ..._rv, platform: escapeHtml(_rv.platform), author: escapeHtml(_rv.author), text: escapeHtml(_rv.text) } : null;
 
     if (!email || !type) {
       return res.status(400).json({ error: 'Paramètres manquants' });
