@@ -212,11 +212,72 @@ footer{padding:2rem 5%;display:flex;align-items:center;justify-content:space-bet
 .result-metric span{font-size:1.2rem;opacity:.7;}
 .result-label{font-size:.92rem;font-weight:500;color:var(--text);margin-bottom:.5rem;line-height:1.5;}
 .result-tag{font-size:.78rem;color:var(--muted2);background-color:var(--surface);border:1px solid var(--border);border-radius:100px;padding:.25rem .8rem;display:inline-block;margin-top:.4rem;}
+.cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:500;background-color:var(--surface);border-top:1px solid var(--border);padding:1rem 5%;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;transition:transform .4s ease,background-color .3s;box-shadow:0 -4px 20px rgba(0,0,0,.15);}
+.cookie-banner.hidden{transform:translateY(110%);pointer-events:none;}
+.cookie-text{font-size:.82rem;color:var(--muted2);line-height:1.5;flex:1;min-width:200px;}
+.cookie-text a{color:var(--accent);text-decoration:none;}
+.cookie-text a:hover{text-decoration:underline;}
+.cookie-actions{display:flex;gap:.6rem;flex-shrink:0;}
+.btn-cookie-accept{background-color:var(--accent);color:var(--btn-text);border:none;padding:.5rem 1.2rem;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;transition:opacity .2s;}
+.btn-cookie-accept:hover{opacity:.85;}
+.btn-cookie-decline{background:transparent;color:var(--muted2);border:1px solid var(--border);padding:.5rem 1rem;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s,border-color .2s;}
+.btn-cookie-decline:hover{color:var(--text);border-color:var(--border2);}
 </style>
 
 <script defer src="/_vercel/insights/script.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "RepuGuard",
+      "url": "https://repuguard.app",
+      "description": "RepuGuard monitors your online reputation 24/7 across Google, TripAdvisor, Trustpilot and 15+ platforms. Instant alerts and AI-powered professional responses.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": [
+        {"@type":"Offer","name":"Starter","price":"29","priceCurrency":"EUR","priceValidUntil":"2027-01-01","url":"https://repuguard.app/signup?plan=starter"},
+        {"@type":"Offer","name":"Pro","price":"69","priceCurrency":"EUR","priceValidUntil":"2027-01-01","url":"https://repuguard.app/signup?plan=pro"},
+        {"@type":"Offer","name":"Business","price":"149","priceCurrency":"EUR","priceValidUntil":"2027-01-01","url":"https://repuguard.app/signup?plan=business"}
+      ],
+      "screenshot": "https://repuguard.app/og-image.png",
+      "inLanguage": ["fr","en","de","es","it","pt","nl","ru","ar","ja","zh","ko","hi","pt-BR","tr"],
+      "provider": {"@type":"Organization","name":"RepuGuard","url":"https://repuguard.app"}
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"Does RepuGuard really monitor all platforms?","acceptedAnswer":{"@type":"Answer","text":"Yes — Google Reviews, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, and many local forums."}},
+        {"@type":"Question","name":"Are the AI responses really usable as-is?","acceptedAnswer":{"@type":"Answer","text":"In 85% of cases, yes. You can always edit them before publishing."}},
+        {"@type":"Question","name":"How long does setup take?","acceptedAnswer":{"@type":"Answer","text":"Less than 5 minutes. Enter your business name, sector and notification preferences."}},
+        {"@type":"Question","name":"Can I cancel at any time?","acceptedAnswer":{"@type":"Answer","text":"Yes, with no conditions or penalties. Manage your subscription from your dashboard."}}
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "RepuGuard",
+      "url": "https://repuguard.app",
+      "logo": "https://repuguard.app/og-image.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "url": "https://repuguard.app/contact",
+        "availableLanguage": ["French","English","German","Spanish","Italian","Portuguese","Dutch","Russian","Arabic","Japanese","Chinese","Korean","Hindi"]
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
+<div class="cookie-banner hidden" id="cookieBanner" role="dialog" aria-label="Cookie consent">
+  <p class="cookie-text" id="cookieText">Nous utilisons des cookies pour améliorer votre expérience et analyser notre trafic. <a href="/privacy" id="cookiePrivacyLink">Politique de confidentialité</a></p>
+  <div class="cookie-actions">
+    <button class="btn-cookie-decline" id="cookieDeclineBtn" onclick="cookieDecline()">Refuser</button>
+    <button class="btn-cookie-accept" id="cookieAcceptBtn" onclick="cookieAccept()">Accepter</button>
+  </div>
+</div>
 <div class="trans-bar" id="transBar"></div>
 
 <nav>
@@ -443,6 +504,12 @@ function getCurrency(langCode){if((langCode==='en'||langCode.startsWith('en'))&&
 function updatePricing(langCode){var curr=getCurrency(langCode);document.querySelectorAll('.price-sym').forEach(function(el){el.textContent=curr.sym;});var nums=document.querySelectorAll('.price-num');var prices=PRICES[curr.key]||PRICES.eur;nums.forEach(function(el,i){var v=prices[i]||0;el.textContent=v>=1000?v.toLocaleString():v;});}
 function updateMeta(langCode){var m=META_TAGS[langCode]||META_TAGS.en;document.title=m.title;var dm=document.querySelector('meta[name="description"]');if(dm)dm.setAttribute('content',m.desc);var og_t=document.querySelector('meta[property="og:title"]');if(og_t)og_t.setAttribute('content',m.title);var og_d=document.querySelector('meta[property="og:description"]');if(og_d)og_d.setAttribute('content',m.desc);var og_l=document.querySelector('meta[property="og:locale"]');if(og_l)og_l.setAttribute('content',m.og_locale);var tw_t=document.querySelector('meta[name="twitter:title"]');if(tw_t)tw_t.setAttribute('content',m.title);var tw_d=document.querySelector('meta[name="twitter:description"]');if(tw_d)tw_d.setAttribute('content',m.desc);}
 
+var COOKIE_STRINGS={fr:{text:'Nous utilisons des cookies pour améliorer votre expérience et analyser notre trafic.',privacy:'Politique de confidentialité',accept:'Accepter',decline:'Refuser'},en:{text:'We use cookies to improve your experience and analyze our traffic.',privacy:'Privacy Policy',accept:'Accept',decline:'Decline'},de:{text:'Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und unseren Datenverkehr zu analysieren.',privacy:'Datenschutzrichtlinie',accept:'Akzeptieren',decline:'Ablehnen'},es:{text:'Usamos cookies para mejorar tu experiencia y analizar nuestro tráfico.',privacy:'Política de privacidad',accept:'Aceptar',decline:'Rechazar'},it:{text:'Utilizziamo i cookie per migliorare la tua esperienza e analizzare il nostro traffico.',privacy:'Informativa sulla privacy',accept:'Accetta',decline:'Rifiuta'},pt:{text:'Utilizamos cookies para melhorar a sua experiência e analisar o nosso tráfego.',privacy:'Política de privacidade',accept:'Aceitar',decline:'Recusar'},'pt-BR':{text:'Usamos cookies para melhorar sua experiência e analisar nosso tráfego.',privacy:'Política de privacidade',accept:'Aceitar',decline:'Recusar'},nl:{text:'We gebruiken cookies om uw ervaring te verbeteren en ons verkeer te analyseren.',privacy:'Privacybeleid',accept:'Accepteren',decline:'Weigeren'},ru:{text:'Мы используем файлы cookie для улучшения вашего опыта и анализа трафика.',privacy:'Политика конфиденциальности',accept:'Принять',decline:'Отказать'},ar:{text:'نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتحليل حركة المرور.',privacy:'سياسة الخصوصية',accept:'قبول',decline:'رفض'},ja:{text:'Cookieを使用して体験を向上させ、トラフィックを分析します。',privacy:'プライバシーポリシー',accept:'同意する',decline:'拒否する'},zh:{text:'我们使用Cookie来改善您的体验并分析我们的流量。',privacy:'隐私政策',accept:'接受',decline:'拒绝'},ko:{text:'쿠키를 사용하여 경험을 개선하고 트래픽을 분석합니다.',privacy:'개인정보 처리방침',accept:'수락',decline:'거부'},hi:{text:'हम अनुभव बेहतर बनाने और ट्रैफ़िक विश्लेषण के लिए कुकीज़ उपयोग करते हैं।',privacy:'गोपनीयता नीति',accept:'स्वीकार',decline:'अस्वीकार'},tr:{text:'Deneyiminizi iyileştirmek ve trafiğimizi analiz etmek için çerezler kullanıyoruz.',privacy:'Gizlilik politikası',accept:'Kabul et',decline:'Reddet'}};
+function updateCookieBanner(langCode){var s=COOKIE_STRINGS[langCode]||COOKIE_STRINGS.en;var t=document.getElementById('cookieText');var a=document.getElementById('cookieAcceptBtn');var d=document.getElementById('cookieDeclineBtn');if(t)t.innerHTML=s.text+' <a href="/privacy">'+s.privacy+'</a>';if(a)a.textContent=s.accept;if(d)d.textContent=s.decline;}
+function cookieAccept(){localStorage.setItem('rg-consent','accepted');document.getElementById('cookieBanner').classList.add('hidden');}
+function cookieDecline(){localStorage.setItem('rg-consent','declined');document.getElementById('cookieBanner').classList.add('hidden');}
+function initCookieBanner(){if(!localStorage.getItem('rg-consent')){setTimeout(function(){document.getElementById('cookieBanner').classList.remove('hidden');},1500);}}
+
 function toggleTheme(){
   var html=document.documentElement;
   var btn=document.getElementById('themeBtn');
@@ -528,6 +595,7 @@ function selectLang(l){
   else{translatePage(l);}
   updatePricing(l.code);
   updateMeta(l.code);
+  updateCookieBanner(l.code);
 }
 
 function applyTrans(t){
@@ -603,6 +671,8 @@ function initLang() {
 initLang();
 updatePricing(currentLang);
 updateMeta(currentLang);
+updateCookieBanner(currentLang);
+initCookieBanner();
 </script>
 
 </body>
