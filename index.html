@@ -307,6 +307,42 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 @media(max-width:700px){.roi-calc{grid-template-columns:1fr;}}
 
 </style>
+<style>
+/* Chat Widget */
+.chat-btn{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:transform .2s,opacity .2s;}
+.chat-btn:hover{transform:scale(1.08);}
+.chat-btn svg{width:24px;height:24px;fill:var(--btn-text);}
+.chat-panel{position:fixed;bottom:5.5rem;right:1.5rem;z-index:9998;width:340px;max-height:480px;background:var(--card);border:1px solid var(--border2);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden;animation:chatIn .25s ease;}
+.chat-panel.open{display:flex;}
+@keyframes chatIn{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.chat-header{display:flex;align-items:center;gap:.75rem;padding:1rem 1.1rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.chat-header-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:var(--accent);}
+.chat-header-info{flex:1;}
+.chat-header-name{font-weight:600;font-size:.88rem;color:var(--text);}
+.chat-header-status{font-size:.72rem;color:var(--green);display:flex;align-items:center;gap:.3rem;}
+.chat-header-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;}
+.chat-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:.2rem;line-height:1;}
+.chat-close:hover{color:var(--text);}
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.75rem;scroll-behavior:smooth;}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.chat-bubble{max-width:80%;padding:.6rem .9rem;border-radius:14px;font-size:.83rem;line-height:1.5;}
+.chat-bubble.user{background:var(--accent);color:var(--btn-text);align-self:flex-end;border-bottom-right-radius:4px;}
+.chat-bubble.bot{background:var(--surface);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-bottom-left-radius:4px;}
+.chat-typing{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;padding:.65rem .9rem;display:none;}
+.chat-typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted2);animation:typingDot 1.2s infinite;margin:0 1px;}
+.chat-typing span:nth-child(2){animation-delay:.2s;}
+.chat-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes typingDot{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.chat-footer{display:flex;gap:.5rem;padding:.75rem;border-top:1px solid var(--border);flex-shrink:0;}
+.chat-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:.55rem .8rem;font-size:.83rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;resize:none;}
+.chat-input:focus{border-color:var(--accent);}
+.chat-send{background:var(--accent);color:var(--btn-text);border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s;}
+.chat-send:hover{opacity:.85;}
+.chat-send:disabled{opacity:.4;cursor:not-allowed;}
+.chat-send svg{width:16px;height:16px;fill:var(--btn-text);}
+@media(max-width:400px){.chat-panel{width:calc(100vw - 2rem);right:1rem;}}
+</style>
 
 <script defer src="/_vercel/insights/script.js"></script>
 <script type="application/ld+json">
@@ -886,6 +922,59 @@ function initLang() {
             || LANGUAGES.find(function(l){ return l.code === code; });
   if (match && match.code !== 'fr') selectLang(match);
 }
+// Chat Widget
+var chatHistory = [];
+var chatOpen = false;
+function initChat() {}
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chatPanel').classList.toggle('open', chatOpen);
+  if (chatOpen) document.getElementById('chatInput').focus();
+}
+function addBubble(text, role) {
+  var msgs = document.getElementById('chatMessages');
+  var typing = document.getElementById('chatTyping');
+  var el = document.createElement('div');
+  el.className = 'chat-bubble ' + role;
+  el.textContent = text;
+  msgs.insertBefore(el, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+async function sendChat() {
+  var input = document.getElementById('chatInput');
+  var sendBtn = document.getElementById('chatSend');
+  var typing = document.getElementById('chatTyping');
+  var msgs = document.getElementById('chatMessages');
+  var text = input.value.trim();
+  if (!text || sendBtn.disabled) return;
+
+  input.value = '';
+  sendBtn.disabled = true;
+  addBubble(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  typing.style.display = 'flex';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    var res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1) }),
+    });
+    var data = await res.json();
+    typing.style.display = 'none';
+    var reply = data.reply || data.error || 'Désolé, une erreur est survenue.';
+    addBubble(reply, 'bot');
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+  } catch (e) {
+    typing.style.display = 'none';
+    addBubble('Désolé, une erreur est survenue. Réessayez.', 'bot');
+  }
+  sendBtn.disabled = false;
+  input.focus();
+}
+
 // ROI Calculator
 function calcROI() {
   var reviews = parseInt(document.getElementById('roiRev').value);
@@ -909,7 +998,33 @@ initNotifBar();
 initExitIntent();
 initCookieBanner();
 calcROI();
+initChat();
 </script>
+
+<button class="chat-btn" id="chatBtn" onclick="toggleChat()" aria-label="Assistant RepuGuard">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="chat-header-avatar">RG</div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">Assistant RepuGuard</div>
+      <div class="chat-header-status">En ligne</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">×</button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-bubble bot">Bonjour ! Je suis l'assistant RepuGuard. Comment puis-je vous aider ?</div>
+    <div class="chat-typing" id="chatTyping"><span></span><span></span><span></span></div>
+  </div>
+  <div class="chat-footer">
+    <input class="chat-input" id="chatInput" type="text" placeholder="Votre question..." maxlength="500" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" id="chatSend" onclick="sendChat()" aria-label="Envoyer">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
 
 </body>
 </html>
