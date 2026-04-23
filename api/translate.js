@@ -11,6 +11,11 @@ export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
+  const origin = req.headers.get('origin') || req.headers.get('referer') || '';
+  if (!origin.startsWith('https://repuguard.app')) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
+  }
+
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
 
   const SUPPORTED_LANGS = new Set(['fr','en','es','de','pt','ar','it','nl','ru','zh','ja','ko','hi','tr','pl','sv','da','fi','nb','cs','ro','hu']);
@@ -45,6 +50,7 @@ export default async function handler(req) {
         max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }],
       }),
+      signal: AbortSignal.timeout(20000),
     });
 
     const data = await aiRes.json();

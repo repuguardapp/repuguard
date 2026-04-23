@@ -81,6 +81,7 @@ Consignes strictes :
         max_tokens: 300,
         messages: [{ role: 'user', content: prompt }],
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!aiRes.ok) {

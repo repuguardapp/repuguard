@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
     // 1. Search business unit on Trustpilot
     const searchUrl = `https://api.trustpilot.com/v1/business-units/search?query=${encodeURIComponent(businessName)}${location ? '&country=' + encodeURIComponent(location) : ''}&apikey=${TRUSTPILOT_KEY}`;
-    const searchRes = await fetch(searchUrl);
+    const searchRes = await fetch(searchUrl, { signal: AbortSignal.timeout(10000) });
     const searchData = await searchRes.json();
 
     if (!searchData.businesses?.length) {
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
 
     // 2. Fetch reviews (latest 20)
     const reviewsUrl = `https://api.trustpilot.com/v1/business-units/${businessUnitId}/reviews?apikey=${TRUSTPILOT_KEY}&perPage=20&orderBy=createdat.desc`;
-    const reviewsRes = await fetch(reviewsUrl);
+    const reviewsRes = await fetch(reviewsUrl, { signal: AbortSignal.timeout(10000) });
     const reviewsData = await reviewsRes.json();
     const reviews = reviewsData.reviews || [];
     const negativeReviews = reviews.filter(r => (r.stars || 0) <= 2);

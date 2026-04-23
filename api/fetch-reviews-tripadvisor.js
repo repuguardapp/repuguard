@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     // 1. Search for the location on TripAdvisor
     const searchRes = await fetch(
       `${TA_BASE}/search?searchQuery=${encodeURIComponent(businessName + (location ? ' ' + location : ''))}&language=${language}&key=${TRIPADVISOR_KEY}`,
-      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } }
+      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) }
     );
     const searchData = await searchRes.json();
 
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     // 2. Fetch location details (rating, review count)
     const detailsRes = await fetch(
       `${TA_BASE}/${locationId}/details?language=${language}&key=${TRIPADVISOR_KEY}`,
-      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } }
+      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) }
     );
     const details = await detailsRes.json();
     const avgRating = parseFloat(details.rating || 0);
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     // 3. Fetch latest reviews
     const reviewsRes = await fetch(
       `${TA_BASE}/${locationId}/reviews?language=${language}&key=${TRIPADVISOR_KEY}`,
-      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } }
+      { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) }
     );
     const reviewsData = await reviewsRes.json();
     const reviews = reviewsData.data || [];

@@ -52,7 +52,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         textQuery: `${businessName} ${location || ''}`,
         languageCode: reviewLang,
-      })
+      }),
+      signal: AbortSignal.timeout(10000),
     });
 
     const searchData = await searchRes.json();
@@ -74,7 +75,8 @@ export default async function handler(req, res) {
         'X-Goog-Api-Key': GOOGLE_API_KEY,
         'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
         'Accept-Language': reviewLang,
-      }
+      },
+      signal: AbortSignal.timeout(10000),
     });
 
     const detailsData = await detailsRes.json();
