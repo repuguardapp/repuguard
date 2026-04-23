@@ -136,9 +136,10 @@ h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;
 .plan-card:hover{transform:translateY(-4px);}
 .featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background-color:var(--accent);color:var(--btn-text);font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap;}
 .plan-name{font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted2);margin-bottom:1rem;}
-.plan-price{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:.3rem;}
-.plan-price sup{font-size:1.2rem;vertical-align:top;margin-top:.5rem;font-weight:400;opacity:.6;}
-.plan-price span{font-size:.9rem;font-weight:400;opacity:.5;}
+.plan-price{display:flex;align-items:baseline;gap:.15rem;font-family:'Syne',sans-serif;font-weight:800;line-height:1;margin-bottom:.3rem;}
+.price-sym{font-size:1.3rem;font-weight:700;opacity:.7;margin-bottom:.35rem;align-self:flex-end;}
+.price-num{font-size:2.8rem;font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--text);}
+.plan-price>span:last-child{font-size:.9rem;font-weight:400;opacity:.5;align-self:flex-end;margin-bottom:.15rem;}
 .plan-desc{font-size:.82rem;color:var(--muted2);margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);line-height:1.5;}
 .plan-features{list-style:none;display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.8rem;}
 .plan-features li{font-size:.83rem;color:var(--muted2);display:flex;align-items:flex-start;gap:.5rem;}
@@ -541,7 +542,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   <div class="pricing-grid reveal">
     <div class="plan-card">
       <div class="plan-name">Starter</div>
-      <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="32" data-gbp="25" data-jpy="4800" data-cny="235" data-inr="2400" data-brl="170" data-mxn="620" data-try="1050" data-krw="43000">29</span><span data-t="per_month">/mois</span></div>
+      <div class="plan-price"><span class="price-sym">€</span><span class="price-num" data-usd="32" data-gbp="25" data-jpy="4800" data-cny="235" data-inr="2400" data-brl="170" data-mxn="620" data-try="1050" data-krw="43000">29</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p1_desc">Idéal pour les indépendants et auto-entrepreneurs.</p>
       <ul class="plan-features"><li data-t="p1_f1">1 établissement surveillé</li><li data-t="p1_f2">8 plateformes</li><li data-t="p1_f3">Alertes email</li><li data-t="p1_f4">Rapport mensuel</li><li data-t="p1_f5">5 réponses IA/mois</li></ul>
       <a href="/signup?plan=starter" class="btn-plan btn-plan-ghost" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'starter'})">Commencer gratuitement</a>
@@ -549,14 +550,14 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
     <div class="plan-card featured">
       <div class="featured-badge" data-t="popular">Le plus populaire</div>
       <div class="plan-name">Pro</div>
-      <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="76" data-gbp="59" data-jpy="11400" data-cny="555" data-inr="5800" data-brl="405" data-mxn="1480" data-try="2500" data-krw="105000">69</span><span data-t="per_month">/mois</span></div>
+      <div class="plan-price"><span class="price-sym">€</span><span class="price-num" data-usd="76" data-gbp="59" data-jpy="11400" data-cny="555" data-inr="5800" data-brl="405" data-mxn="1480" data-try="2500" data-krw="105000">69</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p2_desc">Pour les PME et professionnels qui dépendent de leur réputation.</p>
       <ul class="plan-features"><li data-t="p2_f1">3 établissements surveillés</li><li data-t="p2_f2">15+ plateformes</li><li data-t="p2_f3">Alertes email + SMS</li><li data-t="p2_f4">Rapport hebdomadaire</li><li data-t="p2_f5">Réponses IA illimitées</li><li data-t="p2_f6">Score réputation temps réel</li></ul>
       <a href="/signup?plan=pro" class="btn-plan btn-plan-primary" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'pro'})">Commencer gratuitement</a>
     </div>
     <div class="plan-card">
       <div class="plan-name">Business</div>
-      <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="164" data-gbp="128" data-jpy="24600" data-cny="1200" data-inr="12400" data-brl="875" data-mxn="3190" data-try="5400" data-krw="227000">149</span><span data-t="per_month">/mois</span></div>
+      <div class="plan-price"><span class="price-sym">€</span><span class="price-num" data-usd="164" data-gbp="128" data-jpy="24600" data-cny="1200" data-inr="12400" data-brl="875" data-mxn="3190" data-try="5400" data-krw="227000">149</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p3_desc">Pour les agences et multi-établissements.</p>
       <ul class="plan-features"><li data-t="p3_f1">10 établissements</li><li data-t="p3_f2">Toutes plateformes</li><li data-t="p3_f3">Alertes prioritaires</li><li data-t="p3_f4">Rapports white-label</li><li data-t="p3_f5">Accès API</li><li data-t="p3_f6">Support prioritaire</li></ul>
       <a href="/signup?plan=business" class="btn-plan btn-plan-ghost" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'business'})">Commencer gratuitement</a>
