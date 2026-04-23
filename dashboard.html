@@ -802,7 +802,7 @@
 
     // Bandeau trial
     const trialBanner = document.getElementById('trialBanner');
-    if (trialBanner && RG.client.trial_ends) {
+    if (trialBanner && client.trial_ends) {
       const trialEnd = new Date(RG.client.trial_ends);
       const now = new Date();
       const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
@@ -943,9 +943,9 @@
         const when = diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.round(diff/60)}h` : `il y a ${Math.round(diff/1440)}j`;
         acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>Google</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
       }
-      const responded = (allReviews||[]).filter(r => r.responded_at).slice(0,2);
+      const responded = (reviews||[]).filter(r => r.responded_at).slice(0,2);
       responded.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.responded_at)}</div></div></div>`));
-      const recentNegs = (allReviews||[]).filter(r => r.is_negative && !r.responded_at).slice(0,2);
+      const recentNegs = (reviews||[]).filter(r => r.is_negative && !r.responded_at).slice(0,2);
       recentNegs.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Avis négatif détecté · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.date)}</div></div></div>`));
       actList.innerHTML = acts.length ? acts.join('') : `<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text" style="color:var(--text3)">Aucune activité récente</div></div></div>`;
     }
