@@ -24,7 +24,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ synced: 0, message: 'No clients to sync' });
     }
 
-    console.log(`Cron sync starting: ${clients.length} clients`);
     const results = [];
     const baseUrl = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app';
 
@@ -46,7 +45,6 @@ export default async function handler(req, res) {
     }
 
     const succeeded = results.filter(r => r.success).length;
-    console.log(`Cron sync Google done: ${succeeded}/${clients.length}`);
 
     // TripAdvisor sync — only for clients who have a TripAdvisor location
     const taClients = clients.filter(c => c.tripadvisor_location_id);
@@ -65,8 +63,6 @@ export default async function handler(req, res) {
       }
       await sleep(THROTTLE_MS);
     }
-    console.log(`Cron sync TripAdvisor done: ${taResults.filter(r => r.success).length}/${taClients.length}`);
-
     // Trustpilot sync — only for clients who have connected their account
     const tpClients = clients.filter(c => c.trustpilot_business_id);
     const tpResults = [];
@@ -94,7 +90,6 @@ export default async function handler(req, res) {
     );
     const j7Clients = await j7Res.json();
     if (Array.isArray(j7Clients) && j7Clients.length > 0) {
-      console.log(`Sending J7 trial-ending email to ${j7Clients.length} clients`);
       for (const c of j7Clients) {
         fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
@@ -113,7 +108,6 @@ export default async function handler(req, res) {
     );
     const j1Clients = await j1Res.json();
     if (Array.isArray(j1Clients) && j1Clients.length > 0) {
-      console.log(`Sending J1 onboarding email to ${j1Clients.length} clients`);
       for (const c of j1Clients) {
         await fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
@@ -163,7 +157,6 @@ export default async function handler(req, res) {
     );
     const j3Clients = await j3Res.json();
     if (Array.isArray(j3Clients) && j3Clients.length > 0) {
-      console.log(`Sending J3 onboarding email to ${j3Clients.length} clients`);
       for (const c of j3Clients) {
         fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
