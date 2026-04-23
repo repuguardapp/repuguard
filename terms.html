@@ -4,87 +4,244 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Conditions d'utilisation — RepuGuard</title>
+<meta name="description" content="Conditions générales d'utilisation de RepuGuard. Abonnement, essai gratuit, remboursement, propriété intellectuelle, responsabilité.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0a;--text:#f0f0f0;--muted:#666;--muted2:#999;--card:#111;--border:#1e1e1e;--accent:#e8ff47;--btn-text:#0a0a0a;}
-[data-theme="light"]{--bg:#fafafa;--text:#0a0a0a;--muted:#aaa;--muted2:#555;--card:#fff;--border:#e5e5e5;--accent:#1a56e8;--btn-text:#fff;}
+:root{--bg:#080910;--surface:#0f1117;--card:#151820;--border:rgba(255,255,255,0.07);--accent:#e8ff47;--text:#eef0f8;--muted:#5a6078;--muted2:#8890a8;}
+[data-theme="light"]{--bg:#f5f6fa;--surface:#ffffff;--card:#eef0f8;--border:rgba(0,0,0,0.08);--accent:#1a56e8;--text:#0f1117;--muted:#9098b0;--muted2:#6b7280;}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.7;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.75;transition:background-color .3s,color .3s;}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;background-color:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--text);text-decoration:none;}
 .logo span{color:var(--accent);}
-main{max-width:760px;margin:0 auto;padding:9rem 5% 5rem;}
-h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;margin-bottom:.5rem;}
-.updated{font-size:.82rem;color:var(--muted2);margin-bottom:3rem;}
-h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin:2.5rem 0 .75rem;color:var(--text);}
-p,li{color:var(--muted2);margin-bottom:.75rem;}
-ul{padding-left:1.4rem;}
+.nav-right{display:flex;align-items:center;gap:.75rem;}
+.theme-btn{width:34px;height:34px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;}
+.back-link{font-size:.82rem;color:var(--muted2);text-decoration:none;}
+.back-link:hover{color:var(--text);}
+main{max-width:780px;margin:0 auto;padding:9rem 5% 6rem;}
+.doc-header{margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+h1{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em;}
+.meta{font-size:.82rem;color:var(--muted2);margin-bottom:1.5rem;}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;}
+.toc-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.75rem;font-weight:600;}
+.toc ol{padding-left:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:.3rem .5rem;}
+.toc li{font-size:.82rem;}
+.toc a{color:var(--muted2);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin:2.75rem 0 .75rem;color:var(--text);scroll-margin-top:5rem;}
+h3{font-size:1rem;font-weight:600;margin:1.5rem 0 .5rem;color:var(--text);}
+p{color:var(--muted2);margin-bottom:.85rem;}
+ul,ol{padding-left:1.4rem;margin-bottom:.85rem;}
+li{color:var(--muted2);margin-bottom:.4rem;}
+strong{color:var(--text);font-weight:600;}
 a{color:var(--accent);text-decoration:none;}
 a:hover{text-decoration:underline;}
+.badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(232,255,71,.08);border:1px solid rgba(232,255,71,.2);color:var(--accent);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;}
+[data-theme="light"] .badge{background:rgba(26,86,232,.08);border-color:rgba(26,86,232,.2);}
+.info-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;}
+.info-box p{margin:0;font-size:.9rem;}
+.warn-box{background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.2);border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;}
+.warn-box p{margin:0;font-size:.9rem;}
+table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:.88rem;}
+th{text-align:left;padding:.6rem .85rem;background:var(--surface);color:var(--muted2);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+td{padding:.7rem .85rem;border-bottom:1px solid var(--border);color:var(--muted2);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
 footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;}
+footer a{color:var(--muted2);}
+@media(max-width:600px){.toc ol{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 <nav>
   <a href="/" class="logo">Repu<span>Guard</span></a>
+  <div class="nav-right">
+    <a href="/" class="back-link">← Retour</a>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+  </div>
 </nav>
+
 <main>
-  <h1>Conditions d'utilisation</h1>
-  <p class="updated">Dernière mise à jour : avril 2025</p>
+  <div class="doc-header">
+    <div class="badge">📄 Légal</div>
+    <h1>Conditions générales d'utilisation</h1>
+    <p class="meta">Dernière mise à jour : <strong>22 avril 2026</strong> · Version 2.0 · Applicable à repuguard.app</p>
+    <div class="toc">
+      <div class="toc-title">Table des matières</div>
+      <ol>
+        <li><a href="#acceptation">Acceptation</a></li>
+        <li><a href="#service">Description du service</a></li>
+        <li><a href="#compte">Compte utilisateur</a></li>
+        <li><a href="#abonnement">Abonnements & paiement</a></li>
+        <li><a href="#essai">Période d'essai gratuite</a></li>
+        <li><a href="#remboursement">Remboursement</a></li>
+        <li><a href="#usage">Utilisation acceptable</a></li>
+        <li><a href="#ip">Propriété intellectuelle</a></li>
+        <li><a href="#donnees">Données & confidentialité</a></li>
+        <li><a href="#sla">Disponibilité du service</a></li>
+        <li><a href="#responsabilite">Limitation de responsabilité</a></li>
+        <li><a href="#resiliation">Résiliation</a></li>
+        <li><a href="#force-majeure">Force majeure</a></li>
+        <li><a href="#modifications">Modifications</a></li>
+        <li><a href="#droit">Droit applicable</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ol>
+    </div>
+  </div>
 
-  <h2>1. Acceptation des conditions</h2>
-  <p>En accédant et en utilisant RepuGuard, vous acceptez d'être lié par les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service.</p>
+  <div class="info-box">
+    <p><strong>En résumé :</strong> Essai gratuit 7 jours sans carte bancaire. Résiliation possible à tout moment. Remboursement sous 14 jours après le premier paiement. Vos données vous appartiennent.</p>
+  </div>
 
-  <h2>2. Description du service</h2>
-  <p>RepuGuard est un service de surveillance de réputation en ligne permettant de détecter les mentions, avis et commentaires relatifs à votre établissement, et de générer des réponses professionnelles assistées par intelligence artificielle.</p>
+  <h2 id="acceptation">1. Acceptation des conditions</h2>
+  <p>En créant un compte ou en utilisant le service RepuGuard, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation ("CGU"). Si vous agissez au nom d'une entreprise, vous déclarez avoir l'autorité pour l'engager contractuellement.</p>
+  <p>Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service.</p>
 
-  <h2>3. Inscription et compte</h2>
+  <h2 id="service">2. Description du service</h2>
+  <p>RepuGuard est une plateforme SaaS de surveillance et gestion de réputation en ligne. Le service comprend :</p>
   <ul>
-    <li>Vous devez fournir des informations exactes lors de votre inscription</li>
-    <li>Vous êtes responsable de la confidentialité de vos identifiants de connexion</li>
-    <li>Vous devez nous notifier immédiatement de tout accès non autorisé à votre compte</li>
-    <li>Un seul compte par personne ou entité est autorisé</li>
+    <li>Surveillance automatisée des avis et mentions sur 15+ plateformes (Google, TripAdvisor, Trustpilot, Facebook, Instagram, X, Reddit, YouTube, Yelp, etc.)</li>
+    <li>Alertes en temps réel par email et SMS</li>
+    <li>Génération de réponses professionnelles par intelligence artificielle</li>
+    <li>Score de réputation global mis à jour en temps réel</li>
+    <li>Rapports périodiques automatiques</li>
+    <li>Tableau de bord de gestion multi-établissements</li>
+  </ul>
+  <p>Les fonctionnalités disponibles dépendent du plan souscrit (Starter, Pro, Business).</p>
+
+  <h2 id="compte">3. Compte utilisateur</h2>
+  <ul>
+    <li>Vous devez avoir au moins <strong>18 ans</strong> et fournir des informations exactes lors de l'inscription</li>
+    <li>Vous êtes seul responsable de la confidentialité de vos identifiants de connexion</li>
+    <li>Toute activité effectuée depuis votre compte est réputée être la vôtre</li>
+    <li>Vous devez nous notifier immédiatement de tout accès non autorisé : <a href="mailto:security@repuguard.app">security@repuguard.app</a></li>
+    <li>Un compte ne peut être partagé entre plusieurs personnes sauf dans les plans prévoyant un accès multi-utilisateurs</li>
+    <li>Les comptes créés à des fins de test, de spam ou de fraude seront suspendus sans préavis</li>
   </ul>
 
-  <h2>4. Abonnements et paiement</h2>
+  <h2 id="abonnement">4. Abonnements et paiement</h2>
+
+  <h3>4.1 Plans disponibles</h3>
+  <table>
+    <thead>
+      <tr><th>Plan</th><th>Établissements</th><th>Renouvellement</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Starter</td><td>1</td><td>Mensuel ou annuel</td></tr>
+      <tr><td>Pro</td><td>3</td><td>Mensuel ou annuel</td></tr>
+      <tr><td>Business</td><td>10</td><td>Mensuel ou annuel</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 Facturation</h3>
   <ul>
-    <li>Les abonnements sont facturés mensuellement ou annuellement selon le plan choisi</li>
-    <li>Les paiements sont traités de manière sécurisée par Stripe</li>
-    <li>Tout abonnement commencé est dû dans son intégralité pour la période en cours</li>
-    <li>Vous pouvez résilier à tout moment depuis votre tableau de bord, sans pénalité</li>
+    <li>Les abonnements sont <strong>renouvelés automatiquement</strong> à la fin de chaque période (mensuelle ou annuelle)</li>
+    <li>Les paiements sont traités par <strong>Stripe</strong>, plateforme certifiée PCI-DSS</li>
+    <li>En cas d'échec de paiement, nous tentons une nouvelle transaction pendant 7 jours avant suspension du compte</li>
+    <li>Les prix sont indiqués HT pour les professionnels et TTC pour les particuliers. La TVA applicable dépend de votre pays de résidence</li>
+    <li>Les abonnements annuels bénéficient d'une remise de <strong>20 %</strong> sur le tarif mensuel</li>
   </ul>
 
-  <h2>5. Période d'essai</h2>
-  <p>Une période d'essai gratuite de 7 jours est proposée sans nécessiter de carte bancaire. À l'issue de cette période, l'abonnement est automatiquement suspendu sauf activation d'un plan payant.</p>
+  <h3>4.3 Modification des prix</h3>
+  <p>Tout changement tarifaire sera notifié avec un préavis minimum de <strong>30 jours</strong> par email. Si vous n'acceptez pas le nouveau tarif, vous pouvez résilier avant la date d'effet.</p>
 
-  <h2>6. Utilisation acceptable</h2>
-  <p>Vous vous engagez à ne pas :</p>
+  <h2 id="essai">5. Période d'essai gratuite</h2>
   <ul>
-    <li>Utiliser le service à des fins illégales ou frauduleuses</li>
-    <li>Tenter de contourner les limites techniques du service</li>
-    <li>Revendre ou sous-licencier l'accès au service sans autorisation écrite</li>
-    <li>Utiliser les réponses générées par IA pour induire en erreur des tiers</li>
+    <li>L'essai gratuit dure <strong>7 jours</strong> (ou 14 jours via certaines offres promotionnelles)</li>
+    <li><strong>Aucune carte bancaire</strong> n'est requise pour démarrer l'essai</li>
+    <li>À l'issue de l'essai, le compte est automatiquement suspendu sauf activation d'un plan payant</li>
+    <li>Un seul essai gratuit par personne / entité / adresse email est autorisé</li>
+    <li>Les données créées pendant l'essai sont conservées 30 jours après sa fin, puis supprimées</li>
   </ul>
 
-  <h2>7. Propriété intellectuelle</h2>
-  <p>Le service RepuGuard, son code source, son design et ses contenus sont protégés par le droit de la propriété intellectuelle. Les réponses générées par IA à partir de vos données vous appartiennent.</p>
+  <h2 id="remboursement">6. Politique de remboursement</h2>
+  <p>Nous offrons une <strong>garantie satisfait ou remboursé de 14 jours</strong> à compter de votre premier paiement payant. Pour les abonnements annuels, si vous résiliez dans les 14 jours suivant le renouvellement annuel, nous remboursons au prorata des mois non utilisés.</p>
+  <div class="warn-box">
+    <p><strong>Exceptions :</strong> Les remboursements ne s'appliquent pas après 14 jours, en cas d'abus du service, de violation des présentes CGU, ou si un remboursement a déjà été accordé dans les 12 mois précédents.</p>
+  </div>
+  <p>Pour demander un remboursement : <a href="mailto:billing@repuguard.app">billing@repuguard.app</a></p>
 
-  <h2>8. Limitation de responsabilité</h2>
-  <p>RepuGuard fournit un service de surveillance et d'assistance. Nous ne garantissons pas l'exhaustivité de la surveillance ni l'adéquation parfaite des réponses IA générées. Vous restez seul responsable des contenus publiés en votre nom.</p>
+  <h2 id="usage">7. Utilisation acceptable</h2>
+  <p>Vous vous engagez à utiliser RepuGuard de manière légale et éthique. Il est notamment interdit de :</p>
+  <ul>
+    <li>Utiliser le service pour surveiller des personnes sans leur consentement</li>
+    <li>Générer ou publier des réponses mensongères, diffamatoires ou trompeuses</li>
+    <li>Tenter de contourner les limites techniques ou d'accéder à des données d'autres clients</li>
+    <li>Revendre, sous-licencier ou exploiter commercialement l'accès au service sans accord écrit</li>
+    <li>Automatiser massivement des requêtes au-delà des limites du plan souscrit (rate limiting)</li>
+    <li>Utiliser le service à des fins de concurrence déloyale envers des tiers</li>
+    <li>Téléverser des contenus illégaux, haineux ou portant atteinte aux droits de tiers</li>
+  </ul>
+  <p>Toute violation entraîne la suspension immédiate du compte sans remboursement.</p>
 
-  <h2>9. Résiliation</h2>
-  <p>Vous pouvez résilier votre compte à tout moment depuis votre tableau de bord. En cas de violation des présentes conditions, nous nous réservons le droit de suspendre ou résilier votre accès sans préavis.</p>
+  <h2 id="ip">8. Propriété intellectuelle</h2>
 
-  <h2>10. Modifications</h2>
-  <p>Nous nous réservons le droit de modifier ces conditions à tout moment. Les modifications prennent effet 30 jours après leur publication. Votre utilisation continue du service vaut acceptation des nouvelles conditions.</p>
+  <h3>8.1 Notre propriété</h3>
+  <p>RepuGuard, son code source, son design, ses algorithmes, ses marques et ses contenus éditoriaux sont la propriété exclusive de RepuGuard SAS et sont protégés par le droit français et international de la propriété intellectuelle.</p>
 
-  <h2>11. Droit applicable</h2>
-  <p>Les présentes conditions sont soumises au droit français. Tout litige sera soumis à la compétence exclusive des tribunaux compétents.</p>
+  <h3>8.2 Votre propriété</h3>
+  <p>Les données que vous nous soumettez (nom de l'établissement, préférences, etc.) restent votre propriété. Les réponses générées par l'IA à partir de vos données et validées par vous vous appartiennent. Vous nous accordez une licence limitée d'utilisation de ces données pour opérer et améliorer le service.</p>
 
-  <h2>12. Contact</h2>
-  <p>Pour toute question : <a href="mailto:contact@repuguard.app">contact@repuguard.app</a></p>
+  <h3>8.3 Portabilité à la résiliation</h3>
+  <p>À la résiliation de votre compte, vous pouvez exporter l'intégralité de vos données (historique des avis, réponses générées, rapports) au format JSON ou CSV depuis votre tableau de bord, pendant <strong>30 jours</strong> suivant la résiliation.</p>
+
+  <h2 id="donnees">9. Données et confidentialité</h2>
+  <p>Le traitement de vos données personnelles est régi par notre <a href="/privacy">Politique de confidentialité</a>, qui fait partie intégrante des présentes CGU. En utilisant le service, vous reconnaissez avoir pris connaissance de cette politique.</p>
+  <p>Nous agissons en qualité de <strong>sous-traitant</strong> (au sens RGPD) pour le traitement des avis et données de vos établissements. Vous demeurez responsable du traitement vis-à-vis de vos propres clients.</p>
+
+  <h2 id="sla">10. Disponibilité du service (SLA)</h2>
+  <p>Nous visons une disponibilité de <strong>99,5 %</strong> mensuelle, hors maintenances planifiées. Les maintenances sont annoncées avec un préavis de 24h via email et/ou bannière sur le site.</p>
+  <p>En cas d'indisponibilité supérieure à 4h consécutives non planifiées, vous pouvez demander un crédit équivalent au prorata de la durée d'interruption sur votre prochaine facture. Ce crédit constitue le seul recours disponible pour les interruptions de service.</p>
+
+  <h2 id="responsabilite">11. Limitation de responsabilité</h2>
+  <p>RepuGuard fournit un service d'assistance et de surveillance. Dans les limites permises par la loi :</p>
+  <ul>
+    <li>Nous ne garantissons pas l'exhaustivité de la surveillance (certaines plateformes peuvent limiter l'accès tiers)</li>
+    <li>Nous ne garantissons pas qu'une réponse IA soit adaptée à toutes les situations — vous restez seul responsable des contenus publiés en votre nom</li>
+    <li>Notre responsabilité totale est limitée aux montants effectivement payés au cours des <strong>3 derniers mois</strong> précédant le fait générateur</li>
+    <li>Nous ne sommes pas responsables des dommages indirects, pertes de chiffre d'affaires, d'opportunité ou d'image</li>
+  </ul>
+
+  <h2 id="resiliation">12. Résiliation</h2>
+
+  <h3>12.1 Par vous</h3>
+  <p>Vous pouvez résilier votre abonnement à tout moment depuis votre tableau de bord. La résiliation prend effet à la fin de la période en cours (pas de remboursement au prorata au-delà de 14 jours, sauf pour les abonnements annuels).</p>
+
+  <h3>12.2 Par nous</h3>
+  <p>Nous pouvons résilier ou suspendre votre accès immédiatement en cas de :</p>
+  <ul>
+    <li>Violation des présentes CGU</li>
+    <li>Non-paiement après la période de grâce</li>
+    <li>Activité frauduleuse ou illégale</li>
+    <li>Demande d'une autorité judiciaire compétente</li>
+  </ul>
+  <p>En dehors de ces cas, tout arrêt du service sera notifié avec un préavis de <strong>60 jours</strong>.</p>
+
+  <h2 id="force-majeure">13. Force majeure</h2>
+  <p>RepuGuard ne pourra être tenu responsable d'un manquement à ses obligations résultant d'un événement de force majeure, incluant notamment : catastrophe naturelle, cyberattaque externe, panne généralisée d'infrastructure cloud, décision gouvernementale, ou interruption des services de tiers essentiels (Stripe, Supabase, Anthropic).</p>
+
+  <h2 id="modifications">14. Modifications des CGU</h2>
+  <p>Nous pouvons modifier ces CGU à tout moment. Les modifications substantielles (changement de prix, nouvelles obligations) feront l'objet d'une notification par email au moins <strong>30 jours</strong> à l'avance. La poursuite de l'utilisation du service après cette période vaut acceptation des nouvelles conditions.</p>
+
+  <h2 id="droit">15. Droit applicable et juridiction</h2>
+  <p>Les présentes CGU sont soumises au <strong>droit français</strong>. En cas de litige, les parties s'engagent à rechercher une solution amiable dans un délai de 30 jours. À défaut, tout litige sera soumis à la compétence exclusive des <strong>Tribunaux de Paris</strong>.</p>
+  <p>Pour les consommateurs résidant dans l'UE : vous bénéficiez de la protection accordée par la loi de votre pays de résidence habituelle si elle est plus favorable. La Commission européenne met à disposition une plateforme de règlement en ligne des litiges : <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>.</p>
+
+  <h2 id="contact">16. Contact</h2>
+  <ul>
+    <li><strong>Support général :</strong> <a href="mailto:contact@repuguard.app">contact@repuguard.app</a></li>
+    <li><strong>Facturation :</strong> <a href="mailto:billing@repuguard.app">billing@repuguard.app</a></li>
+    <li><strong>Sécurité :</strong> <a href="mailto:security@repuguard.app">security@repuguard.app</a></li>
+    <li><strong>Légal :</strong> <a href="mailto:legal@repuguard.app">legal@repuguard.app</a></li>
+  </ul>
 </main>
-<footer>© 2026 RepuGuard — <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a></footer>
+
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/contact">Contact</a></footer>
+
+<script>
+function toggleTheme(){var h=document.documentElement;var isDark=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',isDark?'light':'dark');document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';localStorage.setItem('rg-theme',isDark?'light':'dark');}
+(function(){var t=localStorage.getItem('rg-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';})();
+</script>
 </body>
 </html>

@@ -72,12 +72,14 @@
     .feature-icon{font-size:1.8rem;margin-bottom:.75rem;}
     .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:.5rem;}
     .feature-card p{font-size:.88rem;color:var(--muted);line-height:1.65;}
-    .testimonials{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
-    @media(max-width:650px){.testimonials{grid-template-columns:1fr;}}
-    .testimonial{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 2rem;}
-    .testimonial blockquote{font-size:.95rem;color:var(--text);line-height:1.7;margin-bottom:1rem;font-style:italic;padding-top:.5rem;}
-    .testimonial cite{font-size:.82rem;color:var(--muted2);font-style:normal;}
-    .stars{color:#f59e0b;font-size:.85rem;margin-bottom:.5rem;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:900px;margin:0 auto 5rem;}
+    @media(max-width:700px){.kpi-grid{grid-template-columns:1fr;}}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.75rem 1.5rem;text-align:center;}
+    .kpi-card.kpi-featured{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.04);}
+    .kpi-metric{font-size:2.2rem;font-weight:900;color:var(--accent);line-height:1;margin-bottom:.5rem;}
+    .kpi-metric span{font-size:1.1rem;font-weight:700;margin-left:2px;}
+    .kpi-label{font-size:.88rem;color:var(--muted);line-height:1.6;margin-bottom:.75rem;}
+    .kpi-tag{display:inline-block;background:rgba(99,102,241,.1);color:#818cf8;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;}
     .faq{max-width:760px;margin:0 auto 5rem;}
     .faq h2{font-size:1.6rem;font-weight:800;margin-bottom:2rem;text-align:center;}
     .faq-item{border-bottom:1px solid var(--border);padding:1.25rem 0;}
@@ -99,7 +101,10 @@
 <body>
 <nav>
   <a href="/" class="nav-logo">Repu<span>Guard</span></a>
-  <a href="/signup?plan=starter&niche=medecin" class="nav-cta">Essai gratuit →</a>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <button onclick="toggleTheme()" id="themeBtn" style="width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;">☀️</button>
+    <a href="/signup?plan=starter&niche=medecin" class="nav-cta">Essai gratuit →</a>
+  </div>
 </nav>
 <main>
   <div class="breadcrumb">
@@ -149,26 +154,21 @@
     </div>
   </div>
 
-  <div class="testimonials">
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Je ne savais pas ce qui se disait sur moi en ligne. RepuGuard m'a permis de reprendre le contrôle et de répondre professionnellement à chaque avis, même les plus difficiles."</blockquote>
-      <cite>— Dr. Sophie M., médecin généraliste, Bordeaux</cite>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-metric">&lt;4<span>h</span></div>
+      <p class="kpi-label">Temps de réponse moyen aux avis patients, conforme aux recommandations HAS</p>
+      <div class="kpi-tag">Santé · Google Reviews</div>
     </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Un patient frustré a laissé un avis injuste. RepuGuard m'a alerté et m'a proposé une réponse calibrée, empathique, sans révéler quoi que ce soit. Le patient a modifié son commentaire."</blockquote>
-      <cite>— Dr. Romain L., cardiologue, Toulouse</cite>
+    <div class="kpi-card kpi-featured">
+      <div class="kpi-metric">0</div>
+      <p class="kpi-label">Avis négatifs restés sans réponse depuis l'activation du service</p>
+      <div class="kpi-tag">Taux de couverture · 100 %</div>
     </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"Ma secrétaire gère maintenant les réponses via RepuGuard. Elle valide les suggestions IA en 2 minutes, je n'ai plus à m'en occuper. Et ma note est passée de 3,9 à 4,6."</blockquote>
-      <cite>— Dr. Isabelle T., pédiatre, Lille</cite>
-    </div>
-    <div class="testimonial">
-      <div class="stars">★★★★★</div>
-      <blockquote>"En tant que médecin remplaçant dans plusieurs cabinets, RepuGuard me permet de suivre tous mes profils depuis un seul endroit. Indispensable pour maintenir une image cohérente."</blockquote>
-      <cite>— Dr. Karim A., médecin généraliste, Lyon</cite>
+    <div class="kpi-card">
+      <div class="kpi-metric">3<span>h/sem</span></div>
+      <p class="kpi-label">Temps médical libéré sur la surveillance et la rédaction de réponses</p>
+      <div class="kpi-tag">Gain de temps · Cabinet</div>
     </div>
   </div>
 
@@ -215,5 +215,9 @@
   </div>
 </main>
 <footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/contact">Contact</a> · <a href="/privacy">Confidentialité</a> · <a href="/medecins">Médecins</a> · <a href="/dentistes">Dentistes</a> · <a href="/avocats">Avocats</a></footer>
+<script>
+function toggleTheme(){var h=document.documentElement;var d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.getElementById('themeBtn').textContent=d?'🌙':'☀️';localStorage.setItem('rg-theme',d?'light':'dark');}
+(function(){var t=localStorage.getItem('rg-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);var b=document.getElementById('themeBtn');if(b)b.textContent=t==='dark'?'☀️':'🌙';})();
+</script>
 </body>
 </html>
