@@ -936,7 +936,14 @@ function addBubble(text, role) {
   var typing = document.getElementById('chatTyping');
   var el = document.createElement('div');
   el.className = 'chat-bubble ' + role;
-  el.textContent = text;
+  if (role === 'bot') {
+    el.innerHTML = text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>');
+  } else {
+    el.textContent = text;
+  }
   msgs.insertBefore(el, typing);
   msgs.scrollTop = msgs.scrollHeight;
 }
