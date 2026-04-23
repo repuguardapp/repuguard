@@ -305,14 +305,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 .roi-cta:hover{opacity:.85;}
 .roi-hint{font-size:.73rem;color:var(--muted);line-height:1.6;margin-top:.25rem;}
 @media(max-width:700px){.roi-calc{grid-template-columns:1fr;}}
-/* Social Proof Toast */
-.sp-toast{position:fixed;bottom:1.5rem;left:1.5rem;z-index:9998;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:.9rem 2rem .9rem 1rem;display:flex;align-items:center;gap:.75rem;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.25);animation:spSlideIn .4s ease;font-size:.83rem;}
-@keyframes spSlideIn{from{opacity:0;transform:translateX(-24px);}to{opacity:1;transform:translateX(0);}}
-.sp-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:var(--accent);flex-shrink:0;}
-.sp-name{font-weight:600;color:var(--text);font-size:.84rem;}
-.sp-action{color:var(--muted2);font-size:.76rem;margin-top:.1rem;line-height:1.4;}
-.sp-close{position:absolute;top:.45rem;right:.55rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:.15rem .3rem;}
-.sp-close:hover{color:var(--text);}
+
 </style>
 
 <script defer src="/_vercel/insights/script.js"></script>
@@ -907,41 +900,6 @@ function calcROI() {
   document.getElementById('roiRatio').textContent = (ratio > 0 ? ratio : 1) + '×';
 }
 
-// Social Proof
-var SP_EVENTS = [
-  {name:'Sophie B.', city:'de Bordeaux', action:"vient de s'inscrire — Plan Pro", initials:'SB'},
-  {name:'Marc T.', city:'de Paris', action:'a répondu à 3 avis ce matin', initials:'MT'},
-  {name:'Isabelle R.', city:'de Lyon', action:"a rejoint RepuGuard — Plan Starter", initials:'IR'},
-  {name:'Thomas D.', city:'de Marseille', action:"a reçu sa 1ère alerte IA", initials:'TD'},
-  {name:'Claire M.', city:'de Toulouse', action:"a amélioré son score de +12 pts", initials:'CM'},
-  {name:'Nicolas F.', city:'de Nantes', action:'surveille 3 établissements', initials:'NF'},
-  {name:'Emma L.', city:'de Nice', action:"vient de s'inscrire — Plan Business", initials:'EL'},
-  {name:'Pierre G.', city:'de Strasbourg', action:"a évité un bad buzz grâce à l'alerte", initials:'PG'},
-  {name:'Julie K.', city:'de Lille', action:"a rejoint RepuGuard — Plan Pro", initials:'JK'},
-  {name:'Antoine V.', city:'de Rennes', action:"a activé les alertes SMS", initials:'AV'}
-];
-var spCount=0, spMax=3, spTimer=null, spDismissed=false;
-function showSP() {
-  if (spDismissed || spCount >= spMax) return;
-  var ev = SP_EVENTS[Math.floor(Math.random() * SP_EVENTS.length)];
-  document.getElementById('spAvatar').textContent = ev.initials;
-  document.getElementById('spName').textContent = ev.name + ' ' + ev.city;
-  document.getElementById('spAction').textContent = ev.action;
-  var toast = document.getElementById('spToast');
-  toast.style.display = 'flex';
-  toast.style.animation = 'none'; void toast.offsetHeight; toast.style.animation = '';
-  spCount++;
-  spTimer = setTimeout(function() {
-    toast.style.display = 'none';
-    if (spCount < spMax && !spDismissed) spTimer = setTimeout(showSP, 8000);
-  }, 5000);
-}
-function dismissSP() {
-  spDismissed = true;
-  clearTimeout(spTimer);
-  document.getElementById('spToast').style.display = 'none';
-}
-
 initLang();
 updatePricing(currentLang);
 updateMeta(currentLang);
@@ -951,17 +909,7 @@ initNotifBar();
 initExitIntent();
 initCookieBanner();
 calcROI();
-setTimeout(showSP, 4000);
 </script>
-
-<div id="spToast" class="sp-toast" style="display:none">
-  <button class="sp-close" onclick="dismissSP()">×</button>
-  <div class="sp-avatar" id="spAvatar">ML</div>
-  <div>
-    <div class="sp-name" id="spName">Marie L. de Lyon</div>
-    <div class="sp-action" id="spAction">vient de s'inscrire — Plan Pro</div>
-  </div>
-</div>
 
 </body>
 </html>
