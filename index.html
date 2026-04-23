@@ -288,6 +288,31 @@ body.has-notif-bar nav{top:38px;}
 .btn-cookie-accept:hover{opacity:.85;}
 .btn-cookie-decline{background:transparent;color:var(--muted2);border:1px solid var(--border);padding:.5rem 1rem;border-radius:6px;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .2s,border-color .2s;}
 .btn-cookie-decline:hover{color:var(--text);border-color:var(--border2);}
+/* ROI Calculator */
+.roi-calc{max-width:800px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem;display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;}
+.roi-sliders{display:flex;flex-direction:column;gap:1.8rem;}
+.roi-slider-group label{font-size:.78rem;font-weight:500;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between;margin-bottom:.6rem;}
+.roi-slider-group label span{color:var(--text);font-weight:700;font-size:.9rem;text-transform:none;letter-spacing:0;}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--border2);border-radius:2px;outline:none;cursor:pointer;transition:background .2s;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 0 4px var(--accent-dim);}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;box-shadow:0 0 0 4px var(--accent-dim);}
+.roi-result{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:16px;padding:2rem;text-align:center;display:flex;flex-direction:column;gap:1.1rem;}
+.roi-result-label{font-size:.73rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted2);}
+.roi-result-value{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;color:var(--accent);line-height:1;word-break:break-all;}
+.roi-compare{font-size:.83rem;color:var(--muted2);line-height:1.6;}
+.roi-compare strong{color:var(--green);font-weight:600;}
+.roi-cta{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;background:var(--accent);color:var(--btn-text);text-decoration:none;padding:.8rem 1.5rem;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;transition:opacity .2s;}
+.roi-cta:hover{opacity:.85;}
+.roi-hint{font-size:.73rem;color:var(--muted);line-height:1.6;margin-top:.25rem;}
+@media(max-width:700px){.roi-calc{grid-template-columns:1fr;}}
+/* Social Proof Toast */
+.sp-toast{position:fixed;bottom:1.5rem;left:1.5rem;z-index:9998;background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:.9rem 2rem .9rem 1rem;display:flex;align-items:center;gap:.75rem;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.25);animation:spSlideIn .4s ease;font-size:.83rem;}
+@keyframes spSlideIn{from{opacity:0;transform:translateX(-24px);}to{opacity:1;transform:translateX(0);}}
+.sp-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:var(--accent);flex-shrink:0;}
+.sp-name{font-weight:600;color:var(--text);font-size:.84rem;}
+.sp-action{color:var(--muted2);font-size:.76rem;margin-top:.1rem;line-height:1.4;}
+.sp-close{position:absolute;top:.45rem;right:.55rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:.15rem .3rem;}
+.sp-close:hover{color:var(--text);}
 </style>
 
 <script defer src="/_vercel/insights/script.js"></script>
@@ -578,6 +603,37 @@ body.has-notif-bar nav{top:38px;}
   </div>
 </section>
 
+<section id="roi">
+  <div class="section-label" style="text-align:center">Calculateur ROI</div>
+  <h2 style="text-align:center;margin-bottom:.5rem">Combien vous coûte<br>un avis sans réponse ?</h2>
+  <p class="section-sub" style="text-align:center;margin:0 auto 2.5rem">Ajustez selon votre activité pour voir l'impact réel sur votre chiffre d'affaires.</p>
+  <div class="roi-calc reveal">
+    <div class="roi-sliders">
+      <div class="roi-slider-group">
+        <label>Avis reçus par mois <span id="roiRevVal">50</span></label>
+        <input type="range" id="roiRev" min="5" max="300" value="50" step="5" oninput="calcROI()">
+      </div>
+      <div class="roi-slider-group">
+        <label>Panier moyen client <span id="roiTicketVal">120€</span></label>
+        <input type="range" id="roiTicket" min="20" max="500" value="120" step="5" oninput="calcROI()">
+      </div>
+      <div class="roi-slider-group">
+        <label>Impact d'un avis sur la décision <span id="roiInfluenceVal">45%</span></label>
+        <input type="range" id="roiInfluence" min="10" max="80" value="45" step="5" oninput="calcROI()">
+      </div>
+      <p class="roi-hint">Hypothèse : 15% de vos avis sont négatifs. Sans réponse, chaque avis négatif dissuade une part de vos futurs clients.</p>
+    </div>
+    <div class="roi-result">
+      <div class="roi-result-label">CA à risque par an</div>
+      <div class="roi-result-value" id="roiRisk">—</div>
+      <div class="roi-compare">
+        RepuGuard Pro = <strong>69€/mois</strong><br>soit <strong id="roiRatio">—×</strong> moins que votre risque annuel.
+      </div>
+      <a href="/signup?plan=pro" class="roi-cta">Protéger mon chiffre d'affaires →</a>
+    </div>
+  </div>
+</section>
+
 <section class="cta-section surface-section">
   <div class="section-label" data-t="cta_label">Commencer maintenant</div>
   <h2 data-t="cta_h2">La prochaine alerte,<br>vous la recevrez à temps.</h2>
@@ -837,6 +893,55 @@ function initLang() {
             || LANGUAGES.find(function(l){ return l.code === code; });
   if (match && match.code !== 'fr') selectLang(match);
 }
+// ROI Calculator
+function calcROI() {
+  var reviews = parseInt(document.getElementById('roiRev').value);
+  var ticket = parseInt(document.getElementById('roiTicket').value);
+  var influence = parseInt(document.getElementById('roiInfluence').value);
+  document.getElementById('roiRevVal').textContent = reviews;
+  document.getElementById('roiTicketVal').textContent = ticket + '€';
+  document.getElementById('roiInfluenceVal').textContent = influence + '%';
+  var annual_risk = Math.round(reviews * 0.15 * (influence / 100) * ticket * 12);
+  document.getElementById('roiRisk').textContent = annual_risk.toLocaleString('fr-FR') + '€';
+  var ratio = Math.round(annual_risk / (69 * 12));
+  document.getElementById('roiRatio').textContent = (ratio > 0 ? ratio : 1) + '×';
+}
+
+// Social Proof
+var SP_EVENTS = [
+  {name:'Sophie B.', city:'de Bordeaux', action:"vient de s'inscrire — Plan Pro", initials:'SB'},
+  {name:'Marc T.', city:'de Paris', action:'a répondu à 3 avis ce matin', initials:'MT'},
+  {name:'Isabelle R.', city:'de Lyon', action:"a rejoint RepuGuard — Plan Starter", initials:'IR'},
+  {name:'Thomas D.', city:'de Marseille', action:"a reçu sa 1ère alerte IA", initials:'TD'},
+  {name:'Claire M.', city:'de Toulouse', action:"a amélioré son score de +12 pts", initials:'CM'},
+  {name:'Nicolas F.', city:'de Nantes', action:'surveille 3 établissements', initials:'NF'},
+  {name:'Emma L.', city:'de Nice', action:"vient de s'inscrire — Plan Business", initials:'EL'},
+  {name:'Pierre G.', city:'de Strasbourg', action:"a évité un bad buzz grâce à l'alerte", initials:'PG'},
+  {name:'Julie K.', city:'de Lille', action:"a rejoint RepuGuard — Plan Pro", initials:'JK'},
+  {name:'Antoine V.', city:'de Rennes', action:"a activé les alertes SMS", initials:'AV'}
+];
+var spCount=0, spMax=3, spTimer=null, spDismissed=false;
+function showSP() {
+  if (spDismissed || spCount >= spMax) return;
+  var ev = SP_EVENTS[Math.floor(Math.random() * SP_EVENTS.length)];
+  document.getElementById('spAvatar').textContent = ev.initials;
+  document.getElementById('spName').textContent = ev.name + ' ' + ev.city;
+  document.getElementById('spAction').textContent = ev.action;
+  var toast = document.getElementById('spToast');
+  toast.style.display = 'flex';
+  toast.style.animation = 'none'; void toast.offsetHeight; toast.style.animation = '';
+  spCount++;
+  spTimer = setTimeout(function() {
+    toast.style.display = 'none';
+    if (spCount < spMax && !spDismissed) spTimer = setTimeout(showSP, 8000);
+  }, 5000);
+}
+function dismissSP() {
+  spDismissed = true;
+  clearTimeout(spTimer);
+  document.getElementById('spToast').style.display = 'none';
+}
+
 initLang();
 updatePricing(currentLang);
 updateMeta(currentLang);
@@ -845,7 +950,18 @@ updateNotifBar(currentLang);
 initNotifBar();
 initExitIntent();
 initCookieBanner();
+calcROI();
+setTimeout(showSP, 4000);
 </script>
+
+<div id="spToast" class="sp-toast" style="display:none">
+  <button class="sp-close" onclick="dismissSP()">×</button>
+  <div class="sp-avatar" id="spAvatar">ML</div>
+  <div>
+    <div class="sp-name" id="spName">Marie L. de Lyon</div>
+    <div class="sp-action" id="spAction">vient de s'inscrire — Plan Pro</div>
+  </div>
+</div>
 
 </body>
 </html>
