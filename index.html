@@ -544,7 +544,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="32" data-gbp="25" data-jpy="4800" data-cny="235" data-inr="2400" data-brl="170" data-mxn="620" data-try="1050" data-krw="43000">29</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p1_desc">Idéal pour les indépendants et auto-entrepreneurs.</p>
       <ul class="plan-features"><li data-t="p1_f1">1 établissement surveillé</li><li data-t="p1_f2">8 plateformes</li><li data-t="p1_f3">Alertes email</li><li data-t="p1_f4">Rapport mensuel</li><li data-t="p1_f5">5 réponses IA/mois</li></ul>
-      <a href="/signup?plan=starter" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
+      <a href="/signup?plan=starter" class="btn-plan btn-plan-ghost" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'starter'})">Commencer gratuitement</a>
     </div>
     <div class="plan-card featured">
       <div class="featured-badge" data-t="popular">Le plus populaire</div>
@@ -552,14 +552,14 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="76" data-gbp="59" data-jpy="11400" data-cny="555" data-inr="5800" data-brl="405" data-mxn="1480" data-try="2500" data-krw="105000">69</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p2_desc">Pour les PME et professionnels qui dépendent de leur réputation.</p>
       <ul class="plan-features"><li data-t="p2_f1">3 établissements surveillés</li><li data-t="p2_f2">15+ plateformes</li><li data-t="p2_f3">Alertes email + SMS</li><li data-t="p2_f4">Rapport hebdomadaire</li><li data-t="p2_f5">Réponses IA illimitées</li><li data-t="p2_f6">Score réputation temps réel</li></ul>
-      <a href="/signup?plan=pro" class="btn-plan btn-plan-primary" data-t="cta_free">Commencer gratuitement</a>
+      <a href="/signup?plan=pro" class="btn-plan btn-plan-primary" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'pro'})">Commencer gratuitement</a>
     </div>
     <div class="plan-card">
       <div class="plan-name">Business</div>
       <div class="plan-price"><sup class="price-sym">€</sup><span class="price-num" data-usd="164" data-gbp="128" data-jpy="24600" data-cny="1200" data-inr="12400" data-brl="875" data-mxn="3190" data-try="5400" data-krw="227000">149</span><span data-t="per_month">/mois</span></div>
       <p class="plan-desc" data-t="p3_desc">Pour les agences et multi-établissements.</p>
       <ul class="plan-features"><li data-t="p3_f1">10 établissements</li><li data-t="p3_f2">Toutes plateformes</li><li data-t="p3_f3">Alertes prioritaires</li><li data-t="p3_f4">Rapports white-label</li><li data-t="p3_f5">Accès API</li><li data-t="p3_f6">Support prioritaire</li></ul>
-      <a href="/signup?plan=business" class="btn-plan btn-plan-ghost" data-t="cta_free">Commencer gratuitement</a>
+      <a href="/signup?plan=business" class="btn-plan btn-plan-ghost" data-t="cta_free" onclick="vaEvent('pricing_cta',{plan:'business'})">Commencer gratuitement</a>
     </div>
   </div>
 </section>
@@ -667,7 +667,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
   <div class="section-label" data-t="cta_label">Commencer maintenant</div>
   <h2 data-t="cta_h2">La prochaine alerte,<br>vous la recevrez à temps.</h2>
   <p class="section-sub" style="margin:0 auto 2rem;text-align:center" data-t="cta_sub">7 jours gratuits, sans carte bancaire.</p>
-  <a href="/signup" class="btn-primary" style="margin:0 auto;display:inline-flex" data-t="cta_btn">Démarrer l'essai gratuit →</a>
+  <a href="/signup" class="btn-primary" style="margin:0 auto;display:inline-flex" data-t="cta_btn" onclick="vaEvent('hero_cta_bottom')">Démarrer l'essai gratuit →</a>
 </section>
 
 <footer class="footer-main">
@@ -922,6 +922,11 @@ function initLang() {
             || LANGUAGES.find(function(l){ return l.code === code; });
   if (match && match.code !== 'fr') selectLang(match);
 }
+// Analytics helper (Vercel Insights custom events)
+function vaEvent(name, data) {
+  try { if (window.va) window.va('event', Object.assign({ name: name }, data || {})); } catch(e) {}
+}
+
 // Chat Widget
 var chatHistory = [];
 var chatOpen = false;
@@ -929,7 +934,7 @@ function initChat() {}
 function toggleChat() {
   chatOpen = !chatOpen;
   document.getElementById('chatPanel').classList.toggle('open', chatOpen);
-  if (chatOpen) document.getElementById('chatInput').focus();
+  if (chatOpen) { document.getElementById('chatInput').focus(); vaEvent('chat_open'); }
 }
 function addBubble(text, role) {
   var msgs = document.getElementById('chatMessages');
@@ -959,6 +964,7 @@ async function sendChat() {
   sendBtn.disabled = true;
   addBubble(text, 'user');
   chatHistory.push({ role: 'user', content: text });
+  if (chatHistory.length === 1) vaEvent('chat_first_message');
   typing.style.display = 'flex';
   msgs.scrollTop = msgs.scrollHeight;
 
@@ -994,6 +1000,9 @@ function calcROI() {
   document.getElementById('roiRisk').textContent = annual_risk.toLocaleString('fr-FR') + '€';
   var ratio = Math.round(annual_risk / (69 * 12));
   document.getElementById('roiRatio').textContent = (ratio > 0 ? ratio : 1) + '×';
+  document.querySelector('.roi-cta').onclick = function() {
+    vaEvent('roi_cta_click', { annual_risk: annual_risk, reviews: reviews, ticket: ticket });
+  };
 }
 
 initLang();

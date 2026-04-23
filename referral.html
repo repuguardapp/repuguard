@@ -194,23 +194,19 @@ function toggleTheme(){var h=document.documentElement;var d=h.getAttribute('data
 
 function getReferralLink(){
   var code=null;
-  try{
-    var u=new URL(window.location.href);
-    code=u.searchParams.get('code');
-  }catch(e){}
-  if(!code){
-    fetch('/api/auth',{credentials:'include'}).then(function(r){return r.json();}).then(function(d){
-      if(d&&d.referral_code){
-        document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+d.referral_code;
-      } else {
-        document.getElementById('loginPrompt').style.display='flex';
-      }
-    }).catch(function(){
-      document.getElementById('loginPrompt').style.display='flex';
-    });
-  } else {
-    document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+code;
+  try{ code=new URL(window.location.href).searchParams.get('code'); }catch(e){}
+  if(code){ document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+code; return; }
+  // Try localStorage (user already logged in)
+  var token=localStorage.getItem('rg-token');
+  var userData=localStorage.getItem('rg-user');
+  if(token && userData){
+    try{
+      var user=JSON.parse(userData);
+      var refCode=user.id ? user.id.replace(/-/g,'').slice(0,10).toUpperCase() : null;
+      if(refCode){ document.getElementById('referralLink').value='https://repuguard.app/signup?ref='+refCode; return; }
+    }catch(e){}
   }
+  document.getElementById('loginPrompt').style.display='flex';
 }
 
 function copyLink(){
