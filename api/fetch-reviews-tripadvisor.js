@@ -31,6 +31,22 @@ export default async function handler(req, res) {
     if (!businessName || !clientId) return res.status(400).json({ error: 'Paramètres manquants' });
     if (auth.userId && auth.userId !== clientId) return res.status(403).json({ error: 'Forbidden' });
 
+    // Block expired trial + inactive subscription (skip check for cron calls)
+    if (auth.userId) {
+      const accessRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=trial_ends,subscription_status`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      const accessData = await accessRes.json();
+      if (accessData.length > 0) {
+        const c = accessData[0];
+        const trialValid = c.trial_ends && new Date(c.trial_ends) > new Date();
+        const subActive = ['active', 'trialing'].includes(c.subscription_status);
+        if (!trialValid && !subActive) {
+          return res.status(402).json({ error: 'Abonnement expiré.' });
+        }
+      }
+    }
+
     const language = lang || 'fr';
 
     // 1. Search for the location on TripAdvisor
@@ -65,9 +81,9 @@ export default async function handler(req, res) {
     const reviews = reviewsData.data || [];
     const negativeReviews = reviews.filter(r => (r.rating || 0) <= 2);
 
-    // 4. Save to Supabase (upsert, skip duplicates)
-    for (const review of reviews) {
-      await fetch(SUPABASE_URL + '/rest/v1/reviews', {
+    // 4. Save to Supabase (parallel inserts, skip duplicates)
+    await Promise.all(reviews.map(review =>
+      fetch(SUPABASE_URL + '/rest/v1/reviews', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,8 +103,8 @@ export default async function handler(req, res) {
           needs_response:(review.rating || 0) <= 2,
           place_id:      String(locationId),
         }),
-      });
-    }
+      }).catch(e => console.error('TripAdvisor review insert error:', e.message))
+    ));
 
     // 5. Update client record with TripAdvisor info
     await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}`, {

@@ -39,6 +39,22 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    // Block expired trial + inactive subscription (skip check for cron calls)
+    if (auth.userId) {
+      const accessRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}&select=trial_ends,subscription_status`, {
+        headers: { 'apikey': SUPABASE_SECRET_KEY, 'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY }
+      });
+      const accessData = await accessRes.json();
+      if (accessData.length > 0) {
+        const c = accessData[0];
+        const trialValid = c.trial_ends && new Date(c.trial_ends) > new Date();
+        const subActive = ['active', 'trialing'].includes(c.subscription_status);
+        if (!trialValid && !subActive) {
+          return res.status(402).json({ error: 'Abonnement expiré.' });
+        }
+      }
+    }
+
     const reviewLang = lang || 'fr';
 
     // 1. Chercher l'établissement via Places API (New) - Text Search
@@ -81,9 +97,9 @@ export default async function handler(req, res) {
     const reviews = detailsData.reviews || [];
     const negativeReviews = reviews.filter(r => r.rating <= 2);
 
-    // 3. Sauvegarder dans Supabase
-    for (const review of reviews) {
-      await fetch(SUPABASE_URL + '/rest/v1/reviews', {
+    // 3. Sauvegarder dans Supabase (parallel inserts)
+    await Promise.all(reviews.map(review =>
+      fetch(SUPABASE_URL + '/rest/v1/reviews', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,8 +119,8 @@ export default async function handler(req, res) {
           needs_response: (review.rating || 0) <= 2 && !(autoRespond5star && (review.rating || 0) === 5),
           place_id: placeId,
         }),
-      });
-    }
+      }).catch(e => console.error('Google review insert error:', e.message))
+    ));
 
     // 4. Mettre à jour le score client
     await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${clientId}`, {

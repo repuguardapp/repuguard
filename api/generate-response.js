@@ -29,14 +29,21 @@ export default async function handler(req) {
     const user = await userRes.json();
     if (!user.id) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
-    // Fetch client to check plan and daily usage
-    const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}&select=plan,responses_today,responses_date`, { headers: base });
+    // Fetch client to check plan, subscription status, and daily usage
+    const clientRes = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}&select=plan,responses_today,responses_date,trial_ends,subscription_status`, { headers: base });
     const clients = await clientRes.json();
     if (!clients.length) return new Response(JSON.stringify({ error: 'Client not found' }), { status: 404, headers });
     const client = clients[0];
 
-    const plan = client.plan || 'pro';
-    const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.pro;
+    // Block expired trial + inactive subscription
+    const trialValid = client.trial_ends && new Date(client.trial_ends) > new Date();
+    const subActive = ['active', 'trialing'].includes(client.subscription_status);
+    if (!trialValid && !subActive) {
+      return new Response(JSON.stringify({ error: 'Abonnement expiré. Veuillez activer un plan pour continuer.' }), { status: 402, headers });
+    }
+
+    const plan = client.plan || 'starter';
+    const limit = DAILY_LIMITS[plan] || DAILY_LIMITS.starter;
     const today = new Date().toISOString().slice(0, 10);
     const isNewDay = client.responses_date !== today;
     const usedToday = isNewDay ? 0 : (client.responses_today || 0);
@@ -92,8 +99,8 @@ Consignes strictes :
     const response = data.content?.[0]?.text?.trim();
     if (!response) return new Response(JSON.stringify({ error: 'Réponse IA vide' }), { status: 502, headers });
 
-    // Increment daily counter (fire and forget)
-    fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {
+    // Increment daily counter
+    await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${user.id}`, {
       method: 'PATCH',
       headers: { ...base, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({
