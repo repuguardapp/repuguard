@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const clientsRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,lang,trustpilot_business_id,auto_respond_5star`,
+      `${SUPABASE_URL}/rest/v1/clients?active=eq.true&google_place_id=not.is.null&select=id,business_name,country,lang,trustpilot_business_id,tripadvisor_location_id,auto_respond_5star`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     const clients = await clientsRes.json();
@@ -47,6 +47,25 @@ export default async function handler(req, res) {
 
     const succeeded = results.filter(r => r.success).length;
     console.log(`Cron sync Google done: ${succeeded}/${clients.length}`);
+
+    // TripAdvisor sync — only for clients who have a TripAdvisor location
+    const taClients = clients.filter(c => c.tripadvisor_location_id);
+    const taResults = [];
+    for (const client of taClients) {
+      try {
+        const taRes = await fetch(`${baseUrl}/api/fetch-reviews-tripadvisor`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
+          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+        });
+        const taData = await taRes.json();
+        taResults.push({ clientId: client.id, success: true, reviewsFetched: taData.reviewsFetched || 0 });
+      } catch (err) {
+        taResults.push({ clientId: client.id, success: false, error: err.message });
+      }
+      await sleep(THROTTLE_MS);
+    }
+    console.log(`Cron sync TripAdvisor done: ${taResults.filter(r => r.success).length}/${taClients.length}`);
 
     // Trustpilot sync — only for clients who have connected their account
     const tpClients = clients.filter(c => c.trustpilot_business_id);
@@ -203,6 +222,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       google: { synced: succeeded, total: clients.length },
+      tripadvisor: { synced: taResults.filter(r => r.success).length, total: taClients.length },
       trustpilot: { synced: tpResults.filter(r => r.success).length, total: tpClients.length },
       results,
       j1_emails: Array.isArray(j1Clients) ? j1Clients.length : 0,

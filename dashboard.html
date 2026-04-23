@@ -616,8 +616,19 @@
               </div>
               <div class="platform-status" id="trustpilotActions"></div>
             </div>
-            <!-- Business plan placeholders -->
-            <div class="platform-full-item"><div class="platform-logo" style="background:rgba(255,255,255,0.04);border:1px dashed var(--border2);color:var(--text3);">+</div><div><div class="platform-name" style="color:var(--text3);">TripAdvisor, Yelp, Booking...</div><div class="platform-stars">Disponible sur Plan Business</div></div><div class="platform-status"><button class="btn-sm btn-ghost" onclick="navigate('abonnement')">Débloquer</button></div></div>
+            <!-- TripAdvisor — connect form or connected state -->
+            <div class="platform-full-item" id="tripadvisorRow">
+              <div class="platform-logo ta">TA</div>
+              <div style="flex:1;">
+                <div class="platform-name">TripAdvisor</div>
+                <div id="tripadvisorStatus" class="platform-stars">Non connecté</div>
+                <div id="tripadvisorForm" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;">
+                  <input id="taBusinessName" class="settings-input" style="max-width:260px;margin:0;" type="text" placeholder="Nom de votre établissement">
+                  <button class="btn-sm btn-primary" onclick="connectTripAdvisor(this)">Connecter →</button>
+                </div>
+              </div>
+              <div class="platform-status" id="tripadvisorActions"></div>
+            </div>
           </div>
         </div>
         <!-- Review request generator -->
@@ -964,6 +975,10 @@
       const platItems = [];
       const gScore = client.google_score || 0;
       platItems.push(`<div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">${stars(Math.round(gScore))}</div></div><div class="platform-score">${gScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(gScore/5*100)}%"></div></div></div></div>`);
+      if (client.tripadvisor_location_id) {
+        const taScore = client.tripadvisor_score || 0;
+        platItems.push(`<div class="platform-item"><div class="platform-logo ta">TA</div><div><div class="platform-name">TripAdvisor</div><div class="platform-stars">${stars(Math.round(taScore))}</div></div><div class="platform-score">${taScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(taScore/5*100)}%"></div></div></div></div>`);
+      }
       if (client.trustpilot_business_id) {
         const tpScore = client.trustpilot_score || 0;
         platItems.push(`<div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">${stars(Math.round(tpScore))}</div></div><div class="platform-score">${tpScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(tpScore/5*100)}%"></div></div></div></div>`);
@@ -978,7 +993,8 @@
       if (client.last_sync) {
         const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
         const when = diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.round(diff/60)}h` : `il y a ${Math.round(diff/1440)}j`;
-        acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>Google</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
+        const syncedPlatforms = ['Google', client.tripadvisor_location_id ? 'TripAdvisor' : null, client.trustpilot_business_id ? 'Trustpilot' : null].filter(Boolean).join(' + ');
+        acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>${syncedPlatforms}</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
       }
       const responded = (reviews||[]).filter(r => r.responded_at).slice(0,2);
       responded.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.responded_at)}</div></div></div>`));
@@ -1024,6 +1040,20 @@
       if (tpStatus) tpStatus.textContent = 'Non connecté — ajoutez Trustpilot pour doubler vos sources';
       if (tpForm) { tpForm.style.display = 'flex'; const tpInput = document.getElementById('tpBusinessName'); if (tpInput && client.business_name) tpInput.value = client.business_name; }
       if (tpActions) tpActions.innerHTML = '';
+    }
+
+    // TripAdvisor platform row
+    const taStatus = document.getElementById('tripadvisorStatus');
+    const taForm = document.getElementById('tripadvisorForm');
+    const taActions = document.getElementById('tripadvisorActions');
+    if (client.tripadvisor_location_id) {
+      if (taStatus) taStatus.textContent = `Connecté · Score ${client.tripadvisor_score ? client.tripadvisor_score.toFixed(1) : '—'}/5`;
+      if (taForm) taForm.style.display = 'none';
+      if (taActions) taActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-ghost" style="margin-left:8px;" onclick="disconnectTripAdvisor(this)">Déconnecter</button>`;
+    } else {
+      if (taStatus) taStatus.textContent = 'Non connecté — ajoutez TripAdvisor pour les avis restaurants & hôtels';
+      if (taForm) { taForm.style.display = 'flex'; const taInput = document.getElementById('taBusinessName'); if (taInput && client.business_name) taInput.value = client.business_name; }
+      if (taActions) taActions.innerHTML = '';
     }
 
     // Webhook settings
@@ -1446,6 +1476,33 @@
     if (!confirm(t('confirm_disconnect_tp'))) return;
     btn.disabled = true;
     await apiPost('/api/update-client', { trustpilot_business_id: null });
+    await loadDashboard();
+  }
+
+  async function connectTripAdvisor(btn) {
+    const name = document.getElementById('taBusinessName')?.value?.trim();
+    if (!name) return;
+    btn.disabled = true; btn.textContent = 'Recherche...';
+    try {
+      const r = await fetch('/api/fetch-reviews-tripadvisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Connecté';
+      await loadDashboard();
+    } catch(e) {
+      btn.textContent = e.message;
+      setTimeout(() => { btn.textContent = 'Connecter →'; btn.disabled = false; }, 3000);
+    }
+  }
+
+  async function disconnectTripAdvisor(btn) {
+    if (!confirm('Déconnecter TripAdvisor ?')) return;
+    btn.disabled = true;
+    await apiPost('/api/update-client', { tripadvisor_location_id: null });
     await loadDashboard();
   }
 

@@ -46,10 +46,27 @@ export default async function handler(req) {
     const positives = allReviews.filter(r => (r.rating || 0) >= 4);
     const newThisWeek = allReviews.filter(r => new Date(r.date) > weekAgo);
 
+    // Cross-platform reputation score
+    const platformScores = [
+      client.google_score,
+      client.trustpilot_score,
+      client.tripadvisor_score,
+    ].filter(s => s && s > 0);
+    const avgRating = platformScores.length > 0
+      ? Math.round((platformScores.reduce((a, b) => a + b, 0) / platformScores.length) * 10) / 10
+      : 0;
+
+    const platforms = {
+      google:      { score: client.google_score || 0, connected: !!client.google_place_id },
+      trustpilot:  { score: client.trustpilot_score || 0, connected: !!client.trustpilot_business_id },
+      tripadvisor: { score: client.tripadvisor_score || 0, connected: !!client.tripadvisor_location_id },
+    };
+
     return new Response(JSON.stringify({
       client,
+      platforms,
       stats: {
-        avgRating: client.google_score || 0,
+        avgRating,
         totalReviews: client.total_reviews || allReviews.length,
         pendingResponses: pending.length,
         negativeCount: negatives.length,
