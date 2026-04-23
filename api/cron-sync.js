@@ -132,21 +132,23 @@ export default async function handler(req, res) {
     );
     const j2Candidates = await j2Res.json();
     let j2_emails = 0;
-    if (Array.isArray(j2Candidates)) {
+    if (Array.isArray(j2Candidates) && j2Candidates.length > 0) {
+      // Single query to find which j2 candidates already have reviews
+      const ids = j2Candidates.map(c => c.id).join(',');
+      const rvRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/reviews?client_id=in.(${ids})&select=client_id`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const rvRows = await rvRes.json();
+      const clientsWithReviews = new Set(Array.isArray(rvRows) ? rvRows.map(r => r.client_id) : []);
+
       for (const c of j2Candidates) {
-        // Vérifier s'il a des avis (= déjà activé)
-        const rvRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/reviews?client_id=eq.${c.id}&select=id&limit=1`,
-          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
-        const rv = await rvRes.json();
-        if (Array.isArray(rv) && rv.length === 0) {
-          // Pas encore d'avis = pas activé → relance
-          await fetch(`${baseUrl}/api/send-email`, {
+        if (!clientsWithReviews.has(c.id)) {
+          fetch(`${baseUrl}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'onboarding_j1', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
-          });
+            body: JSON.stringify({ type: 'onboarding_j2', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+          }).catch(e => console.error('J2 email error:', e.message));
           j2_emails++;
         }
       }
