@@ -44,7 +44,7 @@ export default async function handler(req) {
     const negatives = allReviews.filter(r => r.is_negative);
     const pending = allReviews.filter(r => r.is_negative && r.needs_response);
     const positives = allReviews.filter(r => (r.rating || 0) >= 4);
-    const newThisWeek = allReviews.filter(r => new Date(r.date) > weekAgo);
+    const newThisWeek = allReviews.filter(r => r.date && new Date(r.date) > weekAgo);
 
     // Cross-platform reputation score
     const platformScores = [

@@ -2,10 +2,11 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// Keep in sync with PRICE_TO_PLAN in stripe-webhook.js
 const PRICE_IDS = {
-  starter: 'price_1TJfMs4AfFLajYNswedRcOT5',
-  pro:     'price_1TJfOW4AfFLajYNsmOvVBxGj',
-  business:'price_1TJfPU4AfFLajYNsJtTIsjl3',
+  starter:  process.env.STRIPE_PRICE_STARTER  || 'price_1TJfMs4AfFLajYNswedRcOT5',
+  pro:      process.env.STRIPE_PRICE_PRO      || 'price_1TJfOW4AfFLajYNsmOvVBxGj',
+  business: process.env.STRIPE_PRICE_BUSINESS || 'price_1TJfPU4AfFLajYNsJtTIsjl3',
 };
 const VALID_PRICE_IDS = new Set(Object.values(PRICE_IDS));
 

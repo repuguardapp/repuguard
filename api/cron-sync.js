@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
     for (const client of clients) {
       try {
-        const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
+        const syncRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
           body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr', autoRespond5star: !!client.auto_respond_5star }),
