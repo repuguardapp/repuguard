@@ -51,10 +51,10 @@ export default async function handler(req, res) {
     const taResults = [];
     for (const client of taClients) {
       try {
-        const taRes = await fetch(`${baseUrl}/api/fetch-reviews-tripadvisor`, {
+        const taRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
-          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+          body: JSON.stringify({ platform: 'tripadvisor', businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
         });
         const taData = await taRes.json();
         taResults.push({ clientId: client.id, success: true, reviewsFetched: taData.reviewsFetched || 0 });
@@ -68,10 +68,10 @@ export default async function handler(req, res) {
     const tpResults = [];
     for (const client of tpClients) {
       try {
-        const tpRes = await fetch(`${baseUrl}/api/fetch-reviews-trustpilot`, {
+        const tpRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
-          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+          body: JSON.stringify({ platform: 'trustpilot', businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
         });
         const tpData = await tpRes.json();
         tpResults.push({ clientId: client.id, success: true, reviewsFetched: tpData.reviewsFetched || 0 });
