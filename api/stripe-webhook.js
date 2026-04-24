@@ -17,6 +17,20 @@ function getPlanFromPriceId(priceId) {
   return PRICE_TO_PLAN[priceId] || 'starter';
 }
 
+function logError(source, message, context = {}) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  fetch(`${SUPABASE_URL}/rest/v1/error_logs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ source, message, context }),
+  }).catch(() => {});
+}
+
 
 // Atomically insert event id — returns true if newly inserted, false if duplicate
 async function claimEvent(eventId) {
@@ -165,6 +179,7 @@ export default async function handler(req, res) {
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('Webhook handler error:', err);
+    logError('stripe-webhook', err.message, { eventType: event?.type, eventId: event?.id });
     res.status(500).json({ error: err.message });
   }
 };

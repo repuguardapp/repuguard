@@ -5,6 +5,20 @@ const THROTTLE_MS = 2000; // 2s between clients to respect API rate limits
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+function logError(source, message, context = {}) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  fetch(`${SUPABASE_URL}/rest/v1/error_logs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ source, message, context }),
+  }).catch(() => {});
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).end();
 
@@ -38,6 +52,7 @@ export default async function handler(req, res) {
         results.push({ clientId: client.id, success: true, reviewsFetched: data.reviewsFetched || 0 });
       } catch (err) {
         results.push({ clientId: client.id, success: false, error: err.message });
+        logError('cron-sync:google', err.message, { clientId: client.id });
       }
 
       // Throttle to avoid hitting Google Places API rate limits
@@ -60,6 +75,7 @@ export default async function handler(req, res) {
         taResults.push({ clientId: client.id, success: true, reviewsFetched: taData.reviewsFetched || 0 });
       } catch (err) {
         taResults.push({ clientId: client.id, success: false, error: err.message });
+        logError('cron-sync:tripadvisor', err.message, { clientId: client.id });
       }
       await sleep(THROTTLE_MS);
     }
@@ -77,6 +93,7 @@ export default async function handler(req, res) {
         tpResults.push({ clientId: client.id, success: true, reviewsFetched: tpData.reviewsFetched || 0 });
       } catch (err) {
         tpResults.push({ clientId: client.id, success: false, error: err.message });
+        logError('cron-sync:trustpilot', err.message, { clientId: client.id });
       }
       await sleep(THROTTLE_MS);
     }
@@ -229,6 +246,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Cron sync error:', err);
+    logError('cron-sync', err.message, {});
     return res.status(500).json({ error: err.message });
   }
 }

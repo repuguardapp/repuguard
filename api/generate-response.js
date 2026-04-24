@@ -2,6 +2,22 @@ export const config = { runtime: 'edge' };
 
 const DAILY_LIMITS = { starter: 50, pro: 200, business: 99999 };
 
+function logError(source, message, context = {}) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) return;
+  fetch(`${url}/rest/v1/error_logs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': key,
+      'Authorization': 'Bearer ' + key,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ source, message, context }),
+  }).catch(() => {});
+}
+
 export default async function handler(req) {
   const headers = {
     'Access-Control-Allow-Origin': 'https://repuguard.app',
@@ -113,6 +129,7 @@ Consignes strictes :
     return new Response(JSON.stringify({ response, remaining: limit - usedToday - 1 }), { status: 200, headers });
 
   } catch (err) {
+    logError('generate-response', err.message, {});
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
   }
 }
