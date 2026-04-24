@@ -109,11 +109,11 @@ export default async function handler(req, res) {
     const j1Clients = await j1Res.json();
     if (Array.isArray(j1Clients) && j1Clients.length > 0) {
       for (const c of j1Clients) {
-        await fetch(`${baseUrl}/api/send-email`, {
+        fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'onboarding_j1', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
-        });
+        }).catch(e => console.error('J1 email error:', e.message));
       }
     }
 

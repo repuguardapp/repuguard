@@ -116,7 +116,7 @@ export default async function handler(req, res) {
           text: review.text?.text || '',
           date: review.publishTime || new Date().toISOString(),
           is_negative: (review.rating || 0) <= 2,
-          needs_response: (review.rating || 0) <= 2 && !(autoRespond5star && (review.rating || 0) === 5),
+          needs_response: (review.rating || 0) <= 2 || (!!autoRespond5star && (review.rating || 0) === 5),
           place_id: placeId,
         }),
       }).catch(e => console.error('Google review insert error:', e.message))

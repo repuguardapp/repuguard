@@ -85,14 +85,18 @@ export default async function handler(req, res) {
     const gbpReviewsData = await gbpReviewsRes.json();
     const gbpReviews = gbpReviewsData.reviews || [];
 
-    // Match by author name + star rating + approximate date (within 48h)
+    // Match by star rating + date window (≤48h) + full author name inclusion
+    const STAR_RATINGS = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
     const reviewDate = new Date(review.date).getTime();
     const matched = gbpReviews.find(r => {
-      const gbpDate = new Date(r.createTime).getTime();
-      const authorMatch = (r.reviewer?.displayName || '').toLowerCase().includes((review.author || '').toLowerCase().split(' ')[0]);
-      const ratingMatch = r.starRating === ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'][review.rating || 0];
-      const dateClose = Math.abs(gbpDate - reviewDate) < 48 * 3600 * 1000;
-      return (authorMatch || dateClose) && ratingMatch;
+      const gbpDate     = new Date(r.createTime).getTime();
+      const authorFull  = (review.author || '').toLowerCase().trim();
+      const displayFull = (r.reviewer?.displayName || '').toLowerCase().trim();
+      const authorMatch = !authorFull || !displayFull ||
+        displayFull.includes(authorFull) || authorFull.includes(displayFull);
+      const ratingMatch = r.starRating === STAR_RATINGS[review.rating || 0];
+      const dateClose   = Math.abs(gbpDate - reviewDate) < 48 * 3600 * 1000;
+      return dateClose && ratingMatch && authorMatch;
     });
 
     if (!matched) {
