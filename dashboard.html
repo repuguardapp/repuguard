@@ -158,6 +158,12 @@
   .status-pill.gbp { background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.25); }
   .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e2030; border:1px solid var(--border2); border-radius:10px; padding:12px 20px; font-size:13px; font-weight:500; color:var(--text); z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.4); opacity:0; transition:opacity .3s; pointer-events:none; max-width:420px; text-align:center; }
   .toast.show { opacity:1; }
+  #dashLoadingOverlay { position:fixed; inset:0; background:rgba(7,8,15,0.75); z-index:8888; display:flex; align-items:center; justify-content:center; }
+  #dashLoadingOverlay.hidden { display:none; }
+  .dash-spinner { width:36px; height:36px; border:3px solid rgba(99,102,241,0.25); border-top-color:#6366f1; border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #dashErrorBanner { display:none; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:10px; padding:14px 20px; margin:16px; color:#f87171; font-size:13px; text-align:center; }
+  #dashErrorBanner.show { display:block; }
   .platform-badge.twitter { border-color:rgba(96,165,250,0.3); color:#60a5fa; }
   .platform-badge.tripadvisor { border-color:rgba(52,211,153,0.3); color:#34d399; }
   .platform-badge.trustpilot { border-color:rgba(251,191,36,0.3); color:#fbbf24; }
@@ -792,6 +798,8 @@
   </main>
 </div>
 
+<div id="dashLoadingOverlay"><div class="dash-spinner"></div></div>
+<div id="dashErrorBanner"></div>
 <div class="toast" id="toastEl"></div>
 
 <script>
@@ -836,12 +844,24 @@
 
   // LOAD
   async function loadDashboard() {
+    const overlay = document.getElementById('dashLoadingOverlay');
+    const errBanner = document.getElementById('dashErrorBanner');
+    if (overlay) overlay.classList.remove('hidden');
+    if (errBanner) errBanner.classList.remove('show');
     try {
       const res = await fetch('/api/get-dashboard', { headers: { 'Authorization': 'Bearer ' + RG.token } });
       if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+      if (!res.ok) throw new Error('Erreur serveur (' + res.status + ')');
       RG.data = await res.json();
       render(RG.data);
-    } catch(e) { console.error('Dashboard error:', e); }
+    } catch(e) {
+      if (errBanner) {
+        errBanner.textContent = '⚠ Impossible de charger le dashboard. Vérifiez votre connexion et rechargez la page.';
+        errBanner.classList.add('show');
+      }
+    } finally {
+      if (overlay) overlay.classList.add('hidden');
+    }
   }
 
   // RENDER
@@ -851,7 +871,7 @@
     // Bandeau trial
     const trialBanner = document.getElementById('trialBanner');
     if (trialBanner && client.trial_ends) {
-      const trialEnd = new Date(RG.client.trial_ends);
+      const trialEnd = new Date(client.trial_ends);
       const now = new Date();
       const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
       if (daysLeft > 0) {
@@ -892,7 +912,7 @@
     // Sidebar
     document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';
     document.querySelector('.biz-type').textContent = [client.sector, client.country].filter(Boolean).join(' · ');
-    const plan = client.plan || 'pro';
+    const plan = client.plan || 'starter';
     document.querySelector('.plan-name').textContent = '✦ Plan ' + plan[0].toUpperCase() + plan.slice(1);
     const name = [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email;
     document.querySelector('.user-name').textContent = name;

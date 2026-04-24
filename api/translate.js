@@ -43,7 +43,7 @@ export default async function handler(req) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': process.env.ANTHROPIC_API_VERSION || '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',

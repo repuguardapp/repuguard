@@ -60,6 +60,18 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Chaque alerte génère automatiquement une réponse professionnelle — 1 clic pour la valider et la publier.',
     j3_upgrade: 'Votre essai se termine dans 4 jours. Activez votre plan maintenant pour continuer la surveillance sans interruption.',
     j3_cta: 'Voir mon dashboard →',
+    j1_subject: 'RepuGuard surveille {business} — Bienvenue à bord !',
+    j1_title: 'Votre réputation est entre de bonnes mains',
+    j1_body1: 'Depuis votre inscription, RepuGuard surveille {business} en temps réel sur Google, Trustpilot et TripAdvisor.',
+    j1_body2: 'Dès qu\'un avis négatif est détecté, vous recevrez une alerte immédiate et une réponse professionnelle sera générée automatiquement.',
+    j1_cta: 'Voir mon dashboard →',
+    j2_subject: '{business} n\'est pas encore configuré — 3 minutes suffisent',
+    j2_title: 'Activez la surveillance de {business}',
+    j2_step1: 'Connectez-vous à votre dashboard',
+    j2_step2: 'Vérifiez que votre établissement est bien trouvé',
+    j2_step3: 'Activez les alertes — nous faisons le reste',
+    j2_urgency: 'Il vous reste 5 jours d\'essai gratuit. Ne le laissez pas expirer sans avoir testé.',
+    j2_cta: 'Configurer maintenant →',
     report_subject: '📊 Votre rapport hebdomadaire RepuGuard — {period}',
     report_period_label: 'Rapport hebdomadaire · {period}',
     report_greeting: 'Bonjour {name} 👋',
@@ -128,6 +140,18 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Each alert automatically generates a professional response — 1 click to validate and publish.',
     j3_upgrade: 'Your trial ends in 4 days. Activate your plan now to keep monitoring without interruption.',
     j3_cta: 'View my dashboard →',
+    j1_subject: 'RepuGuard is monitoring {business} — Welcome aboard!',
+    j1_title: 'Your reputation is in good hands',
+    j1_body1: 'Since you signed up, RepuGuard has been monitoring {business} in real time on Google, Trustpilot and TripAdvisor.',
+    j1_body2: 'As soon as a negative review is detected, you\'ll receive an instant alert and a professional AI response will be generated for you.',
+    j1_cta: 'View my dashboard →',
+    j2_subject: '{business} isn\'t set up yet — takes only 3 minutes',
+    j2_title: 'Activate monitoring for {business}',
+    j2_step1: 'Sign in to your dashboard',
+    j2_step2: 'Make sure your business is found correctly',
+    j2_step3: 'Enable alerts — we\'ll handle the rest',
+    j2_urgency: 'You have 5 days left in your free trial. Don\'t let it expire without trying it out.',
+    j2_cta: 'Set up now →',
     report_subject: '📊 Your weekly RepuGuard report — {period}',
     report_period_label: 'Weekly report · {period}',
     report_greeting: 'Hello {name} 👋',
@@ -186,6 +210,28 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gestionar mi suscripción →',
     hello: 'Hola {name},',
     questions: '¿Preguntas? Responde este email.',
+    j3_subject: 'Día 3 de tu prueba — tu reputación está siendo monitoreada 🔍',
+    j3_title: 'RepuGuard monitorea {business} 24/7',
+    j3_tip1_title: 'Responde en 24h',
+    j3_tip1: 'Los clientes que reciben una respuesta vuelven 3× más a menudo. Tu respuesta IA ya está lista en el panel.',
+    j3_tip2_title: 'Puntuación actualizada diariamente',
+    j3_tip2: 'Tu puntuación global de reputación evoluciona en tiempo real — sigue tu progreso semana tras semana.',
+    j3_tip3_title: 'Respuestas IA en espera',
+    j3_tip3: 'Cada alerta genera automáticamente una respuesta profesional — 1 clic para validarla y publicarla.',
+    j3_upgrade: 'Tu prueba termina en 4 días. Activa tu plan ahora para continuar el monitoreo sin interrupciones.',
+    j3_cta: 'Ver mi panel →',
+    j1_subject: 'RepuGuard monitorea {business} — ¡Bienvenido a bordo!',
+    j1_title: 'Tu reputación está en buenas manos',
+    j1_body1: 'Desde que te registraste, RepuGuard monitorea {business} en tiempo real en Google, Trustpilot y TripAdvisor.',
+    j1_body2: 'En cuanto se detecte una reseña negativa, recibirás una alerta inmediata y se generará automáticamente una respuesta profesional.',
+    j1_cta: 'Ver mi panel →',
+    j2_subject: '{business} aún no está configurado — solo toma 3 minutos',
+    j2_title: 'Activa el monitoreo de {business}',
+    j2_step1: 'Inicia sesión en tu panel',
+    j2_step2: 'Verifica que tu negocio aparezca correctamente',
+    j2_step3: 'Activa las alertas — nosotros hacemos el resto',
+    j2_urgency: 'Te quedan 5 días de prueba gratuita. No dejes que expire sin probarlo.',
+    j2_cta: 'Configurar ahora →',
     report_subject: '📊 Tu informe semanal de RepuGuard — {period}',
     report_period_label: 'Informe semanal · {period}',
     report_greeting: 'Hola {name} 👋',
@@ -244,6 +290,28 @@ const EMAIL_STRINGS = {
     trial_cta: 'Mein Abonnement verwalten →',
     hello: 'Hallo {name},',
     questions: 'Fragen? Antworten Sie auf diese E-Mail.',
+    j3_subject: 'Tag 3 Ihrer Testphase — Ihre Reputation wird überwacht 🔍',
+    j3_title: 'RepuGuard überwacht {business} rund um die Uhr',
+    j3_tip1_title: 'Antworten Sie innerhalb von 24h',
+    j3_tip1: 'Kunden, die eine Antwort erhalten, kommen 3× häufiger zurück. Ihre KI-Antwort steht bereits im Dashboard bereit.',
+    j3_tip2_title: 'Täglich aktualisierter Score',
+    j3_tip2: 'Ihr globaler Reputations-Score entwickelt sich in Echtzeit — verfolgen Sie Ihren Fortschritt Woche für Woche.',
+    j3_tip3_title: 'KI-Antworten warten',
+    j3_tip3: 'Jede Benachrichtigung generiert automatisch eine professionelle Antwort — 1 Klick zum Validieren und Veröffentlichen.',
+    j3_upgrade: 'Ihre Testphase endet in 4 Tagen. Aktivieren Sie jetzt Ihren Plan, um die Überwachung ohne Unterbrechung fortzusetzen.',
+    j3_cta: 'Zu meinem Dashboard →',
+    j1_subject: 'RepuGuard überwacht {business} — Willkommen an Bord!',
+    j1_title: 'Ihre Reputation ist in guten Händen',
+    j1_body1: 'Seit Ihrer Anmeldung überwacht RepuGuard {business} in Echtzeit auf Google, Trustpilot und TripAdvisor.',
+    j1_body2: 'Sobald eine negative Bewertung erkannt wird, erhalten Sie sofort eine Benachrichtigung und eine professionelle Antwort wird automatisch generiert.',
+    j1_cta: 'Zu meinem Dashboard →',
+    j2_subject: '{business} ist noch nicht eingerichtet — dauert nur 3 Minuten',
+    j2_title: 'Aktivieren Sie die Überwachung für {business}',
+    j2_step1: 'Melden Sie sich in Ihrem Dashboard an',
+    j2_step2: 'Stellen Sie sicher, dass Ihr Unternehmen korrekt gefunden wird',
+    j2_step3: 'Aktivieren Sie Benachrichtigungen — wir erledigen den Rest',
+    j2_urgency: 'Sie haben noch 5 Tage kostenlose Testphase. Lassen Sie sie nicht ablaufen, ohne es ausprobiert zu haben.',
+    j2_cta: 'Jetzt einrichten →',
     report_subject: '📊 Ihr wöchentlicher RepuGuard-Bericht — {period}',
     report_period_label: 'Wöchentlicher Bericht · {period}',
     report_greeting: 'Hallo {name} 👋',
@@ -302,6 +370,28 @@ const EMAIL_STRINGS = {
     trial_cta: 'Gerir a minha subscrição →',
     hello: 'Olá {name},',
     questions: 'Dúvidas? Responda a este email.',
+    j3_subject: 'Dia 3 do seu período de teste — a sua reputação está a ser monitorizada 🔍',
+    j3_title: 'RepuGuard monitoriza {business} 24/7',
+    j3_tip1_title: 'Responda em 24h',
+    j3_tip1: 'Os clientes que recebem uma resposta voltam 3× mais vezes. A sua resposta IA já está pronta no dashboard.',
+    j3_tip2_title: 'Score atualizado diariamente',
+    j3_tip2: 'O seu score global de reputação evolui em tempo real — acompanhe o seu progresso semana após semana.',
+    j3_tip3_title: 'Respostas IA à espera',
+    j3_tip3: 'Cada alerta gera automaticamente uma resposta profissional — 1 clique para validar e publicar.',
+    j3_upgrade: 'O seu período de teste termina em 4 dias. Ative o seu plano agora para continuar a monitorização sem interrupções.',
+    j3_cta: 'Ver o meu dashboard →',
+    j1_subject: 'RepuGuard está a monitorizar {business} — Bem-vindo a bordo!',
+    j1_title: 'A sua reputação está em boas mãos',
+    j1_body1: 'Desde que se registou, o RepuGuard monitoriza {business} em tempo real no Google, Trustpilot e TripAdvisor.',
+    j1_body2: 'Assim que uma avaliação negativa for detetada, receberá um alerta imediato e uma resposta profissional será gerada automaticamente.',
+    j1_cta: 'Ver o meu dashboard →',
+    j2_subject: '{business} ainda não está configurado — demora apenas 3 minutos',
+    j2_title: 'Ative a monitorização de {business}',
+    j2_step1: 'Inicie sessão no seu dashboard',
+    j2_step2: 'Verifique que o seu estabelecimento é encontrado corretamente',
+    j2_step3: 'Ative os alertas — tratamos do resto',
+    j2_urgency: 'Restam-lhe 5 dias de período de teste gratuito. Não o deixe expirar sem experimentar.',
+    j2_cta: 'Configurar agora →',
     report_subject: '📊 O seu relatório semanal RepuGuard — {period}',
     report_period_label: 'Relatório semanal · {period}',
     report_greeting: 'Olá {name} 👋',
@@ -360,6 +450,28 @@ const EMAIL_STRINGS = {
     trial_cta: 'إدارة اشتراكي →',
     hello: 'مرحبًا {name}،',
     questions: 'أسئلة؟ أجب على هذا البريد الإلكتروني.',
+    j3_subject: 'اليوم الثالث من تجربتك — سمعتك تُراقَب 🔍',
+    j3_title: 'RepuGuard يراقب {business} على مدار الساعة',
+    j3_tip1_title: 'أجب في غضون 24 ساعة',
+    j3_tip1: 'العملاء الذين يتلقون ردًا يعودون 3 مرات أكثر. ردك بالذكاء الاصطناعي جاهز بالفعل في لوحة التحكم.',
+    j3_tip2_title: 'نقاط محدّثة يوميًا',
+    j3_tip2: 'تتطور نقاط سمعتك العالمية في الوقت الفعلي — تابع تقدمك أسبوعًا بعد أسبوع.',
+    j3_tip3_title: 'ردود الذكاء الاصطناعي في الانتظار',
+    j3_tip3: 'كل تنبيه يُنشئ تلقائيًا ردًا احترافيًا — نقرة واحدة للتحقق منه ونشره.',
+    j3_upgrade: 'تجربتك تنتهي بعد 4 أيام. فعّل خطتك الآن لمواصلة المراقبة دون انقطاع.',
+    j3_cta: 'الذهاب إلى لوحة التحكم →',
+    j1_subject: 'RepuGuard يراقب {business} — مرحبًا بك!',
+    j1_title: 'سمعتك في أيدٍ أمينة',
+    j1_body1: 'منذ تسجيلك، يراقب RepuGuard {business} في الوقت الفعلي على Google وTrustpilot وTripAdvisor.',
+    j1_body2: 'بمجرد اكتشاف تقييم سلبي، ستتلقى تنبيهًا فوريًا وسيتم إنشاء رد احترافي تلقائيًا.',
+    j1_cta: 'الذهاب إلى لوحة التحكم →',
+    j2_subject: '{business} لم يتم إعداده بعد — يستغرق 3 دقائق فقط',
+    j2_title: 'فعّل مراقبة {business}',
+    j2_step1: 'سجّل الدخول إلى لوحة التحكم',
+    j2_step2: 'تحقق من أن نشاطك التجاري يظهر بشكل صحيح',
+    j2_step3: 'فعّل التنبيهات — نحن نتولى الباقي',
+    j2_urgency: 'لديك 5 أيام متبقية من التجربة المجانية. لا تدعها تنتهي دون تجربتها.',
+    j2_cta: 'إعداد الآن →',
     report_subject: '📊 تقريرك الأسبوعي لـ RepuGuard — {period}',
     report_period_label: 'التقرير الأسبوعي · {period}',
     report_greeting: 'مرحبًا {name} 👋',
@@ -428,6 +540,18 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Ogni avviso genera automaticamente una risposta professionale — 1 clic per convalidarla e pubblicarla.',
     j3_upgrade: 'Il tuo periodo di prova scade tra 4 giorni. Attiva il tuo piano ora per continuare il monitoraggio senza interruzioni.',
     j3_cta: 'Vai alla mia dashboard →',
+    j1_subject: 'RepuGuard monitora {business} — Benvenuto a bordo!',
+    j1_title: 'La tua reputazione è in buone mani',
+    j1_body1: 'Dal momento della tua iscrizione, RepuGuard monitora {business} in tempo reale su Google, Trustpilot e TripAdvisor.',
+    j1_body2: 'Non appena viene rilevata una recensione negativa, riceverai un avviso immediato e verrà generata automaticamente una risposta professionale.',
+    j1_cta: 'Vai alla mia dashboard →',
+    j2_subject: '{business} non è ancora configurato — bastano 3 minuti',
+    j2_title: 'Attiva il monitoraggio di {business}',
+    j2_step1: 'Accedi alla tua dashboard',
+    j2_step2: 'Verifica che la tua attività sia trovata correttamente',
+    j2_step3: 'Attiva gli avvisi — pensiamo a tutto noi',
+    j2_urgency: 'Hai ancora 5 giorni di prova gratuita. Non lasciarla scadere senza averla provata.',
+    j2_cta: 'Configura adesso →',
     report_subject: '📊 Il tuo rapporto settimanale RepuGuard — {period}',
     report_period_label: 'Rapporto settimanale · {period}',
     report_greeting: 'Ciao {name} 👋',
@@ -496,6 +620,18 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Elke melding genereert automatisch een professioneel antwoord — 1 klik om het te valideren en te publiceren.',
     j3_upgrade: 'Uw proefperiode eindigt over 4 dagen. Activeer uw plan nu om monitoring zonder onderbreking voort te zetten.',
     j3_cta: 'Naar mijn dashboard →',
+    j1_subject: 'RepuGuard monitort {business} — Welkom aan boord!',
+    j1_title: 'Uw reputatie is in goede handen',
+    j1_body1: 'Sinds uw aanmelding monitort RepuGuard {business} in realtime op Google, Trustpilot en TripAdvisor.',
+    j1_body2: 'Zodra een negatieve recensie wordt gedetecteerd, ontvangt u een direct bericht en wordt er automatisch een professioneel antwoord gegenereerd.',
+    j1_cta: 'Naar mijn dashboard →',
+    j2_subject: '{business} is nog niet ingesteld — duurt maar 3 minuten',
+    j2_title: 'Activeer monitoring voor {business}',
+    j2_step1: 'Log in op uw dashboard',
+    j2_step2: 'Controleer of uw bedrijf correct wordt gevonden',
+    j2_step3: 'Schakel meldingen in — wij doen de rest',
+    j2_urgency: 'U heeft nog 5 dagen gratis proefperiode. Laat het niet verlopen zonder het te proberen.',
+    j2_cta: 'Nu instellen →',
     report_subject: '📊 Uw wekelijks RepuGuard-rapport — {period}',
     report_period_label: 'Wekelijks rapport · {period}',
     report_greeting: 'Hallo {name} 👋',
@@ -564,6 +700,18 @@ const EMAIL_STRINGS = {
     j3_tip3: 'Каждое уведомление автоматически генерирует профессиональный ответ — 1 клик для подтверждения и публикации.',
     j3_upgrade: 'Ваш пробный период заканчивается через 4 дня. Активируйте тариф сейчас, чтобы продолжить мониторинг без перерывов.',
     j3_cta: 'Перейти в мою панель →',
+    j1_subject: 'RepuGuard отслеживает {business} — Добро пожаловать!',
+    j1_title: 'Ваша репутация в надёжных руках',
+    j1_body1: 'С момента регистрации RepuGuard отслеживает {business} в режиме реального времени на Google, Trustpilot и TripAdvisor.',
+    j1_body2: 'Как только обнаружится негативный отзыв, вы получите мгновенное уведомление, и профессиональный ответ будет сгенерирован автоматически.',
+    j1_cta: 'Перейти в мою панель →',
+    j2_subject: '{business} ещё не настроен — займёт всего 3 минуты',
+    j2_title: 'Активируйте мониторинг {business}',
+    j2_step1: 'Войдите в панель управления',
+    j2_step2: 'Убедитесь, что ваш бизнес найден корректно',
+    j2_step3: 'Включите уведомления — остальное мы сделаем сами',
+    j2_urgency: 'У вас осталось 5 дней бесплатного пробного периода. Не дайте ему истечь, не попробовав.',
+    j2_cta: 'Настроить сейчас →',
     report_subject: '📊 Ваш еженедельный отчёт RepuGuard — {period}',
     report_period_label: 'Еженедельный отчёт · {period}',
     report_greeting: 'Привет, {name} 👋',
@@ -994,6 +1142,82 @@ export default async function handler(req, res) {
 
         <div style="text-align:center;margin-bottom:24px;">
           <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j3_cta')}</a>
+        </div>
+        <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
+      </td></tr>
+      <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL ONBOARDING J1 (24h après inscription)
+    // ══════════════════════════════════
+    if (type === 'onboarding_j1') {
+      subject = eT(lang, 'j1_subject', {business: businessName || 'votre établissement'});
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;letter-spacing:-0.5px;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:40px;">
+        <p style="margin:0 0 8px;font-size:15px;color:#f1f5f9;">${eT(lang,'hello',{name:firstName})}</p>
+        <h1 style="margin:0 0 24px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang,'j1_title')}</h1>
+        <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+          <p style="margin:0 0 10px;font-size:14px;color:#94a3b8;line-height:1.6;">${eT(lang,'j1_body1',{business:businessName||'votre établissement'})}</p>
+          <p style="margin:0;font-size:14px;color:#94a3b8;line-height:1.6;">${eT(lang,'j1_body2')}</p>
+        </div>
+        <div style="background:#13151f;border-radius:10px;padding:14px 20px;margin-bottom:28px;">
+          <div style="font-size:12px;color:#475569;margin-bottom:4px;">${eT(lang,'welcome_monitored')}</div>
+          <div style="font-size:16px;font-weight:700;color:#f1f5f9;">${businessName || '—'}</div>
+        </div>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j1_cta')}</a>
+        </div>
+        <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
+      </td></tr>
+      <tr><td style="padding:20px 40px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <p style="margin:0;font-size:11px;color:#334155;">RepuGuard · repuguard.app · <a href="${unsubLink(email)}" style="color:#475569;">${eT(lang,'unsubscribe')}</a></p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+    }
+
+    // ══════════════════════════════════
+    // EMAIL ONBOARDING J2 (relance si pas encore configuré)
+    // ══════════════════════════════════
+    if (type === 'onboarding_j2') {
+      subject = eT(lang, 'j2_subject', {business: businessName || 'votre établissement'});
+      html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#07080f;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#07080f;padding:40px 20px;"><tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="background:#0e1018;border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+      <tr><td style="padding:32px 40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-weight:900;font-size:24px;color:#f1f5f9;letter-spacing:-0.5px;">Repu<span style="color:#818cf8;">Guard</span></div>
+      </td></tr>
+      <tr><td style="padding:40px;">
+        <p style="margin:0 0 8px;font-size:15px;color:#f1f5f9;">${eT(lang,'hello',{name:firstName})}</p>
+        <h1 style="margin:0 0 24px;font-size:22px;font-weight:800;color:#f1f5f9;">${eT(lang,'j2_title',{business:businessName||'votre établissement'})}</h1>
+        <div style="margin-bottom:16px;background:#13151f;border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:4px;">① ${eT(lang,'j2_step1')}</div>
+        </div>
+        <div style="margin-bottom:16px;background:#13151f;border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:4px;">② ${eT(lang,'j2_step2')}</div>
+        </div>
+        <div style="margin-bottom:24px;background:#13151f;border-radius:10px;padding:16px 20px;">
+          <div style="font-size:13px;font-weight:700;color:#818cf8;margin-bottom:4px;">③ ${eT(lang,'j2_step3')}</div>
+        </div>
+        <div style="background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);border-radius:10px;padding:14px 20px;margin-bottom:28px;">
+          <div style="font-size:13px;color:#fb923c;line-height:1.5;">⏳ ${eT(lang,'j2_urgency')}</div>
+        </div>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://repuguard.app/dashboard" style="display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${eT(lang,'j2_cta')}</a>
         </div>
         <p style="margin:0;font-size:12px;color:#475569;text-align:center;">${eT(lang,'questions')}</p>
       </td></tr>

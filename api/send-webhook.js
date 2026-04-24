@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       parsedUrl = new URL(webhookUrl);
       if (parsedUrl.protocol !== 'https:') throw new Error('HTTPS requis');
       const h = parsedUrl.hostname.toLowerCase();
-      if (/^(localhost|127\.|0\.0\.0\.0|::1$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h)) {
+      if (h.startsWith('[') || /^(localhost|127\.|0\.0\.0\.0|::1$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h)) {
         throw new Error('URL invalide');
       }
     } catch {

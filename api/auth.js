@@ -18,7 +18,15 @@ export default async function handler(req) {
     const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
     const CRON_SECRET = process.env.CRON_SECRET;
 
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
     if (action === 'signup') {
+      if (!email || !EMAIL_RE.test(email)) {
+        return new Response(JSON.stringify({ error: 'Adresse email invalide' }), { status: 400, headers });
+      }
+      if (!password || password.length < 8) {
+        return new Response(JSON.stringify({ error: 'Mot de passe trop court (8 caractères minimum)' }), { status: 400, headers });
+      }
       // 1. Créer le compte Supabase Auth
       const authRes = await fetch(SUPABASE_URL + '/auth/v1/signup', {
         method: 'POST',
@@ -50,7 +58,7 @@ export default async function handler(req) {
           business_name: businessName,
           sector: sector,
           country: country,
-          plan: plan || 'pro',
+          plan: plan || 'starter',
           trial_ends: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           active: true,
           lang: lang || 'fr',
@@ -83,7 +91,7 @@ export default async function handler(req) {
             email: email,
             firstName: firstName,
             businessName: businessName,
-            plan: plan || 'pro',
+            plan: plan || 'starter',
           }),
         }).catch(e => console.error('Email welcome error:', e))
       );
@@ -110,6 +118,9 @@ export default async function handler(req) {
     }
 
     if (action === 'login') {
+      if (!email || !EMAIL_RE.test(email)) {
+        return new Response(JSON.stringify({ error: 'Adresse email invalide' }), { status: 400, headers });
+      }
       const loginRes = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
         method: 'POST',
         headers: {

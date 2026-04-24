@@ -5,6 +5,19 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Keep in sync with PRICE_IDS in create-subscription.js
+const PRICE_TO_PLAN = {
+  [process.env.STRIPE_PRICE_STARTER  || 'price_1TJfMs4AfFLajYNswedRcOT5']: 'starter',
+  [process.env.STRIPE_PRICE_PRO      || 'price_1TJfOW4AfFLajYNsmOvVBxGj']: 'pro',
+  [process.env.STRIPE_PRICE_BUSINESS || 'price_1TJfPU4AfFLajYNsJtTIsjl3']: 'business',
+};
+
+function getPlanFromPriceId(priceId) {
+  if (!priceId) return 'starter';
+  return PRICE_TO_PLAN[priceId] || 'starter';
+}
+
+
 // Atomically insert event id — returns true if newly inserted, false if duplicate
 async function claimEvent(eventId) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/processed_webhook_events`, {
@@ -88,6 +101,8 @@ export default async function handler(req, res) {
           if (invoice.subscription) {
             const sub = await stripe.subscriptions.retrieve(invoice.subscription);
             if (sub?.current_period_end) patch.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+            const priceId = sub?.items?.data?.[0]?.price?.id;
+            patch.plan = getPlanFromPriceId(priceId);
           }
           await patchClient(`email=eq.${encodeURIComponent(customer.email)}`, patch);
         }
@@ -135,11 +150,13 @@ export default async function handler(req, res) {
 
       case 'customer.subscription.updated': {
         const sub = event.data.object;
+        const priceId = sub.items?.data?.[0]?.price?.id;
         const customer = await stripe.customers.retrieve(sub.customer);
         await patchClient(`email=eq.${encodeURIComponent(customer.email)}`, {
           subscription_status: sub.status,
           active: sub.status === 'active' || sub.status === 'trialing',
           current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+          plan: getPlanFromPriceId(priceId),
         });
         break;
       }

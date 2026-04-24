@@ -24,13 +24,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ synced: 0, message: 'No clients to sync' });
     }
 
-    console.log(`Cron sync starting: ${clients.length} clients`);
     const results = [];
     const baseUrl = process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app';
 
     for (const client of clients) {
       try {
-        const syncRes = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://repuguard.app'}/api/fetch-reviews`, {
+        const syncRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
           body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr', autoRespond5star: !!client.auto_respond_5star }),
@@ -46,17 +45,16 @@ export default async function handler(req, res) {
     }
 
     const succeeded = results.filter(r => r.success).length;
-    console.log(`Cron sync Google done: ${succeeded}/${clients.length}`);
 
     // TripAdvisor sync — only for clients who have a TripAdvisor location
     const taClients = clients.filter(c => c.tripadvisor_location_id);
     const taResults = [];
     for (const client of taClients) {
       try {
-        const taRes = await fetch(`${baseUrl}/api/fetch-reviews-tripadvisor`, {
+        const taRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
-          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+          body: JSON.stringify({ platform: 'tripadvisor', businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
         });
         const taData = await taRes.json();
         taResults.push({ clientId: client.id, success: true, reviewsFetched: taData.reviewsFetched || 0 });
@@ -65,17 +63,15 @@ export default async function handler(req, res) {
       }
       await sleep(THROTTLE_MS);
     }
-    console.log(`Cron sync TripAdvisor done: ${taResults.filter(r => r.success).length}/${taClients.length}`);
-
     // Trustpilot sync — only for clients who have connected their account
     const tpClients = clients.filter(c => c.trustpilot_business_id);
     const tpResults = [];
     for (const client of tpClients) {
       try {
-        const tpRes = await fetch(`${baseUrl}/api/fetch-reviews-trustpilot`, {
+        const tpRes = await fetch(`${baseUrl}/api/fetch-reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CRON_SECRET },
-          body: JSON.stringify({ businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
+          body: JSON.stringify({ platform: 'trustpilot', businessName: client.business_name, location: client.country, clientId: client.id, lang: client.lang || 'fr' }),
         });
         const tpData = await tpRes.json();
         tpResults.push({ clientId: client.id, success: true, reviewsFetched: tpData.reviewsFetched || 0 });
@@ -94,7 +90,6 @@ export default async function handler(req, res) {
     );
     const j7Clients = await j7Res.json();
     if (Array.isArray(j7Clients) && j7Clients.length > 0) {
-      console.log(`Sending J7 trial-ending email to ${j7Clients.length} clients`);
       for (const c of j7Clients) {
         fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
@@ -113,13 +108,12 @@ export default async function handler(req, res) {
     );
     const j1Clients = await j1Res.json();
     if (Array.isArray(j1Clients) && j1Clients.length > 0) {
-      console.log(`Sending J1 onboarding email to ${j1Clients.length} clients`);
       for (const c of j1Clients) {
-        await fetch(`${baseUrl}/api/send-email`, {
+        fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'onboarding_j1', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
-        });
+        }).catch(e => console.error('J1 email error:', e.message));
       }
     }
 
@@ -132,21 +126,23 @@ export default async function handler(req, res) {
     );
     const j2Candidates = await j2Res.json();
     let j2_emails = 0;
-    if (Array.isArray(j2Candidates)) {
+    if (Array.isArray(j2Candidates) && j2Candidates.length > 0) {
+      // Single query to find which j2 candidates already have reviews
+      const ids = j2Candidates.map(c => c.id).join(',');
+      const rvRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/reviews?client_id=in.(${ids})&select=client_id`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      const rvRows = await rvRes.json();
+      const clientsWithReviews = new Set(Array.isArray(rvRows) ? rvRows.map(r => r.client_id) : []);
+
       for (const c of j2Candidates) {
-        // Vérifier s'il a des avis (= déjà activé)
-        const rvRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/reviews?client_id=eq.${c.id}&select=id&limit=1`,
-          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-        );
-        const rv = await rvRes.json();
-        if (Array.isArray(rv) && rv.length === 0) {
-          // Pas encore d'avis = pas activé → relance
-          await fetch(`${baseUrl}/api/send-email`, {
+        if (!clientsWithReviews.has(c.id)) {
+          fetch(`${baseUrl}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'onboarding_j1', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
-          });
+            body: JSON.stringify({ type: 'onboarding_j2', email: c.email, firstName: c.first_name, businessName: c.business_name, lang: c.lang || 'fr' }),
+          }).catch(e => console.error('J2 email error:', e.message));
           j2_emails++;
         }
       }
@@ -161,7 +157,6 @@ export default async function handler(req, res) {
     );
     const j3Clients = await j3Res.json();
     if (Array.isArray(j3Clients) && j3Clients.length > 0) {
-      console.log(`Sending J3 onboarding email to ${j3Clients.length} clients`);
       for (const c of j3Clients) {
         fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
