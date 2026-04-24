@@ -58,7 +58,7 @@ export default async function handler(req) {
           business_name: businessName,
           sector: sector,
           country: country,
-          plan: plan || 'pro',
+          plan: plan || 'starter',
           trial_ends: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           active: true,
           lang: lang || 'fr',
@@ -91,7 +91,7 @@ export default async function handler(req) {
             email: email,
             firstName: firstName,
             businessName: businessName,
-            plan: plan || 'pro',
+            plan: plan || 'starter',
           }),
         }).catch(e => console.error('Email welcome error:', e))
       );

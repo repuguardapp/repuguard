@@ -871,7 +871,7 @@
     // Bandeau trial
     const trialBanner = document.getElementById('trialBanner');
     if (trialBanner && client.trial_ends) {
-      const trialEnd = new Date(RG.client.trial_ends);
+      const trialEnd = new Date(client.trial_ends);
       const now = new Date();
       const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
       if (daysLeft > 0) {
@@ -912,7 +912,7 @@
     // Sidebar
     document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';
     document.querySelector('.biz-type').textContent = [client.sector, client.country].filter(Boolean).join(' · ');
-    const plan = client.plan || 'pro';
+    const plan = client.plan || 'starter';
     document.querySelector('.plan-name').textContent = '✦ Plan ' + plan[0].toUpperCase() + plan.slice(1);
     const name = [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email;
     document.querySelector('.user-name').textContent = name;
