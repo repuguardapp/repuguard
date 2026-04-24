@@ -5,12 +5,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
-// TODO: Add these 3 env vars in Vercel dashboard (Settings → Environment Variables)
-//   STRIPE_PRICE_STARTER  = price_1TJfMs4AfFLajYNswedRcOT5
-//   STRIPE_PRICE_PRO      = price_1TJfOW4AfFLajYNsmOvVBxGj
-//   STRIPE_PRICE_BUSINESS = price_1TJfPU4AfFLajYNsJtTIsjl3
-// Use different values for test mode vs live mode.
-// Fallbacks below = current production IDs (keep in sync with create-subscription.js).
+// Keep in sync with PRICE_IDS in create-subscription.js
 const PRICE_TO_PLAN = {
   [process.env.STRIPE_PRICE_STARTER  || 'price_1TJfMs4AfFLajYNswedRcOT5']: 'starter',
   [process.env.STRIPE_PRICE_PRO      || 'price_1TJfOW4AfFLajYNsmOvVBxGj']: 'pro',
@@ -21,6 +16,7 @@ function getPlanFromPriceId(priceId) {
   if (!priceId) return 'starter';
   return PRICE_TO_PLAN[priceId] || 'starter';
 }
+
 
 // Atomically insert event id — returns true if newly inserted, false if duplicate
 async function claimEvent(eventId) {

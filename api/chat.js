@@ -3,14 +3,14 @@ export const config = { runtime: 'edge' };
 const SYSTEM = `Tu es l'assistant RepuGuard, une plateforme SaaS de surveillance de réputation en ligne.
 
 PRODUIT :
-- Surveille actuellement : Google Reviews et Trustpilot. TripAdvisor, Facebook et Booking.com en cours d'intégration (disponibles bientôt)
-- Alertes instantanées par email et SMS dès qu'un avis ou une mention négative est détectée
+- Surveille actuellement : Google Reviews, Trustpilot et TripAdvisor. Facebook et Booking.com en cours d'intégration (disponibles bientôt)
+- Alertes instantanées par email et SMS dès qu'un avis négatif est détecté
 - Réponses professionnelles rédigées automatiquement par IA, dans la langue du client
 - Score de réputation global mis à jour en temps réel
 - Configuration en moins de 5 minutes, aucune compétence technique requise
 
 PLANS (tous avec 7 jours d'essai gratuit, sans carte bancaire) :
-- Starter 29€/mois : 1 établissement, 8 plateformes, alertes email, rapport mensuel, 5 réponses IA/mois
+- Starter 29€/mois : 1 établissement, Google + Trustpilot + TripAdvisor, alertes email, rapport mensuel, 5 réponses IA/mois
 - Pro 69€/mois : 3 établissements, toutes plateformes disponibles, alertes email + SMS, rapport hebdomadaire, réponses IA illimitées, score réputation temps réel
 - Business 149€/mois : 10 établissements, toutes plateformes, alertes prioritaires, rapports white-label, accès API, support prioritaire
 
@@ -33,6 +33,12 @@ export default async function handler(req) {
 
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+
+  // Block requests not originating from repuguard.app (blocks bots, scrapers, direct API abuse)
+  const origin = req.headers.get('origin') || req.headers.get('referer') || '';
+  if (!origin.startsWith('https://repuguard.app')) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers });
+  }
 
   try {
     const body = await req.json();
@@ -66,6 +72,7 @@ export default async function handler(req) {
         system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
         messages: [...safeHistory, { role: 'user', content: safeMessage }],
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!aiRes.ok) {

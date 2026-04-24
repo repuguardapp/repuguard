@@ -74,6 +74,7 @@ async function handleGoogle(body, res) {
       'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.formattedAddress',
     },
     body: JSON.stringify({ textQuery: `${businessName} ${location || ''}`, languageCode: reviewLang }),
+    signal: AbortSignal.timeout(10000),
   });
   const searchData = await searchRes.json();
   if (!searchData.places?.length) {
@@ -92,6 +93,7 @@ async function handleGoogle(body, res) {
       'X-Goog-FieldMask': 'id,displayName,rating,userRatingCount,reviews',
       'Accept-Language': reviewLang,
     },
+    signal: AbortSignal.timeout(10000),
   });
   const detailsData = await detailsRes.json();
   const reviews     = detailsData.reviews || [];
@@ -147,7 +149,7 @@ async function handleTrustpilot(body, res) {
   const { businessName, location, clientId } = body;
 
   const searchUrl = `https://api.trustpilot.com/v1/business-units/search?query=${encodeURIComponent(businessName)}${location ? '&country=' + encodeURIComponent(location) : ''}&apikey=${TRUSTPILOT_KEY}`;
-  const searchData = await (await fetch(searchUrl)).json();
+  const searchData = await (await fetch(searchUrl, { signal: AbortSignal.timeout(10000) })).json();
   if (!searchData.businesses?.length) {
     return res.status(404).json({ error: 'Établissement non trouvé sur Trustpilot', query: businessName });
   }
@@ -158,7 +160,7 @@ async function handleTrustpilot(body, res) {
   const totalReviews   = business.numberOfReviews?.total || 0;
 
   const reviewsUrl  = `https://api.trustpilot.com/v1/business-units/${businessUnitId}/reviews?apikey=${TRUSTPILOT_KEY}&perPage=20&orderBy=createdat.desc`;
-  const reviews     = (await (await fetch(reviewsUrl)).json()).reviews || [];
+  const reviews     = (await (await fetch(reviewsUrl, { signal: AbortSignal.timeout(10000) })).json()).reviews || [];
   const negativeReviews = reviews.filter(r => (r.stars || 0) <= 2);
 
   await Promise.all(reviews.map(review =>
@@ -206,7 +208,7 @@ async function handleTripAdvisor(body, res) {
 
   const searchData = await (await fetch(
     `${TA_BASE}/search?searchQuery=${encodeURIComponent(businessName + (location ? ' ' + location : ''))}&language=${language}&key=${TRIPADVISOR_KEY}`,
-    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } }
+    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) }
   )).json();
   if (!searchData.data?.length) {
     return res.status(404).json({ error: 'Établissement non trouvé sur TripAdvisor', query: businessName });
@@ -216,12 +218,12 @@ async function handleTripAdvisor(body, res) {
   const locationName = searchData.data[0].name || businessName;
 
   const details    = await (await fetch(`${TA_BASE}/${locationId}/details?language=${language}&key=${TRIPADVISOR_KEY}`,
-    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } })).json();
+    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) })).json();
   const avgRating  = parseFloat(details.rating || 0);
   const totalReviews = parseInt(details.num_reviews || 0, 10);
 
   const reviews    = (await (await fetch(`${TA_BASE}/${locationId}/reviews?language=${language}&key=${TRIPADVISOR_KEY}`,
-    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' } })).json()).data || [];
+    { headers: { 'Accept': 'application/json', 'Origin': 'https://repuguard.app' }, signal: AbortSignal.timeout(10000) })).json()).data || [];
   const negativeReviews = reviews.filter(r => (r.rating || 0) <= 2);
 
   await Promise.all(reviews.map(review =>
