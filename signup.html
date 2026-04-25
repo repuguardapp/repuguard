@@ -763,12 +763,14 @@
 
       // Step 2 — Create Stripe subscription FIRST: if card/Stripe fails, no DB record created
       const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:userEmail, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
-      const subData = await subRes.json();
-      if (subData.error) { showErr(subData.error); return; }
+      let subData;
+      try { subData = await subRes.json(); } catch(_) { showErr('Erreur réseau — veuillez réessayer.'); return; }
+      if (!subRes.ok || subData.error) { showErr(subData.error || 'Erreur lors du paiement.'); return; }
 
       // Step 3 — Create Supabase account only after Stripe validated the payment method
       const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
-      const authData = await authRes.json();
+      let authData;
+      try { authData = await authRes.json(); } catch(_) { showErr('Erreur réseau — veuillez réessayer.'); return; }
       if (authData.error) {
         // Rollback: cancel the Stripe subscription so no orphaned billing record
         fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'},
@@ -780,8 +782,7 @@
 
       showSuccess();
     } catch(err) {
-      errDiv.textContent = t('error_payment_generic');
-      errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none';
+      showErr(err.message || t('error_payment_generic'));
     }
   }
 

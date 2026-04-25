@@ -61,7 +61,6 @@ export default async function handler(req, res) {
         payment_method_types: ['card'],
         save_default_payment_method: 'on_subscription',
       },
-      expand: ['latest_invoice.payment_intent'],
     });
 
     return res.status(200).json({
@@ -74,6 +73,18 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Stripe error:', error);
-    return res.status(500).json({ error: error.message || 'Une erreur est survenue' });
+    const STRIPE_FR = {
+      card_declined:       'Carte refusée par votre banque. Contactez votre banque ou utilisez une autre carte.',
+      insufficient_funds:  'Fonds insuffisants sur la carte.',
+      expired_card:        'Carte expirée. Veuillez utiliser une autre carte.',
+      incorrect_cvc:       'Code CVV incorrect.',
+      incorrect_number:    'Numéro de carte invalide.',
+      invalid_expiry_year: 'Date d\'expiration invalide.',
+      invalid_expiry_month:'Date d\'expiration invalide.',
+      payment_method_already_attached: 'Cette carte est déjà enregistrée. Réessayez.',
+    };
+    const code = error.raw?.code || error.code;
+    const msg = STRIPE_FR[code] || error.message || 'Erreur lors du paiement. Veuillez réessayer.';
+    return res.status(400).json({ error: msg });
   }
 }
