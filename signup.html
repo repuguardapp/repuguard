@@ -751,21 +751,29 @@
     btn.disabled = true; txt.style.display = 'none'; spin.style.display = 'block'; errDiv.style.display = 'none';
 
     try {
-      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:document.getElementById('email').value } });
+      const userEmail = document.getElementById('email').value.trim();
+      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:userEmail } });
       if (error) { errDiv.textContent = error.message; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:document.getElementById('email').value, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
-      const subData = await subRes.json();
-      if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      // Step 2 — Create Stripe subscription FIRST: if card/Stripe fails, no DB record created
+      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:userEmail, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
+      let subData;
+      try { subData = await subRes.json(); } catch(_) { errDiv.textContent = 'Erreur serveur (HTTP ' + subRes.status + '). Vérifiez les logs Vercel.'; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      if (!subRes.ok || subData.error) { errDiv.textContent = subData.error || 'Erreur lors du paiement.'; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
 
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referralCode:sessionStorage.getItem('rg-ref')||'' }) });
-      const authData = await authRes.json();
-      if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      // Step 3 — Create Supabase account only after Stripe validated the payment method
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
+      let authData;
+      try { authData = await authRes.json(); } catch(_) { errDiv.textContent = 'Erreur serveur (auth). Vérifiez les logs Vercel.'; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      if (authData.error) {
+        // Rollback: cancel the Stripe subscription since Supabase account creation failed
+        fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'cancel', subscriptionId:subData.subscriptionId, email:userEmail }) }).catch(() => {});
+        errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return;
+      }
 
       showSuccess();
     } catch(err) {
-      errDiv.textContent = t('error_payment_generic');
-      errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none';
+      errDiv.textContent = err.message || t('error_payment_generic'); errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none';
     }
   }
 
