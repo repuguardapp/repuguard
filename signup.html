@@ -754,20 +754,29 @@
     const resetBtn = () => { btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; };
     const showErr = (msg) => { errDiv.textContent = msg; errDiv.style.display = 'block'; resetBtn(); };
 
+    const userEmail = document.getElementById('email').value;
+
     try {
-      // Step 1 — Stripe payment method
-      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:document.getElementById('email').value } });
+      // Step 1 — Validate card with Stripe.js (client-side, no account created yet)
+      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:userEmail } });
       if (error) { showErr(error.message); return; }
 
-      // Step 2 — Create Supabase account FIRST (so no orphaned Stripe sub if this fails)
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
-      const authData = await authRes.json();
-      if (authData.error) { showErr(authData.error); return; }
-
-      // Step 3 — Create Stripe subscription AFTER user exists in Supabase
-      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:document.getElementById('email').value, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
+      // Step 2 — Create Stripe subscription FIRST: if card/Stripe fails, no DB record created
+      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:userEmail, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
       const subData = await subRes.json();
       if (subData.error) { showErr(subData.error); return; }
+
+      // Step 3 — Create Supabase account only after Stripe validated the payment method
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
+      const authData = await authRes.json();
+      if (authData.error) {
+        // Rollback: cancel the Stripe subscription so no orphaned billing record
+        fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'cancel', subscriptionId:subData.subscriptionId, email:userEmail })
+        }).catch(() => {});
+        showErr(authData.error);
+        return;
+      }
 
       showSuccess();
     } catch(err) {

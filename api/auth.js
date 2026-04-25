@@ -48,9 +48,13 @@ export default async function handler(req) {
       });
       const authData = await authRes.json();
       if (!authRes.ok || authData.error || authData.msg) {
-        const msg = (typeof authData.error === 'object' ? authData.error?.message : authData.error)
-          || authData.msg || authData.message || 'Erreur lors de la création du compte';
-        return new Response(JSON.stringify({ error: msg }), { status: 400, headers });
+        const rawMsg = authData.msg
+          || (typeof authData.error === 'object' ? authData.error?.message : authData.error)
+          || authData.message || '';
+        const friendlyMsg = /already registered|already exists|duplicate/i.test(rawMsg)
+          ? 'Cet email est déjà utilisé. Connectez-vous ou réinitialisez votre mot de passe.'
+          : rawMsg || 'Erreur lors de la création du compte';
+        return new Response(JSON.stringify({ error: friendlyMsg }), { status: 400, headers });
       }
       const userId = authData.user?.id ?? authData.id;
 
@@ -144,7 +148,19 @@ export default async function handler(req) {
         body: JSON.stringify({ email: email, password: password }),
       });
       const loginData = await loginRes.json();
-      if (loginData.error) return new Response(JSON.stringify({ error: 'Email ou mot de passe incorrect' }), { status: 401, headers });
+      if (loginData.error) {
+        // Check if the email exists in clients to give a specific message
+        const chkRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?email=eq.${encodeURIComponent(email)}&select=id`,
+          { headers: { 'apikey': SUPABASE_SECRET_KEY, 'Authorization': 'Bearer ' + SUPABASE_SECRET_KEY } }
+        );
+        const chkRows = await chkRes.json();
+        const emailKnown = Array.isArray(chkRows) && chkRows.length > 0;
+        const loginErrMsg = emailKnown
+          ? 'Mot de passe incorrect.'
+          : 'Cet email n\'est pas reconnu. Vérifiez votre adresse ou créez un compte.';
+        return new Response(JSON.stringify({ error: loginErrMsg }), { status: 401, headers });
+      }
       const u = loginData.user || {};
       return new Response(JSON.stringify({ success: true, token: loginData.access_token, user: { id: u.id, email: u.email, user_metadata: u.user_metadata } }), { status: 200, headers });
     }

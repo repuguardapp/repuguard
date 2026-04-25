@@ -14,6 +14,19 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    // Rollback: cancel a subscription if Supabase account creation failed after Stripe succeeded
+    if (req.body.action === 'cancel') {
+      const { subscriptionId, email } = req.body;
+      if (!subscriptionId || !email) return res.status(400).json({ error: 'Paramètres manquants' });
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      const customer = await stripe.customers.retrieve(sub.customer);
+      if (customer.email.toLowerCase() !== email.toLowerCase()) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      await stripe.subscriptions.cancel(subscriptionId);
+      return res.status(200).json({ cancelled: true });
+    }
+
     const { paymentMethodId, priceId, email, name } = req.body;
 
     if (!paymentMethodId || !priceId || !email) {
@@ -50,26 +63,6 @@ export default async function handler(req, res) {
       },
       expand: ['latest_invoice.payment_intent'],
     });
-
-    // Patch Supabase immediately so the client record is consistent
-    // (webhook will also fire, this is belt-and-suspenders)
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
-    if (SUPABASE_URL && SUPABASE_KEY) {
-      fetch(`${SUPABASE_URL}/rest/v1/clients?email=eq.${encodeURIComponent(email)}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Prefer': 'return=minimal',
-        },
-        body: JSON.stringify({
-          stripe_customer_id: customer.id,
-          subscription_status: subscription.status,
-        }),
-      }).catch(() => {});
-    }
 
     return res.status(200).json({
       success: true,
