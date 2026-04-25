@@ -51,6 +51,26 @@ export default async function handler(req, res) {
       expand: ['latest_invoice.payment_intent'],
     });
 
+    // Patch Supabase immediately so the client record is consistent
+    // (webhook will also fire, this is belt-and-suspenders)
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY;
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      fetch(`${SUPABASE_URL}/rest/v1/clients?email=eq.${encodeURIComponent(email)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          stripe_customer_id: customer.id,
+          subscription_status: subscription.status,
+        }),
+      }).catch(() => {});
+    }
+
     return res.status(200).json({
       success: true,
       subscriptionId: subscription.id,

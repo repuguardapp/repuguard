@@ -623,7 +623,8 @@
 <script>
   // STRIPE
   const STRIPE_KEY = 'pk_live_51TJfAg30bQbmpNCi24gPPWAiUdWzuBzd8S0o0rpqBm8M8YDQuagXea5qmAkQaoYYLZchYQXfjtIKXiIESvxNdddz006TeICIs7';
-  const PRICE_IDS = { starter:'price_1TJfMs4AfFLajYNswedRcOT5', pro:'price_1TJfOW4AfFLajYNsmOvVBxGj', business:'price_1TJfPU4AfFLajYNsJtTIsjl3' };
+  // Loaded from API on init — prevents mismatch with server-side VALID_PRICE_IDS whitelist
+  let PRICE_IDS = { starter:'price_1TJfMs4AfFLajYNswedRcOT5', pro:'price_1TJfOW4AfFLajYNsmOvVBxGj', business:'price_1TJfPU4AfFLajYNsJtTIsjl3' };
   let stripe, cardNumber, cardExpiry, cardCvc;
   let selectedPlan = { id:'pro', price:69, name:'Pro' };
 
@@ -750,17 +751,23 @@
 
     btn.disabled = true; txt.style.display = 'none'; spin.style.display = 'block'; errDiv.style.display = 'none';
 
-    try {
-      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:document.getElementById('email').value } });
-      if (error) { errDiv.textContent = error.message; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+    const resetBtn = () => { btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; };
+    const showErr = (msg) => { errDiv.textContent = msg; errDiv.style.display = 'block'; resetBtn(); };
 
+    try {
+      // Step 1 — Stripe payment method
+      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:document.getElementById('email').value } });
+      if (error) { showErr(error.message); return; }
+
+      // Step 2 — Create Supabase account FIRST (so no orphaned Stripe sub if this fails)
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
+      const authData = await authRes.json();
+      if (authData.error) { showErr(authData.error); return; }
+
+      // Step 3 — Create Stripe subscription AFTER user exists in Supabase
       const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:document.getElementById('email').value, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
       const subData = await subRes.json();
-      if (subData.error) { errDiv.textContent = subData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
-
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:document.getElementById('email').value, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referralCode:sessionStorage.getItem('rg-ref')||'' }) });
-      const authData = await authRes.json();
-      if (authData.error) { errDiv.textContent = authData.error; errDiv.style.display = 'block'; btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; return; }
+      if (subData.error) { showErr(subData.error); return; }
 
       showSuccess();
     } catch(err) {
@@ -789,9 +796,15 @@
     if (ref) sessionStorage.setItem('rg-ref', ref);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     initI18n();
     initFromUrl();
+    // Sync price IDs with server to prevent validation mismatch
+    try {
+      const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'plans' }) });
+      const p = await r.json();
+      if (p.starter && p.pro && p.business) PRICE_IDS = p;
+    } catch(_) {}
     var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
     document.querySelectorAll('input, select').forEach(el => {
       el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });

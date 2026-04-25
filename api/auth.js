@@ -20,6 +20,15 @@ export default async function handler(req) {
 
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+    // Expose plan price IDs to the frontend (prevents hardcoded mismatch)
+    if (action === 'plans') {
+      return new Response(JSON.stringify({
+        starter:  process.env.STRIPE_PRICE_STARTER  || 'price_1TJfMs4AfFLajYNswedRcOT5',
+        pro:      process.env.STRIPE_PRICE_PRO      || 'price_1TJfOW4AfFLajYNsmOvVBxGj',
+        business: process.env.STRIPE_PRICE_BUSINESS || 'price_1TJfPU4AfFLajYNsJtTIsjl3',
+      }), { status: 200, headers });
+    }
+
     if (action === 'signup') {
       if (!email || !EMAIL_RE.test(email)) {
         return new Response(JSON.stringify({ error: 'Adresse email invalide' }), { status: 400, headers });
@@ -38,8 +47,12 @@ export default async function handler(req) {
         body: JSON.stringify({ email: email, password: password }),
       });
       const authData = await authRes.json();
-      if (authData.error) return new Response(JSON.stringify({ error: authData.error.message || authData.msg }), { status: 400, headers });
-      const userId = authData.user ? authData.user.id : authData.id;
+      if (!authRes.ok || authData.error || authData.msg) {
+        const msg = (typeof authData.error === 'object' ? authData.error?.message : authData.error)
+          || authData.msg || authData.message || 'Erreur lors de la création du compte';
+        return new Response(JSON.stringify({ error: msg }), { status: 400, headers });
+      }
+      const userId = authData.user?.id ?? authData.id;
 
       // 2. Créer le profil client dans Supabase
       await fetch(SUPABASE_URL + '/rest/v1/clients', {
