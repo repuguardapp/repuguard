@@ -59,7 +59,10 @@
   .layout { display: flex; height: 100vh; }
 
   /* SIDEBAR */
-  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; position: relative; z-index: 10; }
+  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; }
+  .sidebar-nav { flex: 1; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+  .sidebar-nav::-webkit-scrollbar { width: 3px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   .sidebar::after { content:''; position:absolute; top:0; right:0; width:1px; height:100%; background:linear-gradient(to bottom,transparent,var(--accent),transparent); opacity:0.3; }
   .logo-area { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
   .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; letter-spacing:-0.5px; color:var(--text); }
@@ -78,7 +81,7 @@
   .nav-icon { width:18px; text-align:center; font-size:15px; }
   .nav-badge { margin-left:auto; background:var(--red); color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; }
   .nav-badge.blue { background:var(--accent); }
-  .sidebar-footer { margin-top:auto; padding:16px 12px; border-top:1px solid var(--border); }
+  .sidebar-footer { flex-shrink:0; padding:16px 12px; border-top:1px solid var(--border); }
   .plan-badge { background:linear-gradient(135deg,var(--accent-dim),rgba(167,139,250,0.08)); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:12px; margin-bottom:12px; }
   .plan-name { font-size:11px; color:var(--accent2); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px; }
   .plan-desc { font-size:11px; color:var(--text3); }
@@ -343,7 +346,7 @@
   <aside class="sidebar">
     <div class="logo-area">
       <div class="logo">Repu<span>Guard</span></div>
-      <div class="business-selector">
+      <div class="business-selector" onclick="showToast('Prochainement — Gestion multi-établissements', '')">
         <div class="biz-icon">🍽️</div>
         <div class="biz-info">
           <div class="biz-name">Le Provençal</div>
@@ -353,6 +356,7 @@
       </div>
     </div>
 
+    <div class="sidebar-nav">
     <div class="nav-section">
       <div class="nav-label">Principal</div>
       <div class="nav-item active" data-section="overview"><span class="nav-icon">⬡</span> <span data-i18n="nav_overview">Vue d'ensemble</span></div>
@@ -390,6 +394,7 @@
         <option value="ru">🇷🇺 Русский</option>
       </select>
     </div>
+    </div><!-- end .sidebar-nav -->
 
     <div class="sidebar-footer">
       <div class="plan-badge">
@@ -414,7 +419,7 @@
       <div class="topbar-right">
         <div class="last-update" id="lastUpdate"><div class="status-dot"></div>Dernière analyse il y a 4 min</div>
         <button id="syncBtn" class="topbar-btn" onclick="syncReviews()" title="Synchroniser les avis" style="font-size:16px;">↻</button>
-        <div class="topbar-btn">🔔<div class="notif-dot"></div></div>
+        <div class="topbar-btn" onclick="navigate('notifications')" title="Notifications" style="cursor:pointer;">🔔<div class="notif-dot"></div></div>
         <div class="theme-toggle" id="themeToggle" onclick="toggleDashTheme()" title="Changer le thème"></div>
         <div class="topbar-btn" onclick="logout()" title="Se déconnecter" style="cursor:pointer;">↗</div>
       </div>
@@ -454,7 +459,7 @@
             <div class="card">
               <div class="card-header">
                 <div class="card-title">◈ Évolution du score</div>
-                <div style="display:flex;gap:6px;"><span class="chart-tab active">30j</span><span class="chart-tab">7j</span><span class="chart-tab">90j</span></div>
+                <div style="display:flex;gap:6px;" id="chartTabs"><span class="chart-tab active" onclick="switchChartTab(this)">30j</span><span class="chart-tab" onclick="switchChartTab(this)">7j</span><span class="chart-tab" onclick="switchChartTab(this)">90j</span></div>
               </div>
               <div class="score-big-wrap">
                 <div class="score-circle"><div class="score-circle-inner">4.5</div></div>
@@ -683,10 +688,10 @@
       <!-- RAPPORTS -->
       <div class="section" id="sec-rapports">
         <div class="card">
-          <div class="card-header"><div class="card-title">📄 Rapports</div><button class="btn-sm btn-primary">+ Générer</button></div>
+          <div class="card-header"><div class="card-title">📄 Rapports</div><button class="btn-sm btn-primary" onclick="showToast('Génération de rapports — Prochainement', '')">+ Générer</button></div>
           <div class="alerts-list">
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">Lundi 08:00</span></div><div class="alert-text"><strong>Rapport hebdomadaire</strong> — Semaine du 7 au 14 avril</div><div class="alert-detail">847 avis · Score moyen 4.5</div><div class="alert-actions"><button class="btn-sm btn-primary">↓ Télécharger</button></div></div>
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">1 avril</span></div><div class="alert-text"><strong>Rapport mensuel</strong> — Mars 2026</div><div class="alert-detail">835 avis · Score moyen 4.3</div><div class="alert-actions"><button class="btn-sm btn-primary">↓ Télécharger</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">Lundi 08:00</span></div><div class="alert-text"><strong>Rapport hebdomadaire</strong> — Semaine du 7 au 14 avril</div><div class="alert-detail">847 avis · Score moyen 4.5</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="showToast('Téléchargement PDF — Prochainement', '')">↓ Télécharger</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">1 avril</span></div><div class="alert-text"><strong>Rapport mensuel</strong> — Mars 2026</div><div class="alert-detail">835 avis · Score moyen 4.3</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="showToast('Téléchargement PDF — Prochainement', '')">↓ Télécharger</button></div></div>
           </div>
         </div>
       </div>
@@ -722,9 +727,9 @@
           </div>
         </div>
         <div class="plan-grid">
-          <div class="plan-card" data-plan="starter"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;">Rétrograder</button></div>
-          <div class="plan-card current" data-plan="pro"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;">Plan actuel</button></div>
-          <div class="plan-card" data-plan="business"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;">Passer au Business</button></div>
+          <div class="plan-card" data-plan="starter"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;" onclick="manageSubscription()">Rétrograder</button></div>
+          <div class="plan-card current" data-plan="pro"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;" disabled>Plan actuel</button></div>
+          <div class="plan-card" data-plan="business"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;" onclick="manageSubscription()">Passer au Business</button></div>
         </div>
       </div>
 
@@ -790,7 +795,7 @@
         </div>
         <div class="card" style="border-color:rgba(248,113,113,0.2);">
           <div class="settings-title" style="color:var(--red);">Zone de danger</div>
-          <div class="settings-row"><div><div class="settings-label">Supprimer le compte</div><div class="settings-sub">Cette action est irréversible</div></div><button class="btn-sm" style="background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.2);">Supprimer</button></div>
+          <div class="settings-row"><div><div class="settings-label">Supprimer le compte</div><div class="settings-sub">Contactez le support pour supprimer votre compte</div></div><button class="btn-sm" style="background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.2);" onclick="showToast('Pour supprimer votre compte, contactez support@repuguard.app', 'red')">Supprimer</button></div>
         </div>
       </div>
 
@@ -840,6 +845,22 @@
     const n = (p||'google').toLowerCase();
     const cls = {google:'google',twitter:'twitter',tripadvisor:'tripadvisor',trustpilot:'trustpilot'}[n] || '';
     return `<span class="platform-badge ${cls}">${n.charAt(0).toUpperCase()+n.slice(1)}</span>`;
+  }
+
+  // CHART TABS
+  function switchChartTab(el) {
+    el.closest('[id="chartTabs"]').querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // AUTO-RESPOND TOGGLE
+  async function toggleAutoRespond(el) {
+    el.classList.toggle('on');
+    const enabled = el.classList.contains('on');
+    try {
+      await apiPost('/api/update-client', { auto_respond_5star: enabled });
+      showToast(enabled ? 'Réponses auto 5★ activées' : 'Réponses auto 5★ désactivées', 'green');
+    } catch(e) { el.classList.toggle('on'); showToast(t('error_generic'), 'red'); }
   }
 
   // LOAD
@@ -1289,7 +1310,7 @@
   }
 
   // NAVIGATION
-  const titleKeys = { overview:'nav_overview', alertes:'nav_alerts', reponses:'nav_responses', score:'nav_score', mentions:'nav_mentions', plateformes:'nav_platforms', notifications:'nav_notifications', rapports:'nav_reports', abonnement:'nav_subscription', parametres:'nav_settings' };
+  const titleKeys = { overview:'nav_overview', alertes:'nav_alerts', reponses:'nav_responses', score:'nav_score', mentions:'nav_mentions', plateformes:'nav_platforms', notifications:'nav_notifications', rapports:'nav_reports', abonnement:'nav_subscription', parrainage:'nav_referral', parametres:'nav_settings' };
 
   function openSidebar() {
     document.querySelector('.sidebar').classList.add('open');
@@ -1477,10 +1498,10 @@
     if (!name) return;
     btn.disabled = true; btn.textContent = 'Recherche...';
     try {
-      const r = await fetch('/api/fetch-reviews-trustpilot', {
+      const r = await fetch('/api/fetch-reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
-        body: JSON.stringify({ businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+        body: JSON.stringify({ platform: 'trustpilot', businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Erreur');
@@ -1504,10 +1525,10 @@
     if (!name) return;
     btn.disabled = true; btn.textContent = 'Recherche...';
     try {
-      const r = await fetch('/api/fetch-reviews-tripadvisor', {
+      const r = await fetch('/api/fetch-reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
-        body: JSON.stringify({ businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+        body: JSON.stringify({ platform: 'tripadvisor', businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Erreur');
@@ -1570,12 +1591,6 @@
       if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = 'Échec : ' + e.message; }
     }
     setTimeout(() => { btn.textContent = 'Tester →'; btn.disabled = false; }, 2000);
-  }
-
-  // AUTO-RESPOND
-  function toggleAutoRespond(el) {
-    el.classList.toggle('on');
-    apiPost('/api/update-client', { auto_respond_5star: el.classList.contains('on') });
   }
 
   function toggleDashTheme() {
