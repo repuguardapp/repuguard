@@ -764,18 +764,16 @@
       // Step 2 — Create Stripe subscription FIRST: if card/Stripe fails, no DB record created
       const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:userEmail, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
       let subData;
-      try { subData = await subRes.json(); } catch(_) { showErr('Erreur réseau — veuillez réessayer.'); return; }
+      try { subData = await subRes.json(); } catch(_) { showErr('Erreur serveur (HTTP ' + subRes.status + '). Vérifiez les logs Vercel.'); return; }
       if (!subRes.ok || subData.error) { showErr(subData.error || 'Erreur lors du paiement.'); return; }
 
       // Step 3 — Create Supabase account only after Stripe validated the payment method
-      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
       let authData;
-      try { authData = await authRes.json(); } catch(_) { showErr('Erreur réseau — veuillez réessayer.'); return; }
+      try { authData = await authRes.json(); } catch(_) { showErr('Erreur serveur (auth). Vérifiez les logs Vercel.'); return; }
       if (authData.error) {
-        // Rollback: cancel the Stripe subscription so no orphaned billing record
-        fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'cancel', subscriptionId:subData.subscriptionId, email:userEmail })
-        }).catch(() => {});
+        // Rollback: cancel the Stripe subscription since Supabase account creation failed
+        fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'cancel', subscriptionId:subData.subscriptionId, email:userEmail }) }).catch(() => {});
         showErr(authData.error);
         return;
       }
