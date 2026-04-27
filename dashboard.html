@@ -401,7 +401,7 @@
         <div class="plan-name">✦ Plan Pro</div>
         <div class="plan-desc">Surveillance active · 4 plateformes</div>
       </div>
-      <div class="user-area">
+      <div class="user-area" onclick="logout()" title="Se déconnecter">
         <div class="avatar">LP</div>
         <div class="user-name">Le Provençal</div>
         <span style="color:var(--text3);font-size:12px;">↗</span>
@@ -492,13 +492,13 @@
                   <div class="alert-meta"><span class="platform-badge google">Google</span><span class="severity critical">Critique 9/10</span><span class="alert-time">il y a 12 min</span></div>
                   <div class="alert-text">"Service catastrophique ce soir, attente de 45 min..."</div>
                   <div class="alert-detail">Note : 1★ · Auteur : @pierreM</div>
-                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost">Ignorer</button></div>
+                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Ignorer</button></div>
                 </div>
                 <div class="alert-item">
                   <div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="severity critical">Critique 8/10</span><span class="alert-time">il y a 38 min</span></div>
                   <div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong></div>
                   <div class="alert-detail">Gravité : 8/10 · Portée élevée</div>
-                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost">Marquer lu</button></div>
+                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div>
                 </div>
               </div>
             </div>
@@ -527,10 +527,10 @@
             <div class="alert-tab">À traiter <span class="alert-count blue">3</span></div>
           </div>
           <div class="alerts-list">
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span class="severity critical">Critique 9/10</span><span class="alert-time">il y a 12 min</span></div><div class="alert-text">"Service catastrophique ce soir, attente de 45 min sans explication..."</div><div class="alert-detail">Note : 1★ · Auteur : @pierreM</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost">Ignorer</button></div></div>
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="severity critical">Critique 8/10</span><span class="alert-time">il y a 38 min</span></div><div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong> · "Évitez ce restaurant..."</div><div class="alert-detail">Gravité : 8/10 · Portée élevée</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost">Marquer lu</button></div></div>
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge tripadvisor">TripAdvisor</span><span class="severity moderate">Modéré 5/10</span><span class="alert-time">il y a 2h</span></div><div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div><div class="alert-detail">Note : 2★</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Répondre avec IA</button><button class="btn-sm btn-ghost">Marquer lu</button></div></div>
-            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span style="font-size:11px;color:var(--green);">★★★★★ Positif</span><span class="alert-time">il y a 5h</span></div><div class="alert-text">"Superbe soirée, accueil chaleureux et cuisine raffinée !"</div><div class="alert-detail">Note : 5★ · Auteur : Claire B.</div><div class="alert-actions"><button class="btn-sm btn-ghost">Marquer lu</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span class="severity critical">Critique 9/10</span><span class="alert-time">il y a 12 min</span></div><div class="alert-text">"Service catastrophique ce soir, attente de 45 min sans explication..."</div><div class="alert-detail">Note : 1★ · Auteur : @pierreM</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Ignorer</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="severity critical">Critique 8/10</span><span class="alert-time">il y a 38 min</span></div><div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong> · "Évitez ce restaurant..."</div><div class="alert-detail">Gravité : 8/10 · Portée élevée</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge tripadvisor">TripAdvisor</span><span class="severity moderate">Modéré 5/10</span><span class="alert-time">il y a 2h</span></div><div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div><div class="alert-detail">Note : 2★</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Répondre avec IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span style="font-size:11px;color:var(--green);">★★★★★ Positif</span><span class="alert-time">il y a 5h</span></div><div class="alert-text">"Superbe soirée, accueil chaleureux et cuisine raffinée !"</div><div class="alert-detail">Note : 5★ · Auteur : Claire B.</div><div class="alert-actions"><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
           </div>
         </div>
       </div>
@@ -544,7 +544,7 @@
           <div class="ia-original">"Service catastrophique ce soir, attente de 45 minutes sans explication. Jamais vu ça dans un restaurant de ce standing. Très déçu."</div>
           <div class="ia-label">Réponse générée par IA</div>
           <div class="ia-response">Cher Pierre, nous vous remercions sincèrement pour votre retour. Nous sommes vraiment désolés de cette expérience qui ne reflète pas nos standards habituels. Un problème en cuisine a malheureusement impacté nos délais ce soir. Nous aimerions vous inviter à revenir pour vous offrir l'expérience que vous méritez. — L'équipe du Provençal</div>
-          <div class="ia-actions"><button class="btn-lg primary">✓ Valider &amp; Publier</button><button class="btn-lg ghost">✎ Modifier</button><button class="btn-lg ghost">✕ Refuser</button></div>
+          <div class="ia-actions"><button class="btn-lg primary" disabled style="opacity:.5;">✓ Valider &amp; Publier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✎ Modifier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✕ Refuser</button></div>
         </div>
         <div class="ia-card">
           <div class="ia-header"><div class="ia-source"><span class="ia-badge tripadvisor">TripAdvisor</span><div><div style="font-size:13px;font-weight:500;color:var(--text);">Avis de Marie L.</div><div class="ia-rating">Note : 2★ · il y a 2h · Modéré 5/10</div></div></div><span class="severity moderate">À valider</span></div>
@@ -552,7 +552,7 @@
           <div class="ia-original">"Déçu par la qualité des plats ce week-end, habituellement excellent mais là c'était en dessous de nos attentes."</div>
           <div class="ia-label">Réponse générée par IA</div>
           <div class="ia-response">Chère Marie, merci pour votre fidélité et votre retour honnête. Nous sommes navrés que votre dernière visite n'ait pas été à la hauteur. Nous prenons votre avis très au sérieux et allons y travailler. Nous espérons vous revoir prochainement. — L'équipe du Provençal</div>
-          <div class="ia-actions"><button class="btn-lg primary">✓ Valider &amp; Publier</button><button class="btn-lg ghost">✎ Modifier</button><button class="btn-lg ghost">✕ Refuser</button></div>
+          <div class="ia-actions"><button class="btn-lg primary" disabled style="opacity:.5;">✓ Valider &amp; Publier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✎ Modifier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✕ Refuser</button></div>
         </div>
       </div>
 
