@@ -1,107 +1,209 @@
-# RegTech Compliance Platform
+# Global RegTech — Vision 6
 
-International compliance audit platform — GDPR, EU AI Act, LGPD and APPI —
-delivered with a multilingual UI and a Multi-Pass dynamic translation engine.
+> **Continuous compliance audits, delivered in any language.**
+> Native support for 6 markets · on-demand reports in any BCP-47 language
+> via the Multi-Pass engine · Zero-Knowledge by design.
 
-This is a **separate sub-project** under the existing `repuguard` monorepo. It
-is intentionally isolated from the legacy static site so the two products can
-ship independently.
+[![Stack](https://img.shields.io/badge/stack-Next.js%2014%20·%20TypeScript%20·%20Supabase-1f6feb)](#stack)
+[![i18n](https://img.shields.io/badge/i18n-EN%20·%20FR%20·%20ES%20·%20DE%20·%20PT--BR%20·%20JA-success)](#internationalisation-strategy)
+[![Frameworks](https://img.shields.io/badge/frameworks-GDPR%20·%20AI%20Act%20·%20LGPD%20·%20APPI-orange)](#regulatory-coverage)
+[![Compliance](https://img.shields.io/badge/privacy-Zero--Knowledge-black)](#zero-knowledge-guarantee)
 
-## Architecture at a glance
+---
+
+## 1. Vision 6
+
+Global RegTech is a SaaS platform that audits a controller's privacy
+documents — policies, contracts, model cards, DPIAs — against the world's
+major data and AI regulations, then delivers a board-ready report **in
+the auditor's language of choice**.
+
+Six market pillars define the product surface:
+
+| # | Pillar               | What it means in practice |
+|---|----------------------|---------------------------|
+| 1 | **Multi-jurisdiction** | One audit run cross-references every regulation that applies to the controller, not just one. |
+| 2 | **Multi-lingual UI**   | Six native languages (EN, FR, ES, DE, PT-BR, JA) with first-class typography and copy. |
+| 3 | **Multi-Pass reports** | The audit logic runs once in a canonical pivot language; localization is a second pass that can target *any* BCP-47 tag. |
+| 4 | **Multi-currency billing** | Stripe Billing checkout in the customer's currency (USD, EUR, BRL, JPY, GBP) with worldwide tax automation. |
+| 5 | **Multi-tenant by default** | Row-Level Security on every table, organization-scoped JWTs, no shared state. |
+| 6 | **Multi-runtime** | Edge for the locale-aware shell, Node.js for long-running audits, async fire-and-forget for documents at the size limit. |
+
+---
+
+## 2. Target markets
+
+| Market | Locale  | Currency | Primary frameworks         |
+|--------|---------|----------|----------------------------|
+| US     | `en`    | USD      | CCPA / CPRA                |
+| UK     | `en`    | GBP      | UK GDPR + DPA 2018         |
+| EU FR  | `fr`    | EUR      | GDPR + EU AI Act           |
+| EU ES  | `es`    | EUR      | GDPR + EU AI Act           |
+| EU DE  | `de`    | EUR      | GDPR + EU AI Act           |
+| Brazil | `pt-br` | BRL      | LGPD                       |
+| Japan  | `ja`    | JPY      | APPI                       |
+
+Auxiliary markets (CA, AU, MX, AR…) inherit a native locale and a tailored
+framework set via `supabase/migrations/0002_seed_frameworks.sql`.
+
+---
+
+## 3. Regulatory coverage
+
+| ID         | Regulation                                                | Authority                              |
+|------------|-----------------------------------------------------------|----------------------------------------|
+| `gdpr`     | General Data Protection Regulation                        | European Data Protection Board         |
+| `eu_ai_act`| EU AI Act (Regulation 2024/1689)                          | European AI Office                     |
+| `lgpd`     | Lei Geral de Proteção de Dados                            | ANPD                                   |
+| `appi`     | Act on the Protection of Personal Information             | PPC                                    |
+| `ccpa`     | California Consumer Privacy Act / CPRA                    | California Privacy Protection Agency   |
+| `pipeda`   | Personal Information Protection and Electronic Documents Act | OPC                                  |
+| `uk_gdpr`  | UK GDPR + Data Protection Act 2018                        | ICO                                    |
+
+Adding a new framework is a four-line change in `src/lib/legal-frameworks.ts`
+plus a row in the seed migration. The Multi-Pass prompt picks it up
+automatically.
+
+---
+
+## 4. Stack
+
+| Layer        | Choice                                 | Why |
+|--------------|----------------------------------------|-----|
+| **Frontend** | Next.js 14 (App Router) + TypeScript strict + Tailwind | Edge-native i18n routing, RTL-ready logical CSS properties. |
+| **i18n**     | `next-intl`                            | Server-component-first, dictionary-per-locale, zero-code language addition. |
+| **AI — Pass 1** | Anthropic Claude 3.5 Sonnet         | Long-context legal reasoning, citation-faithful JSON. |
+| **AI — Pass 2** | OpenAI GPT-4o                       | Broadest BCP-47 language coverage for the localization pass. |
+| **Database** | Supabase (Postgres + RLS + Auth)       | First-party JWT tenant claims, edge-friendly REST. |
+| **Billing**  | Stripe Billing + Stripe Tax            | Multi-currency Prices, automatic VAT/GST/CT, tax-ID collection. |
+| **Hosting**  | Vercel (Edge + Node Functions)         | Edge for routing/i18n, Node for the 60s+ audit pipeline. |
+
+---
+
+## 5. Multi-Pass engine
 
 ```
-                    ┌───────────────────────────┐
-  Browser  ────►    │  Next.js 14 (App Router)  │
-                    │  Edge middleware:         │
-                    │   • locale detection      │
-                    │   • Accept-Language + IP  │
-                    └────────────┬──────────────┘
-                                 │
-            ┌────────────────────┴───────────────────────┐
-            ▼                                            ▼
-     /api/audit            /api/checkout
-   ┌──────────────┐      ┌────────────────┐
-   │ Multi-Pass    │      │ Stripe Billing │
-   │ Pass 1: Claude│      │ + Stripe Tax   │
-   │ Pass 2: GPT-4o│      │ multi-currency │
-   └─────┬────────┘      └────────────────┘
-         │
-         ▼
-   ┌──────────────┐
-   │  Supabase    │  reports + findings only
-   │  (no docs)   │  Zero-Knowledge: source wiped
-   └──────────────┘
+        ┌──────────────────────────┐
+        │  Document (in memory)    │   ← never written to disk
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │  Pass 1 — legalAudit()   │   model: Claude 3.5 Sonnet
+        │  pivot language: English │   output: structured JSON
+        │  citations: verbatim     │
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │  Pass 2 — localizeReport()│  model: GPT-4o
+        │  any BCP-47 target        │  preserves citations & evidence
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │   AuditReport (signed)   │   stored: hash + report only
+        └──────────────────────────┘
 ```
 
-## i18n model
+Two passes, two reasons:
 
-* `messages/<locale>.json` is the source of truth. The 6 native locales
-  (`en`, `fr`, `es`, `de`, `pt-br`, `ja`) are checked into `messages/`.
-* **Adding a 7th language requires no code change.** Drop
-  `messages/it.json` (or any BCP-47 tag) and the loader picks it up:
-    * `discoverLocales()` walks the directory at request time.
-    * `sitemap.ts` and `buildHreflangAlternates()` emit the new locale.
-    * Static-prefix locales remain the 6 in `NATIVE_LOCALE_CODES` (used
-      by `generateStaticParams`); dynamically-discovered locales render
-      via the dynamic segment without static generation.
-* `LanguageSelector` shows only native locales because they have curated
-  UI strings; auxiliary languages flow through pass 2 for **report
-  content** while the chrome stays in a native language.
+1. **Caching** — pass 1 is the expensive step. We cache it per
+   `documentHash` and re-run pass 2 on demand for the marginal cost of a
+   translation call.
+2. **Faithfulness** — citations, statute numbers, and verbatim evidence
+   stay in the regulation's source language. The localization pass is
+   *not* allowed to touch them.
 
-## Multi-Pass engine
+Implementation: [`src/lib/multi-pass-engine.ts`](./src/lib/multi-pass-engine.ts).
 
-`src/lib/multi-pass-engine.ts` exposes:
+---
 
-| Function          | Model                | Purpose                                          |
-| ----------------- | -------------------- | ------------------------------------------------ |
-| `legalAudit()`    | Claude 3.5 Sonnet    | Pass 1 — analyse the document in English (pivot). |
-| `localizeReport()`| GPT-4o               | Pass 2 — translate the report to any language.    |
-| `runMultiPassAudit()` | both             | Composes the two and shapes the final `AuditReport`. |
+## 6. Internationalisation strategy
 
-Citations and verbatim evidence are **not** translated — they remain in the
-original language of the regulation.
+```
+messages/
+├── en.json        ← native, curated copy
+├── fr.json
+├── es.json
+├── de.json
+├── pt-br.json
+├── ja.json
+└── ar.json        ← drop-in: Arabic ships with no source change
+```
 
-## Zero-Knowledge document handling
+* `discoverLocales()` walks `messages/` at request time. Adding `ar.json`,
+  `it.json`, or `vi.json` ships that language to production immediately.
+* `<html lang>` and `<html dir>` are set per locale layout. RTL flips
+  through CSS logical properties (`pis`, `pie`, `border-is`,
+  `border-ie`) baked into Tailwind utilities.
+* Long-text safety: the hero, buttons and cards are tested with German
+  (~+30% length) and Japanese line-break rules. `text-balance` and
+  `text-pretty` keep multi-line copy visually clean.
+* `LanguageSelector` only lists the six native locales — auxiliary
+  languages flow through pass 2 for **report content**, not chrome.
 
-* `withEphemeralDocument()` wraps every analysis call. It hashes the text,
-  runs the work, and `Buffer.fill(0)`'s the source bytes on every exit
-  path (success, throw, cancellation).
-* The Supabase schema (`supabase/migrations/0001_init.sql`) only stores
-  `document_hash` plus the AI-authored report. The original document
-  text never lands in Postgres.
+---
+
+## 7. Zero-Knowledge guarantee
+
+* Source documents live as `Buffer` instances in request scope only.
+* `withEphemeralDocument()` calls `Buffer.fill(0)` on every exit path
+  (success, throw, cancellation) before the slab is GC'd.
+* Postgres stores **only** the SHA-256 hash and the AI-authored report.
+  The original text never lands on disk.
 * `anonymize()` is offered for the secondary path where a customer asks
   to keep documents in their workspace; it strips email, phone, IBAN,
-  CPF, SSN, and PAN-style sequences before storage.
+  CPF, SSN and PAN-style sequences before storage.
 
-## Stripe Billing
+Implementation: [`src/lib/zero-knowledge.ts`](./src/lib/zero-knowledge.ts).
 
-`src/lib/stripe.ts::createCheckoutSession` adapts:
+---
 
-* `currency` — picked from the locale descriptor (`USD`, `EUR`, `BRL`,
-  `JPY`, `GBP`).
-* `locale` — Stripe Checkout UI language, mapped from the user's BCP-47
-  tag (`pt-br` → `pt-BR`, `ja` → `ja`).
-* `automatic_tax: { enabled: true }` — Stripe Tax computes worldwide
-  VAT/GST from the billing address.
-* `tax_id_collection` — collects EU/BR/JP tax IDs at checkout.
+## 8. SEO & discoverability
 
-## Local development
+* `buildHreflangAlternates()` emits one `<link rel="alternate">` per
+  discovered locale plus `x-default`.
+* `app/sitemap.ts` produces a multilingual sitemap with `alternates.languages`
+  for each canonical path.
+* `robots.ts` exposes the sitemap; canonical URLs are locale-prefixed.
+
+---
+
+## 9. Getting started
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env.local   # fill in Supabase, Anthropic, OpenAI, Stripe
 npm install
-npm run dev
+npm run dev                  # http://localhost:3000
 ```
 
-Run the Supabase migrations under `supabase/migrations/` against your
-project, in numerical order.
-
-## Tests
+Run the SQL migrations under `supabase/migrations/` against your
+Supabase project, in numerical order.
 
 ```bash
-npm test
+npm test                     # Vitest: locale detection, frameworks,
+                             #         hreflang, Zero-Knowledge primitives
+npm run typecheck            # tsc --noEmit, strict mode
 ```
 
-Vitest exercises locale detection, framework mapping, hreflang
-generation and Zero-Knowledge primitives. The AI passes are covered by
-contract types but require live API keys to run end-to-end.
+---
+
+## 10. Roadmap
+
+- [x] Multi-Pass engine (Claude pass 1 → GPT-4o pass 2)
+- [x] 6 native locales + dynamic locale discovery
+- [x] Stripe Billing with multi-currency + tax automation
+- [x] Zero-Knowledge document handling
+- [x] Hreflang + multilingual sitemap
+- [ ] PDF report rendering with locale-aware typography (Noto + Source Han)
+- [ ] DPIA wizard (interactive, multi-step, locale-aware)
+- [ ] Continuous monitoring (re-audit on document update)
+- [ ] SOC 2 Type II artefacts
+- [ ] Public API + webhook delivery of findings
+
+---
+
+## 11. License
+
+Proprietary — © RepuGuard Compliance. All rights reserved.
