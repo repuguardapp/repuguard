@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "title": "Compliance audits, in any language",
+    "description": "Automated GDPR, AI Act, LGPD and APPI audits — delivered in your language."
+  },
+  "nav": {
+    "product": "Product",
+    "pricing": "Pricing",
+    "docs": "Documentation",
+    "signIn": "Sign in",
+    "startAudit": "Start an audit"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "RegTech, multilingual by design",
+      "title": "Continuous compliance audits, delivered in your language.",
+      "subtitle": "Upload a policy, contract or model card. Our Multi-Pass engine cross-references it against GDPR, the EU AI Act, LGPD and APPI, then writes the report in any language you need.",
+      "cta": "Start a free audit",
+      "secondaryCta": "Read a sample report"
+    },
+    "trust": {
+      "frameworks": "Mapped frameworks",
+      "languages": "Native languages",
+      "extraLanguages": "additional languages on demand"
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Pay in your local currency. Taxes are calculated automatically.",
+    "starter": { "name": "Starter", "tagline": "For solo founders and small teams" },
+    "pro": { "name": "Pro", "tagline": "For scale-ups handling regulated data" },
+    "enterprise": { "name": "Enterprise", "tagline": "For groups with multi-jurisdiction obligations" },
+    "perMonth": "/ month",
+    "checkout": "Choose this plan"
+  },
+  "audit": {
+    "upload": "Upload a document",
+    "uploadHint": "PDF, DOCX, MD or TXT — up to 25 MB. Files are deleted after analysis.",
+    "targetLanguage": "Report language",
+    "targetLanguageHint": "Choose any language — the engine will translate the final report.",
+    "framework": "Legal framework",
+    "submit": "Run audit",
+    "running": "Auditing — this usually takes under a minute.",
+    "zeroKnowledge": "Zero-Knowledge: your document is wiped from disk and memory once the report is rendered."
+  },
+  "footer": {
+    "copyright": "© {year} RepuGuard Compliance. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  }
+}
