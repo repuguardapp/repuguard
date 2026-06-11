@@ -48,9 +48,18 @@
   "pricing": {
     "title": "料金",
     "subtitle": "現地通貨で支払い。税は自動計算されます。",
-    "starter": { "name": "Starter", "tagline": "個人と小規模チーム向け" },
-    "pro": { "name": "Pro", "tagline": "規制データを扱うスケールアップ向け" },
-    "enterprise": { "name": "Enterprise", "tagline": "複数管轄を持つ企業グループ向け" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "個人と小規模チーム向け"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "規制データを扱うスケールアップ向け"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "複数管轄を持つ企業グループ向け"
+    },
     "perMonth": "/ 月",
     "checkout": "このプランを選択",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "セキュリティ / 責任ある開示",
     "contactDpoLabel": "DPO / プライバシー",
     "responsibleDisclosure": "セキュリティ研究者向けの RFC 9116 形式"
+  },
+  "trustBadges": {
+    "encryption": "AES-256-GCM 暗号化",
+    "euHosted": "EU ホスティング（フランクフルト）",
+    "deletion": "30日後の自動削除",
+    "noCard": "無料・クレジットカード不要",
+    "aria": "セキュリティと信頼の保証"
   },
   "dpa": {
     "courtesyTitle": "参考訳",

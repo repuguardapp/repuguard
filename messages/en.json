@@ -48,9 +48,18 @@
   "pricing": {
     "title": "Pricing",
     "subtitle": "Pay in your local currency. Taxes are calculated automatically.",
-    "starter": { "name": "Starter", "tagline": "For solo founders and small teams" },
-    "pro": { "name": "Pro", "tagline": "For scale-ups handling regulated data" },
-    "enterprise": { "name": "Enterprise", "tagline": "For groups with multi-jurisdiction obligations" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "For solo founders and small teams"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "For scale-ups handling regulated data"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "For groups with multi-jurisdiction obligations"
+    },
     "perMonth": "/ month",
     "checkout": "Choose this plan",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "Security / responsible disclosure",
     "contactDpoLabel": "DPO / privacy",
     "responsibleDisclosure": "RFC 9116 format for security researchers"
+  },
+  "trustBadges": {
+    "encryption": "AES-256-GCM encryption",
+    "euHosted": "EU hosted (Frankfurt)",
+    "deletion": "30-day auto-delete",
+    "noCard": "Free, no credit card",
+    "aria": "Security and trust guarantees"
   },
   "dpa": {
     "courtesyTitle": "Courtesy translation",

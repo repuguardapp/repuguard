@@ -1,17 +1,40 @@
 import { CheckCircle2, Lock, ShieldCheck } from 'lucide-react';
+import type { Metadata } from 'next';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { buildHreflangAlternates } from '@/lib/hreflang';
 import { SUB_PROCESSORS } from '@/lib/sub-processors';
-
-export const metadata = {
-  title: 'Trust Center — LexyFlow',
-  description:
-    'Sécurité, chiffrement, sous-traitants et engagements de confidentialité de LexyFlow. Tout ce que votre équipe juridique doit savoir.'
-};
 
 interface PageProps {
   params: { locale: string };
+}
+
+/**
+ * Localised SEO metadata. The original hard-coded English (in a
+ * French-language description) confused both Google's language
+ * detection and any AR/JA/ES visitor landing here from search. The
+ * page chrome is already i18n'd via the `trust` namespace; we
+ * surface the same translations on <title> + <meta description> and
+ * emit hreflang to every locale variant so Google serves the right
+ * URL per market.
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: 'trust' });
+  const title = `${t('title')} | LexyFlow`;
+  const description = t('intro');
+  const alternates = await buildHreflangAlternates('/trust');
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${params.locale}/trust`,
+      languages: alternates
+    },
+    openGraph: { title, description, type: 'article', locale: params.locale },
+    twitter: { card: 'summary_large_image', title, description },
+    robots: { index: true, follow: true }
+  };
 }
 
 /**
@@ -28,8 +51,39 @@ export default async function TrustPage({ params }: PageProps) {
   unstable_setRequestLocale(params.locale);
   const t = await getTranslations('trust');
 
+  // JSON-LD: Organization + AboutPage. The Organization graph
+  // surfaces the security contact and DPO mailto in Google's
+  // entity card; the AboutPage graph tells search engines this URL
+  // IS the canonical security disclosure for the LexyFlow brand
+  // (boosts the page for "lexyflow security" / "lexyflow trust"
+  // branded queries). FAQ-style markup is intentionally omitted —
+  // the trust page is a reference document, not a Q&A surface.
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/#organization`,
+        name: 'LexyFlow',
+        url: process.env.NEXT_PUBLIC_APP_URL,
+        contactPoint: [
+          { '@type': 'ContactPoint', contactType: 'Security', email: 'security@lexyflow.com' },
+          { '@type': 'ContactPoint', contactType: 'Data Protection Officer', email: 'privacy@lexyflow.com' }
+        ]
+      },
+      {
+        '@type': 'AboutPage',
+        name: t('title'),
+        description: t('intro'),
+        inLanguage: params.locale,
+        about: { '@id': `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/#organization` }
+      }
+    ]
+  };
+
   return (
     <div className="py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <header className="mb-10 grid gap-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-emerald-600" aria-hidden />

@@ -48,9 +48,18 @@
   "pricing": {
     "title": "Preços",
     "subtitle": "Pague na sua moeda local. Os impostos são calculados automaticamente.",
-    "starter": { "name": "Starter", "tagline": "Para fundadores e equipes pequenas" },
-    "pro": { "name": "Pro", "tagline": "Para scale-ups com dados regulados" },
-    "enterprise": { "name": "Enterprise", "tagline": "Para grupos multi-jurisdição" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "Para fundadores e equipes pequenas"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Para scale-ups com dados regulados"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Para grupos multi-jurisdição"
+    },
     "perMonth": "/ mês",
     "checkout": "Escolher este plano",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "Segurança / divulgação responsável",
     "contactDpoLabel": "DPO / privacidade",
     "responsibleDisclosure": "Formato RFC 9116 para pesquisadores de segurança"
+  },
+  "trustBadges": {
+    "encryption": "Criptografia AES-256-GCM",
+    "euHosted": "Hospedado na UE (Frankfurt)",
+    "deletion": "Exclusão automática em 30 dias",
+    "noCard": "Grátis, sem cartão",
+    "aria": "Garantias de segurança e confiança"
   },
   "dpa": {
     "courtesyTitle": "Tradução de cortesia",

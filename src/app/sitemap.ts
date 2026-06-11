@@ -23,7 +23,7 @@ import { CURATED_PAIRS } from '@/lib/seo-routes';
  * shard into sitemap-core.xml / sitemap-compliance.xml /
  * sitemap-compare.xml and ship a sitemap index.
  */
-const CORE_ROUTES = ['', '/pricing', '/audit', '/docs'];
+const CORE_ROUTES = ['', '/pricing', '/audit', '/docs', '/trust'];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://example.com';

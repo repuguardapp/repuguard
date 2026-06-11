@@ -48,9 +48,18 @@
   "pricing": {
     "title": "Preise",
     "subtitle": "Zahlen Sie in Ihrer Landeswährung. Steuern werden automatisch berechnet.",
-    "starter": { "name": "Starter", "tagline": "Für Gründer und kleine Teams" },
-    "pro": { "name": "Pro", "tagline": "Für Scale-ups mit regulierten Daten" },
-    "enterprise": { "name": "Enterprise", "tagline": "Für Konzerne mit mehreren Jurisdiktionen" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "Für Gründer und kleine Teams"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Für Scale-ups mit regulierten Daten"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Für Konzerne mit mehreren Jurisdiktionen"
+    },
     "perMonth": "/ Monat",
     "checkout": "Diesen Plan wählen",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "Sicherheit / verantwortliche Offenlegung",
     "contactDpoLabel": "DSB / Datenschutz",
     "responsibleDisclosure": "RFC 9116-Format für Sicherheitsforscher"
+  },
+  "trustBadges": {
+    "encryption": "AES-256-GCM-Verschlüsselung",
+    "euHosted": "EU-gehostet (Frankfurt)",
+    "deletion": "Auto-Löschung nach 30 Tagen",
+    "noCard": "Kostenlos, ohne Kreditkarte",
+    "aria": "Sicherheits- und Vertrauensgarantien"
   },
   "dpa": {
     "courtesyTitle": "Höflichkeitsübersetzung",

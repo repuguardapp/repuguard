@@ -48,9 +48,18 @@
   "pricing": {
     "title": "Tarifs",
     "subtitle": "Payez dans votre devise locale. Les taxes sont calculées automatiquement.",
-    "starter": { "name": "Starter", "tagline": "Pour les fondateurs et petites équipes" },
-    "pro": { "name": "Pro", "tagline": "Pour les scale-ups manipulant des données réglementées" },
-    "enterprise": { "name": "Enterprise", "tagline": "Pour les groupes multi-juridictions" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "Pour les fondateurs et petites équipes"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Pour les scale-ups manipulant des données réglementées"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Pour les groupes multi-juridictions"
+    },
     "perMonth": "/ mois",
     "checkout": "Choisir cette offre",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "Sécurité / divulgation responsable",
     "contactDpoLabel": "DPO / vie privée",
     "responsibleDisclosure": "Format RFC 9116 pour les chercheurs en sécurité"
+  },
+  "trustBadges": {
+    "encryption": "Chiffrement AES-256-GCM",
+    "euHosted": "Hébergé en UE (Francfort)",
+    "deletion": "Suppression auto à 30 jours",
+    "noCard": "Gratuit, sans carte bancaire",
+    "aria": "Garanties de sécurité et de confiance"
   },
   "dpa": {
     "courtesyTitle": "Traduction de courtoisie",

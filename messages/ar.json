@@ -48,9 +48,18 @@
   "pricing": {
     "title": "الأسعار",
     "subtitle": "ادفع بعملتك المحلية. تُحسب الضرائب آلياً.",
-    "starter": { "name": "Starter", "tagline": "للمؤسّسين والفِرَق الصغيرة" },
-    "pro": { "name": "Pro", "tagline": "للشركات الناشئة التي تتعامل مع بيانات منظَّمة" },
-    "enterprise": { "name": "Enterprise", "tagline": "للمجموعات متعددة الاختصاصات القضائية" },
+    "starter": {
+      "name": "Starter",
+      "tagline": "للمؤسّسين والفِرَق الصغيرة"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "للشركات الناشئة التي تتعامل مع بيانات منظَّمة"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "للمجموعات متعددة الاختصاصات القضائية"
+    },
     "perMonth": "/ شهرياً",
     "checkout": "اختيار هذه الباقة",
     "reasons": {
@@ -266,6 +275,13 @@
     "contactSecurityLabel": "الأمان / الإفصاح المسؤول",
     "contactDpoLabel": "DPO / الخصوصية",
     "responsibleDisclosure": "صيغة RFC 9116 لباحثي الأمان"
+  },
+  "trustBadges": {
+    "encryption": "تشفير AES-256-GCM",
+    "euHosted": "مستضاف في الاتحاد الأوروبي (فرانكفورت)",
+    "deletion": "حذف تلقائي بعد 30 يوماً",
+    "noCard": "مجاني، بدون بطاقة ائتمان",
+    "aria": "ضمانات الأمان والثقة"
   },
   "dpa": {
     "courtesyTitle": "ترجمة للاسترشاد",

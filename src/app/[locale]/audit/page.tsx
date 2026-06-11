@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react';
 import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { AuditForm } from '@/components/AuditForm';
+import { TrustBadges } from '@/components/TrustBadges';
 import { buildAuditFormLabels } from '@/lib/audit-labels';
 import { FRAMEWORKS, frameworksForCountry } from '@/lib/legal-frameworks';
 import { supabaseService } from '@/lib/supabase';
@@ -62,7 +63,7 @@ export default async function AuditPage({ params: { locale } }: PageProps) {
   const errorMessages = messages.errors ?? {};
 
   return (
-    <div className="mx-auto grid max-w-2xl gap-10 px-4 py-16 md:px-0">
+    <div className="mx-auto grid max-w-2xl gap-8 px-4 py-16 md:px-0">
       <header className="grid gap-2">
         <h1 className="text-balance text-3xl font-semibold tracking-tight md:text-4xl">
           {t('upload')}
@@ -72,6 +73,16 @@ export default async function AuditPage({ params: { locale } }: PageProps) {
           {t('zeroKnowledge')}
         </p>
       </header>
+
+      {/* Trust badges immediately above the form. Placement is
+          deliberate — every eye-tracking study on B2B upload flows
+          points the same way: the reassurance signal needs to land
+          BETWEEN the user reading the hero and them looking at the
+          first form field, not below the fold where they'll never
+          see it. The four-badge strip is server-rendered, so the
+          links are crawlable and contribute internal PageRank to
+          /trust. */}
+      <TrustBadges locale={locale} />
 
       <AuditForm
         labels={buildAuditFormLabels(t, errorMessages)}
