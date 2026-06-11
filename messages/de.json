@@ -304,7 +304,11 @@
     "findings": "Befunde",
     "recommendation": "Empfehlung",
     "footerBody": "Echte Berichte enthalten Belege aus dem Quelldokument, einen Maßnahmenplan und ein herunterladbares PDF — in über 100 Sprachen.",
-    "footerCta": "Audit auf eigenem Dokument starten"
+    "footerCta": "Audit auf eigenem Dokument starten",
+    "metaTitle": "Qatar PDPPL Audit-Bericht — Beispiel",
+    "metaDescription": "Sehen Sie genau, was LexyFlow liefert: ein 60-Sekunden-Compliance-Audit einer katarischen Datenschutzrichtlinie gegen die PDPPL (Gesetz Nr. 13 von 2016) — Zitate, Befunde, KI-Umformulierungsvorschläge. Keine Anmeldung, kein Upload, kostenlos.",
+    "switcherLabel": "Anzeigen in:",
+    "switcherAria": "Sprache für diesen Musterbericht wählen"
   },
   "dashboard": {
     "title": "Audits",

@@ -304,7 +304,11 @@
     "findings": "Hallazgos",
     "recommendation": "Recomendación",
     "footerBody": "Los informes reales incluyen pruebas del documento original, un calendario de remediación y un PDF descargable — en más de 100 idiomas.",
-    "footerCta": "Lanzar una auditoría sobre tu propio documento"
+    "footerCta": "Lanzar una auditoría sobre tu propio documento",
+    "metaTitle": "Informe de auditoría PDPPL Qatar — muestra",
+    "metaDescription": "Vea exactamente lo que LexyFlow entrega: una auditoría de cumplimiento de 60 segundos de una política de privacidad catarí frente a la PDPPL (Ley n.º 13 de 2016) — citas, hallazgos y sugerencias de reescritura por IA. Sin registro, sin subir archivos, gratis.",
+    "switcherLabel": "Ver en:",
+    "switcherAria": "Elegir el idioma de este informe de muestra"
   },
   "dashboard": {
     "title": "Auditorías",

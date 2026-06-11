@@ -304,7 +304,11 @@
     "findings": "Constatations",
     "recommendation": "Recommandation",
     "footerBody": "Les vrais rapports incluent les preuves issues du document source, un calendrier de remédiation et un PDF téléchargeable — dans plus de 100 langues.",
-    "footerCta": "Lancer un audit sur votre propre document"
+    "footerCta": "Lancer un audit sur votre propre document",
+    "metaTitle": "Rapport d'audit Qatar PDPPL — exemple",
+    "metaDescription": "Découvrez exactement ce que LexyFlow produit : un audit de conformité de 60 secondes d'une politique de confidentialité qatarie face à la PDPPL (Loi n°13 de 2016) — citations, constats, suggestions de réécriture IA. Sans inscription, sans upload, gratuit.",
+    "switcherLabel": "Voir en :",
+    "switcherAria": "Choisir la langue de ce rapport échantillon"
   },
   "dashboard": {
     "title": "Audits",

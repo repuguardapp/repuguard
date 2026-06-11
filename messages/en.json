@@ -304,7 +304,11 @@
     "findings": "Findings",
     "recommendation": "Recommendation",
     "footerBody": "Real reports include source-document evidence, a remediation timeline and a downloadable PDF — in over 100 languages.",
-    "footerCta": "Run an audit on your own document"
+    "footerCta": "Run an audit on your own document",
+    "metaTitle": "Qatar PDPPL audit report — sample",
+    "metaDescription": "See exactly what LexyFlow returns: a 60-second compliance audit of a Qatari privacy policy against PDPPL (Law No. 13 of 2016) — citations, findings, and AI-rewrite suggestions. No signup, no upload, free.",
+    "switcherLabel": "View in:",
+    "switcherAria": "Choose the language for this sample report"
   },
   "dashboard": {
     "title": "Audits",
