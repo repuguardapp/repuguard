@@ -75,8 +75,26 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   const user = await getCurrentUser();
   const isAuthenticated = !!user;
 
+  // Tolt affiliate tracker — fetched async, sets the tolt_referral
+  // cookie when a visitor arrives via an affiliate link
+  // (?ref=PARTNER_ID). The cookie is read server-side by
+  // /api/checkout and stamped onto Stripe Subscription metadata so
+  // Tolt's independent webhook listener can attribute commissions.
+  // No-op when NEXT_PUBLIC_TOLT_ID is unset, so this is safe to ship
+  // before signing up for Tolt.
+  const toltId = process.env.NEXT_PUBLIC_TOLT_ID;
+
   return (
     <html lang={descriptor.code} dir={descriptor.direction}>
+      <head>
+        {toltId && (
+          <script
+            async
+            src="https://cdn.tolt.io/tolt.js"
+            data-tolt={toltId}
+          />
+        )}
+      </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">

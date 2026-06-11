@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { readAffiliateReferral } from '@/lib/affiliate';
 import { createCheckoutSession } from '@/lib/stripe';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 
@@ -56,6 +57,13 @@ export async function POST(request: Request) {
 
   const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
 
+  // Read the Tolt affiliate cookie from the request headers — never
+  // from the request body. A malicious client could spoof a body
+  // field to steal someone else's commission; the cookie header is
+  // only writable by the affiliate's link redirect, which is the
+  // only legitimate path to attribution.
+  const affiliateReferral = readAffiliateReferral(request.headers.get('cookie'));
+
   // Pass the session-derived orgId, never the request body one — even
   // though we verified equality above, sourcing the value from the
   // session removes the possibility of a future refactor accidentally
@@ -65,6 +73,7 @@ export async function POST(request: Request) {
     locale: parsed.locale,
     organizationId: sessionOrgId,
     origin,
+    affiliateReferral,
     ...(parsed.customerEmail ? { customerEmail: parsed.customerEmail } : {})
   });
 

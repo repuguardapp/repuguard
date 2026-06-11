@@ -46,6 +46,13 @@ export interface CheckoutOptions {
   organizationId: string;
   /** Origin used to build success/cancel URLs. */
   origin: string;
+  /**
+   * Affiliate referral id read server-side from the `tolt_referral`
+   * cookie. Stamped onto the Subscription's metadata so Tolt can
+   * attribute the commission via its independent Stripe webhook
+   * listener. Pass null when no referral cookie is present.
+   */
+  affiliateReferral?: string | null;
 }
 
 /**
@@ -91,7 +98,12 @@ export async function createCheckoutSession(opts: CheckoutOptions) {
     subscription_data: {
       metadata: {
         organization_id: opts.organizationId,
-        ui_locale: opts.locale
+        ui_locale: opts.locale,
+        // Tolt reads this field from its independent Stripe webhook
+        // listener and self-attributes the commission. Empty string
+        // when no referral cookie was present — Stripe accepts empty
+        // values and Tolt treats them as "direct" (no partner).
+        tolt_referral: opts.affiliateReferral ?? ''
       }
     }
   };

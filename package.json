@@ -33,6 +33,8 @@
     "next-intl": "^3.20.0",
     "openai": "^4.55.0",
     "pdf-parse": "^1.1.4",
+    "posthog-js": "^1.386.3",
+    "posthog-node": "^5.36.17",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "resend": "^6.12.2",
