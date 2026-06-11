@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { captureClientEvent } from '@/lib/analytics-client';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -45,6 +46,19 @@ export function CheckoutButton({ plan, locale, organizationId, label, signInLabe
 
   async function go() {
     setBusy(true);
+    // Analytics — funnel step "checkout_started". Fire BEFORE the
+    // fetch so we capture intent even if the POST fails (network,
+    // 4xx, 5xx). The redirect to Stripe is the actual conversion
+    // hop, but the click is what tells us the pricing page did its
+    // job. Properties are kept to plan + locale; the actual price
+    // / currency selection is decided by Stripe Adaptive Pricing
+    // server-side and surfaced in the subscription_created event
+    // once Stripe confirms.
+    captureClientEvent('checkout_started', {
+      plan,
+      ui_locale: locale,
+      organization_id: organizationId
+    });
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',

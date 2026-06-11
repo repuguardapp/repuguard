@@ -129,7 +129,13 @@ describe('POST /api/audit — 2 MB free-tier cap', () => {
                   return { data: { free_audit_used: false }, error: null };
                 }
                 return { data: null, error: null };
-              }
+              },
+              // .limit() chain — used by the analytics first-audit
+              // probe added in the analytics wiring PR. Returning a
+              // count of 0 means "this is the first audit for this
+              // org" so the test exercises the path where
+              // first_audit_submitted would fire.
+              limit: () => Promise.resolve({ data: [], count: 0, error: null })
             })
           })
         }),

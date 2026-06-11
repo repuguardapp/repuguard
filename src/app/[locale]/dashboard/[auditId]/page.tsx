@@ -3,6 +3,7 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { DeleteAuditButton } from '@/components/DeleteAuditButton';
+import { PaywallTracker } from '@/components/PaywallTracker';
 import { PrintButton } from '@/components/PrintButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -133,6 +134,9 @@ export default async function AuditDetailPage({ params }: PageProps) {
 
   return (
     <div className="py-12 print:py-0">
+      {paywalled && (
+        <PaywallTracker auditId={params.auditId} hiddenCount={hiddenCount} />
+      )}
       <div className="mb-8 flex items-center justify-between gap-4 print:hidden">
         <Button asChild variant="ghost" size="sm" className="-ms-3">
           <Link href="/dashboard">

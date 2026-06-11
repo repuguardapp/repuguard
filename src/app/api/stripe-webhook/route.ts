@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { captureServerEvent } from '@/lib/analytics';
 import { PLAN_CREDITS, stripe, type PlanId } from '@/lib/stripe';
 import { supabaseService } from '@/lib/supabase';
 
@@ -88,6 +89,14 @@ export async function POST(request: Request) {
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
         break;
       case 'customer.subscription.created':
+        await handleSubscriptionUpsert(event.data.object as Stripe.Subscription);
+        // Analytics — the conversion event. We only fire on the
+        // `created` variant (not `updated`) so the funnel step
+        // counts net-new subscriptions and not plan upgrades or
+        // status flips. The price-derived MRR contribution is
+        // captured here once for the lifetime of the subscription.
+        await emitSubscriptionCreated(event.data.object as Stripe.Subscription);
+        break;
       case 'customer.subscription.updated':
         await handleSubscriptionUpsert(event.data.object as Stripe.Subscription);
         break;
@@ -279,4 +288,40 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     throw new Error(`add_audit_credits_failed: ${rpcErr.message}`);
   }
   console.log('[stripe-webhook] credited', { orgId, plan, amount, invoiceId: invoice.id });
+}
+
+/**
+ * Analytics — emit a single PostHog `subscription_created` event on
+ * the conversion side of the funnel. Pulls plan + MRR contribution
+ * from the Stripe subscription object directly so the property
+ * payload reflects the as-confirmed-by-Stripe price, not whatever
+ * the client claimed when it opened the checkout. Fire-and-forget;
+ * a PostHog outage must never cause Stripe to retry the webhook.
+ */
+async function emitSubscriptionCreated(sub: Stripe.Subscription) {
+  const orgId = sub.metadata?.organization_id ?? null;
+  if (!orgId) return;
+  const item = sub.items.data[0];
+  if (!item) return;
+  const priceId = item.price.id;
+  const plan = planForPriceId(priceId);
+  if (!plan) return;
+  // Stripe amounts come as the smallest currency unit (cents for
+  // EUR / USD, halalas for SAR, fils for AED, etc.). For the
+  // analytics view the absolute amount in the subscription's own
+  // currency is what we want — PostHog can group by currency
+  // afterwards.
+  const amount = (item.price.unit_amount ?? 0) / 100;
+  await captureServerEvent({
+    distinctId: orgId,
+    event: 'subscription_created',
+    properties: {
+      plan,
+      stripe_subscription_id: sub.id,
+      currency: item.price.currency,
+      amount_per_period: amount,
+      interval: item.price.recurring?.interval ?? 'month',
+      tolt_referral: sub.metadata?.tolt_referral || null
+    }
+  });
 }

@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { type ReactNode } from 'react';
+import { PostHogProvider } from '@/lib/analytics-client';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { Lexymark } from '@/components/Lexymark';
 import { SignOutButton } from '@/components/SignOutButton';
@@ -96,6 +97,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
         )}
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+        <PostHogProvider>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
             <div className="container flex h-16 items-center justify-between gap-4">
@@ -155,6 +157,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
             </div>
           </footer>
         </NextIntlClientProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

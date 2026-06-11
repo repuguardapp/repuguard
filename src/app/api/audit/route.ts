@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logAccess } from '@/lib/access-log';
+import { captureServerEvent } from '@/lib/analytics';
 import { extractText } from '@/lib/document-extractor';
 import { encryptDocument } from '@/lib/document-crypto';
 import { runMultiPassAudit } from '@/lib/multi-pass-engine';
@@ -147,6 +148,47 @@ export async function POST(request: Request) {
     }
   }
   log('input_parsed', { fileSize: file.size, frameworks: meta.frameworks, lang: meta.targetLanguage });
+
+  // ---- 1c. Analytics — submission funnel step -----------------------
+  // We fire `audit_submitted` on every submission and additionally
+  // `first_audit_submitted` on the org's first audit ever. The
+  // first-time check is a 1-row LIMIT 1 lookup (no count, no scan)
+  // so it adds <5ms to the request — cheap insurance to keep the
+  // funnel step distinct in PostHog dashboards. The single-row
+  // probe runs only for non-anonymous orgs; anonymous-org
+  // submissions are public share-link runs and don't have a
+  // stable identity to attribute "first" to.
+  let isFirstAudit = false;
+  if (!isAnonymousOrg) {
+    const probe = await supabaseService()
+      .from('audits')
+      .select('id', { head: true, count: 'exact' })
+      .eq('organization_id', meta.organizationId)
+      .limit(1);
+    isFirstAudit = (probe.count ?? 0) === 0;
+  }
+  await captureServerEvent({
+    distinctId: meta.organizationId,
+    event: 'audit_submitted',
+    properties: {
+      file_size: file.size,
+      frameworks: meta.frameworks,
+      target_language: meta.targetLanguage,
+      is_anonymous_org: isAnonymousOrg,
+      is_first_audit: isFirstAudit
+    }
+  });
+  if (isFirstAudit) {
+    await captureServerEvent({
+      distinctId: meta.organizationId,
+      event: 'first_audit_submitted',
+      properties: {
+        frameworks: meta.frameworks,
+        target_language: meta.targetLanguage,
+        file_size: file.size
+      }
+    });
+  }
 
   // ---- 2. Rate limit ------------------------------------------------
   // Plan-aware IP bucket: lookup the org's active subscription once,
@@ -525,6 +567,26 @@ export async function POST(request: Request) {
       }
 
       log('done', { auditId: audit.id });
+
+      // Analytics — funnel step "audit_completed". Fire-and-forget;
+      // even if PostHog is down we still ship the success envelope
+      // to the client. The captured payload lets the PostHog
+      // funnel filter by risk_score band (e.g. "viewers who saw a
+      // critical finding converted at X%") and by framework mix
+      // (which regulations are driving the most paid upgrades).
+      await captureServerEvent({
+        distinctId: meta.organizationId,
+        event: 'audit_completed',
+        properties: {
+          audit_id: audit.id,
+          risk_score: report.riskScore,
+          findings_count: report.findings.length,
+          frameworks: meta.frameworks,
+          target_language: meta.targetLanguage,
+          using_free_trial: usingFreeTrial
+        }
+      });
+
       progress(100, 'done');
       finish({
         ok: true,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { captureServerEvent, identifyOrg } from '@/lib/analytics';
 import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 import { supabaseService } from '@/lib/supabase';
@@ -62,6 +63,31 @@ export async function POST(request: Request) {
   if (updateErr) {
     return NextResponse.json({ error: 'metadata_update_failed', detail: updateErr.message }, { status: 500 });
   }
+
+  // Analytics — fire-and-forget. identifyOrg() attaches the org id
+  // and onboarding traits to the PostHog person profile so every
+  // subsequent event from this user is cohort-filterable by country
+  // / ui_locale. The signup_completed event is the first step of
+  // the conversion funnel — its absence in PostHog means the
+  // onboarding write succeeded but analytics dropped, not that the
+  // user failed to onboard. Errors inside the analytics module are
+  // logged but never bubble up.
+  await identifyOrg(user.id, org.id, {
+    country: body.country,
+    ui_locale: body.uiLocale,
+    default_report_language: body.defaultReportLanguage,
+    organization_name: body.name
+  });
+  await captureServerEvent({
+    distinctId: user.id,
+    event: 'signup_completed',
+    properties: {
+      organization_id: org.id,
+      country: body.country,
+      ui_locale: body.uiLocale,
+      default_report_language: body.defaultReportLanguage
+    }
+  });
 
   return NextResponse.json({ organizationId: org.id, alreadyOnboarded: false });
 }
