@@ -308,7 +308,19 @@
     "metaTitle": "Qatar PDPPL Audit-Bericht — Beispiel",
     "metaDescription": "Sehen Sie genau, was LexyFlow liefert: ein 60-Sekunden-Compliance-Audit einer katarischen Datenschutzrichtlinie gegen die PDPPL (Gesetz Nr. 13 von 2016) — Zitate, Befunde, KI-Umformulierungsvorschläge. Keine Anmeldung, kein Upload, kostenlos.",
     "switcherLabel": "Anzeigen in:",
-    "switcherAria": "Sprache für diesen Musterbericht wählen"
+    "switcherAria": "Sprache für diesen Musterbericht wählen",
+    "provenanceTitle": "Herkunft — überprüfen Sie diese Prüfung selbst",
+    "provenanceSource": "Quelldokument",
+    "provenanceLicense": "Lizenz",
+    "provenanceRetrieved": "Abgerufen am",
+    "provenanceChars": "Zeichen extrahiert",
+    "provenanceAuditDate": "Prüfung durchgeführt am",
+    "provenanceModels": "KI-Modelle",
+    "evidence": "Auszug aus dem Quelldokument",
+    "regeneratingTitle": "Musterbericht wird neu erstellt",
+    "regeneratingBody": "Diese Seite zeigt eine echte LexyFlow-Prüfung eines öffentlichen Quelldokuments. Die Momentaufnahme wird derzeit erstellt und erscheint hier in Kürze.",
+    "regeneratingEthics": "Wir zeigen niemals erfundene Prüfergebnisse — auch nicht als Marketing. Führen Sie in der Zwischenzeit eine kostenlose Prüfung Ihres eigenen Dokuments durch.",
+    "regeneratingCtaBody": "Führen Sie eine echte Prüfung Ihres Dokuments durch — kostenlos, ohne Kreditkarte, Ergebnis in 60 Sekunden."
   },
   "dashboard": {
     "title": "Audits",

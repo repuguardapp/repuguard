@@ -308,7 +308,19 @@
     "metaTitle": "Informe de auditoría PDPPL Qatar — muestra",
     "metaDescription": "Vea exactamente lo que LexyFlow entrega: una auditoría de cumplimiento de 60 segundos de una política de privacidad catarí frente a la PDPPL (Ley n.º 13 de 2016) — citas, hallazgos y sugerencias de reescritura por IA. Sin registro, sin subir archivos, gratis.",
     "switcherLabel": "Ver en:",
-    "switcherAria": "Elegir el idioma de este informe de muestra"
+    "switcherAria": "Elegir el idioma de este informe de muestra",
+    "provenanceTitle": "Procedencia — verifique esta auditoría usted mismo",
+    "provenanceSource": "Documento de origen",
+    "provenanceLicense": "Licencia",
+    "provenanceRetrieved": "Recuperado el",
+    "provenanceChars": "caracteres extraídos",
+    "provenanceAuditDate": "Auditoría ejecutada el",
+    "provenanceModels": "Modelos de IA",
+    "evidence": "Extracto del documento de origen",
+    "regeneratingTitle": "Informe de muestra en regeneración",
+    "regeneratingBody": "Esta página muestra una auditoría real de LexyFlow sobre un documento de origen público. La instantánea se está preparando y aparecerá aquí en breve.",
+    "regeneratingEthics": "Nunca mostramos hallazgos de auditoría fabricados, ni siquiera como marketing. Mientras tanto, ejecute una auditoría gratuita sobre su propio documento.",
+    "regeneratingCtaBody": "Ejecute una auditoría real sobre su propio documento — gratis, sin tarjeta de crédito, resultados en 60 segundos."
   },
   "dashboard": {
     "title": "Auditorías",

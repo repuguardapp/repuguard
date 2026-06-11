@@ -1,0 +1,6 @@
+{
+  "$comment": "Snapshot of a real LexyFlow audit run on a public source document. Populated by `npm run regenerate:sample-report` — see scripts/regenerate-sample-report.ts. The field `generated` is null when the snapshot has not yet been produced; the public /sample-report page renders an honest 'sample being regenerated' placeholder in that state instead of fabricating content.",
+  "generated": null,
+  "source": null,
+  "audit": null
+}

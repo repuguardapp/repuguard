@@ -308,7 +308,19 @@
     "metaTitle": "カタールPDPPL監査レポート — サンプル",
     "metaDescription": "LexyFlowが返すアウトプットをそのまま確認:カタールのプライバシーポリシーをPDPPL(2016年法律第13号)に照らした60秒のコンプライアンス監査—引用、所見、AIによる文言改善案。登録不要、アップロード不要、無料。",
     "switcherLabel": "表示言語:",
-    "switcherAria": "このサンプルレポートの言語を選択"
+    "switcherAria": "このサンプルレポートの言語を選択",
+    "provenanceTitle": "出典 — この監査をご自身で検証してください",
+    "provenanceSource": "元ドキュメント",
+    "provenanceLicense": "ライセンス",
+    "provenanceRetrieved": "取得日",
+    "provenanceChars": "文字抽出",
+    "provenanceAuditDate": "監査実行日",
+    "provenanceModels": "AIモデル",
+    "evidence": "元ドキュメントからの引用",
+    "regeneratingTitle": "サンプルレポートを再生成中",
+    "regeneratingBody": "このページは、公開された元ドキュメントに対するLexyFlowの実際の監査を表示します。スナップショットは現在準備中で、間もなくここに表示されます。",
+    "regeneratingEthics": "当社はマーケティング目的であっても、捏造された監査結果を表示することは一切ありません。公開までの間、ご自身のドキュメントで無料監査をお試しください。",
+    "regeneratingCtaBody": "ご自身のドキュメントで本物の監査を実行 — 無料、クレジットカード不要、60秒で結果。"
   },
   "dashboard": {
     "title": "監査一覧",

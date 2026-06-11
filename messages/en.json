@@ -308,7 +308,19 @@
     "metaTitle": "Qatar PDPPL audit report — sample",
     "metaDescription": "See exactly what LexyFlow returns: a 60-second compliance audit of a Qatari privacy policy against PDPPL (Law No. 13 of 2016) — citations, findings, and AI-rewrite suggestions. No signup, no upload, free.",
     "switcherLabel": "View in:",
-    "switcherAria": "Choose the language for this sample report"
+    "switcherAria": "Choose the language for this sample report",
+    "provenanceTitle": "Provenance — verify this audit yourself",
+    "provenanceSource": "Source document",
+    "provenanceLicense": "License",
+    "provenanceRetrieved": "Retrieved",
+    "provenanceChars": "characters extracted",
+    "provenanceAuditDate": "Audit run",
+    "provenanceModels": "AI models",
+    "evidence": "Evidence from the source",
+    "regeneratingTitle": "Sample report being regenerated",
+    "regeneratingBody": "This page renders a real LexyFlow audit of a public source document. The snapshot is currently being prepared and will appear here shortly.",
+    "regeneratingEthics": "We never display fabricated audit findings — even as marketing. Until the live snapshot is published, run a free audit on your own document.",
+    "regeneratingCtaBody": "Run a real audit on your own document — free, no credit card, results in 60 seconds."
   },
   "dashboard": {
     "title": "Audits",
