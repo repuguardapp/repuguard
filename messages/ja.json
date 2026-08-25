@@ -1,0 +1,344 @@
+{
+  "brand": {
+    "name": "LexyFlow",
+    "tagline": "グローバル・コンプライアンスを、自動化。"
+  },
+  "meta": {
+    "title": "LexyFlow — グローバル・コンプライアンスを、自動化。",
+    "description": "LexyFlow は GDPR、AI法、LGPD、APPI に対してドキュメントを数秒で監査し、お好みの言語でレポートを届けます。lexyflow.com"
+  },
+  "nav": {
+    "product": "プロダクト",
+    "pricing": "料金",
+    "docs": "ドキュメント",
+    "signIn": "ログイン",
+    "startAudit": "監査を開始",
+    "myDashboard": "マイダッシュボード"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "数秒で完了するグローバル・コンプライアンス",
+      "title": "LexyFlow：グローバル・コンプライアンスを、自動化。",
+      "subtitle": "ポリシー・契約書・モデルカードをアップロードしてください。LexyFlow は GDPR、AI法、LGPD、APPI と数秒で突合し、選択した言語でレポートを作成します。",
+      "cta": "無料で監査を開始",
+      "authedCta": "Enterprise ワークスペースを開く",
+      "secondaryCta": "サンプルレポートを見る"
+    },
+    "trust": {
+      "frameworks": "対応フレームワーク",
+      "languages": "ネイティブ対応言語",
+      "extraLanguages": "オンデマンドで追加可能"
+    },
+    "features": {
+      "title": "グローバルなコンプライアンス・チームのために",
+      "multiPass": {
+        "title": "Multi-Pass エンジン",
+        "body": "LexyFlow は基準言語で監査を行い、その後どの BCP-47 言語にもレポートをローカライズします。法的引用は原文のまま保持されます。"
+      },
+      "zeroKnowledge": {
+        "title": "デフォルトで保存時暗号化",
+        "body": "お客様のドキュメントは組織ごとに分離された鍵で AES-256-GCM によりサーバー側で暗号化され、編集セッション中にのみアクセス可能で、AI の学習には一切使用されません。"
+      },
+      "global": {
+        "title": "初日からグローバル",
+        "body": "ネイティブ 6 言語、Stripe の多通貨チェックアウト、世界各国の自動税計算、各ページに hreflang。"
+      }
+    }
+  },
+  "pricing": {
+    "title": "料金",
+    "subtitle": "現地通貨で支払い。税は自動計算されます。",
+    "starter": {
+      "name": "Starter",
+      "tagline": "個人と小規模チーム向け"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "規制データを扱うスケールアップ向け"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "複数管轄を持つ企業グループ向け"
+    },
+    "perMonth": "/ 月",
+    "checkout": "このプランを選択",
+    "reasons": {
+      "no_credits": "新しい監査を実行するには監査クレジットが必要です。以下のプランから補充してください。",
+      "signin_required": "サインインまたはアカウント作成のうえ、購読してください。"
+    }
+  },
+  "audit": {
+    "upload": "ドキュメントをアップロード",
+    "uploadHint": "PDF、DOCX、MD、TXT — 最大 25 MB。解析後に削除されます。",
+    "targetLanguage": "レポートの言語",
+    "targetLanguageHint": "任意の言語を選択できます — LexyFlow が最終レポートを翻訳します。",
+    "framework": "法的フレームワーク",
+    "submit": "監査を実行",
+    "running": "LexyFlow が監査中 — 通常 1 分以内に完了します。",
+    "zeroKnowledge": "保存時暗号化：ドキュメントは AES-256-GCM で保管され、編集セッション中にのみアクセスできます。",
+    "processing": {
+      "queued": "キューに登録済み — ドキュメントを準備中。",
+      "running": "監査中 — 通常 1 分以内に完了します。",
+      "phases": [
+        "ドキュメントを読み込み中…",
+        "条項を抽出中…",
+        "選択されたフレームワークへの準拠を確認中…",
+        "法的条文と照合中…",
+        "所見を作成中…",
+        "レポートをローカライズ中…"
+      ]
+    },
+    "completed": {
+      "title": "監査完了",
+      "riskScore": "リスクスコア",
+      "findingsCount": "所見数",
+      "openReport": "レポートを開く →"
+    },
+    "failed": {
+      "title": "監査失敗",
+      "tryAgain": "再試行",
+      "timeout": "監査が通常より時間がかかっています。再試行してください。"
+    }
+  },
+  "footer": {
+    "copyright": "© {year} LexyFlow. 無断複写・転載を禁じます。",
+    "privacy": "プライバシー",
+    "terms": "利用規約",
+    "dpa": "DPA"
+  },
+  "auth": {
+    "signInTitle": "LexyFlow にサインイン",
+    "signInTagline": "メールで魔法のリンクをお送りします。パスワードは不要です。",
+    "emailLabel": "メールアドレス",
+    "emailPlaceholder": "you@company.com",
+    "submit": "魔法のリンクを送信",
+    "submitting": "送信中…",
+    "inboxTitle": "メール受信箱をご確認ください",
+    "inboxBody": "ご登録のメール（または新規）であれば、サインインリンクを送信しました。リンクの有効期限は 60 分です。",
+    "inboxRetry": "届きませんか？再送信",
+    "newHere": "はじめての方は",
+    "newHereCta": "監査を実行",
+    "newHereSuffix": "から — アカウント不要です。",
+    "errorService": "メールサービスは一時的に利用できません。少し待って再試行してください。",
+    "errorRateLimited": "試行回数が多すぎます。少し待って再試行してください。",
+    "errorGeneric": "エラーが発生しました。再試行してください。"
+  },
+  "onboarding": {
+    "title": "LexyFlow へようこそ。",
+    "description": "初回セットアップです。組織について教えてください。監査に最適な法的フレームワークを選定します。",
+    "signedInAs": "<bold>{email}</bold> としてログイン中。",
+    "orgName": "組織名",
+    "orgNamePlaceholder": "株式会社サンプル",
+    "country": "国",
+    "countryHint": "デフォルトの法的フレームワークを決定します。",
+    "uiLocale": "インターフェースの言語",
+    "reportLanguage": "レポートのデフォルト言語",
+    "reportLanguageHint": "レポートは既定でこの言語を使用します。監査ごとに上書き可能です。",
+    "reportLanguagePlaceholder": "ja, en, ar…",
+    "submit": "組織を作成",
+    "submitting": "セットアップ中…"
+  },
+  "billing": {
+    "successTitle": "完了しました。LexyFlow へようこそ。",
+    "successBody": "サブスクリプションが有効になりました。Stripe から領収書をメールでお送りしました。ワークスペースの準備が整いましたので、監査ページから最初のドキュメントをアップロードしてください。",
+    "successCta": "最初の監査を実行",
+    "successDashboard": "ダッシュボードへ",
+    "successDocs": "ドキュメントを読む",
+    "creditsAdded": "監査クレジットがアカウントに追加されました",
+    "creditsAvailable": "{count}クレジット利用可能",
+    "manage": "請求の管理",
+    "manageOpening": "開いています…",
+    "signOut": "サインアウト"
+  },
+  "errors": {
+    "generic": "エラーが発生しました。しばらくしてから再試行してください。",
+    "document_required": "まずドキュメントをアップロードしてください。",
+    "document_too_large": "ドキュメントは 25 MB の上限を超えています。",
+    "invalid_metadata": "監査フォームの項目が不完全または無効です。",
+    "rate_limited": "短時間に監査が多すぎます — お待ちいただいてから再試行してください。",
+    "no_credits": "監査クレジットが不足しています。プランを選択してください。",
+    "document_too_large_free_tier": "トライアルモードは 1 ドキュメントあたり 2 MB までです。Pro にアップグレードすると大きなファイルを監査できます。",
+    "credit_check_failed": "監査クレジットを確認できませんでした。再試行してください。",
+    "extraction_failed": "このドキュメントを読み取れませんでした。スキャン PDF の場合は OCR を実行してから再試行してください。",
+    "anthropic_error": "コンプライアンスエンジンは一時的に利用できません。再試行してください。",
+    "openai_error": "翻訳エンジンは一時的に利用できません。再試行してください。",
+    "multipass_failed": "監査パイプラインで予期しない問題が発生しました。再試行してください。",
+    "supabase_write_failed": "レポートを保存できませんでした。再試行してください。",
+    "audit_stream_truncated": "接続が中断されました。再試行してください。",
+    "audit_no_stream": "サーバーから応答がありませんでした。再試行してください。"
+  },
+  "report": {
+    "title": "コンプライアンス監査レポート",
+    "generatedOn": "LexyFlow が {date} に生成。",
+    "riskScore": "リスクスコア",
+    "executiveSummary": "エグゼクティブサマリー",
+    "findings": "指摘事項",
+    "noFindings": "指摘事項はありません — 選択したフレームワークに対して問題は見つかりませんでした。",
+    "recommendation": "推奨事項",
+    "evidence": "根拠",
+    "savePdf": "PDF として保存",
+    "editDocument": "ドキュメントを編集",
+    "editLocked": "AI エディタをアンロック",
+    "paywallTeaserBadge": "プレビュー — Pro にアップグレード",
+    "paywallTitle": "他に {count} 件の指摘が非表示です",
+    "paywallBody": "無料レポートでは総合スコアと最初の指摘事項のみ表示されます。完全な分析と AI 修正エディタは Pro および Enterprise のお客様限定です。",
+    "paywallBenefit1": "非表示の {count} 件の指摘事項とその推奨対応にアクセス",
+    "paywallBenefit2": "非準拠の各条項をワンクリックで修正する AI エディタ",
+    "paywallBenefit3": "AES-256-GCM 暗号化ストレージ + 署名済み DPA + Trust Center",
+    "paywallCta": "プランを見る →",
+    "deleteCta": "完全に削除",
+    "deleteConfirm": "削除を確認",
+    "deleting": "削除中…",
+    "deleteSuccess": "削除済み",
+    "deleteFailed": "失敗 — 再試行",
+    "encryptedTooltip": "ドキュメントは AES-256-GCM で暗号化保存されています。編集セッション中にのみアクセス可能です。",
+    "back": "戻る",
+    "language": "言語",
+    "footer": "LexyFlow により生成 · lexyflow.com · audit id {id}",
+    "severity": {
+      "critical": "重大",
+      "high": "高",
+      "medium": "中",
+      "low": "低",
+      "info": "情報"
+    }
+  },
+  "editor": {
+    "title": "ドキュメントエディタ",
+    "intro": "ソーステキストを下に貼り付け、AI の推奨事項をドキュメントに直接適用してください。サーバー側には何も保存されません。",
+    "back": "← レポートに戻る",
+    "pasteLabel": "ソーステキスト",
+    "pastePlaceholder": "ポリシー、契約書、モデルカードの内容をここに貼り付けてください…",
+    "findingsTitle": "推奨事項",
+    "rewriteCta": "この条項を修正",
+    "rewriting": "修正を生成中…",
+    "applyCta": "修正を適用",
+    "discardCta": "破棄",
+    "downloadCta": "編集済みテキストをダウンロード",
+    "emptyDocument": "テキストを貼り付けると修正が有効になります。",
+    "rewriteError": "修正を実行できません — もう一度お試しください。",
+    "rewriteHint": "AI による修正案",
+    "loadingDocument": "ドキュメントを復号中…",
+    "retainedNotice": "暗号化ストレージ（AES-256-GCM）から読み込まれたドキュメントです。本文は本セッション中にのみサーバーから取り出されました。",
+    "resolvedLabel": "解決済み",
+    "noEvidenceAnchor": "この指摘事項はドキュメント内の特定条項に紐づいていません — 推奨事項を手動で適用してください。"
+  },
+  "security": {
+    "title": "セキュリティアクティビティ",
+    "intro": "貴組織の平文データを読み取るまたは破棄するすべての操作がここに記録されます。ドキュメントがいつ、誰によって、どの IP から復号されたかを正確に確認できます — LexyFlow によるサポートアクセスも含みます。",
+    "back": "← ダッシュボード",
+    "accessSectionTitle": "アクセスログ",
+    "accessEmpty": "まだアクティビティは記録されていません。",
+    "deletionSectionTitle": "削除",
+    "deletedAuditLabel": "監査を完全削除",
+    "signaturePrefix": "HMAC-SHA256 署名",
+    "openAudit": "開く",
+    "promiseTitle": "私たちの約束",
+    "promiseBody": "このログはサーバー側で改ざん防止です（append-only テーブル、Postgres RLS）。私たちは決して黙って行を削除または変更しないことを約束します。",
+    "trustCenterLink": "Trust Center を見る →",
+    "action": {
+      "audit_created": "監査を作成",
+      "document_decrypted": "ドキュメントを復号",
+      "audit_deleted": "監査を削除"
+    }
+  },
+  "trust": {
+    "eyebrow": "Trust Center",
+    "title": "セキュリティ・暗号化・コンプライアンス",
+    "intro": "ドキュメントを LexyFlow に送信する前に、法務チームと CISO が知っておくべきすべて。このページは唯一の真実の情報源であり、デプロイのたびに更新されます。",
+    "encryptionTitle": "暗号化スタック",
+    "encryptionCardTitle": "保存時暗号化 — AES-256-GCM",
+    "encryptionAlgoLabel": "アルゴリズム",
+    "encryptionIvLabel": "IV",
+    "encryptionIvBody": "ドキュメントごとに 12 バイトのランダム値（GCM 標準、再利用なし）",
+    "encryptionTagLabel": "認証",
+    "encryptionTagBody": "16 バイト GCM タグ — ciphertext が改ざんされると復号が失敗します",
+    "encryptionKeyLabel": "マスターキー",
+    "encryptionKeyBody": "256 ビット、Vercel に暗号化環境変数としてのみ保持。ログにも記録されず、コミットもされません。",
+    "encryptionAccessLabel": "平文アクセス",
+    "encryptionAccessBody": "認証された編集セッション中のみ。すべての復号はセキュリティアクティビティログに記録されます。",
+    "subProcessorsTitle": "副処理者",
+    "subProcessorsIntro": "貴データを処理するすべての事業者の完全なリスト。このリストの変更前に 30 日前にメールで通知されます。",
+    "transferMechanismLabel": "国際移転",
+    "websiteLink": "ウェブサイト",
+    "dpaLink": "DPA",
+    "commitmentsTitle": "契約上の約束",
+    "commit30dLabel": "副処理者に関する 30 日前通知",
+    "commit30dBody": "副処理者を追加、削除、または変更する前にメールでお知らせします。変更がご都合に合わない場合は違約金なしで解約できます。",
+    "commitDeleteLabel": "検証可能な削除",
+    "commitDeleteBody": "各監査の「完全に削除」ボタンはカスケード DELETE（監査 + findings + ciphertext）をトリガーし、規制当局に提示できる HMAC-SHA256 暗号化レシートをお渡しします。",
+    "commitTrainingLabel": "AI トレーニングなし",
+    "commitTrainingBody": "貴ドキュメントは AI モデルのトレーニングには一切使用されません — 当社のものも、Anthropic や OpenAI のものも（当社の API キーで zero data retention 有効）。",
+    "commitBreachLabel": "24 時間以内の侵害通知",
+    "commitBreachBody": "データ侵害を検出した場合、GDPR 第 33 条に従い 24 時間以内に通知することを約束します。",
+    "contactTitle": "連絡先",
+    "contactSecurityLabel": "セキュリティ / 責任ある開示",
+    "contactDpoLabel": "DPO / プライバシー",
+    "responsibleDisclosure": "セキュリティ研究者向けの RFC 9116 形式"
+  },
+  "trustBadges": {
+    "encryption": "AES-256-GCM 暗号化",
+    "euHosted": "EU ホスティング（フランクフルト）",
+    "deletion": "30日後の自動削除",
+    "noCard": "無料・クレジットカード不要",
+    "aria": "セキュリティと信頼の保証"
+  },
+  "dpa": {
+    "courtesyTitle": "参考訳",
+    "courtesyBody": "本データ処理契約の英語版が正本です。以下の要約は、英語を母語としない読者が契約の構造を理解できるように提供するもので、法的拘束力のある原文の代替ではありません。",
+    "summaryTitle": "本 DPA の要点（平易な表現）：",
+    "summary": {
+      "point1": "LexyFlow は GDPR（および世界各地の同等の制度）の処理者として、お客様の指示に基づいてのみドキュメントを処理します。",
+      "point2": "再委託先（Anthropic、OpenAI、Supabase、Stripe、Vercel、Resend、Sentry）はすべて標準契約条項に拘束されます。変更時は 30 日前に通知します。",
+      "point3": "セキュリティスタック：通信は TLS 1.3、保存は AES-256-GCM、監査後はソースドキュメントを消去、Postgres RLS、24 時間以内の侵害通知 SLA。",
+      "point4": "コンプライアンス監査は年 1 回まで可能です。データ主体からの請求（開示、削除）は転送し、対応を支援します。",
+      "point5": "契約終了時には、法令による保存義務がある場合を除き、すべての個人データを 30 日以内に削除または返却します。"
+    },
+    "requestSigned": "貴社の管轄言語で署名済の契約書が必要ですか？ <a>legal@lexyflow.com</a> までご連絡ください — 認証翻訳をご要望に応じてお送りします。"
+  },
+  "sampleReport": {
+    "back": "戻る",
+    "badge": "サンプルレポート",
+    "title": "プライバシーポリシー監査 — {org}",
+    "subtitle": "LexyFlow が {seconds} 秒で生成。{count} 件の規制と相互参照。リスクスコア: {score} / 100。",
+    "findings": "指摘事項",
+    "recommendation": "推奨対応",
+    "footerBody": "実際のレポートには、原文書からの証拠、是正スケジュール、ダウンロード可能な PDF が含まれます — 100 以上の言語に対応。",
+    "footerCta": "自分のドキュメントで監査を実行",
+    "metaTitle": "カタールPDPPL監査レポート — サンプル",
+    "metaDescription": "LexyFlowが返すアウトプットをそのまま確認:カタールのプライバシーポリシーをPDPPL(2016年法律第13号)に照らした60秒のコンプライアンス監査—引用、所見、AIによる文言改善案。登録不要、アップロード不要、無料。",
+    "switcherLabel": "表示言語:",
+    "switcherAria": "このサンプルレポートの言語を選択",
+    "provenanceTitle": "出典 — この監査をご自身で検証してください",
+    "provenanceSource": "元ドキュメント",
+    "provenanceLicense": "ライセンス",
+    "provenanceRetrieved": "取得日",
+    "provenanceChars": "文字抽出",
+    "provenanceAuditDate": "監査実行日",
+    "provenanceModels": "AIモデル",
+    "evidence": "元ドキュメントからの引用",
+    "regeneratingTitle": "サンプルレポートを再生成中",
+    "regeneratingBody": "このページは、公開された元ドキュメントに対するLexyFlowの実際の監査を表示します。スナップショットは現在準備中で、間もなくここに表示されます。",
+    "regeneratingEthics": "当社はマーケティング目的であっても、捏造された監査結果を表示することは一切ありません。公開までの間、ご自身のドキュメントで無料監査をお試しください。",
+    "regeneratingCtaBody": "ご自身のドキュメントで本物の監査を実行 — 無料、クレジットカード不要、60秒で結果。"
+  },
+  "dashboard": {
+    "title": "監査一覧",
+    "signedInAs": "<bold>{email}</bold> としてログイン中。",
+    "newAudit": "新規監査",
+    "buyCredits": "クレジット購入",
+    "filterAll": "すべて",
+    "openAudit": "開く",
+    "auditAt": "監査 · {date}",
+    "running": "実行中…",
+    "failed": "失敗",
+    "emptyTitle": "監査がありません",
+    "emptyBody": "最初のドキュメントをアップロードすると、ここに指摘事項が表示されます。",
+    "emptyCta": "最初の監査を開始",
+    "creditsAvailable": "{count}監査クレジット利用可能",
+    "creditsLow": "クレジットを追加してさらに監査を実行",
+    "creditsTopUp": "チャージ",
+    "freeBanner": "トライアルモード有効中。Enterprise プランに切り替えてドキュメントを保護してください。",
+    "freeBannerCta": "Pro にアップグレード"
+  }
+}

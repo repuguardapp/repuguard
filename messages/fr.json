@@ -1,0 +1,344 @@
+{
+  "brand": {
+    "name": "LexyFlow",
+    "tagline": "La conformité mondiale, automatisée."
+  },
+  "meta": {
+    "title": "LexyFlow — La conformité mondiale, automatisée.",
+    "description": "LexyFlow audite vos documents face au RGPD, à l'AI Act, à la LGPD et à l'APPI en quelques secondes — et livre le rapport dans la langue de votre choix. lexyflow.com"
+  },
+  "nav": {
+    "product": "Produit",
+    "pricing": "Tarifs",
+    "docs": "Documentation",
+    "signIn": "Se connecter",
+    "startAudit": "Lancer un audit",
+    "myDashboard": "Mon tableau de bord"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Conformité mondiale, en quelques secondes",
+      "title": "LexyFlow : la conformité mondiale, automatisée.",
+      "subtitle": "Déposez une politique, un contrat ou une fiche modèle. LexyFlow le confronte au RGPD, à l'AI Act, à la LGPD et à l'APPI en quelques secondes — et rédige le rapport dans votre langue.",
+      "cta": "Lancer un audit gratuit",
+      "authedCta": "Accéder à mon espace Enterprise",
+      "secondaryCta": "Voir un rapport d'exemple"
+    },
+    "trust": {
+      "frameworks": "Référentiels couverts",
+      "languages": "Langues natives",
+      "extraLanguages": "langues supplémentaires à la demande"
+    },
+    "features": {
+      "title": "Pensé pour les équipes conformité internationales",
+      "multiPass": {
+        "title": "Moteur Multi-Pass",
+        "body": "LexyFlow analyse dans une langue pivot canonique, puis localise le rapport dans n'importe quelle langue BCP-47 en conservant chaque citation juridique mot pour mot."
+      },
+      "zeroKnowledge": {
+        "title": "Chiffré au repos par défaut",
+        "body": "Vos documents sont chiffrés serveur en AES-256-GCM avec des clés isolées par organisation, accessibles uniquement pendant vos sessions d'édition, et jamais utilisés pour entraîner une IA."
+      },
+      "global": {
+        "title": "Global dès le premier jour",
+        "body": "Six langues natives, paiement Stripe multi-devises, calcul automatique des taxes mondiales, hreflang sur chaque page."
+      }
+    }
+  },
+  "pricing": {
+    "title": "Tarifs",
+    "subtitle": "Payez dans votre devise locale. Les taxes sont calculées automatiquement.",
+    "starter": {
+      "name": "Starter",
+      "tagline": "Pour les fondateurs et petites équipes"
+    },
+    "pro": {
+      "name": "Pro",
+      "tagline": "Pour les scale-ups manipulant des données réglementées"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Pour les groupes multi-juridictions"
+    },
+    "perMonth": "/ mois",
+    "checkout": "Choisir cette offre",
+    "reasons": {
+      "no_credits": "Vous devez disposer de crédits d'audit pour en lancer un nouveau. Choisissez une offre ci-dessous pour recharger.",
+      "signin_required": "Veuillez vous connecter ou créer un compte pour souscrire."
+    }
+  },
+  "audit": {
+    "upload": "Déposer un document",
+    "uploadHint": "PDF, DOCX, MD ou TXT — jusqu'à 25 Mo. Les fichiers sont supprimés après analyse.",
+    "targetLanguage": "Langue du rapport",
+    "targetLanguageHint": "Choisissez n'importe quelle langue — LexyFlow traduira le rapport final.",
+    "framework": "Référentiel juridique",
+    "submit": "Lancer l'audit",
+    "running": "LexyFlow audite — cela prend généralement moins d'une minute.",
+    "zeroKnowledge": "Chiffré au repos : votre document est conservé en AES-256-GCM et accessible uniquement pendant vos sessions d'édition.",
+    "processing": {
+      "queued": "En file d'attente — préparation du document.",
+      "running": "Audit en cours — cela prend généralement moins d'une minute.",
+      "phases": [
+        "Lecture du document…",
+        "Extraction des clauses…",
+        "Vérification de la conformité aux référentiels sélectionnés…",
+        "Recoupement avec les articles juridiques…",
+        "Rédaction des constatations…",
+        "Localisation du rapport…"
+      ]
+    },
+    "completed": {
+      "title": "Audit terminé",
+      "riskScore": "Score de risque",
+      "findingsCount": "Constatations",
+      "openReport": "Ouvrir le rapport →"
+    },
+    "failed": {
+      "title": "Audit échoué",
+      "tryAgain": "Réessayer",
+      "timeout": "L'audit prend plus de temps que prévu. Veuillez réessayer."
+    }
+  },
+  "footer": {
+    "copyright": "© {year} LexyFlow. Tous droits réservés.",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "dpa": "DPA"
+  },
+  "auth": {
+    "signInTitle": "Connexion à LexyFlow",
+    "signInTagline": "Nous vous envoyons un lien magique par email. Aucun mot de passe à retenir.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "vous@entreprise.com",
+    "submit": "Recevoir un lien magique",
+    "submitting": "Envoi en cours…",
+    "inboxTitle": "Vérifiez votre boîte mail",
+    "inboxBody": "Si votre email est enregistré (ou nouveau), nous venons d'envoyer un lien de connexion. Le lien est valide 60 minutes.",
+    "inboxRetry": "Vous ne l'avez pas reçu ? Renvoyer un lien",
+    "newHere": "Nouveau ici ?",
+    "newHereCta": "Lancer un audit",
+    "newHereSuffix": "d'abord — aucun compte nécessaire.",
+    "errorService": "Le service d'email est temporairement indisponible. Veuillez réessayer dans un instant.",
+    "errorRateLimited": "Trop de tentatives. Veuillez patienter avant de réessayer.",
+    "errorGeneric": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "onboarding": {
+    "title": "Bienvenue chez LexyFlow.",
+    "description": "Configuration en une étape. Parlez-nous de votre organisation pour qu'on choisisse les bons référentiels juridiques.",
+    "signedInAs": "Connecté en tant que <bold>{email}</bold>.",
+    "orgName": "Nom de l'organisation",
+    "orgNamePlaceholder": "Acme SAS",
+    "country": "Pays",
+    "countryHint": "Détermine les référentiels juridiques par défaut.",
+    "uiLocale": "Langue de l'interface",
+    "reportLanguage": "Langue par défaut des rapports",
+    "reportLanguageHint": "Les rapports utilisent cette langue par défaut ; vous pouvez la modifier audit par audit.",
+    "reportLanguagePlaceholder": "fr, en, ja, ar…",
+    "submit": "Créer l'organisation",
+    "submitting": "Création en cours…"
+  },
+  "billing": {
+    "successTitle": "C'est confirmé. Bienvenue chez LexyFlow.",
+    "successBody": "Votre abonnement est actif. Stripe vous a envoyé le reçu par email. Votre espace de travail est provisionné — rendez-vous sur la page d'audit pour déposer votre premier document.",
+    "successCta": "Lancer mon premier audit",
+    "successDashboard": "Aller au tableau de bord",
+    "successDocs": "Lire la documentation",
+    "creditsAdded": "Crédits d'audit ajoutés à votre compte",
+    "creditsAvailable": "{count, plural, one {# crédit disponible} other {# crédits disponibles}}",
+    "manage": "Gérer la facturation",
+    "manageOpening": "Ouverture…",
+    "signOut": "Se déconnecter"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer dans un instant.",
+    "document_required": "Veuillez d'abord déposer un document.",
+    "document_too_large": "Le document dépasse la limite de 25 Mo.",
+    "invalid_metadata": "Les champs du formulaire d'audit sont incomplets ou invalides.",
+    "rate_limited": "Trop d'audits sur une courte période — veuillez patienter avant de réessayer.",
+    "no_credits": "Vos crédits d'audit sont épuisés. Veuillez choisir un plan pour continuer.",
+    "document_too_large_free_tier": "Le mode Essai est limité à 2 Mo par document. Passez Pro pour auditer des fichiers plus volumineux.",
+    "credit_check_failed": "Impossible de vérifier vos crédits d'audit. Veuillez réessayer.",
+    "extraction_failed": "Impossible de lire ce document. S'il s'agit d'un PDF scanné, veuillez l'OCRiser puis réessayer.",
+    "anthropic_error": "Le moteur de conformité est temporairement indisponible. Veuillez réessayer.",
+    "openai_error": "Le moteur de traduction est temporairement indisponible. Veuillez réessayer.",
+    "multipass_failed": "Le pipeline d'audit a rencontré un problème inattendu. Veuillez réessayer.",
+    "supabase_write_failed": "Impossible d'enregistrer le rapport. Veuillez réessayer.",
+    "audit_stream_truncated": "La connexion a été interrompue. Veuillez réessayer.",
+    "audit_no_stream": "Le serveur n'a pas envoyé de réponse. Veuillez réessayer."
+  },
+  "report": {
+    "title": "Rapport d'audit de conformité",
+    "generatedOn": "Généré par LexyFlow le {date}.",
+    "riskScore": "Score de risque",
+    "executiveSummary": "Synthèse exécutive",
+    "findings": "Constatations",
+    "noFindings": "Aucune constatation — votre document est en règle par rapport aux référentiels sélectionnés.",
+    "recommendation": "Recommandation",
+    "evidence": "Preuve",
+    "savePdf": "Enregistrer en PDF",
+    "editDocument": "Éditer le document",
+    "editLocked": "Débloquer l'éditeur IA",
+    "paywallTeaserBadge": "Aperçu — passez Pro",
+    "paywallTitle": "{count, plural, one {# lacune supplémentaire masquée} other {# lacunes supplémentaires masquées}}",
+    "paywallBody": "Votre rapport gratuit vous montre le score global et la première lacune détectée. L'analyse complète et l'éditeur correctif IA sont réservés aux clients Pro et Enterprise.",
+    "paywallBenefit1": "{count, plural, one {Accès à la # lacune masquée avec recommandations} other {Accès aux # lacunes masquées avec recommandations}}",
+    "paywallBenefit2": "Éditeur IA pour corriger chaque clause en un clic",
+    "paywallBenefit3": "Stockage chiffré AES-256-GCM + DPA signé + Trust Center",
+    "paywallCta": "Voir les offres →",
+    "deleteCta": "Supprimer définitivement",
+    "deleteConfirm": "Confirmer la suppression",
+    "deleting": "Suppression…",
+    "deleteSuccess": "Supprimé",
+    "deleteFailed": "Échec — réessayer",
+    "encryptedTooltip": "Document conservé chiffré en AES-256-GCM. Accessible uniquement pendant vos sessions d'édition.",
+    "back": "Retour",
+    "language": "langue",
+    "footer": "Généré par LexyFlow · lexyflow.com · audit id {id}",
+    "severity": {
+      "critical": "critique",
+      "high": "élevé",
+      "medium": "moyen",
+      "low": "faible",
+      "info": "info"
+    }
+  },
+  "editor": {
+    "title": "Éditeur de document",
+    "intro": "Collez le texte source ci-dessous, puis appliquez les recommandations de l'IA directement dans le document. Aucun contenu n'est conservé côté serveur.",
+    "back": "← Retour au rapport",
+    "pasteLabel": "Texte source",
+    "pastePlaceholder": "Collez ici le contenu de votre politique, contrat ou fiche modèle…",
+    "findingsTitle": "Recommandations",
+    "rewriteCta": "Corriger cette clause",
+    "rewriting": "Génération de la correction…",
+    "applyCta": "Appliquer la correction",
+    "discardCta": "Ignorer",
+    "downloadCta": "Télécharger le texte édité",
+    "emptyDocument": "Collez du texte pour activer les corrections.",
+    "rewriteError": "Correction indisponible — veuillez réessayer.",
+    "rewriteHint": "Clause corrigée par l'IA",
+    "loadingDocument": "Déchiffrement du document…",
+    "retainedNotice": "Document chargé depuis le stockage chiffré (AES-256-GCM). Le texte n'a quitté le serveur que dans cette session.",
+    "resolvedLabel": "Résolue",
+    "noEvidenceAnchor": "Cette lacune n'est pas ancrée sur une clause précise du document — appliquez la recommandation manuellement."
+  },
+  "security": {
+    "title": "Activité de sécurité",
+    "intro": "Toute action qui lit ou supprime des données en clair de votre organisation est enregistrée ici. Vous voyez exactement quand vos documents sont déchiffrés, par qui, et depuis quelle IP — y compris en cas d'accès par LexyFlow pour le support.",
+    "back": "← Tableau de bord",
+    "accessSectionTitle": "Journal d'accès",
+    "accessEmpty": "Aucune activité enregistrée pour le moment.",
+    "deletionSectionTitle": "Suppressions",
+    "deletedAuditLabel": "Audit supprimé définitivement",
+    "signaturePrefix": "Signature HMAC-SHA256",
+    "openAudit": "Ouvrir",
+    "promiseTitle": "Notre engagement",
+    "promiseBody": "Ce journal est inviolable côté serveur (table en append-only, RLS Postgres). Nous nous interdisons d'y supprimer ou modifier une ligne sans que vous puissiez le constater.",
+    "trustCenterLink": "Voir le Trust Center →",
+    "action": {
+      "audit_created": "Audit créé",
+      "document_decrypted": "Document déchiffré",
+      "audit_deleted": "Audit supprimé"
+    }
+  },
+  "trust": {
+    "eyebrow": "Trust Center",
+    "title": "Sécurité, chiffrement et conformité",
+    "intro": "Tout ce que votre équipe juridique et votre RSSI doivent savoir avant d'envoyer un document à LexyFlow. Cette page est la source de vérité unique — elle est mise à jour avec chaque déploiement.",
+    "encryptionTitle": "Stack de chiffrement",
+    "encryptionCardTitle": "Encrypted at Rest — AES-256-GCM",
+    "encryptionAlgoLabel": "Algorithme",
+    "encryptionIvLabel": "IV",
+    "encryptionIvBody": "12 octets aléatoires par document (standard GCM, jamais réutilisé)",
+    "encryptionTagLabel": "Authentification",
+    "encryptionTagBody": "Tag GCM 16 octets — toute modification du ciphertext fait échouer le déchiffrement",
+    "encryptionKeyLabel": "Clé maîtresse",
+    "encryptionKeyBody": "256 bits, stockée chez Vercel uniquement en variable d'environnement chiffrée. Jamais loggée, jamais commitée.",
+    "encryptionAccessLabel": "Accès aux clairs",
+    "encryptionAccessBody": "Uniquement pendant vos sessions d'édition authentifiées. Chaque déchiffrement est tracé dans votre journal d'activité.",
+    "subProcessorsTitle": "Sous-traitants",
+    "subProcessorsIntro": "Liste complète des entités qui traitent vos données. Vous serez prévenu par email 30 jours avant tout changement de cette liste.",
+    "transferMechanismLabel": "Transfert international",
+    "websiteLink": "Site officiel",
+    "dpaLink": "DPA",
+    "commitmentsTitle": "Engagements contractuels",
+    "commit30dLabel": "Préavis 30 jours sur les sous-traitants",
+    "commit30dBody": "Nous vous notifions par email avant tout ajout, retrait ou remplacement d'un sous-traitant. Vous avez le droit de résilier sans pénalité si le changement ne vous convient pas.",
+    "commitDeleteLabel": "Suppression vérifiable",
+    "commitDeleteBody": "Le bouton « Supprimer définitivement » sur chaque audit déclenche un DELETE en cascade (audit + findings + ciphertext) et vous remet un reçu cryptographique HMAC-SHA256 que vous pouvez présenter à un régulateur.",
+    "commitTrainingLabel": "Aucun entraînement IA",
+    "commitTrainingBody": "Vos documents ne sont jamais utilisés pour entraîner un modèle d'IA, ni les nôtres, ni ceux d'Anthropic ou d'OpenAI (zero data retention activée sur nos clés API).",
+    "commitBreachLabel": "Notification de violation 24h",
+    "commitBreachBody": "En cas de violation de données détectée, nous nous engageons à vous prévenir sous 24 heures conformément à l'article 33 du RGPD.",
+    "contactTitle": "Contact",
+    "contactSecurityLabel": "Sécurité / divulgation responsable",
+    "contactDpoLabel": "DPO / vie privée",
+    "responsibleDisclosure": "Format RFC 9116 pour les chercheurs en sécurité"
+  },
+  "trustBadges": {
+    "encryption": "Chiffrement AES-256-GCM",
+    "euHosted": "Hébergé en UE (Francfort)",
+    "deletion": "Suppression auto à 30 jours",
+    "noCard": "Gratuit, sans carte bancaire",
+    "aria": "Garanties de sécurité et de confiance"
+  },
+  "dpa": {
+    "courtesyTitle": "Traduction de courtoisie",
+    "courtesyBody": "La version anglaise de cet accord de traitement des données fait foi. Le résumé ci-dessous est fourni pour aider les lecteurs non anglophones à comprendre la structure de l'accord ; il ne remplace pas le texte juridique.",
+    "summaryTitle": "Ce que couvre ce DPA, en clair :",
+    "summary": {
+      "point1": "LexyFlow traite vos documents uniquement selon vos instructions, en tant que sous-traitant au sens du RGPD (et régimes équivalents dans le monde).",
+      "point2": "Les sous-traitants ultérieurs (Anthropic, OpenAI, Supabase, Stripe, Vercel, Resend, Sentry) sont tous liés par des Clauses Contractuelles Types ; vous êtes prévenu 30 jours avant tout changement.",
+      "point3": "Stack de sécurité : TLS 1.3 en transit, AES-256-GCM au repos, documents source effacés après audit, RLS Postgres, SLA de notification de violation à 24 h.",
+      "point4": "Vous pouvez auditer notre conformité une fois par an ; les demandes des personnes concernées (accès, suppression) sont transmises et soutenues.",
+      "point5": "À la résiliation, toutes vos données personnelles sont supprimées ou restituées sous 30 jours, sauf obligation légale de conservation."
+    },
+    "requestSigned": "Besoin d'un exemplaire signé dans la langue de votre juridiction ? Écrivez à <a>legal@lexyflow.com</a> — nous envoyons des traductions certifiées sur demande."
+  },
+  "sampleReport": {
+    "back": "Retour",
+    "badge": "Rapport d'exemple",
+    "title": "Audit de la politique de confidentialité — {org}",
+    "subtitle": "Généré par LexyFlow en {seconds} secondes. {count, plural, one {# référentiel croisé} other {# référentiels croisés}}. Score de risque : {score} / 100.",
+    "findings": "Constatations",
+    "recommendation": "Recommandation",
+    "footerBody": "Les vrais rapports incluent les preuves issues du document source, un calendrier de remédiation et un PDF téléchargeable — dans plus de 100 langues.",
+    "footerCta": "Lancer un audit sur votre propre document",
+    "metaTitle": "Rapport d'audit Qatar PDPPL — exemple",
+    "metaDescription": "Découvrez exactement ce que LexyFlow produit : un audit de conformité de 60 secondes d'une politique de confidentialité qatarie face à la PDPPL (Loi n°13 de 2016) — citations, constats, suggestions de réécriture IA. Sans inscription, sans upload, gratuit.",
+    "switcherLabel": "Voir en :",
+    "switcherAria": "Choisir la langue de ce rapport échantillon",
+    "provenanceTitle": "Provenance — vérifiez cet audit vous-même",
+    "provenanceSource": "Document source",
+    "provenanceLicense": "Licence",
+    "provenanceRetrieved": "Récupéré le",
+    "provenanceChars": "caractères extraits",
+    "provenanceAuditDate": "Audit exécuté le",
+    "provenanceModels": "Modèles IA",
+    "evidence": "Extrait du document source",
+    "regeneratingTitle": "Rapport échantillon en cours de régénération",
+    "regeneratingBody": "Cette page affiche un audit LexyFlow réel d'un document source public. Le snapshot est en cours de préparation et s'affichera ici sous peu.",
+    "regeneratingEthics": "Nous n'affichons jamais de findings fabriqués — pas même à des fins marketing. En attendant la publication du snapshot, lancez un audit gratuit sur votre propre document.",
+    "regeneratingCtaBody": "Lancez un vrai audit sur votre propre document — gratuit, sans carte bancaire, résultat en 60 secondes."
+  },
+  "dashboard": {
+    "title": "Audits",
+    "signedInAs": "Connecté en tant que <bold>{email}</bold>.",
+    "newAudit": "Nouvel audit",
+    "buyCredits": "Acheter des crédits",
+    "filterAll": "Tous",
+    "openAudit": "Ouvrir",
+    "auditAt": "Audit · {date}",
+    "running": "En cours…",
+    "failed": "Échec",
+    "emptyTitle": "Aucun audit",
+    "emptyBody": "Déposez votre premier document pour voir les constatations ici.",
+    "emptyCta": "Lancer mon premier audit",
+    "creditsAvailable": "{count, plural, one {# crédit d'audit disponible} other {# crédits d'audit disponibles}}",
+    "creditsLow": "Ajoutez des crédits pour lancer plus d'audits",
+    "creditsTopUp": "Recharger",
+    "freeBanner": "Mode Essai activé. Passez à l'offre Enterprise pour sécuriser vos documents.",
+    "freeBannerCta": "Passer Pro"
+  }
+}

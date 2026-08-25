@@ -1,119 +1,236 @@
-# RepuGuard
+<div align="center">
 
-SaaS platform for real-time online reputation monitoring. Automatically fetches reviews from Google, Trustpilot, and TripAdvisor, generates AI-powered response drafts, and sends alerts via email and webhook.
+# LexyFlow
 
-## Architecture
+**Global compliance, automated.**
 
-```
-Browser / Dashboard
-       │
-       ▼
-  Vercel (repuguard.app)
-  ├── /api/* — 10 Edge Runtime functions (auth, AI generation, dashboard, i18n…)
-  └── /api/* — 11 Node.js Serverless functions (Stripe, cron, email, webhooks…)
-       │
-       ├── Supabase (PostgreSQL + Auth)
-       │   └── Tables: clients, reviews, processed_webhook_events, error_logs
-       │
-       ├── Stripe — subscription billing (webhook → /api/stripe-webhook)
-       │
-       ├── Anthropic API — AI response generation (Claude Haiku)
-       │
-       ├── Resend — transactional email (alerts, onboarding sequences, weekly reports)
-       │
-       └── External review APIs
-           ├── Google Places API (primary — fetched every day at 07:00 UTC)
-           ├── Trustpilot Content API
-           └── TripAdvisor Content API
-```
+Audit privacy documents against GDPR, the EU AI Act, LGPD and APPI in
+seconds. Get the report in any language. Zero-Knowledge by design.
 
-### Cron schedule
+🌐 **[lexyflow.com](https://lexyflow.com)**
 
-`vercel.json` configures a daily cron at `0 7 * * *` (07:00 UTC) that calls `/api/cron-sync`.  
-This single job handles Google + Trustpilot + TripAdvisor review fetching and all onboarding email sequences (J1–J7).
+[![Stack](https://img.shields.io/badge/stack-Next.js%2014%20·%20TypeScript%20·%20Supabase-111827)](#stack)
+[![i18n](https://img.shields.io/badge/i18n-EN%20·%20FR%20·%20ES%20·%20DE%20·%20PT--BR%20·%20JA-22c55e)](#internationalisation)
+[![Frameworks](https://img.shields.io/badge/frameworks-GDPR%20·%20AI%20Act%20·%20LGPD%20·%20APPI-f59e0b)](#regulatory-coverage)
+[![Privacy](https://img.shields.io/badge/privacy-Zero--Knowledge-000000)](#zero-knowledge-guarantee)
 
-### Edge vs Node.js functions
-
-| Runtime | Files |
-|---------|-------|
-| **Edge** | `auth`, `chat`, `generate-response`, `get-dashboard`, `google-oauth-init`, `newsletter`, `reset-password`, `translate`, `update-client`, `update-review` |
-| **Node.js** | `contact`, `create-subscription`, `cron-sync`, `customer-portal`, `fetch-reviews`, `google-oauth-callback`, `publish-review-reply`, `send-email`, `send-webhook`, `stripe-webhook`, `unsubscribe` |
-
-> Vercel Hobby plan limit: 12 Node.js Serverless Functions. Current count: **11** (within limit).
+</div>
 
 ---
 
-## Environment Variables
+## What LexyFlow is
 
-All variables must be set in the Vercel project settings under **Settings → Environment Variables**.
+LexyFlow is a SaaS that audits a controller's privacy documents —
+policies, contracts, model cards, DPIAs — against the world's major
+data and AI regulations, then delivers a board-ready report **in the
+auditor's language of choice**.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SUPABASE_URL` | ✅ | Supabase project URL (e.g. `https://xxxx.supabase.co`) |
-| `SUPABASE_SECRET_KEY` | ✅ | Supabase service role key (bypasses RLS) |
-| `STRIPE_SECRET_KEY` | ✅ | Stripe secret key (`sk_live_…`) |
-| `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret (`whsec_…`) |
-| `STRIPE_PRICE_STARTER` | ✅ | Stripe Price ID for the Starter plan |
-| `STRIPE_PRICE_PRO` | ✅ | Stripe Price ID for the Pro plan |
-| `STRIPE_PRICE_BUSINESS` | ✅ | Stripe Price ID for the Business plan |
-| `GOOGLE_PLACES_API_KEY` | ✅ | Google Places API key (for review fetching) |
-| `GOOGLE_CLIENT_ID` | ✅ | Google OAuth client ID (for GBP reply publishing) |
-| `GOOGLE_CLIENT_SECRET` | ✅ | Google OAuth client secret |
-| `TOKEN_ENCRYPTION_KEY` | ✅ | 32-char secret for encrypting GBP OAuth tokens at rest |
-| `ANTHROPIC_API_KEY` | ✅ | Anthropic API key for Claude Haiku response generation |
-| `RESEND_API_KEY` | ✅ | Resend API key for transactional email |
-| `CRON_SECRET` | ✅ | Bearer secret authenticating cron and internal API-to-API calls |
-| `TRUSTPILOT_API_KEY` | ✅ | Trustpilot Content API key |
-| `TRIPADVISOR_API_KEY` | ✅ | TripAdvisor Content API key |
-| `ADMIN_EMAIL` | ✅ | Admin email address (contact form recipient) |
-| `ANTHROPIC_API_VERSION` | ⬜ | Anthropic API version header (default: `2023-06-01`) |
-| `VERCEL_URL` | auto | Set automatically by Vercel — used to build internal API base URLs |
+> *"LexyFlow: la conformité mondiale, automatisée."*
+
+Six market pillars define the product:
+
+| # | Pillar               | What it means |
+|---|----------------------|---------------|
+| 1 | **Multi-jurisdiction** | One run cross-references every regulation that applies to the controller. |
+| 2 | **Multi-lingual UI**   | Six native languages (EN, FR, ES, DE, PT-BR, JA) with first-class typography. |
+| 3 | **Multi-Pass reports** | Audit logic runs once in a pivot language; localization is a second pass that targets *any* BCP-47 tag. |
+| 4 | **Multi-currency billing** | Stripe Billing in the customer's currency (USD, EUR, BRL, JPY, GBP) with worldwide tax automation. |
+| 5 | **Multi-tenant by default** | RLS on every table, organization-scoped JWTs, no shared state. |
+| 6 | **Multi-runtime** | Edge for the locale-aware shell, Node.js for long audits, async fire-and-forget for big documents. |
 
 ---
 
-## Running Tests Locally
+## Target markets
+
+| Market | Locale  | Currency | Primary frameworks         |
+|--------|---------|----------|----------------------------|
+| US     | `en`    | USD      | CCPA / CPRA                |
+| UK     | `en`    | GBP      | UK GDPR + DPA 2018         |
+| EU FR  | `fr`    | EUR      | GDPR + EU AI Act           |
+| EU ES  | `es`    | EUR      | GDPR + EU AI Act           |
+| EU DE  | `de`    | EUR      | GDPR + EU AI Act           |
+| Brazil | `pt-br` | BRL      | LGPD                       |
+| Japan  | `ja`    | JPY      | APPI                       |
+
+Auxiliary markets (CA, AU, MX, AR…) inherit a native locale and a
+tailored framework set via `supabase/migrations/0002_seed_frameworks.sql`.
+
+---
+
+## Regulatory coverage
+
+| ID         | Regulation                                                | Authority                              |
+|------------|-----------------------------------------------------------|----------------------------------------|
+| `gdpr`     | General Data Protection Regulation                        | European Data Protection Board         |
+| `eu_ai_act`| EU AI Act (Regulation 2024/1689)                          | European AI Office                     |
+| `lgpd`     | Lei Geral de Proteção de Dados                            | ANPD                                   |
+| `appi`     | Act on the Protection of Personal Information             | PPC                                    |
+| `ccpa`     | California Consumer Privacy Act / CPRA                    | California Privacy Protection Agency   |
+| `pipeda`   | Personal Information Protection and Electronic Documents Act | OPC                                  |
+| `uk_gdpr`  | UK GDPR + Data Protection Act 2018                        | ICO                                    |
+
+Adding a new framework is a four-line change in
+`src/lib/legal-frameworks.ts` plus a row in the seed migration. The
+Multi-Pass prompt picks it up automatically.
+
+---
+
+## Stack
+
+| Layer        | Choice                                 | Why |
+|--------------|----------------------------------------|-----|
+| **Frontend** | Next.js 14 (App Router) + TypeScript strict + Tailwind | Edge-native i18n routing, RTL-ready logical CSS properties. |
+| **UI kit**   | Shadcn/UI primitives (Button, Card, Badge) + Radix Slot | Sober, monochrome, accessible by default. |
+| **i18n**     | `next-intl`                            | Server-component-first, dictionary-per-locale, zero-code language addition. |
+| **AI — Pass 1** | Anthropic Claude 3.5 Sonnet         | Long-context legal reasoning, citation-faithful JSON. |
+| **AI — Pass 2** | OpenAI GPT-4o                       | Broadest BCP-47 language coverage for the localization pass. |
+| **Database** | Supabase (Postgres + RLS + Auth)       | First-party JWT tenant claims, edge-friendly REST. |
+| **Billing**  | Stripe Billing + Stripe Tax            | Multi-currency Prices, automatic VAT/GST/CT, tax-ID collection. |
+| **Hosting**  | Vercel (Edge + Node Functions)         | Edge for routing/i18n, Node for the 60s+ audit pipeline. |
+
+---
+
+## Multi-Pass engine
+
+```
+        ┌──────────────────────────┐
+        │  Document (in memory)    │   ← never written to disk
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │  Pass 1 — legalAudit()   │   model: Claude 3.5 Sonnet
+        │  pivot language: English │   output: structured JSON
+        │  citations: verbatim     │
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │ Pass 2 — localizeReport()│   model: GPT-4o
+        │  any BCP-47 target        │  preserves citations & evidence
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │   AuditReport (signed)   │   stored: hash + report only
+        └──────────────────────────┘
+```
+
+Two passes, two reasons:
+
+1. **Caching.** Pass 1 is the expensive step. LexyFlow caches it per
+   `documentHash` and re-runs pass 2 on demand for the marginal cost of
+   a translation call.
+2. **Faithfulness.** Citations, statute numbers and verbatim evidence
+   stay in the regulation's source language. Pass 2 is *not* allowed to
+   touch them.
+
+Implementation: [`src/lib/multi-pass-engine.ts`](./src/lib/multi-pass-engine.ts).
+
+---
+
+## Internationalisation
+
+```
+messages/
+├── en.json        ← native, curated copy
+├── fr.json
+├── es.json
+├── de.json
+├── pt-br.json
+├── ja.json
+└── ar.json        ← drop-in: Arabic ships with no source change
+```
+
+* `discoverLocales()` walks `messages/` at request time. Adding `ar.json`,
+  `it.json`, or `vi.json` ships that language to production immediately.
+* `<html lang>` and `<html dir>` are set per-locale. RTL flips through
+  CSS logical properties (`pis`, `pie`, `border-is`, `border-ie`)
+  baked into Tailwind utilities.
+* Long-text safety: hero, buttons and cards are tested with German
+  (~+30% length) and Japanese line-break rules. `text-balance` and
+  `text-pretty` keep multi-line copy visually clean.
+* `LanguageSelector` only lists the six native locales — auxiliary
+  languages flow through pass 2 for **report content**, not chrome.
+
+---
+
+## Zero-Knowledge guarantee
+
+* Source documents live as `Buffer` instances in request scope only.
+* `withEphemeralDocument()` calls `Buffer.fill(0)` on every exit path
+  (success, throw, cancellation) before the slab is GC'd.
+* Postgres stores **only** the SHA-256 hash and the AI-authored report.
+  The original text never lands on disk.
+* `anonymize()` is offered for the secondary path where a customer
+  wants to keep documents in their workspace; it strips email, phone,
+  IBAN, CPF, SSN and PAN-style sequences before storage.
+
+Implementation: [`src/lib/zero-knowledge.ts`](./src/lib/zero-knowledge.ts).
+
+---
+
+## Getting started
 
 ```bash
-# Install dependencies
+cp .env.example .env.local   # fill in Supabase, Anthropic, OpenAI, Stripe
 npm install
-
-# Run the full test suite once
-npm test
-
-# Watch mode (re-runs on file save)
-npm run test:watch
+npm run dev                  # http://localhost:3000
 ```
 
-Tests are written with [Vitest](https://vitest.dev/) and located in the `tests/` directory:
-
-| File | Coverage |
-|------|---------|
-| `tests/batch-4.1.test.js` | Subscription guard, plan mapping, Stripe price fallbacks, GBP publisher |
-| `tests/batch-4.2.test.js` | `autoRespond5star` logic (H4), GBP review matching (C5), Anthropic version env var (H5), fire-and-forget pattern |
-| `tests/batch-4.3.test.js` | Stripe price IDs env var override (M2), `baseUrl` construction (M3), null-safe date filter (M4) |
-
-All 85 tests must pass before any push to `main`. The GitHub Actions workflow enforces this automatically.
-
----
-
-## Database Migrations
-
-SQL migration files are in `migrations/`. Run them in order against your Supabase project via the SQL editor or Supabase CLI:
+Run the SQL migrations under `supabase/migrations/` against your
+Supabase project, in numerical order.
 
 ```bash
-# Example using psql
-psql "$DATABASE_URL" -f migrations/001_add_columns.sql
-psql "$DATABASE_URL" -f migrations/002_add_lang.sql
-# … up to the latest migration
+npm test                     # Vitest: locale detection, frameworks,
+                             #         hreflang, Zero-Knowledge primitives
+npm run typecheck            # tsc --noEmit, strict mode
 ```
-
-Row-Level Security is enabled on all tables (`migrations/006_enable_rls.sql`). All server-side access uses the service role key which bypasses RLS.
 
 ---
 
 ## Deployment
 
-1. Push to `main` — Vercel auto-deploys on every merge.
-2. Stripe webhook endpoint: `https://repuguard.app/api/stripe-webhook`  
-   Required events: `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.trial_will_end`
-3. Vercel cron (`vercel.json`) runs `/api/cron-sync` daily at 07:00 UTC — no manual setup needed.
+LexyFlow is designed for Vercel + Supabase. Set the following in your
+Vercel project's environment variables:
+
+| Variable                       | Required |
+|--------------------------------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL`     | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`| ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY`    | ✅ |
+| `ANTHROPIC_API_KEY`            | ✅ |
+| `OPENAI_API_KEY`               | ✅ |
+| `STRIPE_SECRET_KEY`            | ✅ |
+| `STRIPE_WEBHOOK_SECRET`        | ✅ |
+| `STRIPE_PRICE_STARTER`         | ✅ |
+| `STRIPE_PRICE_PRO`             | ✅ |
+| `STRIPE_PRICE_ENTERPRISE`      | ✅ |
+| `NEXT_PUBLIC_APP_URL`          | ✅ (`https://lexyflow.com`) |
+| `NEXT_PUBLIC_APP_NAME`         | ✅ (`LexyFlow`) |
+
+Point the `lexyflow.com` domain at the Vercel project. The app handles
+subdomain-less locale routing automatically (`/en`, `/fr`, `/ja`…).
+
+---
+
+## Roadmap
+
+- [x] Multi-Pass engine (Claude pass 1 → GPT-4o pass 2)
+- [x] 6 native locales + dynamic locale discovery
+- [x] Stripe Billing with multi-currency + tax automation
+- [x] Zero-Knowledge document handling
+- [x] Hreflang + multilingual sitemap
+- [x] Shadcn/UI design system
+- [x] LexyFlow brand + lexyflow.com positioning
+- [ ] PDF report rendering with locale-aware typography (Noto + Source Han)
+- [ ] DPIA wizard (interactive, multi-step, locale-aware)
+- [ ] Continuous monitoring (re-audit on document update)
+- [ ] SOC 2 Type II artefacts
+- [ ] Public API + webhook delivery of findings
+
+---
+
+## License
+
+Proprietary — © LexyFlow. All rights reserved.
