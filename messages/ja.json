@@ -340,5 +340,32 @@
     "creditsTopUp": "チャージ",
     "freeBanner": "トライアルモード有効中。Enterprise プランに切り替えてドキュメントを保護してください。",
     "freeBannerCta": "Pro にアップグレード"
+  },
+  "docs": {
+    "title": "ドキュメント",
+    "subtitle": "LexyFlow をコンプライアンスワークフローに統合するために必要なすべて。",
+    "sections": {
+      "gettingStarted": {
+        "title": "はじめに",
+        "description": "60秒以内に最初の監査を実行できます。トライアルにアカウントは不要です。"
+      },
+      "multiPass": {
+        "title": "Multi-Pass エンジン",
+        "description": "LexyFlow がピボット言語で監査を行い、BCP-47 に基づく任意のターゲット言語に結果をローカライズする仕組み。"
+      },
+      "zeroKnowledge": {
+        "title": "ゼロ知識",
+        "description": "なぜあなたのソースドキュメントが当社のディスクに触れることがないのか、そしてそれをどう証明するか。"
+      },
+      "i18n": {
+        "title": "国際化対応",
+        "description": "7つのネイティブロケール、追加言語の動的検出。RTL対応。"
+      },
+      "api": {
+        "title": "API と Webhooks",
+        "description": "プログラム経由の監査、署名済み Webhook 配信、冪等性キー。(Q3 ロードマップ。)"
+      }
+    },
+    "footer": "完全なリファレンスドキュメントは執筆中です。現時点では、README と <link>github.com/repuguardapp/repuguard</link> のインライン JSDoc コメントが真実のソースです。"
   }
 }

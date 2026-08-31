@@ -340,5 +340,32 @@
     "creditsTopUp": "Recarregar",
     "freeBanner": "Modo de avaliação ativo. Passe para o plano Enterprise para proteger seus documentos.",
     "freeBannerCta": "Assinar Pro"
+  },
+  "docs": {
+    "title": "Documentação",
+    "subtitle": "Tudo o que você precisa para integrar o LexyFlow ao seu fluxo de conformidade.",
+    "sections": {
+      "gettingStarted": {
+        "title": "Primeiros passos",
+        "description": "Execute sua primeira auditoria em menos de 60 segundos. Sem cadastro para o teste."
+      },
+      "multiPass": {
+        "title": "Motor Multi-Pass",
+        "description": "Como o LexyFlow audita em um idioma pivô e localiza as constatações para qualquer destino BCP-47."
+      },
+      "zeroKnowledge": {
+        "title": "Zero-Knowledge",
+        "description": "Por que seus documentos fonte nunca tocam nosso disco e como provamos isso."
+      },
+      "i18n": {
+        "title": "Internacionalização",
+        "description": "7 locales nativos, descoberta dinâmica para qualquer idioma adicional. Suporta RTL."
+      },
+      "api": {
+        "title": "API e webhooks",
+        "description": "Auditorias programáticas, entrega de webhooks assinados, chaves de idempotência. (Roadmap T3.)"
+      }
+    },
+    "footer": "A documentação completa de referência está sendo escrita. Por enquanto, a fonte da verdade é o README e os comentários JSDoc em <link>github.com/repuguardapp/repuguard</link>."
   }
 }

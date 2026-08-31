@@ -340,5 +340,32 @@
     "creditsTopUp": "إعادة شحن",
     "freeBanner": "وضع التجربة مُفعَّل. رقِّ إلى باقة Enterprise لتأمين وثائقك.",
     "freeBannerCta": "الترقية إلى Pro"
+  },
+  "docs": {
+    "title": "التوثيق",
+    "subtitle": "كل ما تحتاجه لدمج LexyFlow في سير عمل الامتثال لديك.",
+    "sections": {
+      "gettingStarted": {
+        "title": "بدء الاستخدام",
+        "description": "شغّل تدقيقك الأول في أقل من 60 ثانية. لا حاجة لإنشاء حساب للتجربة."
+      },
+      "multiPass": {
+        "title": "محرك Multi-Pass",
+        "description": "كيف يدقق LexyFlow بلغة محورية ثم يترجم النتائج إلى أي لغة هدف BCP-47."
+      },
+      "zeroKnowledge": {
+        "title": "المعرفة الصفرية",
+        "description": "لماذا لا تلمس مستنداتك المصدر قرصنا أبدًا، وكيف نُثبت ذلك."
+      },
+      "i18n": {
+        "title": "الترجمة والتدويل",
+        "description": "7 لغات محلية، اكتشاف ديناميكي لأي لغة إضافية. متوافق مع RTL."
+      },
+      "api": {
+        "title": "API والـ Webhooks",
+        "description": "تدقيقات برمجية، تسليم webhooks موقّع، مفاتيح idempotency. (ضمن خارطة الطريق T3.)"
+      }
+    },
+    "footer": "يجري حاليًا كتابة الوثائق المرجعية الكاملة. في الوقت الحالي، مصدر الحقيقة هو ملف README وتعليقات JSDoc على <link>github.com/repuguardapp/repuguard</link>."
   }
 }

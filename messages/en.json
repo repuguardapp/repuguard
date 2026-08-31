@@ -340,5 +340,32 @@
     "creditsTopUp": "Top up",
     "freeBanner": "Trial mode active. Upgrade to Enterprise to secure your documents.",
     "freeBannerCta": "Go Pro"
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Everything you need to integrate LexyFlow into your compliance workflow.",
+    "sections": {
+      "gettingStarted": {
+        "title": "Getting started",
+        "description": "Run your first audit in under 60 seconds. No account required for the trial."
+      },
+      "multiPass": {
+        "title": "Multi-Pass engine",
+        "description": "How LexyFlow audits in a pivot language and localizes findings to any BCP-47 target."
+      },
+      "zeroKnowledge": {
+        "title": "Zero-Knowledge",
+        "description": "Why your source documents never touch our disk and how we prove it."
+      },
+      "i18n": {
+        "title": "Internationalisation",
+        "description": "7 native locales, dynamic discovery for any additional language. RTL ready."
+      },
+      "api": {
+        "title": "API & webhooks",
+        "description": "Programmatic audits, signed webhook delivery, idempotency keys. (Q3 roadmap.)"
+      }
+    },
+    "footer": "Full reference documentation is being written. For now, the source of truth is the README and inline JSDoc comments at <link>github.com/repuguardapp/repuguard</link>."
   }
 }

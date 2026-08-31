@@ -152,7 +152,12 @@ async function main() {
       durationSeconds,
       findings: report.findings.map((f) => ({
         severity: f.severity,
-        framework: f.framework,
+        // Force the framework label back to the input framework.
+        // The Multi-Pass engine sometimes tags findings with the
+        // wrong slug (e.g. "gdpr" on a Qatar PDPPL analysis).
+        // Since we audit against exactly one framework per
+        // snapshot run, this alignment is unambiguous.
+        framework: args.framework,
         title: f.title,
         body: f.body,
         recommendation: f.recommendation,
