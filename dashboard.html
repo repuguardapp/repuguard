@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepuGuard — Dashboard</title>
+<script>(function(){var s=localStorage.getItem('rg-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',s||(d?'dark':'light'));})();</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="/i18n.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root, [data-theme="dark"] {
+    --bg: #07080f;
+    --surface: #0e1018;
+    --surface2: #13151f;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fb923c;
+    --yellow: #fbbf24;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --sidebar-w: 240px;
+    --score-track: #13151f;
+    --bg-glass: rgba(7,8,15,0.95);
+    --chart-grid: rgba(255,255,255,0.06);
+  }
+  [data-theme="light"] {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #eef0f8;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --accent: #6366f1;
+    --accent2: #4f46e5;
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #7c3aed;
+    --green: #059669;
+    --red: #dc2626;
+    --orange: #d97706;
+    --yellow: #ca8a04;
+    --text: #0f1117;
+    --text2: #4b5563;
+    --text3: #6b7280;
+    --sidebar-w: 240px;
+    --score-track: #e8eaf6;
+    --bg-glass: rgba(245,246,250,0.95);
+    --chart-grid: rgba(0,0,0,0.08);
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; overflow: hidden; }
+  .layout { display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 10; }
+  .sidebar-nav { flex: 1; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
+  .sidebar-nav::-webkit-scrollbar { width: 3px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  .sidebar::after { content:''; position:absolute; top:0; right:0; width:1px; height:100%; background:linear-gradient(to bottom,transparent,var(--accent),transparent); opacity:0.3; }
+  .logo-area { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; letter-spacing:-0.5px; color:var(--text); }
+  .logo span { color: var(--accent2); }
+  .business-selector { margin-top:14px; background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .biz-icon { width:32px; height:32px; background:var(--accent-dim); border:1px solid rgba(99,102,241,0.3); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .biz-info { flex:1; min-width:0; }
+  .biz-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .biz-type { font-size:11px; color:var(--text3); }
+  .nav-section { padding: 20px 12px 8px; }
+  .nav-label { font-size:10px; font-weight:600; letter-spacing:0.08em; color:var(--text3); text-transform:uppercase; padding:0 8px; margin-bottom:6px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; color:var(--text2); font-size:13.5px; cursor:pointer; transition:all 0.15s; position:relative; user-select:none; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:var(--accent-dim); color:var(--accent2); font-weight:500; }
+  .nav-item.active::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:18px; background:var(--accent); border-radius:0 3px 3px 0; }
+  .nav-icon { width:18px; text-align:center; font-size:15px; }
+  .nav-badge { margin-left:auto; background:var(--red); color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; }
+  .nav-badge.blue { background:var(--accent); }
+  .sidebar-footer { flex-shrink:0; padding:16px 12px; border-top:1px solid var(--border); }
+  .plan-badge { background:linear-gradient(135deg,var(--accent-dim),rgba(167,139,250,0.08)); border:1px solid rgba(99,102,241,0.25); border-radius:10px; padding:12px; margin-bottom:12px; }
+  .plan-name { font-size:11px; color:var(--accent2); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px; }
+  .plan-desc { font-size:11px; color:var(--text3); }
+  .user-area { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; cursor:pointer; }
+  .user-area:hover { background:var(--surface2); }
+  .avatar { width:30px; height:30px; background:linear-gradient(135deg,var(--accent),var(--violet)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; font-family:'Syne',sans-serif; }
+  .user-name { font-size:13px; font-weight:500; flex:1; color:var(--text); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; background: var(--bg); }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:60px; border-bottom:1px solid var(--border); flex-shrink:0; background: var(--bg-glass); backdrop-filter:blur(12px); }
+  .page-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--text); }
+  .topbar-right { display:flex; align-items:center; gap:16px; }
+  .last-update { font-size:12px; color:var(--text3); display:flex; align-items:center; gap:6px; }
+  .status-dot { width:7px; height:7px; background:var(--green); border-radius:50%; box-shadow:0 0 6px var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .topbar-btn { width:34px; height:34px; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text2); position:relative; }
+  .notif-dot { position:absolute; top:6px; right:6px; width:6px; height:6px; background:var(--red); border-radius:50%; border:1px solid #07080f; }
+  .content { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:20px; background: var(--bg); }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
+
+  /* SECTIONS */
+  .section { display:none; flex-direction:column; gap:20px; }
+  .section.active { display:flex; }
+
+  /* CARDS */
+  .card { background: var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+  .card-action { font-size:12px; color:var(--accent2); cursor:pointer; text-decoration:none; }
+
+  /* KPI */
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi-card { background: var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+  .kpi-label { font-size:11.5px; color:var(--text3); font-weight:500; margin-bottom:10px; }
+  .kpi-value { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--text); line-height:1; margin-bottom:8px; }
+  .kpi-value.accent { color:var(--accent2); }
+  .kpi-value.orange { color:var(--orange); }
+  .kpi-delta { font-size:11.5px; color:var(--text3); }
+  .kpi-delta.up { color:var(--green); }
+  .kpi-delta.warn { color:var(--orange); }
+
+  /* LAYOUT */
+  .two-col { display:grid; grid-template-columns:1fr 340px; gap:14px; }
+  .right-panel { display:flex; flex-direction:column; gap:14px; }
+
+  /* CHART */
+  .score-big-wrap { display:flex; align-items:center; gap:20px; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .score-circle { width:64px; height:64px; border-radius:50%; background:conic-gradient(var(--accent2) 0% 82%,var(--score-track) 82% 100%); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .score-circle-inner { width:48px; height:48px; background: var(--surface); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:15px; font-weight:800; color:var(--accent2); }
+  .score-info { flex:1; }
+  .score-label { font-size:12px; color:var(--text3); margin-bottom:4px; }
+  .score-trend { font-size:22px; font-family:'Syne',sans-serif; font-weight:800; color:var(--text); }
+  .score-sub { font-size:12px; color:var(--green); margin-top:2px; }
+  .chart-wrap { padding:16px 20px; }
+  .chart-tabs { display:flex; gap:4px; margin-bottom:16px; }
+  .chart-tab { padding:4px 10px; border-radius:5px; font-size:11.5px; font-weight:500; cursor:pointer; color:var(--text3); }
+  .chart-tab.active { background:var(--accent-dim); color:var(--accent2); }
+  svg.chart { width:100%; height:120px; overflow:visible; }
+  .chart-grid line { stroke:rgba(255,255,255,0.06); stroke-width:1; }
+  .chart-line { fill:none; stroke:var(--accent2); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+  .chart-dot { fill:var(--accent); stroke:#0e1018; stroke-width:2; }
+
+  /* ALERTS */
+  .alert-tabs { display:flex; gap:4px; padding:12px 20px; border-bottom:1px solid var(--border); }
+  .alert-tab { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; color:var(--text3); }
+  .alert-tab.active { background:var(--accent-dim); color:var(--accent2); }
+  .alert-count { display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; background:var(--red); color:white; font-size:10px; font-weight:700; border-radius:50%; margin-left:5px; vertical-align:middle; }
+  .alert-count.blue { background:var(--accent); }
+  .alerts-list { padding:8px 0; }
+  .alert-item { padding:14px 20px; border-bottom:1px solid var(--border); }
+  .alert-item:last-child { border-bottom:none; }
+  .alert-item:hover { background:var(--surface2); }
+  .alert-meta { display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+  .platform-badge { font-size:10px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:2px 7px; border-radius:4px; background:var(--surface2); color:var(--text2); border:1px solid var(--border2); }
+  .status-pill.gbp { background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.25); }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1e2030; border:1px solid var(--border2); border-radius:10px; padding:12px 20px; font-size:13px; font-weight:500; color:var(--text); z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.4); opacity:0; transition:opacity .3s; pointer-events:none; max-width:420px; text-align:center; }
+  .toast.show { opacity:1; }
+  #dashLoadingOverlay { position:fixed; inset:0; background:rgba(7,8,15,0.75); z-index:8888; display:flex; align-items:center; justify-content:center; }
+  #dashLoadingOverlay.hidden { display:none; }
+  .dash-spinner { width:36px; height:36px; border:3px solid rgba(99,102,241,0.25); border-top-color:#6366f1; border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #dashErrorBanner { display:none; background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); border-radius:10px; padding:14px 20px; margin:16px; color:#f87171; font-size:13px; text-align:center; }
+  #dashErrorBanner.show { display:block; }
+  .platform-badge.twitter { border-color:rgba(96,165,250,0.3); color:#60a5fa; }
+  .platform-badge.tripadvisor { border-color:rgba(52,211,153,0.3); color:#34d399; }
+  .platform-badge.trustpilot { border-color:rgba(251,191,36,0.3); color:#fbbf24; }
+  .severity { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; }
+  .severity.critical { background:rgba(248,113,113,0.12); color:var(--red); border:1px solid rgba(248,113,113,0.2); }
+  .severity.moderate { background:rgba(251,146,60,0.1); color:var(--orange); border:1px solid rgba(251,146,60,0.2); }
+  .alert-time { font-size:11px; color:var(--text3); margin-left:auto; }
+  .alert-text { font-size:13px; color:var(--text2); margin-bottom:4px; line-height:1.4; }
+  .alert-text strong { color:var(--text); }
+  .alert-detail { font-size:11px; color:var(--text3); margin-bottom:10px; }
+  .alert-actions { display:flex; gap:8px; }
+
+  /* BUTTONS */
+  .btn-sm { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; }
+  .btn-primary { background:var(--accent); color:white; }
+  .btn-primary:hover { background:var(--accent2); }
+  .btn-ghost { background:transparent; color:var(--text3); border:1px solid var(--border2); }
+  .btn-ghost:hover { color:var(--text); background:var(--surface2); }
+  .btn-lg { padding:10px 20px; border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:8px; }
+  .btn-lg.primary { background:var(--accent); color:white; }
+  .btn-lg.primary:hover { background:var(--accent2); }
+  .btn-lg.ghost { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+
+  /* PLATFORM SCORES */
+  .platform-list { padding:8px 0; }
+  .platform-item { display:flex; align-items:center; gap:12px; padding:12px 20px; cursor:pointer; }
+  .platform-item:hover { background:var(--surface2); }
+  .platform-logo { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; font-family:'Syne',sans-serif; flex-shrink:0; }
+  .platform-logo.g { background:rgba(234,67,53,0.1); color:#f87171; border:1px solid rgba(234,67,53,0.2); }
+  .platform-logo.ta { background:rgba(52,211,153,0.1); color:#34d399; border:1px solid rgba(52,211,153,0.2); }
+  .platform-logo.fb { background:rgba(96,165,250,0.1); color:#60a5fa; border:1px solid rgba(96,165,250,0.2); }
+  .platform-logo.tp { background:rgba(251,191,36,0.1); color:#fbbf24; border:1px solid rgba(251,191,36,0.2); }
+  .platform-name { font-size:13px; font-weight:500; color:var(--text); }
+  .platform-stars { font-size:10px; color:var(--text3); margin-top:1px; }
+  .platform-score { margin-left:auto; font-family:'Syne',sans-serif; font-size:16px; font-weight:800; color:var(--text); text-align:right; }
+  .score-bar-wrap { width:60px; height:4px; background:var(--surface2); border-radius:2px; margin-top:4px; }
+  .score-bar { height:100%; border-radius:2px; background:var(--accent); }
+  .score-bar.warn { background:var(--orange); }
+
+  /* ACTIVITY */
+  .activity-list { padding:8px 0; }
+  .activity-item { display:flex; gap:12px; padding:10px 20px; }
+  .activity-dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .activity-dot.green { background:var(--green); box-shadow:0 0 6px var(--green); }
+  .activity-dot.blue { background:var(--accent2); }
+  .activity-dot.orange { background:var(--orange); }
+  .activity-dot.red { background:var(--red); }
+  .activity-text { font-size:12.5px; color:var(--text2); line-height:1.4; }
+  .activity-text strong { color:var(--text); font-weight:500; }
+  .activity-when { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  /* IA */
+  .ia-card { background: var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .ia-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .ia-source { display:flex; align-items:center; gap:10px; }
+  .ia-badge { font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:4px; }
+  .ia-badge.google { background:rgba(234,67,53,0.12); color:#f87171; border:1px solid rgba(234,67,53,0.2); }
+  .ia-badge.tripadvisor { background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.2); }
+  .ia-rating { font-size:11px; color:var(--text3); }
+  .ia-original { background:var(--surface2); border-radius:8px; padding:12px; margin-bottom:12px; font-size:13px; color:var(--text2); line-height:1.5; border-left:3px solid var(--border2); }
+  .ia-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); margin-bottom:8px; }
+  .ia-response { background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; padding:12px; font-size:13px; color:var(--text); line-height:1.6; }
+  .ia-actions { display:flex; gap:8px; margin-top:14px; }
+
+  /* STATS */
+  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .stat-card { background: var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .stat-title { font-size:12px; color:var(--text3); margin-bottom:12px; font-weight:500; }
+  .stat-big { font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:var(--text); }
+  .stat-big.green { color:var(--green); }
+  .stat-big.orange { color:var(--orange); }
+  .stat-big.accent { color:var(--accent2); }
+  .stat-sub { font-size:12px; color:var(--text3); margin-top:6px; }
+  .progress-list { display:flex; flex-direction:column; gap:12px; padding:16px 20px; }
+  .progress-item { display:flex; align-items:center; gap:12px; }
+  .progress-label { font-size:12px; color:var(--text2); width:80px; flex-shrink:0; }
+  .progress-bar-wrap { flex:1; height:6px; background:var(--surface2); border-radius:3px; }
+  .progress-bar { height:100%; border-radius:3px; }
+  .progress-pct { font-size:12px; font-weight:600; color:var(--text); width:32px; text-align:right; }
+
+  /* PLATEFORMES */
+  .platform-full-item { display:flex; align-items:center; gap:16px; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .platform-full-item:last-child { border-bottom:none; }
+  .platform-status { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .status-pill { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+  .status-pill.active { background:rgba(52,211,153,0.12); color:var(--green); border:1px solid rgba(52,211,153,0.2); }
+  .toggle { width:36px; height:20px; background:var(--surface2); border-radius:10px; position:relative; cursor:pointer; border:1px solid var(--border2); transition:background 0.2s; flex-shrink:0; }
+  .toggle.on { background:var(--accent); border-color:var(--accent); }
+  .toggle::after { content:''; position:absolute; width:14px; height:14px; background:white; border-radius:50%; top:2px; left:2px; transition:transform 0.2s; }
+  .toggle.on::after { transform:translateX(16px); }
+
+  /* PLANS */
+  .plan-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .plan-card { background: var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; position:relative; overflow:hidden; }
+  .plan-card.current { border-color:rgba(99,102,241,0.4); }
+  .plan-card.current::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--violet)); }
+  .plan-pill { font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:4px; background:var(--accent-dim); color:var(--accent2); border:1px solid rgba(99,102,241,0.2); display:inline-block; margin-bottom:12px; }
+  .plan-price { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--text); margin-bottom:4px; }
+  .plan-price span { font-size:14px; font-weight:400; color:var(--text3); }
+  .plan-desc { font-size:12px; color:var(--text3); margin-bottom:16px; }
+  .plan-features { list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .plan-features li { font-size:12.5px; color:var(--text2); display:flex; align-items:center; gap:8px; }
+  .plan-features li::before { content:'✓'; color:var(--green); font-weight:700; font-size:11px; }
+
+  /* SETTINGS */
+  .settings-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--text); padding:16px 20px 8px; }
+  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-label { font-size:13px; color:var(--text); font-weight:500; }
+  .settings-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+  .settings-input { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:7px 12px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; width:220px; outline:none; }
+  .settings-input:focus { border-color:var(--accent); }
+
+  /* THEME TOGGLE */
+  .theme-toggle { width:34px; height:34px; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text2); }
+  .theme-toggle:hover { color:var(--text); }
+
+  /* LIGHT MODE OVERRIDES */
+  [data-theme="light"] svg.chart line { stroke: var(--chart-grid); }
+  [data-theme="light"] .chart-grid line { stroke: var(--chart-grid); }
+  [data-theme="light"] .toast { background: #ffffff; }
+  [data-theme="light"] .sidebar::after { opacity: 0.15; }
+
+  /* MOBILE */
+  .hamburger { display:none; width:34px; height:34px; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; align-items:center; justify-content:center; cursor:pointer; font-size:18px; color:var(--text2); flex-shrink:0; border-style:solid; }
+  .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9; backdrop-filter:blur(2px); }
+  .sidebar-overlay.show { display:block; }
+  @media(max-width:768px) {
+    html, body { overflow:auto; height:auto; }
+    .layout { flex-direction:column; height:auto; min-height:100vh; }
+    .hamburger { display:flex; }
+    .sidebar { position:fixed; top:0; left:0; height:100vh; z-index:10; transform:translateX(-100%); transition:transform .25s ease; box-shadow:4px 0 32px rgba(0,0,0,.4); }
+    .sidebar.open { transform:translateX(0); }
+    .main { overflow:visible; min-height:100vh; }
+    .content { overflow:visible; padding:16px; height:auto; }
+    .topbar { padding:0 16px; position:sticky; top:0; z-index:8; }
+    .last-update { display:none; }
+    .kpi-grid { grid-template-columns:repeat(2,1fr); }
+    .two-col { grid-template-columns:1fr; }
+    .plan-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .settings-input { width:100%; max-width:100%; }
+    .settings-row { flex-wrap:wrap; gap:.5rem; }
+    .ia-actions { flex-wrap:wrap; }
+    .ia-actions .btn-lg { flex:1; min-width:120px; justify-content:center; }
+    .alert-actions { flex-wrap:wrap; }
+    .platform-full-item { flex-wrap:wrap; }
+  }
+  @media(max-width:480px) {
+    .kpi-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:1fr; }
+    .content { padding:12px; }
+    .topbar { padding:0 12px; }
+    .kpi-value { font-size:22px; }
+  }
+
+  .onboarding-card{background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05));border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;}
+  .onboarding-title{font-size:1rem;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+  .onboarding-steps{display:flex;flex-direction:column;gap:.6rem;}
+  .onboarding-step{display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted);}
+  .onboarding-step.done{color:var(--text);}
+  .onboarding-step .step-icon{width:22px;height:22px;border-radius:50%;border:2px solid rgba(99,102,241,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;color:#818cf8;}
+  .onboarding-step.done .step-icon{background:#6366f1;border-color:#6366f1;color:white;}
+  .onboarding-dismiss{font-size:.75rem;color:var(--muted2);cursor:pointer;margin-top:1rem;text-decoration:underline;display:inline-block;}
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<div id="trialBanner" style="display:none;background:linear-gradient(90deg,rgba(99,102,241,.15),rgba(139,92,246,.15));border-bottom:1px solid rgba(99,102,241,.25);padding:.65rem 5%;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+  <span id="trialBannerMsg" style="font-size:.82rem;color:#a5b4fc;">⏳ Votre essai se termine dans <strong id="trialDaysLeft">7</strong> jours — Passez en annuel et économisez 20%</span>
+  <button onclick="manageSubscription()" style="background:#6366f1;color:white;border:none;padding:.4rem 1rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">Repu<span>Guard</span></div>
+      <div class="business-selector" onclick="showToast('Prochainement — Gestion multi-établissements', '')">
+        <div class="biz-icon">🍽️</div>
+        <div class="biz-info">
+          <div class="biz-name">Le Provençal</div>
+          <div class="biz-type">Restaurant · Lyon</div>
+        </div>
+        <span style="color:var(--text3);font-size:10px;">▾</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <div class="nav-item active" data-section="overview"><span class="nav-icon">⬡</span> <span data-i18n="nav_overview">Vue d'ensemble</span></div>
+      <div class="nav-item" data-section="alertes"><span class="nav-icon">🔔</span> <span data-i18n="nav_alerts">Alertes</span><span class="nav-badge">3</span></div>
+      <div class="nav-item" data-section="reponses"><span class="nav-icon">✦</span> <span data-i18n="nav_responses">Réponses IA</span><span class="nav-badge blue">2</span></div>
+      <div class="nav-item" data-section="score"><span class="nav-icon">◈</span> <span data-i18n="nav_score">Score &amp; Tendances</span></div>
+      <div class="nav-item" data-section="mentions"><span class="nav-icon">≡</span> <span data-i18n="nav_mentions">Toutes les mentions</span></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Configuration</div>
+      <div class="nav-item" data-section="plateformes"><span class="nav-icon">⬡</span> <span data-i18n="nav_platforms">Plateformes</span></div>
+      <div class="nav-item" data-section="notifications"><span class="nav-icon">🔔</span> <span data-i18n="nav_notifications">Notifications</span></div>
+      <div class="nav-item" data-section="rapports"><span class="nav-icon">📄</span> <span data-i18n="nav_reports">Rapports</span></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Compte</div>
+      <div class="nav-item" data-section="abonnement"><span class="nav-icon">💳</span> <span data-i18n="nav_subscription">Abonnement</span></div>
+      <div class="nav-item" data-section="parrainage"><span class="nav-icon">🎁</span> Parrainage</div>
+      <div class="nav-item" data-section="parametres"><span class="nav-icon">⚙</span> <span data-i18n="nav_settings">Paramètres</span></div>
+    </div>
+
+    <!-- LANGUAGE SELECTOR -->
+    <div style="padding:8px 12px 4px;">
+      <select id="langSelector" onchange="switchLang(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text2);padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;">
+        <option value="fr">🇫🇷 Français</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="ar">🇸🇦 العربية</option>
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="ru">🇷🇺 Русский</option>
+      </select>
+    </div>
+    </div><!-- end .sidebar-nav -->
+
+    <div class="sidebar-footer">
+      <div class="plan-badge">
+        <div class="plan-name">✦ Plan Pro</div>
+        <div class="plan-desc">Surveillance active · 4 plateformes</div>
+      </div>
+      <div class="user-area" onclick="logout()" title="Se déconnecter">
+        <div class="avatar">LP</div>
+        <div class="user-name">Le Provençal</div>
+        <span style="color:var(--text3);font-size:12px;">↗</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" id="hamburger" onclick="openSidebar()" aria-label="Menu">☰</button>
+        <div class="page-title" id="pageTitle">Vue d'ensemble</div>
+      </div>
+      <div class="topbar-right">
+        <div class="last-update" id="lastUpdate"><div class="status-dot"></div>Dernière analyse il y a 4 min</div>
+        <button id="syncBtn" class="topbar-btn" onclick="syncReviews()" title="Synchroniser les avis" style="font-size:16px;">↻</button>
+        <div class="topbar-btn" onclick="navigate('notifications')" title="Notifications" style="cursor:pointer;">🔔<div class="notif-dot"></div></div>
+        <div class="theme-toggle" id="themeToggle" onclick="toggleDashTheme()" title="Changer le thème"></div>
+        <div class="topbar-btn" onclick="logout()" title="Se déconnecter" style="cursor:pointer;">↗</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- VUE D'ENSEMBLE -->
+      <div class="section active" id="sec-overview">
+        <div id="onboardingCard" style="display:none" class="onboarding-card">
+          <div class="onboarding-title">🚀 Démarrage rapide</div>
+          <div class="onboarding-steps">
+            <div class="onboarding-step done" data-step="account">
+              <div class="step-icon">✓</div>
+              <span>Compte créé et activé</span>
+            </div>
+            <div class="onboarding-step" data-step="google">
+              <div class="step-icon">2</div>
+              <span>Connecter votre profil Google Business</span>
+            </div>
+            <div class="onboarding-step" data-step="reviews">
+              <div class="step-icon">3</div>
+              <span>Recevoir votre première alerte avis</span>
+            </div>
+          </div>
+          <span class="onboarding-dismiss" onclick="localStorage.setItem('onboarding-dismissed','1');document.getElementById('onboardingCard').style.display='none'">Ne plus afficher</span>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">📊 Score global</div><div class="kpi-value accent">4.5</div><div class="kpi-delta up">↑ +0.2 cette semaine</div></div>
+          <div class="kpi-card"><div class="kpi-label">💬 Avis analysés</div><div class="kpi-value">847</div><div class="kpi-delta up">↑ +12 cette semaine</div></div>
+          <div class="kpi-card"><div class="kpi-label">✦ Réponses IA en attente</div><div class="kpi-value orange">2</div><div class="kpi-delta warn">À valider</div></div>
+          <div class="kpi-card"><div class="kpi-label">📡 Mentions ce mois</div><div class="kpi-value">124</div><div class="kpi-delta up">↑ +8% vs mois dernier</div></div>
+        </div>
+
+        <div class="two-col">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">◈ Évolution du score</div>
+                <div style="display:flex;gap:6px;" id="chartTabs"><span class="chart-tab active" onclick="switchChartTab(this)">30j</span><span class="chart-tab" onclick="switchChartTab(this)">7j</span><span class="chart-tab" onclick="switchChartTab(this)">90j</span></div>
+              </div>
+              <div class="score-big-wrap">
+                <div class="score-circle"><div class="score-circle-inner">4.5</div></div>
+                <div class="score-info">
+                  <div class="score-label">Score moyen global</div>
+                  <div class="score-trend">En hausse</div>
+                  <div class="score-sub">↑ +0.2 pts sur 30 jours</div>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <svg class="chart" viewBox="0 0 600 120" preserveAspectRatio="none">
+                  <defs><linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+                  <line x1="0" y1="30" x2="600" y2="30" stroke="rgba(255,255,255,0.06)"/><line x1="0" y1="60" x2="600" y2="60" stroke="rgba(255,255,255,0.06)"/><line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.06)"/>
+                  <path fill="url(#cg1)" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20 L600,120 L0,120 Z"/>
+                  <path class="chart-line" d="M0,90 C60,85 120,75 180,70 C240,65 300,60 360,50 C420,42 480,35 600,20"/>
+                  <circle class="chart-dot" cx="180" cy="70" r="5"/><circle class="chart-dot" cx="360" cy="50" r="5"/><circle class="chart-dot" cx="600" cy="20" r="5"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">🔔 Alertes récentes</div><span class="card-action" onclick="navigate('alertes')">Voir tout →</span></div>
+              <div class="alert-tabs">
+                <div class="alert-tab active">Toutes <span class="alert-count">8</span></div>
+                <div class="alert-tab">Critiques <span class="alert-count">3</span></div>
+                <div class="alert-tab">À traiter <span class="alert-count blue">3</span></div>
+              </div>
+              <div class="alerts-list">
+                <div class="alert-item">
+                  <div class="alert-meta"><span class="platform-badge google">Google</span><span class="severity critical">Critique 9/10</span><span class="alert-time">il y a 12 min</span></div>
+                  <div class="alert-text">"Service catastrophique ce soir, attente de 45 min..."</div>
+                  <div class="alert-detail">Note : 1★ · Auteur : @pierreM</div>
+                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Ignorer</button></div>
+                </div>
+                <div class="alert-item">
+                  <div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="severity critical">Critique 8/10</span><span class="alert-time">il y a 38 min</span></div>
+                  <div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong></div>
+                  <div class="alert-detail">Gravité : 8/10 · Portée élevée</div>
+                  <div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="card">
+              <div class="card-header"><div class="card-title">◈ Par plateforme</div></div>
+              <div class="platform-list" id="platformList"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">⚡ Activité récente</div></div>
+              <div class="activity-list" id="activityList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTES -->
+      <div class="section" id="sec-alertes">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔔 Toutes les alertes</div><span style="font-size:12px;color:var(--text3);">8 alertes · 3 non traitées</span></div>
+          <div class="alert-tabs">
+            <div class="alert-tab active">Toutes <span class="alert-count">8</span></div>
+            <div class="alert-tab">Critiques <span class="alert-count">3</span></div>
+            <div class="alert-tab">À traiter <span class="alert-count blue">3</span></div>
+          </div>
+          <div class="alerts-list">
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span class="severity critical">Critique 9/10</span><span class="alert-time">il y a 12 min</span></div><div class="alert-text">"Service catastrophique ce soir, attente de 45 min sans explication..."</div><div class="alert-detail">Note : 1★ · Auteur : @pierreM</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Ignorer</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="severity critical">Critique 8/10</span><span class="alert-time">il y a 38 min</span></div><div class="alert-text">Mention négative virale — <strong>2 340 impressions</strong> · "Évitez ce restaurant..."</div><div class="alert-detail">Gravité : 8/10 · Portée élevée</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Voir réponse IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge tripadvisor">TripAdvisor</span><span class="severity moderate">Modéré 5/10</span><span class="alert-time">il y a 2h</span></div><div class="alert-text">"Déçu par la qualité des plats ce week-end, habituellement excellent..."</div><div class="alert-detail">Note : 2★</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="navigate('reponses')">✦ Répondre avec IA</button><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span style="font-size:11px;color:var(--green);">★★★★★ Positif</span><span class="alert-time">il y a 5h</span></div><div class="alert-text">"Superbe soirée, accueil chaleureux et cuisine raffinée !"</div><div class="alert-detail">Note : 5★ · Auteur : Claire B.</div><div class="alert-actions"><button class="btn-sm btn-ghost" onclick="showToast('Chargement des données…', '')">Marquer lu</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RÉPONSES IA -->
+      <div class="section" id="sec-reponses">
+        <div style="display:flex;align-items:center;justify-content:space-between;"><span id="responsesCounter" style="font-size:13px;color:var(--text3);">2 réponses générées · En attente de validation</span><button class="btn-lg primary" onclick="validateAll()">✦ Tout valider</button></div>
+        <div class="ia-card">
+          <div class="ia-header"><div class="ia-source"><span class="ia-badge google">Google</span><div><div style="font-size:13px;font-weight:500;color:var(--text);">Avis de @pierreM</div><div class="ia-rating">Note : 1★ · il y a 12 min · Critique 9/10</div></div></div><span class="severity critical">À valider</span></div>
+          <div class="ia-label">Avis original</div>
+          <div class="ia-original">"Service catastrophique ce soir, attente de 45 minutes sans explication. Jamais vu ça dans un restaurant de ce standing. Très déçu."</div>
+          <div class="ia-label">Réponse générée par IA</div>
+          <div class="ia-response">Cher Pierre, nous vous remercions sincèrement pour votre retour. Nous sommes vraiment désolés de cette expérience qui ne reflète pas nos standards habituels. Un problème en cuisine a malheureusement impacté nos délais ce soir. Nous aimerions vous inviter à revenir pour vous offrir l'expérience que vous méritez. — L'équipe du Provençal</div>
+          <div class="ia-actions"><button class="btn-lg primary" disabled style="opacity:.5;">✓ Valider &amp; Publier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✎ Modifier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✕ Refuser</button></div>
+        </div>
+        <div class="ia-card">
+          <div class="ia-header"><div class="ia-source"><span class="ia-badge tripadvisor">TripAdvisor</span><div><div style="font-size:13px;font-weight:500;color:var(--text);">Avis de Marie L.</div><div class="ia-rating">Note : 2★ · il y a 2h · Modéré 5/10</div></div></div><span class="severity moderate">À valider</span></div>
+          <div class="ia-label">Avis original</div>
+          <div class="ia-original">"Déçu par la qualité des plats ce week-end, habituellement excellent mais là c'était en dessous de nos attentes."</div>
+          <div class="ia-label">Réponse générée par IA</div>
+          <div class="ia-response">Chère Marie, merci pour votre fidélité et votre retour honnête. Nous sommes navrés que votre dernière visite n'ait pas été à la hauteur. Nous prenons votre avis très au sérieux et allons y travailler. Nous espérons vous revoir prochainement. — L'équipe du Provençal</div>
+          <div class="ia-actions"><button class="btn-lg primary" disabled style="opacity:.5;">✓ Valider &amp; Publier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✎ Modifier</button><button class="btn-lg ghost" disabled style="opacity:.5;">✕ Refuser</button></div>
+        </div>
+      </div>
+
+      <!-- SCORE & TENDANCES -->
+      <div class="section" id="sec-score">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-title">Score global actuel</div><div class="stat-big accent">4.5 / 5</div><div class="stat-sub">↑ +0.2 sur 30 jours</div></div>
+          <div class="stat-card"><div class="stat-title">Avis positifs (≥4★)</div><div class="stat-big green">78%</div><div class="stat-sub">↑ +5% ce mois</div></div>
+          <div class="stat-card"><div class="stat-title">Avis négatifs (≤2★)</div><div class="stat-big orange">12%</div><div class="stat-sub">↓ -2% ce mois</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">◈ Évolution 90 jours</div></div>
+            <div class="chart-wrap">
+              <svg class="chart" viewBox="0 0 600 120" preserveAspectRatio="none">
+                <defs><linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/><stop offset="100%" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs>
+                <line x1="0" y1="30" x2="600" y2="30" stroke="rgba(255,255,255,0.06)"/><line x1="0" y1="60" x2="600" y2="60" stroke="rgba(255,255,255,0.06)"/><line x1="0" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.06)"/>
+                <path fill="url(#cg2)" d="M0,100 C100,95 150,80 200,75 C250,70 280,85 320,70 C360,55 420,45 500,35 C550,28 580,22 600,18 L600,120 L0,120 Z"/>
+                <path class="chart-line" d="M0,100 C100,95 150,80 200,75 C250,70 280,85 320,70 C360,55 420,45 500,35 C550,28 580,22 600,18"/>
+              </svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Distribution des notes</div></div>
+            <div class="progress-list">
+              <div class="progress-item"><div class="progress-label">5 ★★★★★</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:52%;background:var(--green)"></div></div><div class="progress-pct">52%</div></div>
+              <div class="progress-item"><div class="progress-label">4 ★★★★</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:26%;background:var(--accent)"></div></div><div class="progress-pct">26%</div></div>
+              <div class="progress-item"><div class="progress-label">3 ★★★</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:10%;background:var(--yellow)"></div></div><div class="progress-pct">10%</div></div>
+              <div class="progress-item"><div class="progress-label">2 ★★</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:8%;background:var(--orange)"></div></div><div class="progress-pct">8%</div></div>
+              <div class="progress-item"><div class="progress-label">1 ★</div><div class="progress-bar-wrap"><div class="progress-bar" style="width:4%;background:var(--red)"></div></div><div class="progress-pct">4%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENTIONS -->
+      <div class="section" id="sec-mentions">
+        <div class="card">
+          <div class="card-header"><div class="card-title">≡ Toutes les mentions</div><span style="font-size:12px;color:var(--text3);">124 ce mois</span></div>
+          <div class="alerts-list">
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge google">Google</span><span style="font-size:11px;color:var(--yellow);">★★★★★</span><span class="alert-time">il y a 5h</span></div><div class="alert-text">"Superbe soirée, accueil chaleureux et cuisine raffinée !"</div><div class="alert-detail">Auteur : Claire B. · Positif</div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge tripadvisor">TripAdvisor</span><span style="font-size:11px;color:var(--yellow);">★★★★</span><span class="alert-time">Hier</span></div><div class="alert-text">"Très bon repas, service un peu lent mais qualité au rendez-vous."</div><div class="alert-detail">Auteur : Thomas R. · Neutre</div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge twitter">Twitter / X</span><span class="alert-time">Avant-hier</span></div><div class="alert-text">"Dîner d'anniversaire parfait au Provençal ! Je recommande !"</div><div class="alert-detail">Portée : 450 impressions · Positif</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLATEFORMES -->
+      <div class="section" id="sec-plateformes">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⬡ Plateformes connectées</div></div>
+          <div>
+            <!-- Google — always connected -->
+            <div class="platform-full-item">
+              <div class="platform-logo g">G</div>
+              <div>
+                <div class="platform-name">Google Business</div>
+                <div class="platform-stars" id="googlePlatformStatus">Actif · synchronisation automatique</div>
+              </div>
+              <div class="platform-status" id="googlePlatformActions"><span class="status-pill active">Actif</span></div>
+            </div>
+            <!-- Trustpilot — connect form or connected state -->
+            <div class="platform-full-item" id="trustpilotRow">
+              <div class="platform-logo tp">TP</div>
+              <div style="flex:1;">
+                <div class="platform-name">Trustpilot</div>
+                <div id="trustpilotStatus" class="platform-stars">Non connecté</div>
+                <div id="trustpilotForm" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;">
+                  <input id="tpBusinessName" class="settings-input" style="max-width:260px;margin:0;" type="text" placeholder="Nom de votre établissement">
+                  <button class="btn-sm btn-primary" onclick="connectTrustpilot(this)">Connecter →</button>
+                </div>
+              </div>
+              <div class="platform-status" id="trustpilotActions"></div>
+            </div>
+            <!-- TripAdvisor — connect form or connected state -->
+            <div class="platform-full-item" id="tripadvisorRow">
+              <div class="platform-logo ta">TA</div>
+              <div style="flex:1;">
+                <div class="platform-name">TripAdvisor</div>
+                <div id="tripadvisorStatus" class="platform-stars">Non connecté</div>
+                <div id="tripadvisorForm" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;">
+                  <input id="taBusinessName" class="settings-input" style="max-width:260px;margin:0;" type="text" placeholder="Nom de votre établissement">
+                  <button class="btn-sm btn-primary" onclick="connectTripAdvisor(this)">Connecter →</button>
+                </div>
+              </div>
+              <div class="platform-status" id="tripadvisorActions"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Review request generator -->
+        <div class="card" style="border-color:rgba(52,211,153,.2);background:rgba(52,211,153,.03);">
+          <div class="card-header"><div class="card-title">⭐ Demander un avis à vos clients</div></div>
+          <div style="padding:0 20px 20px;">
+            <p style="font-size:13px;color:#64748b;margin:0 0 16px;">Partagez ce lien avec vos clients pour les inviter à vous laisser un avis Google. Plus vous en avez, plus votre score monte.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="reviewRequestLink" type="text" readonly style="flex:1;min-width:200px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:#34d399;font-size:12px;font-family:monospace;outline:none;" value="Connectez Google Business pour obtenir votre lien" />
+              <button onclick="copyReviewLink()" id="copyReviewBtn" disabled style="background:#059669;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;opacity:.5;">📋 Copier</button>
+              <a id="shareReviewWhatsApp" href="#" onclick="return shareReviewWA(event)" style="display:flex;align-items:center;gap:4px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:#94a3b8;text-decoration:none;font-size:12px;">💬 WA</a>
+            </div>
+            <div id="reviewRequestTip" style="margin-top:12px;font-size:12px;color:#475569;display:none;">💡 Envoyez ce lien par SMS, email ou WhatsApp après chaque prestation. Les clients satisfaits ne pensent pas toujours à laisser un avis — un simple rappel suffit !</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="section" id="sec-notifications">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔔 Préférences de notifications</div></div>
+          <div class="settings-title">Alertes email</div>
+          <div class="settings-row"><div><div class="settings-label">Avis critiques (≤2★)</div><div class="settings-sub">Notification immédiate</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Mentions négatives virales</div><div class="settings-sub">Portée &gt; 1000 impressions</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Rapport hebdomadaire</div><div class="settings-sub">Chaque lundi à 08:00</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Nouveaux avis positifs</div><div class="settings-sub">Résumé quotidien</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Webhook sortant <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:6px;">Slack · Teams · Discord</span></div></div>
+          <div class="settings-row">
+            <div><div class="settings-label">Activer les notifications webhook</div><div class="settings-sub">Reçoit les alertes critiques dans votre workspace</div></div>
+            <div class="toggle" id="webhookToggle" onclick="toggleWebhook(this)"></div>
+          </div>
+          <div style="padding:0 20px 16px;">
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">URL du webhook (Slack / Teams / Discord)</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input id="webhookUrlInput" class="settings-input" style="flex:1;min-width:240px;margin:0;" type="url" placeholder="https://hooks.slack.com/services/...">
+              <button class="btn-sm btn-primary" onclick="saveWebhook(this)">Enregistrer</button>
+              <button class="btn-sm btn-ghost" id="webhookTestBtn" onclick="testWebhook(this)" style="display:none;">Tester →</button>
+            </div>
+            <div id="webhookMsg" style="font-size:12px;margin-top:8px;display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RAPPORTS -->
+      <div class="section" id="sec-rapports">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📄 Rapports</div><button class="btn-sm btn-primary" onclick="showToast('Génération de rapports — Prochainement', '')">+ Générer</button></div>
+          <div class="alerts-list">
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">Lundi 08:00</span></div><div class="alert-text"><strong>Rapport hebdomadaire</strong> — Semaine du 7 au 14 avril</div><div class="alert-detail">847 avis · Score moyen 4.5</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="showToast('Téléchargement PDF — Prochainement', '')">↓ Télécharger</button></div></div>
+            <div class="alert-item"><div class="alert-meta"><span class="platform-badge" style="color:var(--accent2);border-color:rgba(99,102,241,0.3);">PDF</span><span class="alert-time">1 avril</span></div><div class="alert-text"><strong>Rapport mensuel</strong> — Mars 2026</div><div class="alert-detail">835 avis · Score moyen 4.3</div><div class="alert-actions"><button class="btn-sm btn-primary" onclick="showToast('Téléchargement PDF — Prochainement', '')">↓ Télécharger</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABONNEMENT -->
+      <div class="section" id="sec-abonnement">
+        <div class="card" style="padding:20px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="plan-badge" style="margin:0;flex:1;"><div class="plan-name">✦ Votre plan actuel : PRO</div><div class="plan-desc">Prochain renouvellement le 16 mai 2026 · 69€/mois</div></div>
+            <button class="btn-lg ghost" onclick="manageSubscription()">Gérer l'abonnement</button>
+          </div>
+        </div>
+        <!-- Annual billing upsell -->
+        <div id="annualUpsell" style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(129,140,248,.06));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-weight:700;font-size:14px;color:#f1f5f9;">💰 Économisez 20% avec la facturation annuelle</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Payez une fois par an et économisez 2 mois. Annulable à tout moment.</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Starter</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">23€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Pro</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">55€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:#64748b;">Business</div>
+              <div style="font-size:13px;font-weight:700;color:#a5b4fc;">119€<span style="font-size:10px;font-weight:400;">/mo</span></div>
+            </div>
+            <button onclick="manageSubscription()" style="background:#6366f1;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">Passer en annuel →</button>
+          </div>
+        </div>
+        <div class="plan-grid">
+          <div class="plan-card" data-plan="starter"><div class="plan-pill">Starter</div><div class="plan-price">29€ <span>/ mois</span></div><div class="plan-desc">Pour les indépendants</div><ul class="plan-features"><li>2 plateformes</li><li>50 réponses IA / mois</li><li>Alertes email</li><li>Rapport hebdomadaire</li></ul><button class="btn-lg ghost" style="width:100%;justify-content:center;" onclick="manageSubscription()">Rétrograder</button></div>
+          <div class="plan-card current" data-plan="pro"><div class="plan-pill">Pro ✦ Actuel</div><div class="plan-price">69€ <span>/ mois</span></div><div class="plan-desc">Pour les PME</div><ul class="plan-features"><li>4 plateformes</li><li>200 réponses IA / mois</li><li>Alertes temps réel</li><li>Rapports avancés</li><li>Score &amp; Tendances</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;opacity:0.5;cursor:default;" disabled>Plan actuel</button></div>
+          <div class="plan-card" data-plan="business"><div class="plan-pill">Business</div><div class="plan-price">149€ <span>/ mois</span></div><div class="plan-desc">Pour les grandes structures</div><ul class="plan-features"><li>Plateformes illimitées</li><li>Réponses IA illimitées</li><li>Multi-établissements</li><li>API &amp; Intégrations</li><li>Support prioritaire</li></ul><button class="btn-lg primary" style="width:100%;justify-content:center;" onclick="manageSubscription()">Passer au Business</button></div>
+        </div>
+      </div>
+
+      <!-- PARRAINAGE -->
+      <div class="section" id="sec-parrainage">
+        <div class="card" style="padding:28px 32px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(129,140,248,.04));border-color:rgba(99,102,241,.25);">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+            <div style="background:rgba(99,102,241,.15);border-radius:12px;padding:12px;font-size:28px;line-height:1;">🎁</div>
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#f1f5f9;">Programme de parrainage</div>
+              <div style="font-size:13px;color:#64748b;margin-top:4px;">Invitez un collègue — gagnez chacun 1 mois offert</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#818cf8;" id="refCount">0</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">Filleuls parrainés</div>
+            </div>
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#34d399;" id="refSaved">0€</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">Économies générées</div>
+            </div>
+            <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#fbbf24;">🎁</div>
+              <div style="font-size:12px;color:#64748b;margin-top:4px;">1 mois offert par filleul</div>
+            </div>
+          </div>
+          <div style="margin-bottom:24px;">
+            <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Votre lien de parrainage</div>
+            <div style="display:flex;gap:8px;">
+              <input id="refLink" type="text" readonly style="flex:1;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:#818cf8;font-size:13px;font-family:monospace;outline:none;" value="https://repuguard.app/signup?ref=..." />
+              <button onclick="copyRefLink()" style="background:#6366f1;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">📋 Copier</button>
+            </div>
+          </div>
+          <div style="background:#0e1018;border:1px solid var(--border);border-radius:12px;padding:20px;">
+            <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Comment ça marche ?</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#6366f1;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">1</div><div style="font-size:13px;color:#94a3b8;">Partagez votre lien unique à un collègue restaurateur, hôtelier, médecin…</div></div>
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#6366f1;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">2</div><div style="font-size:13px;color:#94a3b8;">Il s'inscrit et démarre son essai gratuit de 7 jours via votre lien.</div></div>
+              <div style="display:flex;gap:12px;align-items:flex-start;"><div style="background:#34d399;color:#022c22;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">3</div><div style="font-size:13px;color:#94a3b8;">À sa conversion en client payant, vous recevez chacun <strong style="color:#f1f5f9;">1 mois gratuit</strong> automatiquement.</div></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="mailto:?subject=Essaie%20RepuGuard%20gratuitement&body=Je%20te%20recommande%20RepuGuard%20pour%20surveiller%20ta%20r%C3%A9putation%20en%20ligne.%20Essai%207j%20offert%20%3A%20" id="refMailShare" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">✉ Email</a>
+            <a href="#" onclick="shareRefWhatsApp(event)" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">💬 WhatsApp</a>
+            <a href="#" onclick="shareRefLinkedIn(event)" style="display:flex;align-items:center;gap:6px;background:#0e1018;border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:#94a3b8;text-decoration:none;font-size:13px;">🔗 LinkedIn</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARAMÈTRES -->
+      <div class="section" id="sec-parametres">
+        <div class="card">
+          <div class="settings-title">Informations du compte</div>
+          <div class="settings-row"><div><div class="settings-label">Nom de l'établissement</div></div><input class="settings-input" type="text" id="settingBusinessName" value="Le Provençal"></div>
+          <div class="settings-row"><div><div class="settings-label">Email de contact</div></div><input class="settings-input" type="email" id="settingEmail" value="contact@leprovencal.fr"></div>
+          <div class="settings-row"><div><div class="settings-label">Ville</div></div><input class="settings-input" type="text" id="settingCity" value="Lyon, France"></div>
+          <div class="settings-title">Automatisation</div>
+          <div class="settings-row"><div><div class="settings-label">Réponse automatique aux avis 5★</div><div class="settings-sub">Génère et valide silencieusement les réponses aux avis 5★ sans texte</div></div><div class="toggle" id="autoRespondToggle" onclick="toggleAutoRespond(this)"></div></div>
+          <div class="settings-title">Sécurité</div>
+          <div class="settings-row"><div><div class="settings-label">Mot de passe</div><div class="settings-sub">Envoie un email de réinitialisation</div></div><button class="btn-sm btn-ghost" onclick="resetPassword(this)">Modifier</button></div>
+          <div style="padding:16px 20px;border-top:1px solid var(--border);"><button class="btn-lg primary" onclick="saveSettings()">Enregistrer les modifications</button></div>
+        </div>
+        <div class="card" style="border-color:rgba(248,113,113,0.2);">
+          <div class="settings-title" style="color:var(--red);">Zone de danger</div>
+          <div class="settings-row"><div><div class="settings-label">Supprimer le compte</div><div class="settings-sub">Contactez le support pour supprimer votre compte</div></div><button class="btn-sm" style="background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.2);" onclick="showToast('Pour supprimer votre compte, contactez support@repuguard.app', 'red')">Supprimer</button></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div id="dashLoadingOverlay"><div class="dash-spinner"></div></div>
+<div id="dashErrorBanner"></div>
+<div class="toast" id="toastEl"></div>
+
+<script>
+  // AUTH GUARD
+  (function() { if (!localStorage.getItem('rg-token')) window.location.href = '/login'; })();
+
+  // I18N
+  initI18n();
+  const langSel = document.getElementById('langSelector');
+  if (langSel) langSel.value = window.RG_LANG || 'fr';
+
+  function switchLang(lang) {
+    applyLang(lang);
+    if (langSel) langSel.value = lang;
+    // Re-render dynamic content if data loaded
+    if (RG.data) render(RG.data);
+  }
+
+  // STATE
+  const RG = { token: localStorage.getItem('rg-token'), data: null };
+
+  // HELPERS
+  function fmt(d) {
+    if (!d) return '';
+    const ms = Date.now() - new Date(d).getTime();
+    const m = Math.round(ms/60000), h = Math.round(ms/3600000), j = Math.round(ms/86400000);
+    if (m < 60) return [t('days_ago'), m, t('min')].filter(Boolean).join(' ');
+    if (h < 24) return [t('days_ago'), h + t('hours')].filter(Boolean).join(' ');
+    if (j === 1) return t('yesterday');
+    return [t('days_ago'), j, t('days')].filter(Boolean).join(' ');
+  }
+  function stars(n) { return '★'.repeat(n||0)+'☆'.repeat(5-(n||0)); }
+  function sevBadge(r) {
+    const s = Math.round((5-(r||0))*2);
+    return `<span class="severity ${s>=7?'critical':'moderate'}">${s>=7?t('severity_critical'):t('severity_moderate')} ${s}/10</span>`;
+  }
+  function platBadge(p) {
+    const n = (p||'google').toLowerCase();
+    const cls = {google:'google',twitter:'twitter',tripadvisor:'tripadvisor',trustpilot:'trustpilot'}[n] || '';
+    return `<span class="platform-badge ${cls}">${n.charAt(0).toUpperCase()+n.slice(1)}</span>`;
+  }
+
+  // CHART TABS
+  function switchChartTab(el) {
+    el.closest('[id="chartTabs"]').querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // AUTO-RESPOND TOGGLE
+  async function toggleAutoRespond(el) {
+    el.classList.toggle('on');
+    const enabled = el.classList.contains('on');
+    try {
+      await apiPost('/api/update-client', { auto_respond_5star: enabled });
+      showToast(enabled ? 'Réponses auto 5★ activées' : 'Réponses auto 5★ désactivées', 'green');
+    } catch(e) { el.classList.toggle('on'); showToast(t('error_generic'), 'red'); }
+  }
+
+  // LOAD
+  async function loadDashboard() {
+    const overlay = document.getElementById('dashLoadingOverlay');
+    const errBanner = document.getElementById('dashErrorBanner');
+    if (overlay) overlay.classList.remove('hidden');
+    if (errBanner) errBanner.classList.remove('show');
+    try {
+      const res = await fetch('/api/get-dashboard', { headers: { 'Authorization': 'Bearer ' + RG.token } });
+      if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+      if (!res.ok) throw new Error('Erreur serveur (' + res.status + ')');
+      RG.data = await res.json();
+      render(RG.data);
+    } catch(e) {
+      if (errBanner) {
+        errBanner.textContent = '⚠ Impossible de charger le dashboard. Vérifiez votre connexion et rechargez la page.';
+        errBanner.classList.add('show');
+      }
+    } finally {
+      if (overlay) overlay.classList.add('hidden');
+    }
+  }
+
+  // RENDER
+  function render(d) {
+    const { client, stats, recentAlerts, allAlerts, pendingResponses, reviews } = d;
+
+    // Bandeau trial
+    const trialBanner = document.getElementById('trialBanner');
+    if (trialBanner && client.trial_ends) {
+      const trialEnd = new Date(client.trial_ends);
+      const now = new Date();
+      const daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+      if (daysLeft > 0) {
+        trialBanner.style.display = 'flex';
+        const daysEl = document.getElementById('trialDaysLeft');
+        if (daysEl) daysEl.textContent = daysLeft;
+        const bannerMsg = document.getElementById('trialBannerMsg');
+        if (daysLeft <= 1) {
+          // Last day: red urgent
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(239,68,68,.25),rgba(220,38,38,.2))';
+          trialBanner.style.borderBottomColor = 'rgba(239,68,68,.5)';
+          if (bannerMsg) { bannerMsg.style.color = '#fca5a5'; bannerMsg.innerHTML = '🚨 <strong>Dernière chance</strong> — Votre essai expire dans ' + daysLeft + ' jour — Activez votre plan maintenant pour ne pas perdre vos données.'; }
+        } else if (daysLeft <= 2) {
+          // 2 days: orange warning
+          trialBanner.style.background = 'linear-gradient(90deg,rgba(251,146,60,.2),rgba(245,158,11,.15))';
+          trialBanner.style.borderBottomColor = 'rgba(251,146,60,.4)';
+          if (bannerMsg) { bannerMsg.style.color = '#fdba74'; bannerMsg.innerHTML = '⚠️ Plus que <strong>' + daysLeft + ' jours</strong> d\'essai — Passez en annuel et économisez 20%.'; }
+        }
+      }
+    }
+
+    // Onboarding checklist
+    const onboardingCard = document.getElementById('onboardingCard');
+    if (onboardingCard) {
+      const createdAt = new Date(client.created_at || Date.now());
+      const isNew = (Date.now() - createdAt.getTime()) < 3 * 24 * 60 * 60 * 1000;
+      const hasReviews = reviews && reviews.length > 0;
+      const dismissed = localStorage.getItem('onboarding-dismissed');
+      if (isNew && !dismissed) {
+        onboardingCard.style.display = 'block';
+        // Marquer les étapes complétées
+        if (client.google_place_id) onboardingCard.querySelector('[data-step="google"]')?.classList.add('done');
+        if (hasReviews) onboardingCard.querySelector('[data-step="reviews"]')?.classList.add('done');
+        if (client.email) onboardingCard.querySelector('[data-step="account"]')?.classList.add('done');
+      }
+    }
+
+    // Sidebar
+    document.querySelector('.biz-name').textContent = client.business_name || 'Mon établissement';
+    document.querySelector('.biz-type').textContent = [client.sector, client.country].filter(Boolean).join(' · ');
+    const plan = client.plan || 'starter';
+    document.querySelector('.plan-name').textContent = '✦ Plan ' + plan[0].toUpperCase() + plan.slice(1);
+    const name = [client.first_name, client.last_name].filter(Boolean).join(' ') || client.email;
+    document.querySelector('.user-name').textContent = name;
+    document.querySelector('.avatar').textContent = [(client.first_name||'')[0],(client.last_name||'')[0]].join('').toUpperCase() || '?';
+
+    // Nav badges
+    const rb = document.querySelector('.nav-item[data-section="reponses"] .nav-badge');
+    if (rb) { rb.textContent = stats.pendingResponses; rb.style.display = stats.pendingResponses ? '' : 'none'; }
+    const ab = document.querySelector('.nav-item[data-section="alertes"] .nav-badge');
+    if (ab) ab.textContent = stats.negativeCount || 0;
+
+    // KPI
+    const k = document.querySelectorAll('.kpi-card');
+    if (k[0]) k[0].querySelector('.kpi-value').textContent = stats.avgRating ? stats.avgRating.toFixed(1) : '—';
+    if (k[1]) k[1].querySelector('.kpi-value').textContent = stats.totalReviews || 0;
+    if (k[2]) k[2].querySelector('.kpi-value').textContent = stats.pendingResponses || 0;
+    if (k[3]) k[3].querySelector('.kpi-value').textContent = stats.newThisWeek || 0;
+
+    // Score circle
+    if (stats.avgRating) {
+      const pct = Math.round((stats.avgRating/5)*100);
+      const sc = document.querySelector('.score-circle');
+      if (sc) sc.style.background = `conic-gradient(var(--accent2) 0% ${pct}%,var(--score-track) ${pct}% 100%)`;
+      const si = document.querySelector('.score-circle-inner');
+      if (si) si.textContent = stats.avgRating.toFixed(1);
+      const st = document.querySelector('.score-trend');
+      if (st) st.textContent = stats.avgRating >= 4.5 ? t('score_excellent') : stats.avgRating >= 4 ? t('score_rising') : stats.avgRating >= 3 ? t('score_correct') : t('score_improve');
+    }
+
+    // Last sync
+    if (client.last_sync) {
+      const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
+      const lu = document.getElementById('lastUpdate');
+      if (lu) lu.innerHTML = `<div class="status-dot"></div>${t('last_sync')} ${diff} ${t('min')}`;
+    }
+
+    renderList('#sec-overview .alerts-list', recentAlerts, true);
+    renderList('#sec-alertes .alerts-list', allAlerts, true);
+    renderResponses(pendingResponses);
+    renderList('#sec-mentions .alerts-list', reviews, false);
+
+    // Subscription section — dynamic plan display
+    const subSec = document.getElementById('sec-abonnement');
+    if (subSec) {
+      const planBanner = subSec.querySelector('.plan-badge');
+      if (planBanner) {
+        planBanner.querySelector('.plan-name').textContent = '✦ Votre plan actuel : ' + plan.toUpperCase();
+        const now = new Date();
+        const trialDate = client.trial_ends ? new Date(client.trial_ends) : null;
+        const renewDate = client.current_period_end ? new Date(client.current_period_end) : null;
+        let desc = 'Abonnement actif';
+        if (trialDate && trialDate > now) {
+          const days = Math.ceil((trialDate - now) / 86400000);
+          desc = `Période d'essai — ${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`;
+        } else if (renewDate) {
+          desc = `Prochain renouvellement le ${renewDate.toLocaleDateString('fr-FR')}`;
+        }
+        const PLAN_PRICES = { starter: '29', pro: '69', business: '149' };
+        const priceStr = PLAN_PRICES[plan] ? ` · ${PLAN_PRICES[plan]}€/mois` : '';
+        planBanner.querySelector('.plan-desc').textContent = desc + (trialDate && trialDate > now ? '' : priceStr);
+      }
+      subSec.querySelectorAll('.plan-card[data-plan]').forEach(card => {
+        const cardPlan = card.dataset.plan;
+        const isCurrent = cardPlan === plan;
+        card.classList.toggle('current', isCurrent);
+        const pill = card.querySelector('.plan-pill');
+        if (pill) pill.textContent = cardPlan.charAt(0).toUpperCase() + cardPlan.slice(1) + (isCurrent ? ' ✦ Actuel' : '');
+        const btn = card.querySelector('.btn-lg');
+        if (btn) { btn.style.opacity = isCurrent ? '0.5' : ''; btn.style.cursor = isCurrent ? 'default' : ''; if (isCurrent) btn.textContent = 'Plan actuel'; }
+      });
+    }
+
+    // Referral section
+    renderReferral(client.id, plan);
+    setupReviewRequestLink(client.google_place_id);
+
+    // Platform list — only connected platforms
+    const platList = document.getElementById('platformList');
+    if (platList) {
+      const platItems = [];
+      const gScore = client.google_score || 0;
+      platItems.push(`<div class="platform-item"><div class="platform-logo g">G</div><div><div class="platform-name">Google</div><div class="platform-stars">${stars(Math.round(gScore))}</div></div><div class="platform-score">${gScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(gScore/5*100)}%"></div></div></div></div>`);
+      if (client.tripadvisor_location_id) {
+        const taScore = client.tripadvisor_score || 0;
+        platItems.push(`<div class="platform-item"><div class="platform-logo ta">TA</div><div><div class="platform-name">TripAdvisor</div><div class="platform-stars">${stars(Math.round(taScore))}</div></div><div class="platform-score">${taScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(taScore/5*100)}%"></div></div></div></div>`);
+      }
+      if (client.trustpilot_business_id) {
+        const tpScore = client.trustpilot_score || 0;
+        platItems.push(`<div class="platform-item"><div class="platform-logo tp">TP</div><div><div class="platform-name">Trustpilot</div><div class="platform-stars">${stars(Math.round(tpScore))}</div></div><div class="platform-score">${tpScore.toFixed(1)}<div class="score-bar-wrap"><div class="score-bar" style="width:${Math.round(tpScore/5*100)}%"></div></div></div></div>`);
+      }
+      platList.innerHTML = platItems.join('');
+    }
+
+    // Activity feed — dynamic from real data
+    const actList = document.getElementById('activityList');
+    if (actList) {
+      const acts = [];
+      if (client.last_sync) {
+        const diff = Math.round((Date.now()-new Date(client.last_sync).getTime())/60000);
+        const when = diff < 60 ? `il y a ${diff} min` : diff < 1440 ? `il y a ${Math.round(diff/60)}h` : `il y a ${Math.round(diff/1440)}j`;
+        const syncedPlatforms = ['Google', client.tripadvisor_location_id ? 'TripAdvisor' : null, client.trustpilot_business_id ? 'Trustpilot' : null].filter(Boolean).join(' + ');
+        acts.push(`<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text">Synchronisation <strong>${syncedPlatforms}</strong> effectuée</div><div class="activity-when">${when}</div></div></div>`);
+      }
+      const responded = (reviews||[]).filter(r => r.responded_at).slice(0,2);
+      responded.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot green"></div><div><div class="activity-text">Réponse publiée · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.responded_at)}</div></div></div>`));
+      const recentNegs = (reviews||[]).filter(r => r.is_negative && !r.responded_at).slice(0,2);
+      recentNegs.forEach(r => acts.push(`<div class="activity-item"><div class="activity-dot red"></div><div><div class="activity-text">Avis négatif détecté · <strong>${r.author||'Anonyme'}</strong></div><div class="activity-when">${fmt(r.date)}</div></div></div>`));
+      actList.innerHTML = acts.length ? acts.join('') : `<div class="activity-item"><div class="activity-dot blue"></div><div><div class="activity-text" style="color:var(--text3)">Aucune activité récente</div></div></div>`;
+    }
+
+    // Alert tab counts
+    function setTabCounts(tabsEl, items) {
+      const tbs = tabsEl.querySelectorAll('.alert-tab');
+      const toCount = (c) => { if (!c) return; const el = c.querySelector('.alert-count'); if (el) el.textContent = c.dataset.count || ''; };
+      if (tbs[0]) { const c = tbs[0].querySelector('.alert-count'); if (c) c.textContent = items.length; }
+      if (tbs[1]) { const c = tbs[1].querySelector('.alert-count'); if (c) c.textContent = items.filter(r => (r.rating||0) <= 2).length; }
+      if (tbs[2]) { const c = tbs[2].querySelector('.alert-count'); if (c) c.textContent = items.filter(r => r.needs_response).length; }
+    }
+    const ot = document.querySelector('#sec-overview .alert-tabs');
+    if (ot) setTabCounts(ot, recentAlerts || []);
+    const at = document.querySelector('#sec-alertes .alert-tabs');
+    if (at) setTabCounts(at, allAlerts || []);
+
+    // Settings
+    const sb = document.getElementById('settingBusinessName');
+    const se = document.getElementById('settingEmail');
+    const sc2 = document.getElementById('settingCity');
+    if (sb) sb.value = client.business_name || '';
+    if (se) se.value = client.email || '';
+    if (sc2) sc2.value = client.country || '';
+
+    // Auto-respond toggle
+    const art = document.getElementById('autoRespondToggle');
+    if (art) art.classList.toggle('on', !!client.auto_respond_5star);
+
+    // Trustpilot platform row
+    const tpStatus = document.getElementById('trustpilotStatus');
+    const tpForm = document.getElementById('trustpilotForm');
+    const tpActions = document.getElementById('trustpilotActions');
+    if (client.trustpilot_business_id) {
+      if (tpStatus) tpStatus.textContent = `Connecté · Score ${client.trustpilot_score ? client.trustpilot_score.toFixed(1) : '—'}/5`;
+      if (tpForm) tpForm.style.display = 'none';
+      if (tpActions) tpActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-ghost" style="margin-left:8px;" onclick="disconnectTrustpilot(this)">Déconnecter</button>`;
+    } else {
+      if (tpStatus) tpStatus.textContent = 'Non connecté — ajoutez Trustpilot pour doubler vos sources';
+      if (tpForm) { tpForm.style.display = 'flex'; const tpInput = document.getElementById('tpBusinessName'); if (tpInput && client.business_name) tpInput.value = client.business_name; }
+      if (tpActions) tpActions.innerHTML = '';
+    }
+
+    // TripAdvisor platform row
+    const taStatus = document.getElementById('tripadvisorStatus');
+    const taForm = document.getElementById('tripadvisorForm');
+    const taActions = document.getElementById('tripadvisorActions');
+    if (client.tripadvisor_location_id) {
+      if (taStatus) taStatus.textContent = `Connecté · Score ${client.tripadvisor_score ? client.tripadvisor_score.toFixed(1) : '—'}/5`;
+      if (taForm) taForm.style.display = 'none';
+      if (taActions) taActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-ghost" style="margin-left:8px;" onclick="disconnectTripAdvisor(this)">Déconnecter</button>`;
+    } else {
+      if (taStatus) taStatus.textContent = 'Non connecté — ajoutez TripAdvisor pour les avis restaurants & hôtels';
+      if (taForm) { taForm.style.display = 'flex'; const taInput = document.getElementById('taBusinessName'); if (taInput && client.business_name) taInput.value = client.business_name; }
+      if (taActions) taActions.innerHTML = '';
+    }
+
+    // Webhook settings
+    const wToggle = document.getElementById('webhookToggle');
+    const wInput = document.getElementById('webhookUrlInput');
+    const wTestBtn = document.getElementById('webhookTestBtn');
+    if (wToggle) wToggle.classList.toggle('on', !!client.webhook_enabled);
+    if (wInput) wInput.value = client.webhook_url || '';
+    if (wTestBtn) wTestBtn.style.display = client.webhook_url ? '' : 'none';
+
+    // Google Business Profile OAuth status
+    const gActions = document.getElementById('googlePlatformActions');
+    const gStatus = document.getElementById('googlePlatformStatus');
+    if (client.gbp_location_name) {
+      if (gStatus) gStatus.textContent = 'Actif · Réponses directes Google activées ✓';
+      if (gActions) gActions.innerHTML = `<span class="status-pill gbp">Réponses ✓</span>`;
+    } else {
+      if (gStatus) gStatus.textContent = 'Actif · Lecture seule — activez les réponses directes';
+      if (gActions) gActions.innerHTML = `<span class="status-pill active">Actif</span><button class="btn-sm btn-primary" style="margin-left:8px;" onclick="connectGBP()">Activer les réponses →</button>`;
+    }
+  }
+
+  function reviewHTML(r, withActions) {
+    const isPos = (r.rating||0) >= 4;
+    return `<div class="alert-item" data-review-id="${r.id}">
+      <div class="alert-meta">${platBadge(r.platform)}
+        ${isPos ? `<span style="font-size:11px;color:var(--green);">${stars(r.rating)} ${t('sentiment_positive')}</span>` : sevBadge(r.rating)}
+        <span class="alert-time">${fmt(r.date)}</span>
+      </div>
+      <div class="alert-text">"${(r.text||t('no_comment')).substring(0,180)}"</div>
+      <div class="alert-detail">Note : ${r.rating||0}★ · Auteur : ${r.author||t('anonymous')}</div>
+      ${withActions && r.is_negative ? `<div class="alert-actions">
+        <button class="btn-sm btn-primary" onclick="navigate('reponses')">${t('btn_see_ai')}</button>
+        <button class="btn-sm btn-ghost" onclick="dismissReview(${r.id},this)">${t('btn_ignore')}</button>
+      </div>` : withActions ? `<div class="alert-actions">
+        <button class="btn-sm btn-ghost" onclick="markRead(${r.id},this)">${t('btn_mark_read')}</button>
+      </div>` : ''}
+    </div>`;
+  }
+
+  function renderList(sel, items, withActions, el) {
+    const container = el || (sel ? document.querySelector(sel) : null);
+    if (!container) return;
+    if (!items?.length) { container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px;">${t('no_items')}</div>`; return; }
+    container.innerHTML = items.map(r => reviewHTML(r, withActions)).join('');
+  }
+
+  function renderResponses(pending) {
+    const sec = document.getElementById('sec-reponses');
+    if (!sec) return;
+    const ctr = document.getElementById('responsesCounter');
+    if (ctr) ctr.textContent = `${pending.length} ${t(pending.length !== 1 ? 'responses_pending_plural' : 'responses_pending')}`;
+    sec.querySelectorAll('.ia-card').forEach(el => el.remove());
+    sec.querySelectorAll('div[style*="text-align:center"]').forEach(el => el.remove());
+
+    if (!pending.length) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:40px;color:var(--text3);font-size:13px;';
+      empty.textContent = t('no_pending');
+      sec.appendChild(empty);
+      return;
+    }
+
+    pending.forEach(r => {
+      const platName = r.platform || 'google';
+      const card = document.createElement('div');
+      card.className = 'ia-card';
+      card.dataset.reviewId = r.id;
+      card.innerHTML = `
+        <div class="ia-header">
+          <div class="ia-source">
+            <span class="ia-badge ${platName}">${platName.charAt(0).toUpperCase()+platName.slice(1)}</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text);">Avis de ${r.author||'Anonyme'}</div>
+              <div class="ia-rating">Note : ${r.rating||0}★ · ${fmt(r.date)}</div>
+            </div>
+          </div>
+          <span class="severity critical" id="status-${r.id}">À valider</span>
+        </div>
+        <div class="ia-label">Avis original</div>
+        <div class="ia-original">"${(r.text||'Aucun commentaire').substring(0,300)}"</div>
+        <div class="ia-label">Réponse générée par IA</div>
+        <div class="ia-response" id="resp-${r.id}" style="color:var(--text3);font-style:italic;font-size:12px;">${t('click_to_generate')}</div>
+        <div class="ia-actions" id="actions-${r.id}">
+          <button class="btn-lg primary" onclick="generateResponse(${r.id},this)">${t('btn_generate')}</button>
+          <button class="btn-lg ghost" onclick="dismissReview(${r.id},this)">${t('btn_refuse')}</button>
+        </div>`;
+      sec.appendChild(card);
+    });
+  }
+
+  // ACTIONS
+  async function apiPost(url, body) {
+    return fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+RG.token}, body:JSON.stringify(body) });
+  }
+
+  async function dismissReview(id, btn) {
+    btn.disabled = true;
+    await apiPost('/api/update-review', { reviewId: id, action: 'dismiss' });
+    const item = btn.closest('.alert-item') || btn.closest('.ia-card');
+    if (item) { item.style.opacity = '0.4'; item.style.pointerEvents = 'none'; }
+  }
+
+  async function markRead(id, btn) {
+    btn.disabled = true; btn.textContent = 'Lu ✓';
+    await apiPost('/api/update-review', { reviewId: id, action: 'dismiss' });
+  }
+
+  async function validateResponse(id, btn) {
+    btn.disabled = true; btn.textContent = t('publish_loading');
+    await apiPost('/api/update-review', { reviewId: id, action: 'validate' });
+    btn.textContent = '✓ ' + t('status_published');
+    const s = document.getElementById('status-' + id);
+    if (s) { s.textContent = t('status_validated'); s.className = 'severity moderate'; }
+  }
+
+  async function generateResponse(id, btn) {
+    const review = RG.data?.pendingResponses?.find(r => r.id === id);
+    if (!review) return;
+    btn.disabled = true;
+    btn.textContent = t('generating');
+    try {
+      const res = await apiPost('/api/generate-response', {
+        reviewText: review.text, rating: review.rating, author: review.author,
+        platform: review.platform, businessName: RG.data?.client?.business_name
+      });
+      const data = await res.json();
+      const respDiv = document.getElementById('resp-' + id);
+      if (respDiv && data.response) {
+        respDiv.style.color = ''; respDiv.style.fontStyle = '';
+        respDiv.textContent = data.response;
+      }
+      const actDiv = document.getElementById('actions-' + id);
+      const gbpConnected = !!RG.data?.client?.gbp_location_name;
+      const isGoogle = (review.platform || 'google') === 'google';
+      if (actDiv) actDiv.innerHTML = `
+        ${gbpConnected && isGoogle
+          ? `<button class="btn-lg primary" onclick="publishToGoogle(${id},this)">${t('btn_publish_google')}</button>`
+          : `<button class="btn-lg primary" onclick="validateResponse(${id},this)">${t('btn_validate')}</button>`}
+        <button class="btn-lg ghost" onclick="editResponse(${id})">${t('btn_edit')}</button>
+        <button class="btn-lg ghost" onclick="dismissReview(${id},this)">${t('btn_refuse')}</button>`;
+    } catch(e) {
+      btn.textContent = t('retry'); btn.disabled = false;
+    }
+  }
+
+  function editResponse(id) {
+    const div = document.getElementById('resp-' + id);
+    if (!div) return;
+    div.contentEditable = 'true';
+    div.style.outline = '1px solid var(--accent)';
+    div.focus();
+    div.addEventListener('blur', () => { div.contentEditable='false'; div.style.outline=''; }, { once: true });
+  }
+
+  async function validateAll() {
+    const cards = document.querySelectorAll('#sec-reponses .ia-card');
+    for (const card of cards) {
+      const id = parseInt(card.dataset.reviewId);
+      if (!id) continue;
+      const resp = document.getElementById('resp-' + id);
+      if (!resp || resp.style.fontStyle === 'italic') {
+        const genBtn = card.querySelector('.btn-lg.primary');
+        if (genBtn && !genBtn.disabled) await generateResponse(id, genBtn);
+      }
+      const valBtn = card.querySelector('.btn-lg.primary');
+      if (valBtn && !valBtn.disabled) {
+        const onclick = valBtn.getAttribute('onclick') || '';
+        if (onclick.includes('publishToGoogle')) {
+          await publishToGoogle(id, valBtn);
+        } else {
+          await validateResponse(id, valBtn);
+        }
+      }
+    }
+  }
+
+  async function saveSettings() {
+    const biz = document.getElementById('settingBusinessName')?.value?.trim();
+    const email = document.getElementById('settingEmail')?.value?.trim();
+    const city = document.getElementById('settingCity')?.value?.trim();
+    const btn = document.querySelector('#sec-parametres .btn-lg.primary');
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = t('saving'); btn.disabled = true;
+    try {
+      await apiPost('/api/update-client', { business_name: biz, email, country: city });
+      btn.textContent = t('btn_saved');
+      if (biz) document.querySelector('.biz-name').textContent = biz;
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+    } catch(e) { btn.textContent = t('error_retry'); btn.disabled = false; }
+  }
+
+  async function syncReviews() {
+    if (!RG.data?.client) return;
+    const btn = document.getElementById('syncBtn');
+    if (btn) { btn.style.opacity = '0.4'; btn.disabled = true; }
+    try {
+      await fetch('/api/fetch-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ businessName: RG.data.client.business_name, location: RG.data.client.country, clientId: RG.data.client.id, lang: window.RG_LANG || 'fr' })
+      });
+      await loadDashboard();
+    } catch(e) { console.error(e); }
+    if (btn) { btn.style.opacity = ''; btn.disabled = false; }
+  }
+
+  function logout() {
+    localStorage.removeItem('rg-token');
+    localStorage.removeItem('rg-user');
+    window.location.href = '/login';
+  }
+
+  // NAVIGATION
+  const titleKeys = { overview:'nav_overview', alertes:'nav_alerts', reponses:'nav_responses', score:'nav_score', mentions:'nav_mentions', plateformes:'nav_platforms', notifications:'nav_notifications', rapports:'nav_reports', abonnement:'nav_subscription', parrainage:'nav_referral', parametres:'nav_settings' };
+
+  function openSidebar() {
+    document.querySelector('.sidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('show');
+  }
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+
+  function navigate(section) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.section === section));
+    document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id === 'sec-' + section));
+    document.getElementById('pageTitle').textContent = t(titleKeys[section] || section);
+    closeSidebar();
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll('.nav-item[data-section]').forEach(el => el.addEventListener('click', () => navigate(el.dataset.section)));
+
+  // Alert tabs with real filtering
+  document.querySelectorAll('.alert-tabs').forEach(tabs => {
+    const alertsList = tabs.closest('.card')?.querySelector('.alerts-list');
+    const isOverview = !!tabs.closest('#sec-overview');
+    tabs.querySelectorAll('.alert-tab').forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        tabs.querySelectorAll('.alert-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (!alertsList || !RG.data) return;
+        const items = isOverview ? (RG.data.recentAlerts || []) : (RG.data.allAlerts || []);
+        const filtered = idx === 1 ? items.filter(r => (r.rating||0) <= 2)
+                       : idx === 2 ? items.filter(r => r.needs_response)
+                       : items;
+        renderList(null, filtered, true, alertsList);
+      });
+    });
+  });
+
+  // TOAST
+  function showToast(msg, color) {
+    const el = document.getElementById('toastEl');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.borderColor = color === 'green' ? 'rgba(52,211,153,0.3)' : color === 'red' ? 'rgba(248,113,113,0.3)' : 'var(--border2)';
+    el.style.color = color === 'green' ? '#34d399' : color === 'red' ? '#f87171' : 'var(--text)';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  // GOOGLE BUSINESS PROFILE OAUTH
+  async function resetPassword(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+      await fetch('/api/reset-password', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
+      showToast('Email de réinitialisation envoyé', 'green');
+    } catch(e) { showToast('Erreur', 'red'); }
+    if (btn) { btn.disabled = false; btn.textContent = 'Modifier'; }
+  }
+
+  async function manageSubscription() {
+    try {
+      const r = await fetch('/api/customer-portal', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RG.token } });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || t('error_generic'), 'red'); return; }
+      if (d.url) window.location.href = d.url;
+    } catch(e) { showToast(t('error_connection'), 'red'); }
+  }
+
+  function renderReferral(clientId, plan) {
+    const code = clientId ? clientId.replace(/-/g, '').slice(0, 10).toUpperCase() : 'XXXXXX';
+    const link = `https://repuguard.app/signup?ref=${code}`;
+    const refInput = document.getElementById('refLink');
+    if (refInput) refInput.value = link;
+    const mailA = document.getElementById('refMailShare');
+    if (mailA) mailA.href = `mailto:?subject=Essaie%20RepuGuard%20gratuitement&body=Je%20te%20recommande%20RepuGuard%20pour%20surveiller%20ta%20r%C3%A9putation%20en%20ligne.%20Essai%207j%20offert%20%3A%20${encodeURIComponent(link)}`;
+    const PLAN_PRICES = { starter: 29, pro: 69, business: 149 };
+    const price = PLAN_PRICES[plan] || 0;
+    const refCountEl = document.getElementById('refCount');
+    const refSavedEl = document.getElementById('refSaved');
+    const saved = (RG.data?.client?.referral_count || 0) * price;
+    if (refCountEl) refCountEl.textContent = RG.data?.client?.referral_count || 0;
+    if (refSavedEl) refSavedEl.textContent = saved + '€';
+    // Hide annual upsell if already on annual billing
+    const upsell = document.getElementById('annualUpsell');
+    if (upsell && RG.data?.client?.billing_interval === 'year') upsell.style.display = 'none';
+  }
+
+  function copyRefLink() {
+    const inp = document.getElementById('refLink');
+    if (!inp) return;
+    navigator.clipboard.writeText(inp.value).then(() => showToast('Lien copié !', 'green')).catch(() => {
+      inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
+    });
+  }
+
+  function setupReviewRequestLink(placeId) {
+    const inp = document.getElementById('reviewRequestLink');
+    const btn = document.getElementById('copyReviewBtn');
+    const tip = document.getElementById('reviewRequestTip');
+    const wa = document.getElementById('shareReviewWhatsApp');
+    if (!inp) return;
+    if (placeId) {
+      const url = `https://search.google.com/local/writereview?placeid=${placeId}`;
+      inp.value = url;
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (tip) tip.style.display = 'block';
+      if (wa) wa.href = '#';
+      inp._url = url;
+    }
+  }
+
+  function copyReviewLink() {
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    navigator.clipboard.writeText(inp._url).then(() => showToast('Lien copié !', 'green')).catch(() => {
+      inp.select(); document.execCommand('copy'); showToast('Lien copié !', 'green');
+    });
+  }
+
+  function shareReviewWA(e) {
+    e.preventDefault();
+    const inp = document.getElementById('reviewRequestLink');
+    if (!inp || !inp._url) return;
+    const msg = `Bonjour ! Si vous avez été satisfait(e) de notre service, nous vous serions très reconnaissants de nous laisser un avis Google (1 minute) : ${inp._url} Merci d'avance ! 🙏`;
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  function shareRefWhatsApp(e) {
+    e.preventDefault();
+    const link = document.getElementById('refLink')?.value || '';
+    window.open('https://wa.me/?text=' + encodeURIComponent('Essaie RepuGuard gratuitement (7j offerts) : ' + link), '_blank');
+  }
+
+  function shareRefLinkedIn(e) {
+    e.preventDefault();
+    const link = document.getElementById('refLink')?.value || '';
+    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(link), '_blank');
+  }
+
+  async function connectGBP() {
+    try {
+      const r = await fetch('/api/google-oauth-init', { headers: { 'Authorization': 'Bearer ' + RG.token } });
+      const d = await r.json();
+      if (!r.ok) { showToast(d.error || t('error_generic'), 'red'); return; }
+      if (d.url) window.location.href = d.url;
+    } catch(e) { showToast(t('error_connection'), 'red'); }
+  }
+
+  async function publishToGoogle(id, btn) {
+    const respDiv = document.getElementById('resp-' + id);
+    const replyText = respDiv?.textContent?.trim();
+    if (!replyText || respDiv?.style?.fontStyle === 'italic') {
+      showToast(t('toast_generate_first'), 'red'); return;
+    }
+    btn.disabled = true; btn.textContent = t('publish_loading');
+    try {
+      const r = await apiPost('/api/publish-review-reply', { reviewId: id, replyText });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = '✓ ' + t('status_published') + ' Google';
+      const s = document.getElementById('status-' + id);
+      if (s) { s.textContent = t('status_published') + ' ✓'; s.className = 'severity moderate'; }
+      showToast(t('toast_published_google'), 'green');
+    } catch(e) {
+      showToast(e.message, 'red');
+      btn.textContent = t('btn_publish_google'); btn.disabled = false;
+    }
+  }
+
+  // Handle GBP OAuth callback result
+  (function() {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('gbp') === 'connected') {
+      showToast(t('toast_gbp_connected'), 'green');
+      history.replaceState({}, '', '/dashboard');
+    } else if (p.get('gbp_error')) {
+      showToast(t('error_generic') + ' : ' + p.get('gbp_error'), 'red');
+      history.replaceState({}, '', '/dashboard');
+    }
+  })();
+
+  // TRUSTPILOT
+  async function connectTrustpilot(btn) {
+    const name = document.getElementById('tpBusinessName')?.value?.trim();
+    if (!name) return;
+    btn.disabled = true; btn.textContent = 'Recherche...';
+    try {
+      const r = await fetch('/api/fetch-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ platform: 'trustpilot', businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Connecté';
+      await loadDashboard();
+    } catch(e) {
+      btn.textContent = e.message;
+      setTimeout(() => { btn.textContent = 'Connecter →'; btn.disabled = false; }, 3000);
+    }
+  }
+
+  async function disconnectTrustpilot(btn) {
+    if (!confirm(t('confirm_disconnect_tp'))) return;
+    btn.disabled = true;
+    await apiPost('/api/update-client', { trustpilot_business_id: null });
+    await loadDashboard();
+  }
+
+  async function connectTripAdvisor(btn) {
+    const name = document.getElementById('taBusinessName')?.value?.trim();
+    if (!name) return;
+    btn.disabled = true; btn.textContent = 'Recherche...';
+    try {
+      const r = await fetch('/api/fetch-reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ platform: 'tripadvisor', businessName: name, location: RG.data?.client?.country, clientId: RG.data?.client?.id }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Erreur');
+      btn.textContent = '✓ Connecté';
+      await loadDashboard();
+    } catch(e) {
+      btn.textContent = e.message;
+      setTimeout(() => { btn.textContent = 'Connecter →'; btn.disabled = false; }, 3000);
+    }
+  }
+
+  async function disconnectTripAdvisor(btn) {
+    if (!confirm('Déconnecter TripAdvisor ?')) return;
+    btn.disabled = true;
+    await apiPost('/api/update-client', { tripadvisor_location_id: null });
+    await loadDashboard();
+  }
+
+  // WEBHOOK
+  function toggleWebhook(el) {
+    el.classList.toggle('on');
+    apiPost('/api/update-client', { webhook_enabled: el.classList.contains('on') });
+  }
+
+  async function saveWebhook(btn) {
+    const url = document.getElementById('webhookUrlInput')?.value?.trim();
+    btn.disabled = true; btn.textContent = 'Enregistrement...';
+    const msg = document.getElementById('webhookMsg');
+    try {
+      const r = await apiPost('/api/update-client', { webhook_url: url || '' });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = t('btn_saved');
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = t('webhook_url_saved'); }
+      const testBtn = document.getElementById('webhookTestBtn');
+      if (testBtn) testBtn.style.display = url ? '' : 'none';
+      setTimeout(() => { btn.textContent = 'Enregistrer'; btn.disabled = false; }, 2000);
+    } catch(e) {
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = e.message; }
+      btn.textContent = 'Enregistrer'; btn.disabled = false;
+    }
+  }
+
+  async function testWebhook(btn) {
+    const url = document.getElementById('webhookUrlInput')?.value?.trim();
+    if (!url) return;
+    btn.disabled = true; btn.textContent = 'Envoi...';
+    const msg = document.getElementById('webhookMsg');
+    try {
+      const r = await fetch('/api/send-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + RG.token },
+        body: JSON.stringify({ webhookUrl: url, businessName: RG.data?.client?.business_name, isTest: true }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || t('error_generic'));
+      btn.textContent = '✓';
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--green)'; msg.textContent = t('webhook_test_success'); }
+    } catch(e) {
+      if (msg) { msg.style.display = ''; msg.style.color = 'var(--red)'; msg.textContent = 'Échec : ' + e.message; }
+    }
+    setTimeout(() => { btn.textContent = 'Tester →'; btn.disabled = false; }, 2000);
+  }
+
+  function toggleDashTheme() {
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('rg-theme', t);
+    document.getElementById('themeToggle').textContent = t === 'dark' ? '☀' : '🌙';
+  }
+  (function() {
+    const t = document.documentElement.getAttribute('data-theme');
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = t === 'dark' ? '☀' : '🌙';
+  })();
+
+  loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<script>(function(){var s=localStorage.getItem("rg-theme");var d=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.setAttribute("data-theme",s||(d?"dark":"light"));})();</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Politique de confidentialité — RepuGuard</title>
+<meta name="description" content="Politique de confidentialité de RepuGuard. Comment nous collectons, utilisons et protégeons vos données personnelles. RGPD, CCPA, LGPD.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080910;--surface:#0f1117;--card:#151820;--border:rgba(255,255,255,0.07);--accent:#e8ff47;--text:#eef0f8;--muted:#5a6078;--muted2:#8890a8;}
+[data-theme="light"]{--bg:#f5f6fa;--surface:#ffffff;--card:#eef0f8;--border:rgba(0,0,0,0.08);--accent:#1a56e8;--text:#0f1117;--muted:#9098b0;--muted2:#6b7280;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.75;transition:background-color .3s,color .3s;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;background-color:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.nav-right{display:flex;align-items:center;gap:.75rem;}
+.theme-btn{width:34px;height:34px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;}
+.back-link{font-size:.82rem;color:var(--muted2);text-decoration:none;display:flex;align-items:center;gap:.3rem;}
+.back-link:hover{color:var(--text);}
+main{max-width:780px;margin:0 auto;padding:9rem 5% 6rem;}
+.doc-header{margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--border);}
+h1{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.02em;}
+.meta{font-size:.82rem;color:var(--muted2);margin-bottom:1.5rem;}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;}
+.toc-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.75rem;font-weight:600;}
+.toc ol{padding-left:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:.3rem .5rem;}
+.toc li{font-size:.82rem;}
+.toc a{color:var(--muted2);text-decoration:none;}
+.toc a:hover{color:var(--accent);}
+h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin:2.75rem 0 .75rem;color:var(--text);scroll-margin-top:5rem;}
+h3{font-size:1rem;font-weight:600;margin:1.5rem 0 .5rem;color:var(--text);}
+p{color:var(--muted2);margin-bottom:.85rem;}
+ul,ol{padding-left:1.4rem;margin-bottom:.85rem;}
+li{color:var(--muted2);margin-bottom:.4rem;}
+strong{color:var(--text);font-weight:600;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(232,255,71,.08);border:1px solid rgba(232,255,71,.2);color:var(--accent);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;}
+[data-theme="light"] .badge{background:rgba(26,86,232,.08);border-color:rgba(26,86,232,.2);}
+.info-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1.25rem 0;}
+.info-box p{margin:0;font-size:.9rem;}
+table{width:100%;border-collapse:collapse;margin:1.25rem 0;font-size:.88rem;}
+th{text-align:left;padding:.6rem .85rem;background:var(--surface);color:var(--muted2);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+td{padding:.7rem .85rem;border-bottom:1px solid var(--border);color:var(--muted2);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.section-divider{border:none;border-top:1px solid var(--border);margin:3rem 0;}
+footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;}
+footer a{color:var(--muted2);}
+@media(max-width:600px){.toc ol{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Repu<span>Guard</span></a>
+  <div class="nav-right">
+    <a href="/" class="back-link">← Retour</a>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️</button>
+  </div>
+</nav>
+
+<main>
+  <div class="doc-header">
+    <div class="badge">🔒 Légal</div>
+    <h1>Politique de confidentialité</h1>
+    <p class="meta">Dernière mise à jour : <strong>22 avril 2026</strong> · Version 2.0 · Applicable à repuguard.app</p>
+    <div class="toc">
+      <div class="toc-title">Table des matières</div>
+      <ol>
+        <li><a href="#responsable">Responsable du traitement</a></li>
+        <li><a href="#collecte">Données collectées</a></li>
+        <li><a href="#finalites">Finalités & bases légales</a></li>
+        <li><a href="#conservation">Conservation des données</a></li>
+        <li><a href="#partage">Sous-traitants & transferts</a></li>
+        <li><a href="#cookies">Cookies</a></li>
+        <li><a href="#droits">Vos droits (RGPD)</a></li>
+        <li><a href="#ccpa">Droits CCPA (Californie)</a></li>
+        <li><a href="#lgpd">Droits LGPD (Brésil)</a></li>
+        <li><a href="#securite">Sécurité</a></li>
+        <li><a href="#mineurs">Mineurs</a></li>
+        <li><a href="#modifications">Modifications</a></li>
+        <li><a href="#contact">Contact & DPO</a></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <p><strong>En résumé :</strong> Nous collectons uniquement les données nécessaires au fonctionnement du service. Nous ne vendons jamais vos données. Vous pouvez demander leur suppression à tout moment.</p>
+  </div>
+
+  <h2 id="responsable">1. Responsable du traitement</h2>
+  <p>Le responsable du traitement des données collectées sur <strong>repuguard.app</strong> est :</p>
+  <ul>
+    <li><strong>Entité :</strong> RepuGuard SAS (en cours d'immatriculation)</li>
+    <li><strong>Siège social :</strong> France</li>
+    <li><strong>Email :</strong> <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a></li>
+    <li><strong>DPO :</strong> <a href="mailto:dpo@repuguard.app">dpo@repuguard.app</a></li>
+  </ul>
+
+  <h2 id="collecte">2. Données collectées</h2>
+
+  <h3>2.1 Données que vous nous fournissez</h3>
+  <ul>
+    <li><strong>Compte :</strong> prénom, nom, adresse email, mot de passe (haché, non lisible)</li>
+    <li><strong>Profil professionnel :</strong> nom de l'établissement, secteur d'activité, pays, URL Google Business / TripAdvisor</li>
+    <li><strong>Paiement :</strong> géré exclusivement par <strong>Stripe</strong> — nous n'avons jamais accès à vos coordonnées bancaires ni numéros de carte</li>
+    <li><strong>Communications :</strong> messages envoyés via le formulaire de contact ou le support</li>
+  </ul>
+
+  <h3>2.2 Données collectées automatiquement</h3>
+  <ul>
+    <li><strong>Logs d'utilisation :</strong> pages visitées, fonctionnalités utilisées, nombre de réponses générées</li>
+    <li><strong>Données techniques :</strong> adresse IP, type de navigateur, système d'exploitation, résolution d'écran</li>
+    <li><strong>Préférences :</strong> langue sélectionnée, thème (clair/sombre), paramètres de notification</li>
+    <li><strong>Cookies :</strong> voir section 6</li>
+  </ul>
+
+  <h3>2.3 Données issues de la surveillance</h3>
+  <p>Dans le cadre du service, nous collectons et traitons les avis, mentions et commentaires publics relatifs aux établissements que vous nous autorisez à surveiller (données de tiers, publiquement accessibles).</p>
+
+  <h2 id="finalites">3. Finalités et bases légales</h2>
+
+  <table>
+    <thead>
+      <tr><th>Finalité</th><th>Base légale (RGPD)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fournir et opérer le service RepuGuard</td><td>Exécution du contrat (Art. 6.1.b)</td></tr>
+      <tr><td>Gérer l'abonnement et la facturation</td><td>Exécution du contrat (Art. 6.1.b)</td></tr>
+      <tr><td>Envoyer des alertes, rapports et notifications de service</td><td>Exécution du contrat (Art. 6.1.b)</td></tr>
+      <tr><td>Authentification et sécurité du compte</td><td>Intérêt légitime (Art. 6.1.f)</td></tr>
+      <tr><td>Améliorer le service, détecter les bugs</td><td>Intérêt légitime (Art. 6.1.f)</td></tr>
+      <tr><td>Envoi d'emails marketing et newsletters</td><td>Consentement (Art. 6.1.a)</td></tr>
+      <tr><td>Conformité légale et comptable</td><td>Obligation légale (Art. 6.1.c)</td></tr>
+      <tr><td>Lutte contre la fraude</td><td>Intérêt légitime (Art. 6.1.f)</td></tr>
+    </tbody>
+  </table>
+
+  <p>Aucun traitement n'est basé sur des décisions entièrement automatisées produisant des effets juridiques significatifs (au sens de l'Art. 22 RGPD).</p>
+
+  <h2 id="conservation">4. Conservation des données</h2>
+
+  <table>
+    <thead>
+      <tr><th>Catégorie de données</th><th>Durée de conservation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Données de compte (actif)</td><td>Pendant toute la durée de l'abonnement</td></tr>
+      <tr><td>Données de compte (après résiliation)</td><td>12 mois (réclamations potentielles)</td></tr>
+      <tr><td>Données de facturation</td><td>10 ans (obligation légale comptable)</td></tr>
+      <tr><td>Logs techniques et sécurité</td><td>90 jours</td></tr>
+      <tr><td>Emails de support</td><td>3 ans</td></tr>
+      <tr><td>Données de surveillance (avis publics)</td><td>Durée de l'abonnement + 30 jours</td></tr>
+      <tr><td>Cookies fonctionnels</td><td>12 mois maximum</td></tr>
+      <tr><td>Consentements enregistrés</td><td>3 ans (preuve de conformité)</td></tr>
+    </tbody>
+  </table>
+
+  <p>À l'expiration de ces délais, vos données sont supprimées définitivement ou anonymisées.</p>
+
+  <h2 id="partage">5. Sous-traitants et transferts internationaux</h2>
+
+  <p>Nous ne vendons jamais vos données. Nous faisons appel aux sous-traitants suivants, tous engagés contractuellement :</p>
+
+  <table>
+    <thead>
+      <tr><th>Sous-traitant</th><th>Rôle</th><th>Localisation</th><th>Garanties</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Supabase</strong></td><td>Base de données, authentification</td><td>UE (AWS Frankfurt)</td><td>DPA signé, RGPD</td></tr>
+      <tr><td><strong>Stripe</strong></td><td>Traitement des paiements</td><td>UE + USA</td><td>PCI-DSS, SCCs</td></tr>
+      <tr><td><strong>Anthropic</strong></td><td>Génération de réponses IA</td><td>USA</td><td>DPA, SCCs (Art. 46 RGPD)</td></tr>
+      <tr><td><strong>Vercel</strong></td><td>Hébergement de l'application</td><td>USA + UE</td><td>DPA, SCCs</td></tr>
+      <tr><td><strong>Resend</strong></td><td>Envoi d'emails transactionnels</td><td>USA</td><td>DPA, SCCs</td></tr>
+    </tbody>
+  </table>
+
+  <p>Pour les transferts vers des pays tiers (hors EEE), nous nous appuyons sur les <strong>Clauses Contractuelles Types (CCT)</strong> approuvées par la Commission européenne, conformément à l'Art. 46 du RGPD.</p>
+
+  <h2 id="cookies">6. Cookies</h2>
+
+  <h3>6.1 Cookies que nous utilisons</h3>
+  <table>
+    <thead>
+      <tr><th>Cookie</th><th>Type</th><th>Durée</th><th>Finalité</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>rg-lang</code></td><td>Fonctionnel</td><td>1 an</td><td>Mémoriser la langue choisie</td></tr>
+      <tr><td><code>rg-theme</code></td><td>Fonctionnel</td><td>1 an</td><td>Mémoriser le thème (clair/sombre)</td></tr>
+      <tr><td><code>rg-consent</code></td><td>Fonctionnel</td><td>1 an</td><td>Enregistrer votre choix de consentement</td></tr>
+      <tr><td><code>rg-notif</code></td><td>Session</td><td>Session</td><td>Éviter de réafficher la barre d'annonce</td></tr>
+      <tr><td><code>rg-exit</code></td><td>Session</td><td>Session</td><td>Éviter de réafficher le popup de sortie</td></tr>
+      <tr><td><code>sb-*</code></td><td>Nécessaire</td><td>Session / 1 an</td><td>Authentification Supabase</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 Cookies tiers</h3>
+  <p>Nous n'installons <strong>aucun cookie publicitaire, de traçage tiers ou de réseaux sociaux</strong>. Aucun pixel Facebook, Google Analytics, Hotjar ou autre outil de tracking n'est présent sur notre site.</p>
+
+  <h3>6.3 Gestion de vos préférences</h3>
+  <p>Vous pouvez supprimer les cookies à tout moment via les paramètres de votre navigateur. La suppression des cookies fonctionnels peut affecter votre expérience (langue, thème réinitialisés).</p>
+
+  <h2 id="droits">7. Vos droits (RGPD)</h2>
+
+  <p>En vertu du Règlement Général sur la Protection des Données (RGPD — Règlement UE 2016/679), vous disposez des droits suivants :</p>
+
+  <ul>
+    <li><strong>Droit d'accès (Art. 15) :</strong> obtenir une copie de toutes vos données personnelles</li>
+    <li><strong>Droit de rectification (Art. 16) :</strong> corriger des données inexactes ou incomplètes</li>
+    <li><strong>Droit à l'effacement (Art. 17) :</strong> demander la suppression de vos données ("droit à l'oubli")</li>
+    <li><strong>Droit à la limitation (Art. 18) :</strong> restreindre temporairement le traitement</li>
+    <li><strong>Droit à la portabilité (Art. 20) :</strong> recevoir vos données dans un format structuré et lisible</li>
+    <li><strong>Droit d'opposition (Art. 21) :</strong> vous opposer au traitement basé sur l'intérêt légitime ou à des fins de marketing</li>
+    <li><strong>Retrait du consentement :</strong> retirer votre consentement à tout moment, sans effet sur les traitements passés</li>
+  </ul>
+
+  <p>Pour exercer ces droits : <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a>. Nous répondons dans un délai de <strong>30 jours</strong>. En cas de refus ou de non-réponse, vous pouvez saisir la <strong>CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a> ou votre autorité de protection des données locale.</p>
+
+  <h2 id="ccpa">8. Droits des résidents de Californie (CCPA)</h2>
+
+  <p>Si vous résidez en Californie, le <em>California Consumer Privacy Act</em> (CCPA) vous confère des droits supplémentaires :</p>
+
+  <ul>
+    <li><strong>Droit de savoir :</strong> quelles catégories de données personnelles nous collectons et pourquoi</li>
+    <li><strong>Droit de supprimer :</strong> demander la suppression de vos données personnelles</li>
+    <li><strong>Droit d'opt-out :</strong> nous ne vendons pas vos données — ce droit est satisfait par défaut</li>
+    <li><strong>Droit à la non-discrimination :</strong> l'exercice de ces droits ne modifie pas la qualité du service reçu</li>
+  </ul>
+
+  <p>Pour exercer vos droits CCPA : <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a> avec l'objet "CCPA Request".</p>
+
+  <h2 id="lgpd">9. Droits des résidents du Brésil (LGPD)</h2>
+
+  <p>Si vous résidez au Brésil, la <em>Lei Geral de Proteção de Dados</em> (LGPD — Lei n° 13.709/2018) vous accorde des droits équivalents au RGPD :</p>
+
+  <ul>
+    <li>Confirmation de l'existence du traitement et accès aux données</li>
+    <li>Correction de données incomplètes, inexactes ou obsolètes</li>
+    <li>Anonymisation, blocage ou suppression de données excessives</li>
+    <li>Portabilité des données vers un autre prestataire</li>
+    <li>Suppression des données traitées avec consentement</li>
+    <li>Information sur les tiers avec qui les données sont partagées</li>
+    <li>Opposition au traitement en cas de non-conformité</li>
+    <li>Retrait du consentement</li>
+  </ul>
+
+  <p>Pour exercer vos droits LGPD : <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a> avec l'objet "LGPD Request".</p>
+
+  <h2 id="securite">10. Sécurité</h2>
+
+  <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées, notamment :</p>
+  <ul>
+    <li>Chiffrement des données en transit (TLS 1.3) et au repos (AES-256)</li>
+    <li>Mots de passe hachés avec bcrypt (jamais stockés en clair)</li>
+    <li>Authentification à deux facteurs disponible</li>
+    <li>Accès aux données de production limité aux personnes autorisées</li>
+    <li>Journalisation des accès et alertes de sécurité automatisées</li>
+    <li>Sauvegardes chiffrées quotidiennes</li>
+  </ul>
+
+  <p>En cas de violation de données susceptible d'affecter vos droits, nous vous notifierons dans les <strong>72 heures</strong> conformément à l'Art. 33 du RGPD.</p>
+
+  <h2 id="mineurs">11. Mineurs</h2>
+
+  <p>RepuGuard est un service destiné aux professionnels et entreprises. Nous ne collectons sciemment pas de données concernant des personnes de moins de <strong>18 ans</strong>. Si vous estimez qu'un mineur nous a fourni des données, contactez-nous immédiatement à <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a>.</p>
+
+  <h2 id="modifications">12. Modifications de cette politique</h2>
+
+  <p>Nous pouvons mettre à jour cette politique pour refléter des changements légaux, techniques ou opérationnels. En cas de modification substantielle, vous serez notifié par email ou via une bannière sur le site au moins <strong>30 jours avant</strong> l'entrée en vigueur. La date de dernière mise à jour en haut de cette page reflète toujours la version en vigueur.</p>
+
+  <h2 id="contact">13. Contact et DPO</h2>
+
+  <p>Pour toute question, demande d'exercice de droits ou réclamation :</p>
+  <ul>
+    <li><strong>Email général :</strong> <a href="mailto:privacy@repuguard.app">privacy@repuguard.app</a></li>
+    <li><strong>DPO :</strong> <a href="mailto:dpo@repuguard.app">dpo@repuguard.app</a></li>
+    <li><strong>Délai de réponse :</strong> 30 jours maximum</li>
+    <li><strong>Autorité de contrôle :</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL (France)</a></li>
+  </ul>
+</main>
+
+<footer>© 2026 RepuGuard · <a href="/">Accueil</a> · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/contact">Contact</a></footer>
+
+<script>
+function toggleTheme(){var h=document.documentElement;var isDark=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',isDark?'light':'dark');document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';localStorage.setItem('rg-theme',isDark?'light':'dark');}
+(function(){var t=localStorage.getItem('rg-theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';})();
+</script>
+</body>
+</html>

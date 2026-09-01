@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepuGuard — Créer votre compte</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root, [data-theme="dark"] {
+    --bg: #07080f;
+    --surface: #0e1018;
+    --surface2: #13151f;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fb923c;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --dot-active-bg: #ffffff;
+    --dot-active-text: #07080f;
+    --tip-bg: #f1f5f9;
+    --tip-text: #07080f;
+    --select-option-bg: #0e1018;
+  }
+  [data-theme="light"] {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #eef0f8;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.12);
+    --accent: #6366f1;
+    --accent2: #4f46e5;
+    --accent-dim: rgba(99,102,241,0.08);
+    --violet: #7c3aed;
+    --green: #059669;
+    --red: #dc2626;
+    --orange: #d97706;
+    --text: #0f1117;
+    --text2: #4b5563;
+    --text3: #6b7280;
+    --dot-active-bg: var(--accent);
+    --dot-active-text: #ffffff;
+    --tip-bg: #0f1117;
+    --tip-text: #ffffff;
+    --select-option-bg: #ffffff;
+  }
+
+  html, body { min-height: 100vh; background: var(--bg) !important; color: var(--text) !important; font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; }
+
+  /* LAYOUT */
+  .page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+  /* LEFT PANEL */
+  .left-panel {
+    background: var(--surface) !important;
+    border-right: 1px solid var(--border);
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    bottom: -120px; left: -120px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--text);
+    text-decoration: none;
+    margin-bottom: 48px;
+    display: block;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent2); }
+
+  /* PLAN SELECTOR */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+  }
+
+  .plan-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+
+  .plan-option {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .plan-option:hover { border-color: rgba(99,102,241,0.3); }
+
+  .plan-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .plan-left { display: flex; align-items: center; gap: 12px; }
+
+  .plan-radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .plan-option.selected .plan-radio {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .plan-option.selected .plan-radio::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: white;
+  }
+
+  .plan-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+  .plan-desc { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
+  .plan-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--text); }
+  .plan-price span { font-size: 11px; font-weight: 400; color: var(--text3); }
+
+  /* BENEFITS */
+  .benefits { margin-bottom: 36px; }
+  .benefit-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--text2); }
+  .benefit-icon { color: var(--green); font-size: 12px; flex-shrink: 0; margin-top: 3px; font-weight: 700; }
+
+  /* TRUST */
+  .trust-badges { display: flex; gap: 16px; flex-wrap: wrap; padding-top: 28px; border-top: 1px solid var(--border); margin-top: auto; }
+  .trust-badge { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text3); }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--bg) !important;
+  }
+
+  .trial-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--green);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    width: fit-content;
+  }
+
+  .form-header { margin-bottom: 28px; }
+  .form-header h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); margin-bottom: 6px; }
+  .form-header p { color: var(--text3); font-size: 13.5px; }
+
+  /* STEP INDICATOR */
+  .steps-wrap { margin-bottom: 28px; }
+  .steps-bar { display: flex; align-items: center; gap: 0; margin-bottom: 8px; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: all 0.3s; font-family: 'Syne', sans-serif; }
+  .step-dot.done { background: var(--accent); color: white; }
+  .step-dot.active { background: var(--dot-active-bg); color: var(--dot-active-text); }
+  .step-dot.pending { background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
+  .step-line { flex: 1; height: 2px; background: var(--border2); transition: background 0.3s; }
+  .step-line.done { background: var(--accent); }
+  .steps-labels { display: flex; justify-content: space-between; }
+  .step-lbl { font-size: 11px; color: var(--text3); flex: 1; text-align: center; }
+  .step-lbl.active { color: var(--text); font-weight: 600; }
+  .step-lbl.done { color: var(--accent2); }
+
+  /* FORM */
+  .form-step { display: none; }
+  .form-step.active { display: block; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    width: 100%;
+    background: var(--surface) !important;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text) !important;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+  input.error { border-color: var(--red) !important; }
+
+  .error-msg { font-size: 11.5px; color: var(--red); margin-top: 4px; display: none; }
+  .error-msg.show { display: block; }
+
+  select option { background: var(--select-option-bg); color: var(--text); }
+
+  /* PASSWORD STRENGTH */
+  .pw-strength { margin-top: 6px; display: none; }
+  .strength-bar { height: 3px; border-radius: 2px; background: var(--border2); overflow: hidden; margin-bottom: 4px; }
+  .strength-fill { height: 100%; width: 0; transition: all 0.3s; border-radius: 2px; }
+  .strength-text { font-size: 11px; color: var(--text3); }
+
+  /* PLATFORM TAGS */
+  .platform-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .platform-tag { padding: 5px 12px; border-radius: 100px; border: 1px solid var(--border2); background: var(--surface2); font-size: 12px; cursor: pointer; color: var(--text3); transition: all 0.2s; user-select: none; }
+  .platform-tag.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent2); }
+  .platform-tag:hover { border-color: var(--border2); color: var(--text); }
+
+  /* STRIPE */
+  .stripe-field { background: var(--surface) !important; border: 1px solid var(--border2); border-radius: 8px; padding: 10px 14px; transition: border-color 0.2s; }
+  .stripe-field.StripeElement--focus { border-color: var(--accent); }
+  .stripe-field.StripeElement--invalid { border-color: var(--red); }
+  .card-icons { display: flex; gap: 6px; margin-top: 6px; }
+  .card-icon { background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 2px 7px; font-size: 10px; font-weight: 700; color: var(--text3); }
+
+  /* ORDER SUMMARY */
+  .order-summary { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+  .order-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 8px; }
+  .order-row:last-child { margin-bottom: 0; padding-top: 10px; border-top: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+  .order-label { color: var(--text3); }
+  .order-value { color: var(--text); }
+  .order-free { color: var(--green); font-weight: 600; }
+
+  /* BUTTONS */
+  .btn-submit {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .btn-submit:hover:not(:disabled) { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.25); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-back { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 8px; padding: 10px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; margin-right: 10px; }
+  .btn-back:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+  .btn-row { display: flex; align-items: center; margin-top: 20px; }
+  .btn-row .btn-submit { flex: 1; }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DIVIDER */
+  .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; }
+  .divider-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-text { font-size: 12px; color: var(--text3); }
+
+  /* LEGAL */
+  .legal-text { font-size: 11px; color: var(--text3); line-height: 1.5; margin-top: 14px; text-align: center; }
+  .legal-text a { color: var(--text3); text-decoration: underline; }
+
+  /* PAYMENT ERROR */
+  .payment-error { color: var(--red); font-size: 12.5px; margin-bottom: 14px; display: none; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; padding: 10px 14px; }
+
+  /* SUCCESS */
+  .success-screen { display: none; text-align: center; padding: 20px 0; }
+  .success-icon { font-size: 56px; margin-bottom: 16px; }
+  .success-screen h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+  .success-screen p { color: var(--text3); margin-bottom: 24px; font-size: 13.5px; line-height: 1.6; }
+  .success-steps { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 20px; }
+  .success-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 13px; color: var(--text2); }
+  .success-step:last-child { margin-bottom: 0; }
+  .success-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); color: var(--accent2); border: 1px solid rgba(99,102,241,0.2); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Syne', sans-serif; }
+
+  /* TOOLTIP */
+  .tip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .tip-icon { width: 14px; height: 14px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); font-size: 9px; display: inline-flex; align-items: center; justify-content: center; cursor: help; margin-left: 5px; }
+  .tip-box { position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--tip-bg); color: var(--tip-text); font-size: 11px; padding: 5px 10px; border-radius: 6px; white-space: nowrap; display: none; z-index: 10; pointer-events: none; }
+  .tip-wrap:hover .tip-box { display: block; }
+
+  /* RESPONSIVE */
+  @media (max-width: 800px) {
+    .page { grid-template-columns: 1fr; }
+    .left-panel { display: none; }
+    .right-panel { padding: 32px 24px; justify-content: flex-start; }
+  }
+</style>
+<script>
+(function(){
+  var s=localStorage.getItem('rg-theme');
+  var d=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', s||(d?'dark':'light'));
+})();
+</script>
+<script src="/i18n.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <a href="/" class="logo">Repu<span>Guard</span></a>
+
+    <div class="section-label" data-i18n="plan_choose">Choisissez votre plan</div>
+    <div class="plan-options">
+      <div class="plan-option" onclick="selectPlan(this,'starter',29,'Starter')" id="plan-starter">
+        <div class="plan-left">
+          <div class="plan-radio"></div>
+          <div>
+            <div class="plan-name">Starter</div>
+            <div class="plan-desc" data-i18n="plan_starter_desc">1 établissement · Google + Trustpilot + TripAdvisor</div>
+          </div>
+        </div>
+        <div class="plan-price">29€<span>/mois</span></div>
+      </div>
+      <div class="plan-option selected" onclick="selectPlan(this,'pro',69,'Pro')" id="plan-pro">
+        <div class="plan-left">
+          <div class="plan-radio"></div>
+          <div>
+            <div class="plan-name">Pro ✦</div>
+            <div class="plan-desc" data-i18n="plan_pro_desc">3 établissements · toutes les plateformes disponibles</div>
+          </div>
+        </div>
+        <div class="plan-price">69€<span>/mois</span></div>
+      </div>
+      <div class="plan-option" onclick="selectPlan(this,'business',149,'Business')" id="plan-business">
+        <div class="plan-left">
+          <div class="plan-radio"></div>
+          <div>
+            <div class="plan-name">Business</div>
+            <div class="plan-desc" data-i18n="plan_business_desc">10 établissements · API · White-label</div>
+          </div>
+        </div>
+        <div class="plan-price">149€<span>/mois</span></div>
+      </div>
+    </div>
+
+    <div class="section-label" data-i18n="plan_included">Inclus dans tous les plans</div>
+    <div class="benefits">
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_trial">7 jours d'essai gratuit — aucune carte débitée avant</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_monitoring">Surveillance 24h/24, 7j/7 sans interruption</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_ai">Réponses IA générées automatiquement</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_alerts">Alertes email + SMS en temps réel</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_cancel">Annulation à tout moment, sans pénalité</span></div>
+      <div class="benefit-item"><span class="benefit-icon">✓</span> <span data-i18n="benefit_support">Support client 7j/7</span></div>
+    </div>
+
+    <div class="trust-badges">
+      <div class="trust-badge" data-i18n="trust_ssl">🔒 Paiement SSL sécurisé</div>
+      <div class="trust-badge" data-i18n="trust_eu">🇪🇺 Données hébergées en Europe</div>
+      <div class="trust-badge" data-i18n="trust_gdpr">✓ Conforme RGPD</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div id="mainForm">
+
+      <div style="text-align:right;margin-bottom:.5rem;"><select onchange="switchLang(this.value)" id="langSel" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);padding:3px 8px;font-size:.75rem;cursor:pointer;outline:none;"><option value="fr">🇫🇷 FR</option><option value="en">🇬🇧 EN</option><option value="es">🇪🇸 ES</option><option value="de">🇩🇪 DE</option><option value="pt">🇵🇹 PT</option><option value="ar">🇸🇦 AR</option><option value="it">🇮🇹 IT</option><option value="nl">🇳🇱 NL</option><option value="ru">🇷🇺 RU</option></select></div>
+      <div class="trial-badge" data-i18n="signup_trial_badge">🎁 7 jours gratuits — aucun débit aujourd'hui</div>
+
+      <div class="form-header">
+        <h1 data-i18n="signup_title">Créer votre compte</h1>
+        <p data-i18n="signup_subtitle">Votre réputation sera surveillée dans moins de 5 minutes.</p>
+      </div>
+
+      <!-- STEP INDICATOR -->
+      <div class="steps-wrap">
+        <div class="steps-bar">
+          <div class="step-dot active" id="dot-1">1</div>
+          <div class="step-line" id="line-1"></div>
+          <div class="step-dot pending" id="dot-2">2</div>
+          <div class="step-line" id="line-2"></div>
+          <div class="step-dot pending" id="dot-3">3</div>
+        </div>
+        <div class="steps-labels">
+          <div class="step-lbl active" id="lbl-1" data-i18n="step1_label">Votre compte</div>
+          <div class="step-lbl" id="lbl-2" data-i18n="step2_label">Votre business</div>
+          <div class="step-lbl" id="lbl-3" data-i18n="step3_label">Paiement</div>
+        </div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="form-step active" id="step-1">
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="field_firstname">Prénom</label>
+            <input type="text" id="firstName" placeholder="Marie" autocomplete="given-name">
+            <div class="error-msg" id="err-firstName" data-i18n="err_required">Prénom requis</div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="field_lastname">Nom</label>
+            <input type="text" id="lastName" placeholder="Dupont" autocomplete="family-name">
+            <div class="error-msg" id="err-lastName" data-i18n="err_required">Nom requis</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="marie@monentreprise.fr" autocomplete="email">
+          <div class="error-msg" id="err-email" data-i18n="err_email_invalid">Email valide requis</div>
+        </div>
+        <div class="form-group">
+          <label>
+            <span data-i18n="field_password_label">Mot de passe</span>
+            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="pw_tooltip">Min. 8 caractères, 1 majuscule, 1 chiffre</div></div>
+          </label>
+          <input type="password" id="password" placeholder="••••••••" oninput="checkPwStrength(this.value)">
+          <div class="pw-strength" id="pwStrength">
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-text" id="strengthText"></div>
+          </div>
+          <div class="error-msg" id="err-password" data-i18n="err_pw_min">Minimum 8 caractères requis</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field_confirm_pw">Confirmer le mot de passe</label>
+          <input type="password" id="passwordConfirm" placeholder="••••••••">
+          <div class="error-msg" id="err-passwordConfirm" data-i18n="err_pw_mismatch">Les mots de passe ne correspondent pas</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-submit" onclick="goStep2()">
+            <span data-i18n="btn_continue">Continuer</span><span>→</span>
+          </button>
+        </div>
+        <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:16px"><span data-i18n="already_account">Déjà un compte ?</span> <a href="/login" style="color:var(--accent2);text-decoration:none;font-weight:500" data-i18n="login_link">Se connecter</a></p>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="form-step" id="step-2">
+        <div class="form-group">
+          <label data-i18n="field_business">Nom de votre établissement / marque</label>
+          <input type="text" id="businessName" placeholder="Restaurant Le Provençal">
+          <div class="error-msg" id="err-businessName" data-i18n="err_required">Nom requis</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field_sector">Secteur d'activité</label>
+          <select id="sector">
+            <option value="" data-i18n="sector_placeholder">Sélectionner votre secteur...</option>
+            <option value="restaurant" data-i18n="sector_restaurant">Restaurant / Café / Bar</option>
+            <option value="hotel" data-i18n="sector_hotel">Hôtel / Hébergement</option>
+            <option value="medical" data-i18n="sector_medical">Médical / Santé / Bien-être</option>
+            <option value="retail" data-i18n="sector_retail">Commerce / Boutique</option>
+            <option value="service" data-i18n="sector_service">Services professionnels</option>
+            <option value="beauty" data-i18n="sector_beauty">Beauté / Coiffure / Spa</option>
+            <option value="education" data-i18n="sector_education">Éducation / Formation</option>
+            <option value="real-estate" data-i18n="sector_real_estate">Immobilier</option>
+            <option value="influencer" data-i18n="sector_influencer">Créateur de contenu / Influenceur</option>
+            <option value="other" data-i18n="sector_other">Autre</option>
+          </select>
+          <div class="error-msg" id="err-sector" data-i18n="err_sector_required">Secteur requis</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field_website">Site web ou profil Google (optionnel)</label>
+          <input type="text" id="website" placeholder="https://monrestaurant.fr">
+        </div>
+        <div class="form-group">
+          <label data-i18n="field_country">Pays</label>
+          <select id="country">
+            <option value="FR">🇫🇷 France</option>
+            <option value="BE">🇧🇪 Belgique</option>
+            <option value="CH">🇨🇭 Suisse</option>
+            <option value="LU">🇱🇺 Luxembourg</option>
+            <option value="ES">🇪🇸 Espagne</option>
+            <option value="IT">🇮🇹 Italie</option>
+            <option value="DE">🇩🇪 Allemagne</option>
+            <option value="MA">🇲🇦 Maroc</option>
+            <option value="OTHER">🌍 Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>
+            <span data-i18n="field_platforms">Plateformes à surveiller</span>
+            <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="platforms_tooltip">Vous pourrez en ajouter dans votre dashboard</div></div>
+          </label>
+          <div class="platform-tags">
+            <span class="platform-tag selected" onclick="this.classList.toggle('selected')">Google</span>
+            <span class="platform-tag selected" onclick="this.classList.toggle('selected')">TripAdvisor</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">Facebook</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">Instagram</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">X / Twitter</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">Trustpilot</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">Reddit</span>
+            <span class="platform-tag" onclick="this.classList.toggle('selected')">YouTube</span>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-back" onclick="goStep(1)" data-i18n="btn_back">← Retour</button>
+          <button class="btn-submit" onclick="goStep3()">
+            <span data-i18n="btn_continue_payment">Continuer vers le paiement</span><span>→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="form-step" id="step-3">
+        <div class="order-summary">
+          <div class="order-row">
+            <span class="order-label" data-i18n="plan_selected_label">Plan sélectionné</span>
+            <span class="order-value" id="summaryPlan">Pro — 69€/mois</span>
+          </div>
+          <div class="order-row">
+            <span class="order-label" data-i18n="trial_label">Essai gratuit (7 jours)</span>
+            <span class="order-free">Offert</span>
+          </div>
+          <div class="order-row">
+            <span class="order-label" data-i18n="due_today_label">Dû aujourd'hui</span>
+            <span class="order-value" style="color:var(--green)">0,00 €</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="field_card_number">Numéro de carte</label>
+          <div id="cardNumber" class="stripe-field"></div>
+          <div class="card-icons">
+            <div class="card-icon">VISA</div>
+            <div class="card-icon">MC</div>
+            <div class="card-icon">AMEX</div>
+            <div class="card-icon">CB</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="field_card_expiry">Date d'expiration</label>
+            <div id="cardExpiry" class="stripe-field"></div>
+          </div>
+          <div class="form-group">
+            <label>Code CVV <div class="tip-wrap"><span class="tip-icon">?</span><div class="tip-box" data-i18n="cvv_tooltip">3 chiffres au dos de votre carte</div></div></label>
+            <div id="cardCvc" class="stripe-field"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="field_card_name">Nom sur la carte</label>
+          <input type="text" id="cardName" placeholder="MARIE DUPONT" style="text-transform:uppercase">
+          <div class="error-msg" id="err-cardName" data-i18n="err_required">Nom requis</div>
+        </div>
+
+        <div class="payment-error" id="paymentError"></div>
+
+        <div class="btn-row">
+          <button class="btn-back" onclick="goStep(2)" data-i18n="btn_back">← Retour</button>
+          <button class="btn-submit" id="submitBtn" onclick="handlePayment()">
+            <span id="submitText" data-i18n="btn_start_free">🔒 Démarrer gratuitement</span>
+            <div class="spinner" id="spinPayment"></div>
+          </button>
+        </div>
+
+        <div class="legal-text">
+          <span data-i18n="legal_continue">En continuant, vous acceptez nos</span> <a href="/terms" data-i18n="legal_terms">Conditions d'utilisation</a> <span data-i18n="legal_and">et notre</span> <a href="/privacy" data-i18n="legal_privacy">Politique de confidentialité</a>.<br>
+          <span data-i18n="legal_charge_prefix">Votre carte sera débitée de</span> <strong id="legalAmount">69€</strong><span data-i18n="legal_charge_suffix">/mois après 7 jours d'essai gratuit. Annulable à tout moment.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">🎉</div>
+      <h2 data-i18n="success_title">Bienvenue sur RepuGuard !</h2>
+      <p><span data-i18n="success_subtitle">Votre compte est créé. Votre réputation est maintenant surveillée.</span><br><span data-i18n="success_confirm_hint">Vérifiez votre email pour confirmer votre adresse.</span></p>
+      <div class="success-steps">
+        <div class="success-step"><div class="success-step-num">1</div><div><span data-i18n="success_step1_prefix">Confirmez votre email — un lien vous a été envoyé à</span> <strong id="confirmedEmail"></strong></div></div>
+        <div class="success-step"><div class="success-step-num">2</div><div data-i18n="success_step2">Accédez à votre dashboard et vérifiez que vos profils ont bien été détectés</div></div>
+        <div class="success-step"><div class="success-step-num">3</div><div data-i18n="success_step3">Configurez vos préférences d'alerte (email, SMS, fréquence)</div></div>
+      </div>
+      <a href="/dashboard" class="btn-submit" style="text-decoration:none;justify-content:center" data-i18n="btn_go_dashboard">
+        Accéder à mon dashboard →
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // STRIPE
+  const STRIPE_KEY = 'pk_live_51TJfAg30bQbmpNCi24gPPWAiUdWzuBzd8S0o0rpqBm8M8YDQuagXea5qmAkQaoYYLZchYQXfjtIKXiIESvxNdddz006TeICIs7';
+  // Loaded from API on init — prevents mismatch with server-side VALID_PRICE_IDS whitelist
+  let PRICE_IDS = { starter:'price_1TJfMs4AfFLajYNswedRcOT5', pro:'price_1TJfOW4AfFLajYNsmOvVBxGj', business:'price_1TJfPU4AfFLajYNsJtTIsjl3' };
+  let stripe, cardNumber, cardExpiry, cardCvc;
+  let selectedPlan = { id:'pro', price:69, name:'Pro' };
+
+  function getStripeStyle() {
+    var dark = document.documentElement.getAttribute('data-theme') !== 'light';
+    return {
+      base: { color: dark ? '#f1f5f9' : '#0f1117', fontFamily:"'DM Sans', sans-serif", fontSize:'14px', '::placeholder':{ color: dark ? '#475569' : '#9ca3af' } },
+      invalid: { color: dark ? '#f87171' : '#dc2626' }
+    };
+  }
+
+  function initStripe() {
+    try {
+      stripe = Stripe(STRIPE_KEY);
+      const elements = stripe.elements({ fonts:[{ cssSrc:'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400&display=swap' }] });
+      const style = getStripeStyle();
+      cardNumber = elements.create('cardNumber', { style, showIcon:true });
+      cardExpiry = elements.create('cardExpiry', { style });
+      cardCvc = elements.create('cardCvc', { style });
+      cardNumber.mount('#cardNumber');
+      cardExpiry.mount('#cardExpiry');
+      cardCvc.mount('#cardCvc');
+    } catch(e) { console.log('Stripe init:', e); }
+  }
+
+  function selectPlan(el, id, price, name) {
+    document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPlan = { id, price, name };
+    document.getElementById('summaryPlan').textContent = name + ' — ' + price + '€' + t('plan_month');
+    document.getElementById('legalAmount').textContent = price + '€';
+  }
+
+  function checkPwStrength(val) {
+    const wrap = document.getElementById('pwStrength');
+    const fill = document.getElementById('strengthFill');
+    const text = document.getElementById('strengthText');
+    wrap.style.display = val.length > 0 ? 'block' : 'none';
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+      { pct:'25%', color:'#f87171', label:t('pw_very_weak') },
+      { pct:'50%', color:'#fb923c', label:t('pw_weak') },
+      { pct:'75%', color:'#818cf8', label:t('pw_good') },
+      { pct:'100%', color:'#34d399', label:t('pw_excellent') },
+    ];
+    const lvl = levels[Math.max(score-1,0)];
+    fill.style.width = score > 0 ? lvl.pct : '0';
+    fill.style.background = lvl.color;
+    text.textContent = score > 0 ? lvl.label : '';
+    text.style.color = lvl.color;
+  }
+
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    const err = document.getElementById('err-' + id);
+    if (el) el.classList.add('error');
+    if (err) { if (msg) err.textContent = msg; err.classList.add('show'); }
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+    document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+  }
+
+  function validateStep1() {
+    clearErrors(); let ok = true;
+    if (!document.getElementById('firstName').value.trim()) { showErr('firstName'); ok = false; }
+    if (!document.getElementById('lastName').value.trim()) { showErr('lastName'); ok = false; }
+    const email = document.getElementById('email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('email'); ok = false; }
+    const pw = document.getElementById('password').value;
+    if (pw.length < 8) { showErr('password'); ok = false; }
+    if (pw !== document.getElementById('passwordConfirm').value) { showErr('passwordConfirm'); ok = false; }
+    return ok;
+  }
+
+  function validateStep2() {
+    clearErrors(); let ok = true;
+    if (!document.getElementById('businessName').value.trim()) { showErr('businessName'); ok = false; }
+    if (!document.getElementById('sector').value) { showErr('sector'); ok = false; }
+    return ok;
+  }
+
+  function goStep(n) {
+    document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    updateIndicator(n);
+    if (n === 3) initStripe();
+    window.scrollTo(0, 0);
+  }
+
+  function goStep2() { if (validateStep1()) goStep(2); }
+  function goStep3() { if (validateStep2()) goStep(3); }
+
+  function updateIndicator(active) {
+    for (let i = 1; i <= 3; i++) {
+      const dot = document.getElementById('dot-' + i);
+      const lbl = document.getElementById('lbl-' + i);
+      if (i < active) { dot.className = 'step-dot done'; dot.innerHTML = '✓'; lbl.className = 'step-lbl done'; }
+      else if (i === active) { dot.className = 'step-dot active'; dot.textContent = i; lbl.className = 'step-lbl active'; }
+      else { dot.className = 'step-dot pending'; dot.textContent = i; lbl.className = 'step-lbl'; }
+      if (i < 3) { document.getElementById('line-' + i).className = 'step-line' + (i < active ? ' done' : ''); }
+    }
+  }
+
+  async function handlePayment() {
+    const cardName = document.getElementById('cardName').value.trim();
+    if (!cardName) { showErr('cardName'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    const txt = document.getElementById('submitText');
+    const spin = document.getElementById('spinPayment');
+    const errDiv = document.getElementById('paymentError');
+
+    if (!stripe || !cardNumber) {
+      errDiv.textContent = t('stripe_load_error');
+      errDiv.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true; txt.style.display = 'none'; spin.style.display = 'block'; errDiv.style.display = 'none';
+
+    const resetBtn = () => { btn.disabled = false; txt.style.display = 'inline'; spin.style.display = 'none'; };
+    const showErr = (msg) => { errDiv.textContent = msg; errDiv.style.display = 'block'; resetBtn(); };
+
+    const userEmail = document.getElementById('email').value;
+
+    try {
+      // Step 1 — Validate card with Stripe.js (client-side, no account created yet)
+      const { paymentMethod, error } = await stripe.createPaymentMethod({ type:'card', card:cardNumber, billing_details:{ name:cardName, email:userEmail } });
+      if (error) { showErr(error.message); return; }
+
+      // Step 2 — Create Stripe subscription FIRST: if card/Stripe fails, no DB record created
+      const subRes = await fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ paymentMethodId:paymentMethod.id, priceId:PRICE_IDS[selectedPlan.id], email:userEmail, name:document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value }) });
+      let subData;
+      try { subData = await subRes.json(); } catch(_) { showErr('Erreur serveur (HTTP ' + subRes.status + '). Vérifiez les logs Vercel.'); return; }
+      if (!subRes.ok || subData.error) { showErr(subData.error || 'Erreur lors du paiement.'); return; }
+
+      // Step 3 — Create Supabase account only after Stripe validated the payment method
+      const authRes = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'signup', email:userEmail, password:document.getElementById('password').value, firstName:document.getElementById('firstName').value, lastName:document.getElementById('lastName').value, businessName:document.getElementById('businessName').value, sector:document.getElementById('sector').value, country:document.getElementById('country').value, lang:window.RG_LANG||'fr', plan:selectedPlan.id, stripeCustomerId:subData.customerId, subscriptionId:subData.subscriptionId, referredBy:sessionStorage.getItem('rg-ref')||'' }) });
+      let authData;
+      try { authData = await authRes.json(); } catch(_) { showErr('Erreur serveur (auth). Vérifiez les logs Vercel.'); return; }
+      if (authData.error) {
+        // Rollback: cancel the Stripe subscription since Supabase account creation failed
+        fetch('/api/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'cancel', subscriptionId:subData.subscriptionId, email:userEmail }) }).catch(() => {});
+        showErr(authData.error);
+        return;
+      }
+
+      showSuccess();
+    } catch(err) {
+      showErr(err.message || t('error_payment_generic'));
+    }
+  }
+
+  function showSuccess() {
+    document.getElementById('mainForm').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('confirmedEmail').textContent = document.getElementById('email').value;
+  }
+
+  function switchLang(lang) { applyLang(lang); document.getElementById('langSel').value = lang; }
+
+  function initFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var plan = params.get('plan');
+    var ref = params.get('ref');
+    if (plan) {
+      var map = { starter:[29,'Starter'], pro:[69,'Pro'], business:[149,'Business'] };
+      var el = document.getElementById('plan-' + plan);
+      if (el && map[plan]) selectPlan(el, plan, map[plan][0], map[plan][1]);
+    }
+    if (ref) sessionStorage.setItem('rg-ref', ref);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    initI18n();
+    initFromUrl();
+    // Sync price IDs with server to prevent validation mismatch
+    try {
+      const r = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'plans' }) });
+      const p = await r.json();
+      if (p.starter && p.pro && p.business) PRICE_IDS = p;
+    } catch(_) {}
+    var sel = document.getElementById('langSel'); if (sel) sel.value = window.RG_LANG || 'fr';
+    document.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', () => { el.classList.remove('error'); const err = document.getElementById('err-' + el.id); if (err) err.classList.remove('show'); });
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "repuguard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "RepuGuard — surveillance de réputation en ligne et réponses IA aux avis pour commerces locaux (Google, Trustpilot, TripAdvisor). repuguard.app",
+  "homepage": "https://repuguard.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/repuguardapp/repuguard.git"
+  },
+  "dependencies": {
+    "resend": "^6.12.2",
+    "stripe": "^16.8.0"
+  }
+}
