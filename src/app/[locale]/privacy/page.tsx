@@ -19,7 +19,7 @@ export default async function PrivacyPage({ params: { locale } }: PageProps) {
   unstable_setRequestLocale(locale);
 
   return (
-    <LegalShell title="Privacy Policy" effective="January 1, 2026">
+    <LegalShell title="Privacy Policy" effective="January 1, 2026" locale={locale}>
       <p>
         LexyFlow (&ldquo;we&rdquo;, &ldquo;us&rdquo;) provides an AI-powered
         compliance audit service at <a href="https://lexyflow.com">lexyflow.com</a>.

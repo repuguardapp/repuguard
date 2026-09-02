@@ -367,5 +367,8 @@
       }
     },
     "footer": "完全なリファレンスドキュメントは執筆中です。現時点では、README と <link>github.com/repuguardapp/repuguard</link> のインライン JSDoc コメントが真実のソースです。"
+  },
+  "legalNotice": {
+    "body": "この文書は法的正本として英語で提供されています。日本語でのご質問・ご要望は legal@lexyflow.com までお願いします。"
   }
 }

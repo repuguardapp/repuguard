@@ -19,7 +19,7 @@ export default async function TermsPage({ params: { locale } }: PageProps) {
   unstable_setRequestLocale(locale);
 
   return (
-    <LegalShell title="Terms of Service" effective="January 1, 2026">
+    <LegalShell title="Terms of Service" effective="January 1, 2026" locale={locale}>
       <p>
         These Terms govern your use of LexyFlow (lexyflow.com). By creating
         an account or running an audit you accept them.

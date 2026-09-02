@@ -367,5 +367,8 @@
       }
     },
     "footer": "يجري حاليًا كتابة الوثائق المرجعية الكاملة. في الوقت الحالي، مصدر الحقيقة هو ملف README وتعليقات JSDoc على <link>github.com/repuguardapp/repuguard</link>."
+  },
+  "legalNotice": {
+    "body": "هذه الوثيقة تعتمد بالإنجليزية كنسخة قانونية مرجعية. لأي سؤال أو طلب بالعربية: legal@lexyflow.com."
   }
 }

@@ -31,7 +31,7 @@ export default async function DpaPage({ params: { locale } }: PageProps) {
   const isCourtesyLocale = locale !== 'en';
 
   return (
-    <LegalShell title="Data Processing Agreement (DPA)" effective="January 1, 2026">
+    <LegalShell title="Data Processing Agreement (DPA)" effective="January 1, 2026" locale={locale}>
       {isCourtesyLocale && (
         <aside className="not-prose mb-8 grid gap-4 rounded-lg border border-amber-300 bg-amber-50 p-5 dark:border-amber-900/40 dark:bg-amber-950/30">
           <div className="flex items-start gap-3">

@@ -367,5 +367,8 @@
       }
     },
     "footer": "La documentación de referencia completa se está redactando. Por ahora, la fuente de verdad es el README y los comentarios JSDoc en <link>github.com/repuguardapp/repuguard</link>."
+  },
+  "legalNotice": {
+    "body": "Este documento se proporciona en inglés como la versión legal autorizada. Para preguntas o solicitudes en español: legal@lexyflow.com."
   }
 }
