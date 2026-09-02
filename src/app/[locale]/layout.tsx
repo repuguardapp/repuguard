@@ -106,7 +106,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
                 <span className="text-base font-semibold tracking-tight">LexyFlow</span>
               </Link>
 
-              <nav className="hidden items-center gap-6 text-sm md:flex">
+              <nav className="flex items-center gap-4 text-sm md:gap-6">
                 <Link
                   href="/pricing"
                   className="text-muted-foreground transition-colors hover:text-foreground"
