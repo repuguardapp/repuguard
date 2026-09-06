@@ -43,27 +43,46 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
   const supabase = createSupabaseServerClient();
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: body.email,
-    options: {
-      emailRedirectTo: `${origin}/api/auth/callback?next=/${body.locale}/dashboard`,
-      shouldCreateUser: true,
-      // Stamp the locale in the user's metadata so the email hook can
-      // render the magic-link mail in the user's language on the very
-      // first request — without this, a fresh French signup gets the
-      // English fallback because metadata is empty until they finish
-      // onboarding.
-      data: { locale: body.locale }
-    }
-  });
+  // signInWithOtp can THROW (not just return an error) when Supabase
+  // itself is unreachable — paused free-tier project, DNS blip,
+  // network partition. An uncaught throw here produced an opaque 500
+  // that the client rendered as the generic "something went wrong",
+  // with nothing actionable in the logs. Catching it lets us return a
+  // 503 (which the client maps to a specific "service unavailable"
+  // message) and log the reason for triage.
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: body.email,
+      options: {
+        emailRedirectTo: `${origin}/api/auth/callback?next=/${body.locale}/dashboard`,
+        shouldCreateUser: true,
+        // Stamp the locale in the user's metadata so the email hook can
+        // render the magic-link mail in the user's language on the very
+        // first request — without this, a fresh French signup gets the
+        // English fallback because metadata is empty until they finish
+        // onboarding.
+        data: { locale: body.locale }
+      }
+    });
 
-  if (error) {
-    // Do NOT leak Supabase's error verbatim — that would let an attacker
-    // distinguish "email exists" vs "email valid". Always 200, log the
-    // detail for ops triage.
-    console.error('[auth/magic-link] otp_send_failed', error.message);
-  } else {
-    console.log('[auth/magic-link] otp_send_queued');
+    if (error) {
+      // Do NOT leak Supabase's error verbatim — that would let an attacker
+      // distinguish "email exists" vs "email valid". Always 200, log the
+      // detail for ops triage.
+      console.error('[auth/magic-link] otp_send_failed', {
+        message: error.message,
+        status: error.status ?? null,
+        code: error.code ?? null
+      });
+    } else {
+      console.log('[auth/magic-link] otp_send_queued');
+    }
+  } catch (err) {
+    console.error('[auth/magic-link] otp_threw', {
+      error: err instanceof Error ? err.message : String(err),
+      cause: err instanceof Error && err.cause ? String(err.cause) : null
+    });
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
   }
 
   // Always 200 with a generic body so the client UI can show a uniform
