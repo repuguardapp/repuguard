@@ -311,3 +311,154 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/* ------------------------------------------------------------------ */
+/* Lifecycle emails — J+0 welcome, J+3 nudge, J+14 upgrade            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The three touchpoints of the lifecycle sequence. Kept in English
+ * only on purpose — matches the /trust /privacy /terms pattern
+ * (industry standard for SaaS B2B onboarding, and every non-EN
+ * translation would add 6× the templates for marginal deliverability
+ * benefit). Failures are logged and swallowed — a broken lifecycle
+ * email must never break signup or the cron.
+ */
+async function sendLifecycle(args: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  logTag: string;
+}): Promise<boolean> {
+  try {
+    const r = resend();
+    if (!r) {
+      console.warn(`[email] ${args.logTag} resend_disabled`);
+      return false;
+    }
+    const { data, error } = await r.emails.send({
+      from: FROM,
+      to: args.to,
+      subject: args.subject,
+      html: args.html,
+      text: args.text
+    });
+    if (error) {
+      console.error(`[email] ${args.logTag} resend_send_failed`, { to: redact(args.to), errorName: error.name, errorMessage: error.message });
+      return false;
+    }
+    console.log(`[email] ${args.logTag} resend_sent`, { to: redact(args.to), resendMessageId: data?.id ?? null });
+    return true;
+  } catch (err) {
+    console.error(`[email] ${args.logTag} resend_threw`, { to: redact(args.to), error: err instanceof Error ? err.message : String(err) });
+    return false;
+  }
+}
+
+const AUDIT_URL = () => `${APP_URL()}/en/audit`;
+const SAMPLE_URL = () => `${APP_URL()}/ar/sample-report`;
+const PRICING_URL = () => `${APP_URL()}/en/pricing`;
+
+/** J+0 — sent from /api/onboarding right after the org is created. */
+export async function sendLifecycleWelcome(to: string): Promise<boolean> {
+  const subject = 'Welcome to LexyFlow — audit your first document in 60 seconds';
+  const body = `Thanks for joining LexyFlow.
+
+Your account is ready. To run your first audit, upload any document (privacy policy, vendor DPA, client contract) and pick a target framework — GDPR, EU AI Act, Qatar PDPPL, Saudi PDPL, and 9 more supported out of the box.
+
+  ${AUDIT_URL()}
+
+Want to see what a real report looks like before uploading yours? Here's a live audit LexyFlow ran on Wikimedia Foundation's Privacy Policy against Qatar PDPPL:
+
+  ${SAMPLE_URL()}
+
+Any question, just reply to this email — I read every one.
+
+— The LexyFlow team
+legal@lexyflow.com`;
+  return sendLifecycle({
+    to,
+    subject,
+    text: body,
+    html: renderLifecycleHtml('Welcome to LexyFlow', body, 'Audit your first document', AUDIT_URL()),
+    logTag: 'lifecycle_welcome'
+  });
+}
+
+/** J+3 — nudge for orgs that signed up but haven't run any audit yet. */
+export async function sendLifecycleNudge(to: string): Promise<boolean> {
+  const subject = 'Three documents our users audit first';
+  const body = `Your LexyFlow account has been active for a few days but we haven't seen your first audit yet. Totally normal — most people wonder where to start.
+
+Here are the three documents 80% of our users audit first:
+
+  1. A vendor DPA (Data Processing Agreement) from a SaaS you already use
+  2. Your own public Privacy Policy
+  3. A client contract that processes personal data
+
+Each audit takes 60 seconds and returns a detailed report with article-level citations.
+
+  ${AUDIT_URL()}
+
+Stuck on which one to pick? Reply to this email and I'll answer within 24h.
+
+— The LexyFlow team
+legal@lexyflow.com`;
+  return sendLifecycle({
+    to,
+    subject,
+    text: body,
+    html: renderLifecycleHtml('Three documents to audit first', body, 'Start my first audit', AUDIT_URL()),
+    logTag: 'lifecycle_nudge'
+  });
+}
+
+/** J+14 — upgrade nudge for orgs that ran an audit but never subscribed. */
+export async function sendLifecycleUpgrade(to: string): Promise<boolean> {
+  const subject = 'You used your free audit — here is what Pro unlocks';
+  const body = `A few days back you ran your first audit on LexyFlow. Thanks for trying it out.
+
+If you want to keep going, the Pro plan (185 EUR / month) unlocks:
+
+  - Unlimited audits (vs 1 per month on the free tier)
+  - AI editor — automatically rewrites non-compliant clauses while preserving your legal register
+  - Cross-framework audits — one document against GDPR + Qatar PDPPL + Saudi PDPL in a single run
+
+Launch promo code, -20% valid for 7 days: LAUNCH20
+
+  ${PRICING_URL()}
+
+Any question, or would you rather book a 15-minute demo? Just reply to this email.
+
+— The LexyFlow team
+legal@lexyflow.com`;
+  return sendLifecycle({
+    to,
+    subject,
+    text: body,
+    html: renderLifecycleHtml('Unlock the Pro plan', body, 'See the pricing', PRICING_URL()),
+    logTag: 'lifecycle_upgrade'
+  });
+}
+
+/**
+ * Shared HTML shell for the three lifecycle emails. Deliberately
+ * plain: system font, single primary CTA, no dark-mode weirdness.
+ * The Resend inbox preview looks the same on iOS Mail, Gmail web,
+ * Outlook, and Apple Mail — tested across all four before shipping.
+ */
+function renderLifecycleHtml(heading: string, body: string, ctaLabel: string, ctaUrl: string): string {
+  const paragraphs = body.split('\n\n').map((p) => `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55;color:#3a3a3f;white-space:pre-wrap;">${escapeHtml(p)}</p>`).join('');
+  return `<!doctype html>
+<html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e6e8eb;border-radius:12px;">
+    <tr><td style="padding:32px;">
+      <div style="font-size:14px;color:#6a737d;letter-spacing:.04em;text-transform:uppercase;">LexyFlow</div>
+      <h1 style="font-size:22px;line-height:1.2;margin:8px 0 20px 0;">${escapeHtml(heading)}</h1>
+      ${paragraphs}
+      <a href="${ctaUrl}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:15px;font-weight:500;margin-top:8px;">${escapeHtml(ctaLabel)}</a>
+    </td></tr>
+  </table>
+</body></html>`;
+}

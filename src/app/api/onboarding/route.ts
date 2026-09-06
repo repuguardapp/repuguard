@@ -89,5 +89,21 @@ export async function POST(request: Request) {
     }
   });
 
+  // Lifecycle J+0 welcome — fire-and-forget. Only stamp the sent-at
+  // timestamp when Resend actually accepted the send, so a cold-
+  // start failure will retry on the next signup for the same user
+  // (they'd normally not signup twice, but idempotence protects
+  // us from double-sends if they do).
+  if (user.email) {
+    const { sendLifecycleWelcome } = await import('@/lib/email');
+    const sent = await sendLifecycleWelcome(user.email);
+    if (sent) {
+      await admin
+        .from('organizations')
+        .update({ lifecycle_welcome_sent_at: new Date().toISOString() })
+        .eq('id', org.id);
+    }
+  }
+
   return NextResponse.json({ organizationId: org.id, alreadyOnboarded: false });
 }
