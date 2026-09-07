@@ -2,14 +2,42 @@ import * as Sentry from '@sentry/nextjs';
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
+// ROOT CAUSE (Sept 2026 login outage) — every POST fetch() from the
+// browser to an App Router Route Handler (/api/auth/magic-link,
+// /api/auth/signout) arrived at the server with a broken body,
+// rejected at the platform level before our handler code ran ("Raw
+// body unavailable", 400, on EVERY attempt, reproduced only through a
+// real browser — never through a local curl POST with the identical
+// server code, which always worked).
+//
+// tracesSampleRate > 0 with no explicit `integrations` array makes
+// @sentry/nextjs auto-register `browserTracingIntegration()`, which
+// monkey-patches `window.fetch` to wrap outgoing requests in spans.
+// Safari's fetch()/Request body-handling has long-standing, well-
+// documented interoperability issues with libraries that clone or
+// intercept the body before the real network send — the affected
+// user's requests were all from Safari on iPadOS. Disabling the
+// server-side Sentry instrumentation first (commit 453b6ec) did NOT
+// fix this, which in hindsight is the exact evidence pointing here
+// instead: the corruption happens client-side, before the request
+// ever leaves the browser, so nothing on the server side could ever
+// have fixed it.
+//
+// Fix: tracesSampleRate: 0 stops the SDK from auto-registering
+// browser tracing / fetch instrumentation. Error capture (the actual
+// point of having Sentry) is unaffected — only performance tracing
+// (and its fetch-wrapping side effect) is disabled.
 if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? 'development',
     release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
 
-    // Trace 10% of transactions in prod, all of them in dev.
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    // See note above — this used to be 0.1 in production. Do not
+    // re-enable without confirming the fetch-instrumentation Safari
+    // issue is resolved upstream in @sentry/nextjs, or without
+    // explicitly excluding BrowserTracing from `integrations`.
+    tracesSampleRate: 0,
 
     // Session replay disabled by default — would otherwise capture form
     // input on /audit which is the very thing we promise not to retain.

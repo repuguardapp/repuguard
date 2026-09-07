@@ -2,40 +2,28 @@ import * as Sentry from '@sentry/nextjs';
 
 const dsn = process.env.SENTRY_DSN;
 
-// TEMPORARILY DISABLED — root-cause isolation for the production login
-// outage (Sept 2026). Every POST to an App Router Route Handler
-// (/api/auth/magic-link, /api/auth/signout) was failing on Vercel's
-// production runtime with a platform-level 400 "Raw body unavailable"
-// before our own handler code ran, at 6-7ms with zero outgoing
-// requests. Disabling the Next.js-level route-file auto-instrumentation
-// (autoInstrumentAppDirectory / autoInstrumentServerFunctions in
-// next.config.mjs) did NOT resolve it.
+// RESOLVED (Sept 2026 login outage, root-caused in
+// sentry.client.config.ts) — the actual bug was CLIENT-side:
+// tracesSampleRate > 0 with no explicit `integrations` array made the
+// browser SDK auto-register browserTracingIntegration(), which
+// monkey-patches window.fetch and corrupted the POST body Safari sent
+// for /api/auth/magic-link and /api/auth/signout before it ever left
+// the browser. This server config was hard-disabled for a few hours
+// while we chased that down (a red herring — server-side
+// instrumentation was never the cause), then restored here.
 //
-// tracesSampleRate > 0 below enables Sentry's performance tracing,
-// which auto-registers OpenTelemetry-based HTTP instrumentation at
-// the Node.js http/https module level — a layer BELOW the Next.js
-// route-file wrapping, and one the previous fix never touched. That
-// class of instrumentation is a known source of request-body-stream
-// conflicts on serverless/edge-like runtimes.
-//
-// Hard-disabling Sentry.init() here entirely (not just tracing) is
-// the cleanest experiment: it isolates whether ANY layer of Sentry's
-// server-side instrumentation is the cause. If POST routes recover,
-// re-enable with tracesSampleRate: 0 (error tracking only, no HTTP
-// tracing) rather than reverting this whole block.
-//
-// TODO(post-incident): once confirmed, either restore with
-// tracesSampleRate: 0, or pin @sentry/nextjs to a version verified
-// not to auto-instrument the Node http module for tracing.
-const SENTRY_SERVER_DISABLED = true;
-
-if (dsn && !SENTRY_SERVER_DISABLED) {
+// tracesSampleRate stays at 0 as a precaution: same class of fetch/
+// http instrumentation risk exists in the Node SDK too (see the old
+// comment this replaced), and we don't have a pressing need for
+// server-side performance tracing. Error capture — the actual point
+// of Sentry — is unaffected by tracesSampleRate.
+if (dsn) {
   Sentry.init({
     dsn,
     environment: process.env.VERCEL_ENV ?? 'development',
     release: process.env.VERCEL_GIT_COMMIT_SHA,
 
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    tracesSampleRate: 0,
     sendDefaultPii: false,
 
     beforeSend: scrubPII,
