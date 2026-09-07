@@ -10,7 +10,28 @@ const Body = z.object({
   locale: z.string().min(2).max(10).default('en')
 });
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
+  // Outer safety net. Every known throw site below already has its own
+  // handling, but this route sits on the critical "first thing a new
+  // visitor does" path — a single overlooked throw (a future refactor,
+  // an SDK upgrade that changes error shape, an env var typo) must
+  // never again surface as Next.js's raw unhandled-exception 500,
+  // which the client cannot distinguish from "service unavailable" and
+  // renders as the least helpful generic message. Anything that
+  // reaches this outer catch is a bug we didn't anticipate — it still
+  // gets a clean 503 + a log line with a stack trace to grep for.
+  try {
+    return await handle(request);
+  } catch (err) {
+    console.error('[auth/magic-link] unhandled_exception', {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined
+    });
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+}
+
+async function handle(request: Request): Promise<Response> {
   // Tight per-IP cap to thwart enumeration / mailbomb attempts.
   const ip = clientIpFrom(request.headers);
   const limit = rateLimit({ key: `auth:magic:${ip}`, windowMs: 60 * 60 * 1000, max: 10 });
@@ -45,11 +66,13 @@ export async function POST(request: Request) {
 
   // signInWithOtp can THROW (not just return an error) when Supabase
   // itself is unreachable — paused free-tier project, DNS blip,
-  // network partition. An uncaught throw here produced an opaque 500
-  // that the client rendered as the generic "something went wrong",
-  // with nothing actionable in the logs. Catching it lets us return a
-  // 503 (which the client maps to a specific "service unavailable"
-  // message) and log the reason for triage.
+  // network partition — or when the configured Send Email Hook
+  // rejects the request (bad signature, hook URL down, hook returns
+  // non-2xx). Either way Supabase surfaces it as a failed call, not
+  // a soft {error} response, in several SDK versions. Catching it
+  // lets us return a 503 (which the client maps to a specific
+  // "service unavailable" message) and log the reason for triage
+  // instead of letting Next.js turn it into an opaque 500.
   try {
     const { error } = await supabase.auth.signInWithOtp({
       email: body.email,
