@@ -3,6 +3,7 @@
 import { CheckCircle2, Mail, RefreshCw, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Turnstile } from '@/components/Turnstile';
 
 export interface SignInFormLabels {
   emailLabel: string;
@@ -28,6 +29,8 @@ type View =
   | { phase: 'sent'; email: string }
   | { phase: 'error'; message: string };
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 /**
  * Magic-link sign-in form.
  *
@@ -37,17 +40,30 @@ type View =
  *   - error    → red banner with a localized cause:
  *                  503 → labels.errorService    (env missing, Supabase down)
  *                  429 → labels.errorRateLimited
- *                  any other 4xx/5xx → labels.errorGeneric
+ *                  any other 4xx/5xx → labels.errorGeneric (also covers
+ *                    a failed captcha — see the server route)
  *   - idle     → editable form
  *
  * The previous implementation showed "Check your inbox" regardless of
  * what happened on the backend. The CEO flagged this as the "user
  * waits in the void" failure mode — now any hard failure surfaces a
  * specific message and a path forward.
+ *
+ * Turnstile widget: rendered only when NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ * is configured — no-ops cleanly before that env var is set up, same
+ * pattern as the PostHog/Tolt integrations. Submit is disabled until
+ * a token is captured, since Turnstile tokens are short-lived and
+ * single-use — a stale token would just fail server-side verification
+ * anyway, so gating client-side saves the user a round trip.
  */
 export function SignInForm({ locale, labels }: Props) {
   const [view, setView] = useState<View>({ phase: 'idle' });
   const [lastEmail, setLastEmail] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // Bumping this key forces Turnstile's widget to fully remount,
+  // which is the reliable way to get a fresh token after a token has
+  // been consumed (a submit attempt) or has expired.
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   async function send(email: string) {
     setView({ phase: 'submitting' });
@@ -55,8 +71,17 @@ export function SignInForm({ locale, labels }: Props) {
       const res = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, locale })
+        body: JSON.stringify({
+          email,
+          locale,
+          ...(turnstileToken ? { turnstileToken } : {})
+        })
       });
+
+      // Tokens are single-use regardless of outcome — force a fresh
+      // challenge for the next attempt.
+      setTurnstileToken(null);
+      setTurnstileKey((k) => k + 1);
 
       if (res.status === 429) {
         setView({ phase: 'error', message: labels.errorRateLimited });
@@ -108,6 +133,8 @@ export function SignInForm({ locale, labels }: Props) {
   }
 
   const submitting = view.phase === 'submitting';
+  const needsCaptcha = Boolean(TURNSTILE_SITE_KEY);
+  const captchaBlocking = needsCaptcha && !turnstileToken;
 
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
@@ -123,6 +150,15 @@ export function SignInForm({ locale, labels }: Props) {
         />
       </label>
 
+      {needsCaptcha && (
+        <Turnstile
+          key={turnstileKey}
+          siteKey={TURNSTILE_SITE_KEY!}
+          onToken={setTurnstileToken}
+          onInvalidate={() => setTurnstileToken(null)}
+        />
+      )}
+
       {view.phase === 'error' && (
         <div
           className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
@@ -133,7 +169,7 @@ export function SignInForm({ locale, labels }: Props) {
         </div>
       )}
 
-      <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+      <Button type="submit" size="lg" className="w-full" disabled={submitting || captchaBlocking}>
         <Mail className="me-2 h-4 w-4" />
         {submitting ? labels.submitting : labels.submit}
       </Button>

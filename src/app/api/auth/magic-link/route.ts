@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const runtime = 'nodejs';
 
 const Body = z.object({
   email: z.string().email().max(254),
-  locale: z.string().min(2).max(10).default('en')
+  locale: z.string().min(2).max(10).default('en'),
+  turnstileToken: z.string().optional()
 });
 
 export async function POST(request: Request): Promise<Response> {
@@ -50,6 +52,21 @@ async function handle(request: Request): Promise<Response> {
       error: err instanceof Error ? err.message : String(err)
     });
     return NextResponse.json({ error: 'invalid_request', detail: String(err) }, { status: 400 });
+  }
+
+  // Bot gate — this endpoint has been observed under sustained
+  // automated scanning (dotted-gmail obfuscation, SMS-gateway
+  // "emails", role-based corporate addresses — none of it real
+  // signups) since well before any known incident, at a steady
+  // background rate. verifyTurnstileToken() is a no-op until
+  // TURNSTILE_SECRET_KEY is configured in the environment, so this
+  // is inert until that's set up. Runs BEFORE the credential checks
+  // below so a failed captcha never reaches Supabase or spends a
+  // Resend send.
+  const captchaOk = await verifyTurnstileToken(body.turnstileToken, ip);
+  if (!captchaOk) {
+    console.warn('[auth/magic-link] captcha_failed', { ip });
+    return NextResponse.json({ error: 'captcha_failed' }, { status: 400 });
   }
 
   // Hard-fail when the email pipeline is misconfigured server-side.
