@@ -43,6 +43,12 @@ async function handle(request: Request): Promise<Response> {
   try {
     body = Body.parse(await request.json());
   } catch (err) {
+    // Logged (unlike before) so a recurrence of the "every POST body
+    // read fails" class of bug shows up in Vercel logs immediately
+    // instead of silently returning 400 with nothing to grep for.
+    console.error('[auth/magic-link] invalid_request', {
+      error: err instanceof Error ? err.message : String(err)
+    });
     return NextResponse.json({ error: 'invalid_request', detail: String(err) }, { status: 400 });
   }
 
