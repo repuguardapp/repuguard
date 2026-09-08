@@ -191,6 +191,10 @@ describe('Stripe webhook · subscription lifecycle dispatch', () => {
   });
 
   it('routes customer.subscription.updated to subscriptions.upsert', async () => {
+    // handleSubscriptionUpsert re-fetches the subscription rather than
+    // trusting the event's embedded snapshot (see comment in route.ts) —
+    // the retrieve() mock is what actually feeds the upsert now.
+    mockSubscriptionsRetrieve.mockResolvedValue(fakeSubscription({ priceId: 'price_pro' }));
     mockConstructEvent.mockReturnValue({
       id: 'evt_sub_1',
       type: 'customer.subscription.updated',
@@ -209,6 +213,7 @@ describe('Stripe webhook · subscription lifecycle dispatch', () => {
   });
 
   it('skips upsert when the price id is unknown', async () => {
+    mockSubscriptionsRetrieve.mockResolvedValue(fakeSubscription({ priceId: 'price_unknown' }));
     mockConstructEvent.mockReturnValue({
       id: 'evt_sub_2',
       type: 'customer.subscription.updated',

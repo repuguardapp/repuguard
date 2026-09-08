@@ -147,7 +147,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .eq('id', orgId);
 }
 
-async function handleSubscriptionUpsert(sub: Stripe.Subscription) {
+async function handleSubscriptionUpsert(subFromEvent: Stripe.Subscription) {
+  // `created` and `updated` events for the same change often arrive
+  // within milliseconds of each other with no delivery-order guarantee.
+  // Upserting each event's own embedded snapshot let whichever request
+  // happened to finish last win — frequently the *older* snapshot,
+  // leaving status stuck on a stale value (e.g. `incomplete` after the
+  // subscription had already gone `active`). Re-fetching the current
+  // subscription right before writing makes every delivery converge on
+  // Stripe's actual current state instead of racing on stale payloads.
+  const sub = await stripe().subscriptions.retrieve(subFromEvent.id);
+
   const orgId = sub.metadata?.organization_id ?? null;
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
   if (!orgId) return;
@@ -219,9 +229,20 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
  * account.
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const subId = typeof invoice.subscription === 'string'
-    ? invoice.subscription
-    : invoice.subscription?.id;
+  // `invoice.subscription` is the pre-2024-04 field. Recent Stripe API
+  // versions (this account is on 2026-04-22.dahlia) moved it to
+  // `invoice.parent.subscription_details.subscription` — checking the
+  // old field only silently dropped every credit top-up, since it's
+  // always null on this API version. Check both so this survives a
+  // future account API-version bump either way.
+  const parentSubscription = (
+    invoice as unknown as {
+      parent?: { subscription_details?: { subscription?: string | { id: string } } };
+    }
+  ).parent?.subscription_details?.subscription;
+  const subId =
+    (typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id) ??
+    (typeof parentSubscription === 'string' ? parentSubscription : parentSubscription?.id);
   if (!subId) return;
 
   const db = supabaseService();
