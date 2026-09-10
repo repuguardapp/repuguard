@@ -87,7 +87,9 @@ describe('POST /api/audit — requested framework scope', () => {
     const parsed = logs.find((l) => l.step === 'input_parsed');
     expect(parsed, 'route never reached input_parsed').toBeDefined();
     // The old FormData.get() implementation logged ["gdpr"] here.
-    expect(parsed?.frameworks).toEqual(['gdpr', 'eu_ai_act']);
+    // Order is canonical (sorted), not submission order — the scope is
+    // a set and forms part of the audit dedup key.
+    expect(parsed?.frameworks).toEqual(['eu_ai_act', 'gdpr']);
   });
 
   it('still accepts a single comma-joined value from non-browser clients', async () => {
@@ -96,7 +98,20 @@ describe('POST /api/audit — requested framework scope', () => {
     await postAudit(['gdpr,eu_ai_act']);
 
     const parsed = logs.find((l) => l.step === 'input_parsed');
-    expect(parsed?.frameworks).toEqual(['gdpr', 'eu_ai_act']);
+    expect(parsed?.frameworks).toEqual(['eu_ai_act', 'gdpr']);
+  });
+
+  it('normalises the scope to a canonical set', async () => {
+    const logs = captureAuditLogs();
+
+    // Same two frameworks, reversed, with a duplicate thrown in.
+    await postAudit(['qatar_pdppl', 'gdpr', 'gdpr']);
+
+    const parsed = logs.find((l) => l.step === 'input_parsed');
+    // Sorted and de-duplicated: the scope is part of the audit dedup
+    // key, so ['gdpr','qatar_pdppl'] selected in either order must
+    // produce the same key rather than re-running the whole pipeline.
+    expect(parsed?.frameworks).toEqual(['gdpr', 'qatar_pdppl']);
   });
 
   it('rejects an id outside the catalogue instead of silently dropping it', async () => {

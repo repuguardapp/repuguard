@@ -100,7 +100,7 @@ create table if not exists public.audits (
 create index if not exists audits_org_idx     on public.audits (organization_id, created_at desc);
 create index if not exists audits_status_idx  on public.audits (status) where status in ('pending','running');
 create unique index if not exists audits_dedup_idx
-  on public.audits (organization_id, document_hash, language);
+  on public.audits (organization_id, document_hash, language, frameworks);
 
 create type public.severity_level as enum ('critical','high','medium','low','info');
 

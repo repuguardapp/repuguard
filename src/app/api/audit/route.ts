@@ -72,11 +72,16 @@ const Meta = z.object({
  * can still post `frameworks=gdpr,eu_ai_act` as one value.
  */
 function readFrameworks(form: FormData): string[] {
-  return form
+  const ids = form
     .getAll('frameworks')
     .flatMap((v) => String(v).split(','))
     .map((s) => s.trim())
     .filter(Boolean);
+  // Canonical order, no duplicates: the scope is a set, and it is part
+  // of the audit dedup key (see audits_dedup_idx). Without this,
+  // selecting the same two frameworks in a different order would look
+  // like a different audit and re-run the whole pipeline.
+  return [...new Set(ids)].sort();
 }
 
 /**
@@ -514,13 +519,22 @@ export async function POST(request: Request) {
         // retry: surface the existing row instead of failing, and
         // refund the credit because we re-ran the AI for nothing.
         if (insertErr?.code === '23505') {
-          const { data: existing, error: lookupErr } = await db
+          // The dedup key includes the framework scope, so this triple
+          // can legitimately match several rows (same document, same
+          // language, audited against different regulations). Match the
+          // scope in JS rather than relying on PostgREST array equality
+          // — and never hand back an audit run against a different set
+          // of regulations than the one that was asked for.
+          const { data: candidates, error: lookupErr } = await db
             .from('audits')
-            .select('id, risk_score')
+            .select('id, risk_score, frameworks')
             .eq('organization_id', meta.organizationId)
             .eq('document_hash', report.documentHash)
-            .eq('language', report.language)
-            .maybeSingle();
+            .eq('language', report.language);
+
+          const wanted = [...report.frameworks].sort().join(',');
+          const existing = (candidates as { id: string; risk_score: number; frameworks: string[] }[] | null)
+            ?.find((c) => [...(c.frameworks ?? [])].sort().join(',') === wanted);
 
           if (existing && !lookupErr) {
             log('idempotent_replay', { auditId: existing.id });
