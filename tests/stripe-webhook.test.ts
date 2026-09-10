@@ -17,6 +17,9 @@ const mockUpsert: ReturnType<typeof vi.fn> = vi.fn(async (_payload: unknown, _op
 const mockUpdate = vi.fn(() => ({ eq: vi.fn(async () => ({ error: null as DbErr })) }));
 const mockInsert: ReturnType<typeof vi.fn> = vi.fn(async (_row: unknown) => ({ error: null as DbErr }));
 const mockRpc: ReturnType<typeof vi.fn> = vi.fn(async (_fn: string, _args: unknown) => ({ error: null as DbErr }));
+const mockAlertOps = vi.fn();
+
+vi.mock('@/lib/alert', () => ({ alertOps: mockAlertOps }));
 
 const tableHandlers: Record<string, () => unknown> = {
   organizations: () => ({ update: () => ({ eq: () => Promise.resolve({ error: null }) }) }),
@@ -58,6 +61,7 @@ beforeEach(() => {
   mockInsert.mockReturnValue(Promise.resolve({ error: null }));
   mockRpc.mockReset();
   mockRpc.mockResolvedValue({ error: null });
+  mockAlertOps.mockClear();
 });
 
 afterEach(() => vi.clearAllMocks());
@@ -340,6 +344,13 @@ describe('Stripe webhook · invoice.paid credit top-up', () => {
     const res = await callHandler({ 'stripe-signature': 't=1,v1=ok' }, '{}');
     expect(res.status).toBe(200);
     expect(mockRpc).not.toHaveBeenCalled();
+    // Skipping quietly is what let a drifted STRIPE_PRICE_* env var
+    // stop every credit top-up unnoticed. The skip is correct; being
+    // silent about it is not.
+    expect(mockAlertOps).toHaveBeenCalledWith(
+      'stripe.invoice_paid_unknown_price',
+      expect.objectContaining({ priceId: 'price_legacy_unknown' })
+    );
   });
 
   it('returns 200 (no Stripe retry) when add_audit_credits RPC errors', async () => {

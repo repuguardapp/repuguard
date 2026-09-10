@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { alertOps } from '@/lib/alert';
 import { captureServerEvent } from '@/lib/analytics';
 import { PLAN_CREDITS, stripe, type PlanId } from '@/lib/stripe';
 import { supabaseService } from '@/lib/supabase';
@@ -126,6 +127,15 @@ export async function POST(request: Request) {
     // Return 200 to prevent infinite Stripe retries on a terminal bug;
     // the row remains for manual replay.
     console.error('[stripe-webhook] handler error', event.id, err);
+    // Returning 200 here is deliberate (a throw would make Stripe
+    // retry a terminal bug forever) — which is exactly why it needs
+    // to shout somewhere else. A paid invoice that lands here is a
+    // customer who was charged and got nothing.
+    alertOps('stripe.handler_error', {
+      eventId: event.id,
+      eventType: event.type,
+      error: err instanceof Error ? err.message : String(err)
+    });
     return NextResponse.json({ ok: true, handlerError: true });
   }
 
@@ -280,6 +290,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       customer: sub.customer,
       hasMetadata: Boolean(sub.metadata?.organization_id)
     });
+    // Money came in and we cannot tell whose account to credit.
+    alertOps('stripe.invoice_paid_org_unresolved', {
+      subscriptionId: sub.id,
+      invoiceId: invoice.id,
+      customer: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id
+    });
     return;
   }
 
@@ -289,6 +305,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     console.error('[stripe-webhook] invoice.paid for unknown plan price', {
       subscriptionId: sub.id,
       priceId
+    });
+    // Almost always a STRIPE_PRICE_* env var that drifted out of sync
+    // with the Stripe catalogue — the exact failure that silently
+    // stopped every credit top-up here.
+    alertOps('stripe.invoice_paid_unknown_price', {
+      subscriptionId: sub.id,
+      priceId,
+      invoiceId: invoice.id
     });
     return;
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { alertOps } from '@/lib/alert';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { verifyTurnstileToken } from '@/lib/turnstile';
@@ -120,11 +121,25 @@ async function handle(request: Request): Promise<Response> {
         status: error.status ?? null,
         code: error.code ?? null
       });
+      // The user still sees "check your inbox" (we must not leak
+      // whether the address exists), so this is invisible without an
+      // explicit alert. This exact branch fired `over_email_send_rate_limit`
+      // unnoticed for months while the Supabase auth email hook pointed
+      // at a dead deploy URL.
+      alertOps('auth.otp_send_failed', {
+        message: error.message,
+        status: error.status ?? null,
+        code: error.code ?? null
+      });
     } else {
       console.log('[auth/magic-link] otp_send_queued');
     }
   } catch (err) {
     console.error('[auth/magic-link] otp_threw', {
+      error: err instanceof Error ? err.message : String(err),
+      cause: err instanceof Error && err.cause ? String(err.cause) : null
+    });
+    alertOps('auth.otp_threw', {
       error: err instanceof Error ? err.message : String(err),
       cause: err instanceof Error && err.cause ? String(err.cause) : null
     });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logAccess } from '@/lib/access-log';
+import { alertOps } from '@/lib/alert';
 import { captureServerEvent } from '@/lib/analytics';
 import { extractText } from '@/lib/document-extractor';
 import { encryptDocument } from '@/lib/document-crypto';
@@ -402,6 +403,16 @@ export async function POST(request: Request) {
         wipeBuffer(buffer);
         const { code, detail } = classifyAiError(err);
         log('multipass_failed', { code, detail });
+        // The credit is refunded and the user sees a clean error, so
+        // nothing escalates on its own — but this is the product
+        // failing to deliver. An expired or missing provider key shows
+        // up here and nowhere else.
+        alertOps('audit.multipass_failed', {
+          code,
+          detail,
+          frameworks: meta.frameworks,
+          targetLanguage: meta.targetLanguage
+        });
         await refundIfNeeded(code);
         finish({ ok: false, error: code, detail });
         return;
