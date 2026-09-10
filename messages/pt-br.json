@@ -73,6 +73,7 @@
     "targetLanguage": "Idioma do relatório",
     "targetLanguageHint": "Escolha qualquer idioma — LexyFlow traduzirá o relatório final.",
     "framework": "Marco legal",
+    "frameworkHint": "Marque um ou mais referenciais. A auditoria cobrirá todos os selecionados.",
     "submit": "Executar auditoria",
     "running": "LexyFlow está auditando — geralmente leva menos de um minuto.",
     "zeroKnowledge": "Criptografado em repouso: seu documento é mantido em AES-256-GCM e só fica acessível durante suas sessões de edição.",

@@ -73,6 +73,7 @@
     "targetLanguage": "Report language",
     "targetLanguageHint": "Choose any language — LexyFlow will translate the final report.",
     "framework": "Legal framework",
+    "frameworkHint": "Tick one or more frameworks. The audit covers every one you select.",
     "submit": "Run audit",
     "running": "LexyFlow is auditing — this usually takes under a minute.",
     "zeroKnowledge": "Encrypted at rest: your document is stored AES-256-GCM encrypted and accessible only during your edit sessions.",

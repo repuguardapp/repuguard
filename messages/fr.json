@@ -73,6 +73,7 @@
     "targetLanguage": "Langue du rapport",
     "targetLanguageHint": "Choisissez n'importe quelle langue — LexyFlow traduira le rapport final.",
     "framework": "Référentiel juridique",
+    "frameworkHint": "Cochez un ou plusieurs référentiels. L'audit couvrira tous ceux qui sont cochés.",
     "submit": "Lancer l'audit",
     "running": "LexyFlow audite — cela prend généralement moins d'une minute.",
     "zeroKnowledge": "Chiffré au repos : votre document est conservé en AES-256-GCM et accessible uniquement pendant vos sessions d'édition.",

@@ -73,6 +73,7 @@
     "targetLanguage": "レポートの言語",
     "targetLanguageHint": "任意の言語を選択できます — LexyFlow が最終レポートを翻訳します。",
     "framework": "法的フレームワーク",
+    "frameworkHint": "1つ以上の法令を選択してください。選択したすべてが監査対象になります。",
     "submit": "監査を実行",
     "running": "LexyFlow が監査中 — 通常 1 分以内に完了します。",
     "zeroKnowledge": "保存時暗号化：ドキュメントは AES-256-GCM で保管され、編集セッション中にのみアクセスできます。",

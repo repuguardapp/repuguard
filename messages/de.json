@@ -73,6 +73,7 @@
     "targetLanguage": "Berichtsprache",
     "targetLanguageHint": "Wählen Sie eine beliebige Sprache — LexyFlow übersetzt den finalen Bericht.",
     "framework": "Rechtsrahmen",
+    "frameworkHint": "Wählen Sie einen oder mehrere Rechtsrahmen. Die Prüfung deckt alle angekreuzten ab.",
     "submit": "Audit ausführen",
     "running": "LexyFlow prüft — üblicherweise unter einer Minute.",
     "zeroKnowledge": "Verschlüsselt gespeichert: Ihr Dokument wird in AES-256-GCM aufbewahrt und ist nur während Ihrer Bearbeitungssitzungen zugänglich.",

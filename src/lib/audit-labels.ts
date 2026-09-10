@@ -21,6 +21,7 @@ export function buildAuditFormLabels(t: Translator, errorMessages: Readonly<Reco
     targetLanguage: t('targetLanguage'),
     targetLanguageHint: t('targetLanguageHint'),
     framework: t('framework'),
+    frameworkHint: t('frameworkHint'),
     submit: t('submit'),
     running: t('running'),
     processing: {

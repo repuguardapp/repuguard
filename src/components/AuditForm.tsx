@@ -23,6 +23,7 @@ export interface AuditFormLabels {
   targetLanguage: string;
   targetLanguageHint: string;
   framework: string;
+  frameworkHint: string;
   submit: string;
   running: string;
 
@@ -159,6 +160,22 @@ export function AuditForm({
   // === 'failed'` because it lives next to the file input — the user
   // never leaves the form, just sees a red note + a disabled submit.
   const [fileIssue, setFileIssue] = useState<{ message: string; size: number; name: string } | null>(null);
+  // The selected scope is controlled so the submit button can reflect
+  // "nothing ticked" — a checkbox group has no HTML-level `required`
+  // that means "at least one of these" (marking each box required
+  // would demand all of them).
+  const [selectedFrameworks, setSelectedFrameworks] = useState<ReadonlySet<string>>(
+    () => new Set(defaultFrameworkIds)
+  );
+
+  function toggleFramework(id: string) {
+    setSelectedFrameworks((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   if (view.phase === 'running') return <RunningCard progress={view.progress} labels={labels} />;
   if (view.phase === 'failed') {
@@ -181,7 +198,9 @@ export function AuditForm({
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (fileIssue) return; // belt-and-braces: button is also disabled
+    // Belt-and-braces: the button is disabled for both of these.
+    if (fileIssue) return;
+    if (selectedFrameworks.size === 0) return;
     setView({ phase: 'running', progress: 5 });
 
     const form = new FormData(event.currentTarget);
@@ -286,21 +305,47 @@ export function AuditForm({
         />
       </Field>
 
-      <Field label={labels.framework}>
-        <select
-          name="frameworks"
-          required
-          multiple
-          defaultValue={defaultFrameworkIds as string[]}
-          className={cn(inputClass, 'min-h-[8rem]')}
-        >
-          {frameworks.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {/* Checkboxes, not a <select multiple>. The multi-select required
+          a precise long-press-and-drag on tablets, which is how a
+          customer asking for GDPR + EU AI Act could believe both were
+          selected — and it hid the fact that the server was only ever
+          reading the first one. Each box posts its own `frameworks`
+          entry, which the route reads with getAll(). */}
+      <CheckboxGroup
+        legend={labels.framework}
+        hint={labels.frameworkHint}
+        meta={`${selectedFrameworks.size} / ${frameworks.length}`}
+      >
+        {frameworks.map((f) => {
+          const { short, detail } = splitFrameworkName(f.name);
+          const checked = selectedFrameworks.has(f.id);
+          return (
+            <label
+              key={f.id}
+              className={cn(
+                'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition',
+                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background',
+                checked
+                  ? 'border-primary/40 bg-accent'
+                  : 'border-input bg-background hover:bg-accent/40'
+              )}
+            >
+              <input
+                type="checkbox"
+                name="frameworks"
+                value={f.id}
+                checked={checked}
+                onChange={() => toggleFramework(f.id)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+              />
+              <span className="grid gap-0.5 text-sm leading-snug">
+                <span className="font-medium">{short}</span>
+                {detail && <span className="text-xs text-muted-foreground">{detail}</span>}
+              </span>
+            </label>
+          );
+        })}
+      </CheckboxGroup>
 
       <Field label={labels.targetLanguage} hint={labels.targetLanguageHint}>
         <input
@@ -315,7 +360,12 @@ export function AuditForm({
 
       <input type="hidden" name="organizationId" value={organizationId} />
 
-      <Button type="submit" size="lg" disabled={!!fileIssue} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={!!fileIssue || selectedFrameworks.size === 0}
+        className="w-full sm:w-auto"
+      >
         {labels.submit}
       </Button>
     </form>
@@ -415,6 +465,60 @@ function FailedCard({ message, labels }: { message: string; labels: AuditFormLab
 /* ------------------------------------------------------------------ */
 /* Form field helper                                                  */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Framework names carry their full statute reference — "Qatar PDPPL
+ * (Personal Data Privacy Protection Law - Law No. 13 of 2016)". The
+ * short form is what someone scans for; the statute is what they check
+ * before trusting the result. Split so both can be shown at their own
+ * weight instead of truncated into one line, which is what the old
+ * select did. Names without a parenthetical (e.g. "UK GDPR + Data
+ * Protection Act 2018") pass through whole.
+ */
+function splitFrameworkName(name: string): { short: string; detail?: string } {
+  const open = name.indexOf(' (');
+  if (open === -1 || !name.endsWith(')')) return { short: name };
+  return { short: name.slice(0, open), detail: name.slice(open + 2, -1) };
+}
+
+/**
+ * Label + hint wrapper for a set of related controls.
+ *
+ * Deliberately a `div[role="group"]` rather than `Field`, whose <label>
+ * wraps its children: a label may only name one control, so wrapping a
+ * checkbox list in it makes clicking the group title toggle the first
+ * box. `aria-labelledby` gives the group its name without <legend>'s
+ * layout quirks inside a flex row.
+ */
+function CheckboxGroup({
+  legend,
+  hint,
+  meta,
+  children
+}: {
+  legend: string;
+  hint?: string;
+  meta?: string;
+  children: React.ReactNode;
+}) {
+  const labelId = 'audit-framework-group-label';
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span id={labelId} className="text-sm font-medium">
+          {legend}
+        </span>
+        {meta && (
+          <span className="text-xs tabular-nums text-muted-foreground">{meta}</span>
+        )}
+      </div>
+      <div role="group" aria-labelledby={labelId} className="grid gap-2 sm:grid-cols-2">
+        {children}
+      </div>
+      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+    </div>
+  );
+}
 
 function Field({
   label,
