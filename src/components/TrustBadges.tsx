@@ -1,4 +1,4 @@
-import { CreditCard, Lock, MapPin, Trash2 } from 'lucide-react';
+import { Coins, CreditCard, Lock, MapPin, Trash2 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 
@@ -31,15 +31,32 @@ import { Link } from '@/i18n/navigation';
  * dive without leaving the funnel — and the click is observable in
  * PostHog under the auto-captured pageview, surfacing as a separate
  * cohort of "trust-aware" users we can measure conversion against.
+ *
+ * Badge 4 is audience-dependent. `/audit` redirects anyone who is not
+ * signed in, and anyone holding zero credits, before it renders — so
+ * the only person who could ever read "free, no credit card" there is
+ * someone who has already paid and is spending the credits they bought.
+ * Exactly the wrong audience for that reassurance, and confusing at the
+ * moment they are about to spend one. Pass `credits` on authenticated
+ * surfaces to show the balance instead; leave it undefined on public
+ * pages (`/sample-report`), where the objection it answers is real.
  */
-export async function TrustBadges({ locale }: { locale: string }) {
+export async function TrustBadges({ locale, credits }: { locale: string; credits?: number }) {
   const t = await getTranslations('trustBadges');
+  // Reuses the dashboard's existing wording so the balance reads
+  // identically wherever the customer sees it.
+  const tDashboard = await getTranslations('dashboard');
+
+  const commitment =
+    typeof credits === 'number'
+      ? { icon: Coins, label: tDashboard('creditsAvailable', { count: credits }), href: '/pricing' }
+      : { icon: CreditCard, label: t('noCard'), href: '/pricing' };
 
   const badges = [
     { icon: Lock,       label: t('encryption'),  href: '/trust#encryption' },
     { icon: MapPin,     label: t('euHosted'),    href: '/trust#hosting' },
     { icon: Trash2,     label: t('deletion'),    href: '/trust#commitments' },
-    { icon: CreditCard, label: t('noCard'),      href: '/pricing' }
+    commitment
   ];
 
   return (

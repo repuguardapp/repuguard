@@ -37,7 +37,7 @@ function seededFrameworkIds(): Set<string> {
     );
     for (const [statement] of statements) {
       for (const [, id] of statement.matchAll(/\(\s*'([a-z0-9_]+)'\s*,/gi)) {
-        ids.add(id);
+        if (id) ids.add(id);
       }
     }
   }
@@ -62,7 +62,7 @@ describe('legal framework catalogue ↔ database seed parity', () => {
     // The reverse drift is milder — an orphan row breaks nothing — but
     // it usually means a framework was renamed and the old id is still
     // referenced by historical findings.
-    const known = new Set(FRAMEWORKS.map((f) => f.id));
+    const known = new Set<string>(FRAMEWORKS.map((f) => f.id));
     const orphans = [...seededFrameworkIds()].filter((id) => !known.has(id));
 
     expect(orphans, `Seeded but absent from the application catalogue`).toEqual([]);

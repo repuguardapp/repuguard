@@ -82,7 +82,7 @@ export default async function AuditPage({ params: { locale } }: PageProps) {
           see it. The four-badge strip is server-rendered, so the
           links are crawlable and contribute internal PageRank to
           /trust. */}
-      <TrustBadges locale={locale} />
+      <TrustBadges locale={locale} credits={credits} />
 
       <AuditForm
         labels={buildAuditFormLabels(t, errorMessages)}
