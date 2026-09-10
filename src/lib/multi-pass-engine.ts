@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { ANTHROPIC_MODEL, anthropic, OPENAI_MODEL, openai } from './ai-clients';
+import { alertOps } from './alert';
 import { frameworkById, type FrameworkId } from './legal-frameworks';
 import type { AuditFinding, AuditReport, Severity } from '@/types/audit';
 
@@ -332,12 +333,60 @@ const LocalizationSchema = z.object({
   findings: z.array(LocalizedFindingSchema)
 });
 
+/**
+ * Pass 2 is an ENHANCEMENT over a complete, already-valid English
+ * report — it must never be able to destroy pass 1's work.
+ *
+ * It used to throw on any hiccup (malformed JSON, a changed findings
+ * count), which discarded a finished audit the customer had already
+ * paid for and burned a Claude call on. That risk scales with the
+ * number of findings, so it showed up as "one framework works, two
+ * frameworks fail" — reproduced in production on a GDPR + EU AI Act
+ * audit of our own privacy policy.
+ *
+ * Now: any pass-2 failure degrades to the English report and alerts,
+ * rather than losing everything.
+ *
+ * Returns the language actually delivered, so the persisted audit row
+ * never claims to be in a language it isn't.
+ */
 export async function localizeReport(
   pass1: AuditPassResult,
   targetLanguage: string
-): Promise<AuditPassResult> {
+): Promise<{ report: AuditPassResult; language: string }> {
   // English pivot can skip pass 2.
-  if (targetLanguage.toLowerCase().startsWith('en')) return pass1;
+  if (targetLanguage.toLowerCase().startsWith('en')) {
+    return { report: pass1, language: targetLanguage };
+  }
+
+  const fallbackToEnglish = (reason: string, extra: Record<string, unknown> = {}) => {
+    alertOps('audit.localization_degraded', {
+      reason,
+      targetLanguage,
+      findingsCount: pass1.findings.length,
+      ...extra
+    });
+    return { report: pass1, language: 'en' };
+  };
+
+  try {
+    return await localizeOrThrow(pass1, targetLanguage, fallbackToEnglish);
+  } catch (err) {
+    // Provider outage, network error, anything unforeseen.
+    return fallbackToEnglish('pass2_threw', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+}
+
+async function localizeOrThrow(
+  pass1: AuditPassResult,
+  targetLanguage: string,
+  fallbackToEnglish: (reason: string, extra?: Record<string, unknown>) => {
+    report: AuditPassResult;
+    language: string;
+  }
+): Promise<{ report: AuditPassResult; language: string }> {
 
   const payload = {
     summary: pass1.summary,
@@ -351,6 +400,11 @@ export async function localizeReport(
   const completion = await openai().chat.completions.create({
     model: OPENAI_MODEL,
     temperature: 0,
+    // Was unset, so a long report could run into the model's output
+    // ceiling and come back as truncated (but syntactically plausible)
+    // JSON. Explicit and generous — a 30-finding translation is well
+    // under this — and it makes finish_reason meaningful below.
+    max_tokens: 16384,
     response_format: { type: 'json_object' },
     messages: [
       {
@@ -377,18 +431,44 @@ export async function localizeReport(
     ]
   });
 
-  const raw = completion.choices[0]?.message?.content;
-  if (!raw) throw new Error('OpenAI returned empty translation');
+  const choice = completion.choices[0];
+  const raw = choice?.message?.content;
+  if (!raw) return fallbackToEnglish('empty_translation');
+  if (choice?.finish_reason === 'length') {
+    // Truncated mid-JSON. Parsing it would either throw or, worse,
+    // succeed on a partial array.
+    return fallbackToEnglish('truncated', { finishReason: choice.finish_reason });
+  }
 
-  const localized = LocalizationSchema.safeParse(JSON.parse(raw));
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(raw);
+  } catch (err) {
+    // json_object mode makes this unlikely but not impossible; an
+    // unguarded JSON.parse here used to take the whole audit down.
+    return fallbackToEnglish('json_parse_failed', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+
+  const localized = LocalizationSchema.safeParse(parsedJson);
   if (!localized.success) {
-    throw new Error(`Localization pass returned malformed JSON: ${localized.error.message}`);
+    return fallbackToEnglish('schema_mismatch', { zodError: localized.error.message });
   }
   if (localized.data.findings.length !== pass1.findings.length) {
-    throw new Error('Localization pass changed the number of findings');
+    // Do NOT try to salvage this positionally. If the translator
+    // dropped or merged an entry, every subsequent index shifts, and
+    // we would staple finding N's translated text onto finding N-1's
+    // citation and verbatim evidence — a compliance report that
+    // misattributes a quote to the wrong statute is worse than an
+    // untranslated one.
+    return fallbackToEnglish('findings_count_mismatch', {
+      expected: pass1.findings.length,
+      received: localized.data.findings.length
+    });
   }
 
-  return {
+  const report = {
     summary: localized.data.summary,
     riskScore: pass1.riskScore,
     findings: pass1.findings.map((original, i) => {
@@ -401,6 +481,8 @@ export async function localizeReport(
       };
     })
   };
+
+  return { report, language: targetLanguage };
 }
 
 /* ------------------------------------------------------------------ */
@@ -409,7 +491,7 @@ export async function localizeReport(
 
 export async function runMultiPassAudit(input: AuditInput): Promise<AuditReport> {
   const pass1 = await legalAudit(input);
-  const pass2 = await localizeReport(pass1, input.targetLanguage);
+  const { report: pass2, language } = await localizeReport(pass1, input.targetLanguage);
 
   const findings: AuditFinding[] = pass2.findings.map((f) => ({
     id: randomUUID(),
@@ -425,7 +507,9 @@ export async function runMultiPassAudit(input: AuditInput): Promise<AuditReport>
   return {
     documentHash: sha256(input.documentText),
     frameworks: input.frameworks,
-    language: input.targetLanguage,
+    // What we actually delivered, not what was asked for — a report
+    // that fell back to English must not be filed as French.
+    language,
     generatedAt: new Date().toISOString(),
     summary: pass2.summary,
     riskScore: pass2.riskScore,
