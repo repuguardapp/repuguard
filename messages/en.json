@@ -164,6 +164,7 @@
     "openai_error": "The translation engine is temporarily unavailable. Please retry.",
     "multipass_failed": "The audit pipeline ran into an unexpected issue. Please retry.",
     "supabase_write_failed": "We couldn't save the report. Please retry.",
+    "findings_insert_failed": "We couldn't save the audit findings in full, so we're not showing an incomplete report. Your credit has been refunded — please retry.",
     "audit_stream_truncated": "The connection was interrupted. Please retry.",
     "audit_no_stream": "The server didn't send a response. Please retry."
   },

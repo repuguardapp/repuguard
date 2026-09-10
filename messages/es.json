@@ -164,6 +164,7 @@
     "openai_error": "El motor de traducción no está disponible temporalmente. Reinténtalo.",
     "multipass_failed": "El pipeline de auditoría tuvo un problema inesperado. Reinténtalo.",
     "supabase_write_failed": "No pudimos guardar el informe. Reinténtalo.",
+    "findings_insert_failed": "No pudimos guardar todos los hallazgos, así que preferimos no mostrar un informe incompleto. Tu crédito ha sido reembolsado; reinténtalo.",
     "audit_stream_truncated": "La conexión se interrumpió. Reinténtalo.",
     "audit_no_stream": "El servidor no envió respuesta. Reinténtalo."
   },

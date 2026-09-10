@@ -164,6 +164,7 @@
     "openai_error": "Le moteur de traduction est temporairement indisponible. Veuillez réessayer.",
     "multipass_failed": "Le pipeline d'audit a rencontré un problème inattendu. Veuillez réessayer.",
     "supabase_write_failed": "Impossible d'enregistrer le rapport. Veuillez réessayer.",
+    "findings_insert_failed": "Nous n'avons pas pu enregistrer l'intégralité des constatations. Plutôt que d'afficher un rapport incomplet, nous préférons ne rien afficher. Votre crédit a été remboursé — veuillez réessayer.",
     "audit_stream_truncated": "La connexion a été interrompue. Veuillez réessayer.",
     "audit_no_stream": "Le serveur n'a pas envoyé de réponse. Veuillez réessayer."
   },

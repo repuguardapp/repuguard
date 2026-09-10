@@ -164,6 +164,7 @@
     "openai_error": "Die Übersetzungs-Engine ist vorübergehend nicht verfügbar. Bitte erneut versuchen.",
     "multipass_failed": "Die Audit-Pipeline hatte ein unerwartetes Problem. Bitte erneut versuchen.",
     "supabase_write_failed": "Der Bericht konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "findings_insert_failed": "Die Prüfergebnisse konnten nicht vollständig gespeichert werden. Wir zeigen lieber gar keinen Bericht als einen unvollständigen. Ihr Guthaben wurde erstattet — bitte erneut versuchen.",
     "audit_stream_truncated": "Die Verbindung wurde unterbrochen. Bitte erneut versuchen.",
     "audit_no_stream": "Der Server hat keine Antwort gesendet. Bitte erneut versuchen."
   },

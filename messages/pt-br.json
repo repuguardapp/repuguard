@@ -164,6 +164,7 @@
     "openai_error": "O motor de tradução está temporariamente indisponível. Tente novamente.",
     "multipass_failed": "A pipeline de auditoria teve um problema inesperado. Tente novamente.",
     "supabase_write_failed": "Não foi possível salvar o relatório. Tente novamente.",
+    "findings_insert_failed": "Não conseguimos salvar todas as constatações, então preferimos não exibir um relatório incompleto. Seu crédito foi devolvido — tente novamente.",
     "audit_stream_truncated": "A conexão foi interrompida. Tente novamente.",
     "audit_no_stream": "O servidor não enviou resposta. Tente novamente."
   },

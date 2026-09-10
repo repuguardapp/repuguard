@@ -104,6 +104,7 @@ type AuditError =
   | 'openai_error'
   | 'multipass_failed'
   | 'supabase_write_failed'
+  | 'findings_insert_failed'
   | 'unauthenticated'
   | 'organization_mismatch';
 
@@ -610,10 +611,40 @@ export async function POST(request: Request) {
           }))
         );
         if (findingsErr) {
+          // This is a single batch insert: an error means ZERO of the
+          // findings were stored while the engine had produced several.
+          // The audit row is already saved as `completed`, so leaving it
+          // there publishes a report whose findings list is empty — and
+          // the UI renders an empty list as "no findings, your document
+          // is compliant". A risk score of 78 next to "you are compliant"
+          // is not a degraded report, it is a false one, and in a
+          // compliance product that is the most damaging thing we can
+          // ship. Fail the audit instead, and give the credit back.
           log('findings_insert_failed', { error: findingsErr.message, auditId: audit.id });
-        } else {
-          log('findings_persisted', { count: report.findings.length });
+          alertOps('audit.findings_insert_failed', {
+            auditId: audit.id,
+            error: findingsErr.message,
+            frameworks: meta.frameworks,
+            expectedFindings: report.findings.length
+          });
+
+          await db
+            .from('audits')
+            .update({
+              status: 'failed',
+              error_message: `findings_insert_failed: ${findingsErr.message}`
+            })
+            .eq('id', audit.id);
+
+          await refundIfNeeded('findings_insert_failed');
+          finish({
+            ok: false,
+            error: 'findings_insert_failed',
+            detail: findingsErr.message
+          });
+          return;
         }
+        log('findings_persisted', { count: report.findings.length });
       }
 
       log('done', { auditId: audit.id });
