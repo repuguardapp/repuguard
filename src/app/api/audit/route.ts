@@ -11,7 +11,7 @@ import { supabaseService } from '@/lib/supabase';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 import { FREE_TIER_MAX_BYTES, getTierForOrg } from '@/lib/tier';
 import { hashDocument, wipeBuffer } from '@/lib/zero-knowledge';
-import type { FrameworkId } from '@/lib/legal-frameworks';
+import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
 
 /**
  * Synchronous audit endpoint — single request, single response.
@@ -48,11 +48,36 @@ const ORG_LIMIT     = { windowMs: 24 * 60 * 60 * 1000, max: 50 };  // 50/day per
 const PAID_PLANS = new Set(['pro', 'enterprise']);
 const PAID_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
+// Validate against the real catalogue instead of casting. The previous
+// `z.string().transform(s => s.split(',') as FrameworkId[])` was a blind
+// cast: any string became a "valid" FrameworkId, and an id that matched
+// nothing was then silently dropped by buildAuditSystemPrompt's
+// `if (!f) continue`. Scope narrowed without anyone being told.
+const FRAMEWORK_IDS = FRAMEWORKS.map((f) => f.id) as [FrameworkId, ...FrameworkId[]];
+
 const Meta = z.object({
   organizationId: z.string().uuid(),
-  frameworks: z.string().transform((s) => s.split(',') as FrameworkId[]),
+  frameworks: z.array(z.enum(FRAMEWORK_IDS)).min(1),
   targetLanguage: z.string().min(2).max(10)
 });
+
+/**
+ * `<select multiple>` submits one form entry per selected option, and
+ * FormData.get() returns only the FIRST of them — so every framework
+ * after the first was discarded before it ever reached the engine. A
+ * customer who selected GDPR + EU AI Act spent a credit and received a
+ * GDPR-only audit, presented as complete. Reproduced on 10 Sep 2026.
+ *
+ * getAll() is the fix. The comma split is kept so a non-browser client
+ * can still post `frameworks=gdpr,eu_ai_act` as one value.
+ */
+function readFrameworks(form: FormData): string[] {
+  return form
+    .getAll('frameworks')
+    .flatMap((v) => String(v).split(','))
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 /**
  * Strongly-typed error envelope so the client can either show the
@@ -121,7 +146,7 @@ export async function POST(request: Request) {
   try {
     meta = Meta.parse({
       organizationId: form.get('organizationId'),
-      frameworks: form.get('frameworks'),
+      frameworks: readFrameworks(form),
       targetLanguage: form.get('targetLanguage')
     });
   } catch (err) {

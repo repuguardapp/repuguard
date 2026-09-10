@@ -178,7 +178,13 @@ function buildAuditSystemPrompt(frameworks: FrameworkId[]): string {
   ];
   for (const id of frameworks) {
     const f = frameworkById(id);
-    if (!f) continue;
+    if (!f) {
+      // Unreachable via /api/audit, which validates ids against the
+      // catalogue. Kept loud rather than `continue`: silently skipping
+      // an unknown id is how a requested framework vanishes from the
+      // audit scope while the report still presents itself as complete.
+      throw new Error(`Unknown framework id in audit scope: ${String(id)}`);
+    }
     lines.push(`- ${f.name} (${f.jurisdiction}) — citation style: ${f.citationStyle}`);
   }
 
