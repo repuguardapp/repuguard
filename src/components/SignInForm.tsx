@@ -55,6 +55,13 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
  * a token is captured, since Turnstile tokens are short-lived and
  * single-use — a stale token would just fail server-side verification
  * anyway, so gating client-side saves the user a round trip.
+ *
+ * The "sent" card's widget is unmounted (it's a different screen), so
+ * its one-click resend can't carry a fresh token once captcha is
+ * required — sending without one just fails server-side. When captcha
+ * is on, resend instead drops back to the form (email prefilled) so
+ * the user solves a fresh challenge; the instant one-click resend is
+ * only safe while captcha is off.
  */
 export function SignInForm({ locale, labels }: Props) {
   const [view, setView] = useState<View>({ phase: 'idle' });
@@ -112,6 +119,8 @@ export function SignInForm({ locale, labels }: Props) {
     await send(email);
   }
 
+  const needsCaptcha = Boolean(TURNSTILE_SITE_KEY);
+
   if (view.phase === 'sent') {
     return (
       <div className="grid gap-3 rounded-md border bg-muted/40 p-6 text-center">
@@ -123,7 +132,7 @@ export function SignInForm({ locale, labels }: Props) {
           variant="outline"
           size="sm"
           className="mx-auto mt-2"
-          onClick={() => send(lastEmail)}
+          onClick={() => (needsCaptcha ? setView({ phase: 'idle' }) : send(lastEmail))}
         >
           <RefreshCw className="me-2 h-4 w-4" aria-hidden />
           {labels.inboxRetry}
@@ -133,7 +142,6 @@ export function SignInForm({ locale, labels }: Props) {
   }
 
   const submitting = view.phase === 'submitting';
-  const needsCaptcha = Boolean(TURNSTILE_SITE_KEY);
   const captchaBlocking = needsCaptcha && !turnstileToken;
 
   return (
@@ -145,6 +153,7 @@ export function SignInForm({ locale, labels }: Props) {
           name="email"
           required
           autoComplete="email"
+          defaultValue={lastEmail}
           placeholder={labels.emailPlaceholder}
           className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
