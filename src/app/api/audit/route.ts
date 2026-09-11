@@ -509,6 +509,11 @@ export async function POST(request: Request) {
           summary: report.summary,
           language: report.language,
           completed_at: report.generatedAt,
+          // Whether this audit cost a credit is knowable only here.
+          // Recording it is what lets /api/cron/reap-audits refund an
+          // audit it finds abandoned, without handing free credits to
+          // free-trial runs that never spent one.
+          credit_consumed: !usingFreeTrial,
           ...(cryptoFields ?? {})
         })
         .select('id')
