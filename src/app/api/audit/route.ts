@@ -440,14 +440,23 @@ export async function POST(request: Request) {
           },
           {
             read: async () => {
+              // Matched in JS rather than with .eq() on the array
+              // column, for the same reason the replay lookup does:
+              // PostgREST array equality is a shape we do not control,
+              // and getting it wrong here fails silently — the cache
+              // would simply never hit, and we would go on paying for
+              // pass 1 twice while believing we had fixed it. Rows are
+              // at most one per framework scope for a given document.
               const { data } = await db
                 .from('audit_pass1_cache')
-                .select('pivot')
+                .select('pivot, frameworks')
                 .eq('organization_id', pivotKey.organization_id)
-                .eq('document_hash', pivotKey.document_hash)
-                .eq('frameworks', pivotKey.frameworks)
-                .maybeSingle();
-              const hit = (data as { pivot?: unknown } | null)?.pivot ?? null;
+                .eq('document_hash', pivotKey.document_hash);
+
+              const wanted = [...pivotKey.frameworks].sort().join(',');
+              const row = (data as { pivot?: unknown; frameworks?: string[] }[] | null)
+                ?.find((r) => [...(r.frameworks ?? [])].sort().join(',') === wanted);
+              const hit = row?.pivot ?? null;
               if (hit) log('pivot_cache_hit', { documentHash: pivotKey.document_hash });
               return hit;
             },
