@@ -185,7 +185,14 @@ function buildAuditSystemPrompt(frameworks: FrameworkId[]): string {
       // audit scope while the report still presents itself as complete.
       throw new Error(`Unknown framework id in audit scope: ${String(id)}`);
     }
-    lines.push(`- ${f.name} (${f.jurisdiction}) — citation style: ${f.citationStyle}`);
+    // The id is listed FIRST and verbatim. The findings schema asks for
+    // a "framework id", and this line is the only place the model can
+    // learn what those ids actually are — listing the display name
+    // alone left it guessing. It guessed "gdpr", "qatar_pdppl" and
+    // "saudi_pdpl" correctly and something else for the EU AI Act,
+    // which then failed the audit_findings foreign key and took the
+    // whole audit down with it.
+    lines.push(`- id: ${f.id} — ${f.name} (${f.jurisdiction}) — citation style: ${f.citationStyle}`);
   }
 
   const guidanceBlocks = frameworks
@@ -205,6 +212,9 @@ function buildAuditSystemPrompt(frameworks: FrameworkId[]): string {
     'return findings.',
     '',
     'Rules:',
+    '- Every finding\'s "framework" field must be one of the id strings',
+    '  listed above, copied exactly. Do not invent an id, do not use the',
+    '  display name, and do not use a framework outside the list.',
     '- Write in English. Translation is performed in a later pass.',
     '- Never invent quotes. Every "evidence" must be verbatim from the doc.',
     '- Citations stay in the original language of the regulation.',
@@ -234,7 +244,8 @@ function buildAuditSystemPrompt(frameworks: FrameworkId[]): string {
 // raw JSON in a text block — Sonnet 4.6 frequently wrapped it in ```json
 // fences, breaking JSON.parse(). Tool use eliminates the parsing surface:
 // the API itself validates the input matches input_schema.
-const SUBMIT_AUDIT_TOOL = {
+function buildSubmitAuditTool(frameworks: FrameworkId[]) {
+  return {
   name: 'submit_audit',
   description:
     'Submit the compliance audit. Call this exactly once with the full audit payload.',
@@ -254,7 +265,14 @@ const SUBMIT_AUDIT_TOOL = {
         items: {
           type: 'object',
           properties: {
-            framework: { type: 'string', description: 'Framework ID, e.g. "gdpr".' },
+            // Constrained to the ids actually in scope rather than a free
+            // string: the API enforces the schema, so the model cannot
+            // return an id that does not exist in legal_frameworks.
+            framework: {
+              type: 'string',
+              enum: frameworks,
+              description: 'Which framework in scope this finding is raised under.'
+            },
             citation: { type: 'string', description: 'e.g. "GDPR Art. 13(2)(a)".' },
             severity: {
               type: 'string',
@@ -271,7 +289,49 @@ const SUBMIT_AUDIT_TOOL = {
     },
     required: ['summary', 'riskScore', 'findings']
   }
-};
+  };
+}
+
+/** Lowercase, and fold spaces/hyphens/punctuation to underscores. */
+function normaliseKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+/**
+ * Map whatever the model put in `framework` onto a real catalogue id.
+ *
+ * The tool schema constrains this field to an enum of the ids in scope,
+ * so this should never have to do anything. It exists because the cost
+ * of being wrong is asymmetric: `audit_findings.framework_id` is a
+ * foreign key, and one unrecognised value fails the whole batch insert,
+ * which discards a finished audit the customer paid for.
+ *
+ * Resolution is deliberately confident-or-fail. A finding attributed to
+ * the wrong regulation is worse than no report at all — the citation
+ * and the verbatim evidence would then sit under a statute they have
+ * nothing to do with.
+ */
+function resolveFrameworkId(raw: string, scope: FrameworkId[]): FrameworkId | null {
+  const exact = scope.find((id) => id === raw);
+  if (exact) return exact;
+
+  const key = normaliseKey(raw);
+  const byId = scope.find((id) => normaliseKey(id) === key);
+  if (byId) return byId;
+
+  // The model may have echoed the display name instead of the id.
+  const byName = scope.find((id) => {
+    const f = frameworkById(id);
+    return f ? normaliseKey(f.name) === key || normaliseKey(f.name).startsWith(key) : false;
+  });
+  if (byName) return byName;
+
+  // Single-framework audit: attribution is unambiguous whatever the
+  // model called it.
+  if (scope.length === 1) return scope[0] ?? null;
+
+  return null;
+}
 
 export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
   const system = buildAuditSystemPrompt(input.frameworks);
@@ -287,7 +347,7 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
     max_tokens: 16384,
     temperature: 0,
     system,
-    tools: [SUBMIT_AUDIT_TOOL],
+    tools: [buildSubmitAuditTool(input.frameworks)],
     tool_choice: { type: 'tool', name: 'submit_audit' },
     messages: [{ role: 'user', content: input.documentText }]
   });
@@ -321,7 +381,28 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
       `Refusing to persist a report that flags risk without listing it.`
     );
   }
-  return r;
+
+  // Normalise framework attribution before it can reach the database.
+  const findings = r.findings.map((finding) => {
+    const resolved = resolveFrameworkId(finding.framework, input.frameworks);
+    if (!resolved) {
+      throw new Error(
+        `Finding attributed to a framework outside the audit scope: ` +
+        `"${finding.framework}" (scope: ${input.frameworks.join(', ')}). ` +
+        `Refusing to guess which regulation this finding belongs to.`
+      );
+    }
+    if (resolved !== finding.framework) {
+      alertOps('audit.framework_id_normalised', {
+        returned: finding.framework,
+        resolved,
+        scope: input.frameworks
+      });
+    }
+    return { ...finding, framework: resolved };
+  });
+
+  return { ...r, findings };
 }
 
 /* ------------------------------------------------------------------ */
