@@ -422,11 +422,42 @@ export async function POST(request: Request) {
       let report;
       try {
         log('multipass_start');
-        report = await runMultiPassAudit({
-          documentText: extracted.text,
-          frameworks: meta.frameworks,
-          targetLanguage: meta.targetLanguage
-        });
+        // The pivot cache makes a second language nearly free: pass 1
+        // is language-independent, so only the translation is billed.
+        // Keyed on the org too — two customers can upload the same
+        // public document, and neither may read findings produced from
+        // the other's upload.
+        const pivotKey = {
+          organization_id: meta.organizationId,
+          document_hash: hashDocument(extracted.text),
+          frameworks: meta.frameworks
+        };
+        report = await runMultiPassAudit(
+          {
+            documentText: extracted.text,
+            frameworks: meta.frameworks,
+            targetLanguage: meta.targetLanguage
+          },
+          {
+            read: async () => {
+              const { data } = await db
+                .from('audit_pass1_cache')
+                .select('pivot')
+                .eq('organization_id', pivotKey.organization_id)
+                .eq('document_hash', pivotKey.document_hash)
+                .eq('frameworks', pivotKey.frameworks)
+                .maybeSingle();
+              const hit = (data as { pivot?: unknown } | null)?.pivot ?? null;
+              if (hit) log('pivot_cache_hit', { documentHash: pivotKey.document_hash });
+              return hit;
+            },
+            write: async (pivot) => {
+              await db
+                .from('audit_pass1_cache')
+                .upsert({ ...pivotKey, pivot }, { onConflict: 'organization_id,document_hash,frameworks' });
+            }
+          }
+        );
         report.documentHash = hashDocument(extracted.text);
         log('multipass_done', { findings: report.findings.length, riskScore: report.riskScore });
         progress(85, 'analysis_done');

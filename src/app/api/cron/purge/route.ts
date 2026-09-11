@@ -71,6 +71,14 @@ async function runPurge() {
     .delete({ count: 'exact' })
     .lt('created_at', auditCutoff);
 
+  // The pivot cache holds verbatim evidence quotes, exactly like the
+  // findings it was derived from, so it lives under the same retention
+  // promise rather than quietly outliving the audit it came from.
+  const { count: pivotsDeleted, error: pivotErr } = await db
+    .from('audit_pass1_cache')
+    .delete({ count: 'exact' })
+    .lt('created_at', auditCutoff);
+
   const { count: webhooksDeleted, error: webhookErr } = await db
     .from('stripe_webhook_events')
     .delete({ count: 'exact' })
@@ -81,12 +89,13 @@ async function runPurge() {
     .delete({ count: 'exact' })
     .lt('window_start', rateCutoff);
 
-  const errors = [auditErr, webhookErr, rateErr].filter(Boolean).map((e) => e?.message);
+  const errors = [auditErr, pivotErr, webhookErr, rateErr].filter(Boolean).map((e) => e?.message);
   return NextResponse.json(
     {
       ok: errors.length === 0,
       deleted: {
         audits:        auditsDeleted ?? 0,
+        pivot_cache:   pivotsDeleted ?? 0,
         webhooks:      webhooksDeleted ?? 0,
         rate_limits:   rateLimitsDeleted ?? 0
       },

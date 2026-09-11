@@ -652,8 +652,55 @@ async function localizeOrThrow(
 /* Composition                                                        */
 /* ------------------------------------------------------------------ */
 
-export async function runMultiPassAudit(input: AuditInput): Promise<AuditReport> {
-  const pass1 = await legalAudit(input);
+/**
+ * Storage for the English pivot, injected so the engine stays free of
+ * database access. Both sides are best-effort: a cache that is down
+ * must never be able to stop an audit.
+ */
+export interface PivotCache {
+  read(): Promise<unknown | null>;
+  write(pivot: AuditPassResult): Promise<void>;
+}
+
+export async function runMultiPassAudit(
+  input: AuditInput,
+  cache?: PivotCache
+): Promise<AuditReport> {
+  // Pass 1 is the expensive half and it does not depend on the target
+  // language — it audits in English and pass 2 localises. Re-running it
+  // to produce the same audit in a second language is pure waste: the
+  // same document, the same frameworks, the same findings, paid for
+  // twice. Reuse the pivot and only the translation is billed.
+  let pass1: AuditPassResult | null = null;
+  if (cache) {
+    try {
+      const cached = await cache.read();
+      if (cached) {
+        const parsed = AuditPassSchema.safeParse(cached);
+        if (parsed.success) pass1 = parsed.data;
+        else alertOps('audit.pivot_cache_unreadable', { scope: input.frameworks });
+      }
+    } catch (err) {
+      // A cache miss and a broken cache must look the same from here.
+      alertOps('audit.pivot_cache_read_failed', {
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  }
+
+  if (!pass1) {
+    pass1 = await legalAudit(input);
+    if (cache) {
+      try {
+        await cache.write(pass1);
+      } catch (err) {
+        alertOps('audit.pivot_cache_write_failed', {
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }
+  }
+
   const { report: pass2, language } = await localizeReport(pass1, input.targetLanguage);
 
   const findings: AuditFinding[] = pass2.findings.map((f) => ({
