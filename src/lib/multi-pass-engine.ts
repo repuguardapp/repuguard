@@ -333,18 +333,32 @@ function resolveFrameworkId(raw: string, scope: FrameworkId[]): FrameworkId | nu
   return null;
 }
 
+/**
+ * Output budget for pass 1, scaled to the number of frameworks audited.
+ *
+ * 16K is comfortable for a single framework. Each additional one adds a
+ * full set of findings, so the ceiling has to move with the scope
+ * rather than sit at a fixed value that silently becomes too small at
+ * some point nobody predicted. Sonnet 4.6 allows 64K output, so even a
+ * full 13-framework audit stays inside the model's own limit.
+ */
+function maxTokensForScope(frameworkCount: number): number {
+  return Math.min(16384 + Math.max(0, frameworkCount - 1) * 8192, 64000);
+}
+
 export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
   const system = buildAuditSystemPrompt(input.frameworks);
   const message = await anthropic().messages.create({
     model: ANTHROPIC_MODEL,
-    // 16K is roomy for a thorough multi-finding audit. Sonnet 4.6
-    // tops out at 64K so we have headroom; the previous 4K cap was
-    // truncating outputs mid-array — Claude would write a confident
-    // executive summary mentioning N findings and then run out of
-    // budget before populating the findings[] in the tool input.
-    // Empirically a 7-finding detailed report is ~3K tokens; 16K
-    // covers a 30-finding policy without strain.
-    max_tokens: 16384,
+    // Scaled to the scope, because the output grows with it: each
+    // framework adds its own findings, and every finding carries 2-4
+    // paragraphs of analysis plus a recommendation and a verbatim
+    // quote. A flat 16K held for one framework (5-7 findings) and for
+    // Qatar + Saudi (8), then truncated a GDPR + EU AI Act audit
+    // mid-array after 113 seconds of generation — surfacing as a
+    // baffling "findings: expected array, received string", since a
+    // cut-off tool input never finishes parsing.
+    max_tokens: maxTokensForScope(input.frameworks.length),
     temperature: 0,
     system,
     tools: [buildSubmitAuditTool(input.frameworks)],
@@ -357,12 +371,40 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
     throw new Error('Anthropic did not call submit_audit — stop_reason=' + message.stop_reason);
   }
 
-  // toolUse.input is already a parsed object (Anthropic guarantees JSON
-  // schema conformance). We still run it through Zod for runtime safety
-  // and to produce the strongly-typed AuditPassResult.
-  const parsed = AuditPassSchema.safeParse(toolUse.input);
+  // Truncation is the failure this call is most exposed to, and it
+  // does not announce itself: the tool input simply stops mid-JSON and
+  // the next thing anyone sees is a type error deep in a Zod report.
+  // Name it here instead, before it can masquerade as a schema problem.
+  if (message.stop_reason === 'max_tokens') {
+    throw new Error(
+      `Pass 1 hit the output ceiling (${maxTokensForScope(input.frameworks.length)} tokens) ` +
+      `for ${input.frameworks.length} framework(s) and returned a truncated audit. ` +
+      `Raise maxTokensForScope.`
+    );
+  }
+
+  // toolUse.input is normally a parsed object. A findings array that
+  // arrives as a string is a real, observed shape — recover it rather
+  // than discard a generation that took nearly two minutes.
+  const raw = toolUse.input as Record<string, unknown>;
+  if (typeof raw.findings === 'string') {
+    try {
+      raw.findings = JSON.parse(raw.findings);
+      alertOps('audit.findings_arrived_as_string', { scope: input.frameworks });
+    } catch {
+      throw new Error(
+        `Pass 1 returned findings as an unparseable string (stop_reason=${message.stop_reason}). ` +
+        `Most likely a truncated tool input.`
+      );
+    }
+  }
+
+  const parsed = AuditPassSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new Error(`Audit tool input failed Zod validation: ${parsed.error.message}`);
+    throw new Error(
+      `Audit tool input failed Zod validation (stop_reason=${message.stop_reason}): ` +
+      parsed.error.message
+    );
   }
 
   // Self-consistency check — Pass 1 sometimes ships a summary that

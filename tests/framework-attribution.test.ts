@@ -46,9 +46,12 @@ function finding(framework: string) {
 }
 
 /** Anthropic returns the audit through a tool_use block. */
-function anthropicReply(findings: ReturnType<typeof finding>[]) {
+function anthropicReply(
+  findings: ReturnType<typeof finding>[] | string,
+  stopReason = 'tool_use'
+) {
   return {
-    stop_reason: 'tool_use',
+    stop_reason: stopReason,
     content: [
       {
         type: 'tool_use',
@@ -108,6 +111,62 @@ describe('Framework attribution of findings', () => {
   it('attributes to the only framework in scope on a single-framework audit', async () => {
     const result = await audit(['qatar_pdppl'], [finding('qatar-pdppl-2016')]);
     expect(result.findings[0]?.framework).toBe('qatar_pdppl');
+  });
+
+  it('names truncation instead of letting it surface as a schema error', async () => {
+    // What a GDPR + EU AI Act audit actually did on 11 Sep: 113 seconds
+    // of generation, then `findings: expected array, received string`
+    // — a cut-off tool input, not a schema problem.
+    mockCreate.mockResolvedValue(anthropicReply('[{"framework":"gdpr","cita', 'max_tokens'));
+    const { legalAudit } = await import('../src/lib/multi-pass-engine');
+
+    await expect(
+      legalAudit({
+        documentText: 'a privacy policy',
+        frameworks: ['gdpr', 'eu_ai_act'] as never,
+        targetLanguage: 'en'
+      })
+    ).rejects.toThrow(/output ceiling/);
+  });
+
+  it('recovers a findings array that arrives serialised rather than losing the run', async () => {
+    mockCreate.mockResolvedValue(anthropicReply(JSON.stringify([finding('gdpr')])));
+    const { legalAudit } = await import('../src/lib/multi-pass-engine');
+
+    const result = await legalAudit({
+      documentText: 'a privacy policy',
+      frameworks: ['gdpr'] as never,
+      targetLanguage: 'en'
+    });
+
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0]?.framework).toBe('gdpr');
+    expect(mockAlertOps).toHaveBeenCalledWith(
+      'audit.findings_arrived_as_string',
+      expect.anything()
+    );
+  });
+
+  it('grows the output budget with the number of frameworks', async () => {
+    mockCreate.mockResolvedValue(anthropicReply([finding('gdpr')]));
+    const { legalAudit } = await import('../src/lib/multi-pass-engine');
+    await legalAudit({
+      documentText: 'x',
+      frameworks: ['gdpr'] as never,
+      targetLanguage: 'en'
+    });
+    const single = mockCreate.mock.calls[0]?.[0].max_tokens;
+
+    mockCreate.mockClear();
+    mockCreate.mockResolvedValue(anthropicReply([finding('gdpr'), finding('eu_ai_act')]));
+    await legalAudit({
+      documentText: 'x',
+      frameworks: ['gdpr', 'eu_ai_act'] as never,
+      targetLanguage: 'en'
+    });
+    const pair = mockCreate.mock.calls[0]?.[0].max_tokens;
+
+    expect(pair).toBeGreaterThan(single);
   });
 
   it('refuses to guess when the value matches nothing in a multi-framework scope', async () => {
