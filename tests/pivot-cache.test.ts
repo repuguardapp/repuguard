@@ -112,7 +112,7 @@ describe('Pass 1 pivot cache', () => {
   });
 
   it('stores the pivot on a miss so the next language is cheap', async () => {
-    const write = vi.fn(async () => undefined);
+    const write = vi.fn(async (_pivot: unknown) => undefined);
 
     await audit({ read: async () => null, write });
 
