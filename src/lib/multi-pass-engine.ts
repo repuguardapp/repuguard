@@ -346,7 +346,40 @@ function maxTokensForScope(frameworkCount: number): number {
   return Math.min(16384 + Math.max(0, frameworkCount - 1) * 8192, 64000);
 }
 
+/** Pass 1 ran out of output budget before finishing the audit. */
+class Pass1TruncatedError extends Error {}
+
+const MAX_OUTPUT_TOKENS = 64000;
+
+/**
+ * Run pass 1 once, and never hand a truncated audit to the customer.
+ *
+ * Sizing an output budget by prediction is guesswork: a document that
+ * needs 30 findings under two frameworks will always exist somewhere
+ * past whatever number we pick. So the budget is an opening bid, not a
+ * promise — if the model runs out of room, the audit is retried once
+ * with double, up to the model's own ceiling. The customer sees a
+ * slower audit instead of an error, and we stop shipping estimates as
+ * if they were guarantees.
+ */
 export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
+  const budget = maxTokensForScope(input.frameworks.length);
+  try {
+    return await runPass1(input, budget);
+  } catch (err) {
+    if (!(err instanceof Pass1TruncatedError) || budget >= MAX_OUTPUT_TOKENS) throw err;
+
+    const retryBudget = Math.min(budget * 2, MAX_OUTPUT_TOKENS);
+    alertOps('audit.pass1_retried_after_truncation', {
+      scope: input.frameworks,
+      budget,
+      retryBudget
+    });
+    return runPass1(input, retryBudget);
+  }
+}
+
+async function runPass1(input: AuditInput, maxTokens: number): Promise<AuditPassResult> {
   const system = buildAuditSystemPrompt(input.frameworks);
   const message = await anthropic().messages.create({
     model: ANTHROPIC_MODEL,
@@ -358,7 +391,7 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
     // mid-array after 113 seconds of generation — surfacing as a
     // baffling "findings: expected array, received string", since a
     // cut-off tool input never finishes parsing.
-    max_tokens: maxTokensForScope(input.frameworks.length),
+    max_tokens: maxTokens,
     temperature: 0,
     system,
     tools: [buildSubmitAuditTool(input.frameworks)],
@@ -376,10 +409,9 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
   // the next thing anyone sees is a type error deep in a Zod report.
   // Name it here instead, before it can masquerade as a schema problem.
   if (message.stop_reason === 'max_tokens') {
-    throw new Error(
-      `Pass 1 hit the output ceiling (${maxTokensForScope(input.frameworks.length)} tokens) ` +
-      `for ${input.frameworks.length} framework(s) and returned a truncated audit. ` +
-      `Raise maxTokensForScope.`
+    throw new Pass1TruncatedError(
+      `Pass 1 hit the output ceiling (${maxTokens} tokens) for ` +
+      `${input.frameworks.length} framework(s) and returned a truncated audit.`
     );
   }
 
@@ -392,9 +424,11 @@ export async function legalAudit(input: AuditInput): Promise<AuditPassResult> {
       raw.findings = JSON.parse(raw.findings);
       alertOps('audit.findings_arrived_as_string', { scope: input.frameworks });
     } catch {
-      throw new Error(
-        `Pass 1 returned findings as an unparseable string (stop_reason=${message.stop_reason}). ` +
-        `Most likely a truncated tool input.`
+      // Unparseable means it was cut off mid-JSON — same failure as
+      // stop_reason=max_tokens, and it earns the same retry.
+      throw new Pass1TruncatedError(
+        `Pass 1 returned findings as an unparseable string ` +
+        `(stop_reason=${message.stop_reason}, budget=${maxTokens}).`
       );
     }
   }

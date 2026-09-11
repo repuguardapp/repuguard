@@ -113,11 +113,37 @@ describe('Framework attribution of findings', () => {
     expect(result.findings[0]?.framework).toBe('qatar_pdppl');
   });
 
-  it('names truncation instead of letting it surface as a schema error', async () => {
+  it('retries with a bigger budget when the output is truncated, rather than failing', async () => {
     // What a GDPR + EU AI Act audit actually did on 11 Sep: 113 seconds
     // of generation, then `findings: expected array, received string`
-    // — a cut-off tool input, not a schema problem.
-    mockCreate.mockResolvedValue(anthropicReply('[{"framework":"gdpr","cita', 'max_tokens'));
+    // — a cut-off tool input. The customer should get a slower audit,
+    // not an error.
+    mockCreate
+      .mockResolvedValueOnce(anthropicReply('[{"framework":"gdpr","cita', 'max_tokens'))
+      .mockResolvedValueOnce(anthropicReply([finding('gdpr'), finding('eu_ai_act')]));
+
+    const { legalAudit } = await import('../src/lib/multi-pass-engine');
+    const result = await legalAudit({
+      documentText: 'a privacy policy',
+      frameworks: ['gdpr', 'eu_ai_act'] as never,
+      targetLanguage: 'en'
+    });
+
+    expect(result.findings).toHaveLength(2);
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    // Second attempt asks for strictly more room than the first.
+    const first = mockCreate.mock.calls[0]?.[0].max_tokens;
+    const second = mockCreate.mock.calls[1]?.[0].max_tokens;
+    expect(second).toBeGreaterThan(first);
+    expect(mockAlertOps).toHaveBeenCalledWith(
+      'audit.pass1_retried_after_truncation',
+      expect.objectContaining({ budget: first, retryBudget: second })
+    );
+  });
+
+  it('gives up only once the model\'s own ceiling has been reached', async () => {
+    // Truncated twice: the retry is bounded, not a loop.
+    mockCreate.mockResolvedValue(anthropicReply('[{"framework":"gd', 'max_tokens'));
     const { legalAudit } = await import('../src/lib/multi-pass-engine');
 
     await expect(
@@ -126,7 +152,8 @@ describe('Framework attribution of findings', () => {
         frameworks: ['gdpr', 'eu_ai_act'] as never,
         targetLanguage: 'en'
       })
-    ).rejects.toThrow(/output ceiling/);
+    ).rejects.toThrow(/truncated audit/);
+    expect(mockCreate).toHaveBeenCalledTimes(2);
   });
 
   it('recovers a findings array that arrives serialised rather than losing the run', async () => {
