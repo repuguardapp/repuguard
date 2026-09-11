@@ -495,8 +495,10 @@ export async function POST(request: Request) {
       // closure returns.
       wipeBuffer(buffer);
 
-      // Persist audit row
-      const { data: audit, error: insertErr } = await db
+      // Persist audit row. `audit` is reassignable because a unique
+      // violation against an unusable earlier row is resolved by
+      // overwriting that row and carrying on with its id.
+      const { data: insertedAudit, error: insertErr } = await db
         .from('audits')
         .insert({
           organization_id: meta.organizationId,
@@ -511,6 +513,8 @@ export async function POST(request: Request) {
         })
         .select('id')
         .single();
+
+      let audit: { id: string } | null = (insertedAudit as { id: string } | null) ?? null;
 
       if (insertErr || !audit) {
         // PG 23505 = unique violation. Our audits_dedup_idx enforces
@@ -528,16 +532,56 @@ export async function POST(request: Request) {
           // of regulations than the one that was asked for.
           const { data: candidates, error: lookupErr } = await db
             .from('audits')
-            .select('id, risk_score, frameworks')
+            .select('id, risk_score, frameworks, status')
             .eq('organization_id', meta.organizationId)
             .eq('document_hash', report.documentHash)
             .eq('language', report.language);
 
           const wanted = [...report.frameworks].sort().join(',');
-          const existing = (candidates as { id: string; risk_score: number; frameworks: string[] }[] | null)
+          const existing = (candidates as
+            | { id: string; risk_score: number; frameworks: string[]; status: string }[]
+            | null)
             ?.find((c) => [...(c.frameworks ?? [])].sort().join(',') === wanted);
 
-          if (existing && !lookupErr) {
+          // Only a completed audit is worth replaying. A failed one is
+          // a record of something that did not work, and handing it
+          // back discards the audit we just produced: on 11 Sep a
+          // GDPR + EU AI Act run finished with 12 findings after 182
+          // seconds, collided with an earlier failed row for the same
+          // document, and the customer was shown that failure instead.
+          // Overwrite the stale row with the result we now have.
+          if (existing && !lookupErr && existing.status !== 'completed') {
+            log('replacing_unusable_audit', { auditId: existing.id, previousStatus: existing.status });
+            alertOps('audit.replaced_unusable_row', {
+              auditId: existing.id,
+              previousStatus: existing.status,
+              frameworks: report.frameworks
+            });
+
+            const { error: overwriteErr } = await db
+              .from('audits')
+              .update({
+                document_hash: report.documentHash,
+                frameworks: report.frameworks,
+                status: 'completed',
+                risk_score: report.riskScore,
+                summary: report.summary,
+                language: report.language,
+                completed_at: report.generatedAt,
+                error_message: null,
+                ...(cryptoFields ?? {})
+              })
+              .eq('id', existing.id);
+
+            if (!overwriteErr) {
+              // Clear any partial findings from the previous attempt so
+              // the report cannot mix two runs.
+              await db.from('audit_findings').delete().eq('audit_id', existing.id);
+              audit = { id: existing.id };
+            }
+          }
+
+          if (!audit && existing && !lookupErr) {
             log('idempotent_replay', { auditId: existing.id });
             await refundIfNeeded('idempotent_replay');
             const { count: existingFindingsCount } = await db
@@ -557,18 +601,23 @@ export async function POST(request: Request) {
           }
         }
 
-        log('supabase_write_failed', {
-          code: insertErr?.code,
-          message: insertErr?.message,
-          hint: insertErr?.hint
-        });
-        await refundIfNeeded('supabase_write_failed');
-        finish({
-          ok: false,
-          error: 'supabase_write_failed',
-          detail: insertErr?.message ?? 'audit row insert returned no id'
-        });
-        return;
+        // Reached only when nothing above recovered a usable row —
+        // `audit` is set when an unusable earlier row was overwritten,
+        // and the replay path above returns on its own.
+        if (!audit) {
+          log('supabase_write_failed', {
+            code: insertErr?.code,
+            message: insertErr?.message,
+            hint: insertErr?.hint
+          });
+          await refundIfNeeded('supabase_write_failed');
+          finish({
+            ok: false,
+            error: 'supabase_write_failed',
+            detail: insertErr?.message ?? 'audit row insert returned no id'
+          });
+          return;
+        }
       }
       log('audit_persisted', { auditId: audit.id });
 
