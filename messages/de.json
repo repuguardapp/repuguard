@@ -203,7 +203,12 @@
       "medium": "mittel",
       "low": "gering",
       "info": "Info"
-    }
+    },
+    "stateRunningTitle": "Prüfung läuft",
+    "stateRunningBody": "Diese Prüfung ist noch nicht abgeschlossen. Aktualisieren Sie die Seite in Kürze.",
+    "stateFailedTitle": "Prüfung nicht abgeschlossen",
+    "stateFailedBody": "Diese Prüfung wurde abgebrochen, bevor ein Bericht entstand. Daraus lässt sich in keine Richtung eine Aussage ableiten. Ein verbrauchtes Guthaben wurde erstattet.",
+    "stateFailedCta": "Neue Prüfung starten"
   },
   "editor": {
     "title": "Dokumenten-Editor",

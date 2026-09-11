@@ -203,7 +203,12 @@
       "medium": "medium",
       "low": "low",
       "info": "info"
-    }
+    },
+    "stateRunningTitle": "Audit in progress",
+    "stateRunningBody": "This audit hasn't finished yet. Refresh the page in a moment.",
+    "stateFailedTitle": "Audit did not complete",
+    "stateFailedBody": "This audit stopped before producing a report. No conclusion can be drawn from it either way. If a credit was spent, it has been returned.",
+    "stateFailedCta": "Start a new audit"
   },
   "editor": {
     "title": "Document editor",

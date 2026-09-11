@@ -203,7 +203,12 @@
       "medium": "medio",
       "low": "bajo",
       "info": "info"
-    }
+    },
+    "stateRunningTitle": "Auditoría en curso",
+    "stateRunningBody": "Esta auditoría aún no ha terminado. Actualiza la página en unos instantes.",
+    "stateFailedTitle": "La auditoría no se completó",
+    "stateFailedBody": "Esta auditoría se interrumpió antes de generar un informe. No puede extraerse ninguna conclusión, ni en un sentido ni en otro. Si se consumió un crédito, te ha sido devuelto.",
+    "stateFailedCta": "Iniciar una nueva auditoría"
   },
   "editor": {
     "title": "Editor de documentos",

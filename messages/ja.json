@@ -203,7 +203,12 @@
       "medium": "中",
       "low": "低",
       "info": "情報"
-    }
+    },
+    "stateRunningTitle": "監査を実行中",
+    "stateRunningBody": "この監査はまだ完了していません。しばらくしてからページを再読み込みしてください。",
+    "stateFailedTitle": "監査は完了しませんでした",
+    "stateFailedBody": "この監査はレポートを生成する前に中断しました。適合・不適合のいずれについても結論は導けません。クレジットが消費された場合は返却済みです。",
+    "stateFailedCta": "新しい監査を開始"
   },
   "editor": {
     "title": "ドキュメントエディタ",

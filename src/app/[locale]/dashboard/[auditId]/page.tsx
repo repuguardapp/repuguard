@@ -118,6 +118,16 @@ export default async function AuditDetailPage({ params }: PageProps) {
     viewerTier
   });
 
+  // Only a completed audit is a report. Without this gate the page
+  // rendered a failed audit as a normal report — headline, risk score,
+  // executive summary — and, because its findings list is empty, closed
+  // with "no findings, your document is compliant". The list view
+  // already showed it as failed; opening it told the customer the
+  // opposite. An audit that did not finish has no verdict to give.
+  if (a.status !== 'completed') {
+    return <AuditNotReady status={a.status} locale={params.locale} />;
+  }
+
   const { data: findings } = await supabase
     .from('audit_findings')
     .select('id,framework_id,citation,severity,title,body,recommendation,evidence')
@@ -308,6 +318,56 @@ export default async function AuditDetailPage({ params }: PageProps) {
       <section className="mt-12 hidden print:block text-xs text-muted-foreground">
         {t('footer', { id: a.id })}
       </section>
+    </div>
+  );
+}
+
+/**
+ * Shown in place of the report when an audit is not `completed`.
+ *
+ * `failed` is terminal — the pipeline stopped and produced no verdict.
+ * `pending` / `running` are transient; the page does not live-update
+ * yet, so it says so rather than implying it will.
+ */
+async function AuditNotReady({ status, locale }: { status: string; locale: string }) {
+  const t = await getTranslations('report');
+  const running = status === 'running' || status === 'pending';
+
+  return (
+    <div className="py-12">
+      <div className="mb-8 print:hidden">
+        <Button asChild variant="ghost" size="sm" className="-ms-3">
+          <Link href="/dashboard">
+            <ArrowLeft className="me-2 h-4 w-4 rtl:-scale-x-100" />
+            {t('back')}
+          </Link>
+        </Button>
+      </div>
+
+      <Card className={running ? undefined : 'border-destructive/30 bg-destructive/5'}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            {running ? (
+              <Info className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            )}
+            {running ? t('stateRunningTitle') : t('stateFailedTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <p className="text-sm text-muted-foreground">
+            {running ? t('stateRunningBody') : t('stateFailedBody')}
+          </p>
+          {!running && (
+            <Button asChild size="sm" className="justify-self-start">
+              <Link href="/audit" locale={locale}>
+                {t('stateFailedCta')}
+              </Link>
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
