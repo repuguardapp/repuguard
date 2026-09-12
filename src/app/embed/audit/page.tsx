@@ -69,8 +69,8 @@ export default async function EmbedAuditPage({ searchParams }: PageProps) {
               labels={buildAuditFormLabels(t, ((messages as unknown as { errors?: Record<string, string> }).errors ?? {}))}
               frameworks={
                 preselect.length > 0
-                  ? FRAMEWORKS.filter((f) => preselect.includes(f.id)).map((f) => ({ id: f.id, name: f.name }))
-                  : FRAMEWORKS.map((f) => ({ id: f.id, name: f.name }))
+                  ? FRAMEWORKS.filter((f) => preselect.includes(f.id)).map((f) => ({ id: f.id, name: f.name, jurisdiction: f.jurisdiction }))
+                  : FRAMEWORKS.map((f) => ({ id: f.id, name: f.name, jurisdiction: f.jurisdiction }))
               }
               defaultLanguage={locale}
               organizationId={ANONYMOUS_ORG_ID}

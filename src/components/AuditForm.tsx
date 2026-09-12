@@ -1,13 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NATIVE_LOCALES, NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { cn } from '@/lib/utils';
+
+/**
+ * The language a report is most likely wanted in, per jurisdiction.
+ *
+ * Only unambiguous cases. 'EU' is deliberately absent: it spans
+ * twenty-four official languages and guessing one would be worse than
+ * suggesting none.
+ */
+const LANGUAGE_BY_JURISDICTION: Readonly<Record<string, string>> = {
+  QA: 'ar',
+  SA: 'ar',
+  AE: 'ar',
+  BH: 'ar',
+  KW: 'ar',
+  OM: 'ar',
+  JP: 'ja',
+  BR: 'pt-br',
+  UK: 'en',
+  CA: 'en',
+  'US-CA': 'en'
+};
 
 interface FrameworkOption {
   id: string;
   name: string;
+  /** ISO-ish jurisdiction tag ('EU', 'SA', 'JP'…), used to suggest a report language. */
+  jurisdiction?: string;
 }
 
 /**
@@ -22,6 +46,9 @@ export interface AuditFormLabels {
   uploadHint: string;
   targetLanguage: string;
   targetLanguageHint: string;
+  languageSuggested: string;
+  languageOther: string;
+  languageOtherPlaceholder: string;
   framework: string;
   frameworkHint: string;
   submit: string;
@@ -168,6 +195,28 @@ export function AuditForm({
     () => new Set(defaultFrameworkIds)
   );
 
+  const [language, setLanguage] = useState(defaultLanguage);
+  // True once the customer asks for a language we don't ship a UI in —
+  // the engine handles any BCP-47 tag, so the field stays available
+  // rather than the chip row quietly becoming the limit of the promise.
+  const [customLanguage, setCustomLanguage] = useState(
+    () => !NATIVE_LOCALE_CODES.includes(defaultLanguage)
+  );
+
+  /**
+   * Languages worth offering first, given what is being audited: a
+   * Saudi PDPL audit most likely wants an Arabic report, a Japanese
+   * APPI audit a Japanese one. The jurisdiction is already on every
+   * framework, so this costs nothing and saves the customer from
+   * translating our own catalogue in their head.
+   */
+  const suggestedLanguages = new Set(
+    frameworks
+      .filter((f) => selectedFrameworks.has(f.id))
+      .map((f) => LANGUAGE_BY_JURISDICTION[f.jurisdiction ?? ''])
+      .filter((code): code is string => Boolean(code))
+  );
+
   function toggleFramework(id: string) {
     setSelectedFrameworks((current) => {
       const next = new Set(current);
@@ -201,6 +250,10 @@ export function AuditForm({
     // Belt-and-braces: the button is disabled for both of these.
     if (fileIssue) return;
     if (selectedFrameworks.size === 0) return;
+    // "Other language" with an empty field would post a value the
+    // server rejects as invalid metadata — a 400 where the real
+    // message is "you haven't told us the language yet".
+    if (language.trim().length < 2) return;
     setView({ phase: 'running', progress: 5 });
 
     const form = new FormData(event.currentTarget);
@@ -347,23 +400,84 @@ export function AuditForm({
         })}
       </CheckboxGroup>
 
-      <Field label={labels.targetLanguage} hint={labels.targetLanguageHint}>
-        <input
-          type="text"
-          name="targetLanguage"
-          required
-          defaultValue={defaultLanguage}
-          placeholder="en, fr, ja, ar, vi…"
-          className={inputClass}
-        />
-      </Field>
+      {/* One tap for the languages we ship, a free field for the rest.
+          Typing a BCP-47 tag was asking the customer to know a standard
+          in order to use the feature — and it hid the promise, which is
+          that any language works, not that we accept two letters. */}
+      <CheckboxGroup legend={labels.targetLanguage} hint={labels.targetLanguageHint}>
+        <div className="col-span-full flex flex-wrap gap-2">
+          {NATIVE_LOCALES.map((locale) => {
+            const active = !customLanguage && language === locale.code;
+            const suggested = suggestedLanguages.has(locale.code);
+            return (
+              <button
+                key={locale.code}
+                type="button"
+                onClick={() => {
+                  setCustomLanguage(false);
+                  setLanguage(locale.code);
+                }}
+                aria-pressed={active}
+                className={cn(
+                  'rounded-md border px-3 py-2 text-sm transition',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                  active
+                    ? 'border-primary/40 bg-accent font-medium'
+                    : 'border-input bg-background hover:bg-accent/40'
+                )}
+              >
+                <span dir={locale.direction}>{locale.endonym}</span>
+                {suggested && !active && (
+                  <span className="ms-2 text-xs text-muted-foreground">
+                    {labels.languageSuggested}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => {
+              setCustomLanguage(true);
+              setLanguage('');
+            }}
+            aria-pressed={customLanguage}
+            className={cn(
+              'rounded-md border px-3 py-2 text-sm transition',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+              customLanguage
+                ? 'border-primary/40 bg-accent font-medium'
+                : 'border-input bg-background hover:bg-accent/40'
+            )}
+          >
+            {labels.languageOther}
+          </button>
+        </div>
+
+        {customLanguage && (
+          <input
+            type="text"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            autoFocus
+            placeholder={labels.languageOtherPlaceholder}
+            aria-label={labels.languageOther}
+            className={cn(inputClass, 'col-span-full')}
+          />
+        )}
+      </CheckboxGroup>
+
+      {/* Exactly one element ever carries this name — two would make
+          FormData.get() read the first and silently drop the other. */}
+      <input type="hidden" name="targetLanguage" value={language.trim()} />
 
       <input type="hidden" name="organizationId" value={organizationId} />
 
       <Button
         type="submit"
         size="lg"
-        disabled={!!fileIssue || selectedFrameworks.size === 0}
+        disabled={!!fileIssue || selectedFrameworks.size === 0 || language.trim().length < 2}
         className="w-full sm:w-auto"
       >
         {labels.submit}
@@ -501,7 +615,10 @@ function CheckboxGroup({
   meta?: string;
   children: React.ReactNode;
 }) {
-  const labelId = 'audit-framework-group-label';
+  // Generated, not hardcoded: the form renders this wrapper more than
+  // once, and a duplicated id would point every group's aria-labelledby
+  // at the first label on the page.
+  const labelId = useId();
   return (
     <div className="grid gap-2">
       <div className="flex items-baseline justify-between gap-3">

@@ -86,7 +86,7 @@ export default async function AuditPage({ params: { locale } }: PageProps) {
 
       <AuditForm
         labels={buildAuditFormLabels(t, errorMessages)}
-        frameworks={FRAMEWORKS.map((f) => ({ id: f.id, name: f.name }))}
+        frameworks={FRAMEWORKS.map((f) => ({ id: f.id, name: f.name, jurisdiction: f.jurisdiction }))}
         defaultFrameworkIds={defaultFrameworkIds}
         defaultLanguage={locale}
         organizationId={orgId}
