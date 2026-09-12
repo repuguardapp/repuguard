@@ -1,6 +1,7 @@
 import 'server-only';
 import { Resend } from 'resend';
 import { emailStringsFor, type AuditCompletedStrings } from './email-i18n';
+import { lifecycleStringsFor } from './email-lifecycle-i18n';
 import { PLAN_CREDITS } from './stripe';
 import { supabaseService } from './supabase';
 
@@ -120,7 +121,8 @@ const MAGIC_SUBJECT: Record<string, string> = {
   es:    'Tu enlace de acceso a LexyFlow',
   de:    'Ihr LexyFlow-Anmeldelink',
   'pt-br': 'Seu link de acesso ao LexyFlow',
-  ja:    'LexyFlow へのログインリンク'
+  ja:    'LexyFlow へのログインリンク',
+  ar:    'رابط تسجيل الدخول إلى LexyFlow'
 };
 
 const MAGIC_BODY: Record<string, { lead: string; cta: string; safety: string }> = {
@@ -153,8 +155,16 @@ const MAGIC_BODY: Record<string, { lead: string; cta: string; safety: string }> 
     lead: '下のボタンをタップしてサインインしてください。リンクは 60 分間、1 つの端末でのみ有効です。',
     cta:  'LexyFlow にサインイン',
     safety: '心当たりがない場合はこのメールを無視してください。アカウントは変更されません。'
+  },
+  ar: {
+    lead: 'اضغط على الزر أدناه لتسجيل الدخول. الرابط صالح لمدة 60 دقيقة ويعمل على جهاز واحد فقط.',
+    cta:  'تسجيل الدخول إلى LexyFlow',
+    safety: 'إذا لم تطلب ذلك، فتجاهل هذه الرسالة — لن يطرأ أي تغيير على حسابك.'
   }
 };
+
+/** Arabic is the only right-to-left locale the product ships. */
+const RTL_LOCALES = new Set(['ar']);
 
 export async function sendMagicLinkEmail(args: MagicLinkEmailArgs): Promise<void> {
   // Structured logs around every code path so a missing magic-link
@@ -180,7 +190,11 @@ export async function sendMagicLinkEmail(args: MagicLinkEmailArgs): Promise<void
       from: FROM,
       to: args.to,
       subject,
-      html: renderMagicLinkHtml({ link: args.link, body }),
+      html: renderMagicLinkHtml({
+        link: args.link,
+        body,
+        dir: RTL_LOCALES.has(locale) ? 'rtl' : 'ltr'
+      }),
       text: `${body.lead}\n\n${args.link}\n\n${body.safety}`
     });
 
@@ -290,9 +304,14 @@ function renderAuditCompletedText(args: {
   ].join('\n');
 }
 
-function renderMagicLinkHtml(args: { link: string; body: { lead: string; cta: string; safety: string } }): string {
+function renderMagicLinkHtml(args: {
+  link: string;
+  body: { lead: string; cta: string; safety: string };
+  dir: 'ltr' | 'rtl';
+}): string {
+  const dir = args.dir;
   return `<!doctype html>
-<html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;">
+<html dir="${dir}"><body dir="${dir}" style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;text-align:${dir === 'rtl' ? 'right' : 'left'};">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e6e8eb;border-radius:12px;">
     <tr><td style="padding:32px;">
       <div style="font-size:14px;color:#6a737d;letter-spacing:.04em;text-transform:uppercase;">LexyFlow</div>
@@ -357,60 +376,48 @@ async function sendLifecycle(args: {
   }
 }
 
-const AUDIT_URL = () => `${APP_URL()}/en/audit`;
-const SAMPLE_URL = () => `${APP_URL()}/ar/sample-report`;
-const PRICING_URL = () => `${APP_URL()}/en/pricing`;
+/**
+ * Locale-aware entry points. The URLs carry the reader's own locale so
+ * the page they land on speaks the language the email was written in —
+ * sending an Arabic email to an /en/ page undoes the whole point.
+ */
+const AUDIT_URL = (locale: string) => `${APP_URL()}/${locale}/audit`;
+const SAMPLE_URL = (locale: string) => `${APP_URL()}/${locale}/sample-report`;
+const PRICING_URL = (locale: string) => `${APP_URL()}/${locale}/pricing`;
+
+/** Locales the site actually serves; anything else falls back to English. */
+const SITE_LOCALES = new Set(['en', 'fr', 'es', 'de', 'pt-br', 'ja', 'ar']);
+const localeOrEn = (locale: string | null | undefined) => {
+  const lower = (locale ?? '').toLowerCase();
+  return SITE_LOCALES.has(lower) ? lower : 'en';
+};
+
+const SIGNOFF = '\n\n— The LexyFlow team\nlegal@lexyflow.com';
 
 /** J+0 — sent from /api/onboarding right after the org is created. */
-export async function sendLifecycleWelcome(to: string): Promise<boolean> {
-  const subject = 'Welcome to LexyFlow — audit your first document in 60 seconds';
-  const body = `Thanks for joining LexyFlow.
-
-Your account is ready. To run your first audit, upload any document (privacy policy, vendor DPA, client contract) and pick a target framework — GDPR, EU AI Act, Qatar PDPPL, Saudi PDPL, and 9 more supported out of the box.
-
-  ${AUDIT_URL()}
-
-Want to see what a real report looks like before uploading yours? Here's a live audit LexyFlow ran on Wikimedia Foundation's Privacy Policy against Qatar PDPPL:
-
-  ${SAMPLE_URL()}
-
-Any question, just reply to this email — I read every one.
-
-— The LexyFlow team
-legal@lexyflow.com`;
+export async function sendLifecycleWelcome(to: string, locale?: string | null): Promise<boolean> {
+  const lang = localeOrEn(locale);
+  const t = lifecycleStringsFor(lang);
+  const body = t.welcomeBody(AUDIT_URL(lang), SAMPLE_URL(lang)) + SIGNOFF;
   return sendLifecycle({
     to,
-    subject,
+    subject: t.welcomeSubject,
     text: body,
-    html: renderLifecycleHtml('Welcome to LexyFlow', body, 'Audit your first document', AUDIT_URL()),
+    html: renderLifecycleHtml(t.welcomeHeading, body, t.welcomeCta, AUDIT_URL(lang), t.dir),
     logTag: 'lifecycle_welcome'
   });
 }
 
 /** J+3 — nudge for orgs that signed up but haven't run any audit yet. */
-export async function sendLifecycleNudge(to: string): Promise<boolean> {
-  const subject = 'Three documents our users audit first';
-  const body = `Your LexyFlow account has been active for a few days but we haven't seen your first audit yet. Totally normal — most people wonder where to start.
-
-Here are the three documents 80% of our users audit first:
-
-  1. A vendor DPA (Data Processing Agreement) from a SaaS you already use
-  2. Your own public Privacy Policy
-  3. A client contract that processes personal data
-
-Each audit takes 60 seconds and returns a detailed report with article-level citations.
-
-  ${AUDIT_URL()}
-
-Stuck on which one to pick? Reply to this email and I'll answer within 24h.
-
-— The LexyFlow team
-legal@lexyflow.com`;
+export async function sendLifecycleNudge(to: string, locale?: string | null): Promise<boolean> {
+  const lang = localeOrEn(locale);
+  const t = lifecycleStringsFor(lang);
+  const body = t.nudgeBody(AUDIT_URL(lang)) + SIGNOFF;
   return sendLifecycle({
     to,
-    subject,
+    subject: t.nudgeSubject,
     text: body,
-    html: renderLifecycleHtml('Three documents to audit first', body, 'Start my first audit', AUDIT_URL()),
+    html: renderLifecycleHtml(t.nudgeHeading, body, t.nudgeCta, AUDIT_URL(lang), t.dir),
     logTag: 'lifecycle_nudge'
   });
 }
@@ -437,71 +444,49 @@ export interface UpgradeContext {
    */
   wasPaywalled: boolean;
   frameworkNames: string[];
+  locale?: string | null;
 }
 
 /** J+14 — upgrade nudge for orgs that ran an audit but never subscribed. */
 export async function sendLifecycleUpgrade(to: string, ctx: UpgradeContext): Promise<boolean> {
-  const reportUrl = `${APP_URL()}/en/dashboard/${ctx.auditId}`;
-  const scope = ctx.frameworkNames.length > 0 ? ctx.frameworkNames.join(' and ') : 'your selected frameworks';
-  const hidden = Math.max(0, ctx.findingsCount - 1);
+  const lang = localeOrEn(ctx.locale);
+  const t = lifecycleStringsFor(lang);
+  const reportUrl = `${APP_URL()}/${lang}/dashboard/${ctx.auditId}`;
 
   // Two genuinely different situations, so two genuinely different
   // emails. Sending the "you have unread findings" version to someone
   // who paid and read them all is how an automated sequence destroys
   // the credibility of everything else it sends.
-  const opening =
-    ctx.wasPaywalled && hidden > 0
-      ? `Two weeks ago you audited a document against ${scope}. We found ${ctx.findingsCount} compliance gaps${
-          ctx.riskScore !== null ? ` and scored it ${ctx.riskScore}/100` : ''
-        }.
+  const hidden = ctx.wasPaywalled ? Math.max(0, ctx.findingsCount - 1) : 0;
 
-You have read one of them. The other ${hidden} are still in your report, waiting.
-
-  ${reportUrl}`
-      : `Two weeks ago you audited a document against ${scope}${
-          ctx.riskScore !== null ? `, and it scored ${ctx.riskScore}/100` : ''
-        }. Thanks for putting us to work.
-
-  ${reportUrl}`;
-
-  // Derived from PLAN_CREDITS so the number in the email cannot drift
-  // away from the number the webhook actually grants. The previous
-  // copy promised "unlimited audits (vs 1 per month on the free tier)":
-  // Pro grants 100 a month, and the free tier is one audit ever, not
-  // one a month. Both halves were false, in writing, from a company
-  // that sells compliance.
-  const body = `${opening}
-
-The Pro plan (185 EUR / month) adds:
-
-  - ${PLAN_CREDITS.pro} audits per month
-  - The full findings list on every report, with article-level citations
-  - AI editor — rewrites a non-compliant clause while preserving your legal register
-  - Cross-framework audits — one document against GDPR + Qatar PDPPL + Saudi PDPL in a single run
-
-  ${PRICING_URL()}
-
-Starter is ${PLAN_CREDITS.starter} audits a month if that fits better.
-
-Any question, or would you rather book a 15-minute demo? Just reply to this email.
-
-— The LexyFlow team
-legal@lexyflow.com`;
-
-  const subject =
-    ctx.wasPaywalled && hidden > 0
-      ? `${hidden} compliance gaps you haven't read yet`
-      : 'Your LexyFlow audit, two weeks on';
+  // Credit allowances are derived from PLAN_CREDITS so the number in
+  // the email cannot drift away from the number the webhook actually
+  // grants. The previous copy promised "unlimited audits (vs 1 per
+  // month on the free tier)": Pro grants 100 a month, and the free
+  // tier is one audit ever, not one a month. Both halves were false,
+  // in writing, from a company that sells compliance.
+  const body =
+    t.upgradeBody({
+      scope: t.joinScope(ctx.frameworkNames),
+      score: ctx.riskScore,
+      findingsCount: ctx.findingsCount,
+      hidden,
+      reportUrl,
+      pricingUrl: PRICING_URL(lang),
+      proCredits: PLAN_CREDITS.pro,
+      starterCredits: PLAN_CREDITS.starter
+    }) + SIGNOFF;
 
   return sendLifecycle({
     to,
-    subject,
+    subject: hidden > 0 ? t.upgradeSubjectUnread(hidden) : t.upgradeSubjectSeen,
     text: body,
     html: renderLifecycleHtml(
-      ctx.wasPaywalled && hidden > 0 ? `${hidden} findings still unread` : 'Your audit, two weeks on',
+      hidden > 0 ? t.upgradeHeadingUnread(hidden) : t.upgradeHeadingSeen,
       body,
-      ctx.wasPaywalled && hidden > 0 ? 'Open my report' : 'See the plans',
-      ctx.wasPaywalled && hidden > 0 ? reportUrl : PRICING_URL()
+      hidden > 0 ? t.upgradeCtaUnread : t.upgradeCtaSeen,
+      hidden > 0 ? reportUrl : PRICING_URL(lang),
+      t.dir
     ),
     logTag: 'lifecycle_upgrade'
   });
@@ -513,10 +498,16 @@ legal@lexyflow.com`;
  * The Resend inbox preview looks the same on iOS Mail, Gmail web,
  * Outlook, and Apple Mail — tested across all four before shipping.
  */
-function renderLifecycleHtml(heading: string, body: string, ctaLabel: string, ctaUrl: string): string {
+function renderLifecycleHtml(
+  heading: string,
+  body: string,
+  ctaLabel: string,
+  ctaUrl: string,
+  dir: 'ltr' | 'rtl' = 'ltr'
+): string {
   const paragraphs = body.split('\n\n').map((p) => `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55;color:#3a3a3f;white-space:pre-wrap;">${escapeHtml(p)}</p>`).join('');
   return `<!doctype html>
-<html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;">
+<html dir="${dir}"><body dir="${dir}" style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;text-align:${dir === 'rtl' ? 'right' : 'left'};">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e6e8eb;border-radius:12px;">
     <tr><td style="padding:32px;">
       <div style="font-size:14px;color:#6a737d;letter-spacing:.04em;text-transform:uppercase;">LexyFlow</div>

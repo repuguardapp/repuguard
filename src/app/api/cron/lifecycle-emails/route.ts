@@ -64,7 +64,7 @@ async function run() {
   // ---- J+3 nudge ----------------------------------------------------
   const { data: nudgeCandidates } = await db
     .from('organizations')
-    .select('id, created_at')
+    .select('id, created_at, ui_locale')
     .lt('created_at', nudgeCutoff)
     .is('lifecycle_nudge_sent_at', null)
     .not('id', 'eq', '00000000-0000-0000-0000-000000000000')
@@ -87,7 +87,10 @@ async function run() {
     }
     const email = await ownerEmail(org.id);
     if (!email) { stats.nudge_skipped++; continue; }
-    const sent = await sendLifecycleNudge(email);
+    // The org already told us which language it works in. Nurturing a
+    // Riyadh prospect in English, after their report came back in
+    // Arabic, undercuts the one claim the product is built on.
+    const sent = await sendLifecycleNudge(email, org.ui_locale);
     if (sent) {
       await db.from('organizations').update({ lifecycle_nudge_sent_at: new Date().toISOString() }).eq('id', org.id);
       stats.nudge_sent++;
@@ -97,7 +100,7 @@ async function run() {
   // ---- J+14 upgrade -------------------------------------------------
   const { data: upgradeCandidates } = await db
     .from('organizations')
-    .select('id, created_at')
+    .select('id, created_at, ui_locale')
     .lt('created_at', upgradeCutoff)
     .is('lifecycle_upgrade_sent_at', null)
     .not('id', 'eq', '00000000-0000-0000-0000-000000000000')
@@ -140,7 +143,7 @@ async function run() {
       stats.upgrade_skipped++;
       continue;
     }
-    const sent = await sendLifecycleUpgrade(email, context);
+    const sent = await sendLifecycleUpgrade(email, { ...context, locale: org.ui_locale });
     if (sent) {
       await db.from('organizations').update({ lifecycle_upgrade_sent_at: new Date().toISOString() }).eq('id', org.id);
       stats.upgrade_sent++;

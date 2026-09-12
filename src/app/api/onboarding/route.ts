@@ -96,7 +96,9 @@ export async function POST(request: Request) {
   // us from double-sends if they do).
   if (user.email) {
     const { sendLifecycleWelcome } = await import('@/lib/email');
-    const sent = await sendLifecycleWelcome(user.email);
+    // The very first email anyone receives from us, in the language
+    // they just chose in the product.
+    const sent = await sendLifecycleWelcome(user.email, body.uiLocale);
     if (sent) {
       await admin
         .from('organizations')
