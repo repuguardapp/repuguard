@@ -18,6 +18,23 @@ import type { MetadataRoute } from 'next';
 
 const PRIVATE_PATHS = ['/api/', '/dashboard/', '/admin/', '/onboarding', '/monitoring/', '/embed/'];
 
+/**
+ * Every private path, in both the shape it is written above and the
+ * shape it actually has on the site.
+ *
+ * The middleware forces a locale prefix onto every non-API request, so
+ * the real URL of the dashboard is /en/dashboard, not /dashboard.
+ * robots.txt matches on a literal prefix from the root, which means
+ * this file spent its life disallowing paths that redirect and
+ * allowing the ones that exist. Every private surface was crawlable.
+ *
+ * `/*\/dashboard/` covers all seven locales in one line — the wildcard
+ * is honoured by Google and Bing. The unprefixed form is kept because
+ * /api/ genuinely is unprefixed (middleware skips it) and because a
+ * redirect is still a URL a crawler can request.
+ */
+const DISALLOW = PRIVATE_PATHS.flatMap((path) => [path, `/*${path}`]);
+
 const AI_TRAINING_USER_AGENTS = [
   'GPTBot',           // OpenAI
   'ChatGPT-User',     // OpenAI ChatGPT browsing
@@ -46,7 +63,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       // Search engines: marketing surface only.
-      { userAgent: '*', allow: '/', disallow: PRIVATE_PATHS },
+      { userAgent: '*', allow: '/', disallow: DISALLOW },
       // AI crawlers: blanket block.
       ...AI_TRAINING_USER_AGENTS.map((ua) => ({ userAgent: ua, disallow: '/' }))
     ],
