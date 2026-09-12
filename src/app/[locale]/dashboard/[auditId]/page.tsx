@@ -12,7 +12,7 @@ import { supabaseService } from '@/lib/supabase';
 import { createSupabaseServerClient, getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 import { getTierForOrg } from '@/lib/tier';
 import { ANONYMOUS_ORG_ID, applyPaywall, isPaywalled, type ViewerTier } from '@/lib/paywall';
-import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
+import { getLocaleDescriptor } from '@/i18n/locales';
 import type { Severity } from '@/types/audit';
 
 export const dynamic = 'force-dynamic';
@@ -71,27 +71,22 @@ export default async function AuditDetailPage({ params }: PageProps) {
   if (!audit) notFound();
   const a = audit as AuditDetailRow;
 
-  // Chrome-content language alignment: when the report was generated
-  // in a native locale we ship (a.language) but the URL was served
-  // under a different locale (params.locale), the user sees report
-  // body text in language X but every button, header and CTA in
-  // language Y. The "Unlock the AI editor" → /<urlLocale>/pricing
-  // mismatch is the most visible symptom. Server-redirect so the URL
-  // always reflects the report's language.
+  // The report's language and the reader's language are different
+  // things, and this page used to conflate them: generating an Arabic
+  // report redirected the whole interface into Arabic, right-to-left.
   //
-  // Exception: anonymous-org audits are share-link contracts. The
-  // sharer's URL choice is intentional (a French CISO sharing a
-  // demo with English colleagues uses /en/dashboard/<id> on purpose).
-  // We don't second-guess the sharer.
-  const auditLang = (a.language ?? '').toLowerCase();
-  if (
-    a.organization_id !== ANONYMOUS_ORG_ID &&
-    auditLang &&
-    auditLang !== params.locale &&
-    (NATIVE_LOCALE_CODES as readonly string[]).includes(auditLang)
-  ) {
-    redirect(`/${auditLang}/dashboard/${params.auditId}`);
-  }
+  // That is backwards for the case we actually sell. A French
+  // compliance officer producing an Arabic report for a Saudi
+  // subsidiary does not read Arabic — the engine exists precisely to
+  // "deliver reports in languages we do not staff for". Throwing their
+  // own dashboard into a script they cannot navigate, and silently
+  // rewriting their UI language preference, is the opposite of the
+  // feature.
+  //
+  // The chrome stays in the reader's locale. The report body carries
+  // its own `lang` and `dir`, which is what those attributes are for:
+  // a document in one language quoted inside a page in another.
+  const reportLocale = getLocaleDescriptor((a.language ?? params.locale).toLowerCase());
 
   // Auth gate: anonymous-org reports are public-by-UUID; everything
   // else requires a logged-in user. We deliberately do not check that
@@ -187,6 +182,7 @@ export default async function AuditDetailPage({ params }: PageProps) {
         </div>
       </div>
 
+      <div lang={reportLocale.code} dir={reportLocale.direction}>
       <header className="grid gap-3 print:gap-2">
         <div className="flex flex-wrap items-center gap-2">
           {a.frameworks.map((id) => (
@@ -318,6 +314,7 @@ export default async function AuditDetailPage({ params }: PageProps) {
       <section className="mt-12 hidden print:block text-xs text-muted-foreground">
         {t('footer', { id: a.id })}
       </section>
+      </div>
     </div>
   );
 }
