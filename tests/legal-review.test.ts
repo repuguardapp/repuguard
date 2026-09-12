@@ -24,8 +24,10 @@ let currentUser: { id: string; email: string | null } | null;
 let updated: { id: string }[];
 
 function install() {
+  // The route uses getCurrentAdminUser, which applies the short admin
+  // time-box on top of the identity check — see src/lib/session-policy.
   vi.doMock('@/lib/supabase-server', () => ({
-    getCurrentUser: async () => currentUser
+    getCurrentAdminUser: async () => currentUser
   }));
   vi.doMock('@/lib/alert', () => ({ alertOps: () => undefined }));
   vi.doMock('@/lib/supabase', () => ({

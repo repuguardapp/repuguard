@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { isAdminEmail } from '@/lib/admin';
 import { alertOps } from '@/lib/alert';
 import { supabaseService } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/supabase-server';
+import { getCurrentAdminUser } from '@/lib/supabase-server';
 
 /**
  * The editorial gate of the Acquisition brain.
@@ -33,7 +33,7 @@ const Body = z.object({
 });
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
+  const user = await getCurrentAdminUser();
   if (!user || !isAdminEmail(user.email)) {
     // Deliberately the same answer for "not signed in" and "signed in
     // but not an admin": the existence of the queue is not something a

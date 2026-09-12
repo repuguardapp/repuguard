@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { supabaseService } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/supabase-server';
+import { getCurrentAdminUser } from '@/lib/supabase-server';
 
 /**
  * The legal review queue — the only screen the acquisition engine ever
@@ -53,7 +53,7 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
 
   // 404 rather than 403: an internal tool should not confirm it exists
   // to someone who has no business here.
-  const user = await getCurrentUser();
+  const user = await getCurrentAdminUser();
   if (!user || !isAdminEmail(user.email)) notFound();
 
   const db = supabaseService();
