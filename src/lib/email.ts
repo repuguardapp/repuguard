@@ -1,6 +1,7 @@
 import 'server-only';
 import { Resend } from 'resend';
 import { emailStringsFor, type AuditCompletedStrings } from './email-i18n';
+import { PLAN_CREDITS } from './stripe';
 import { supabaseService } from './supabase';
 
 /**
@@ -414,30 +415,94 @@ legal@lexyflow.com`;
   });
 }
 
+/**
+ * What the J+14 email knows about the recipient's own audit.
+ *
+ * All of it comes from rows we already have. The previous version of
+ * this email pitched features to someone whose document we had just
+ * finished analysing — the strongest sales argument in the business,
+ * sitting unused in the database.
+ */
+export interface UpgradeContext {
+  auditId: string;
+  riskScore: number | null;
+  /** Findings the audit produced. */
+  findingsCount: number;
+  /**
+   * True when the report was the free trial, so the paywall showed one
+   * finding and withheld the rest. False when a credit paid for it and
+   * the customer has already read everything — a completely different
+   * conversation, and claiming otherwise in an email they can check
+   * against the page in front of them would be a lie with a URL.
+   */
+  wasPaywalled: boolean;
+  frameworkNames: string[];
+}
+
 /** J+14 — upgrade nudge for orgs that ran an audit but never subscribed. */
-export async function sendLifecycleUpgrade(to: string): Promise<boolean> {
-  const subject = 'You used your free audit — here is what Pro unlocks';
-  const body = `A few days back you ran your first audit on LexyFlow. Thanks for trying it out.
+export async function sendLifecycleUpgrade(to: string, ctx: UpgradeContext): Promise<boolean> {
+  const reportUrl = `${APP_URL()}/en/dashboard/${ctx.auditId}`;
+  const scope = ctx.frameworkNames.length > 0 ? ctx.frameworkNames.join(' and ') : 'your selected frameworks';
+  const hidden = Math.max(0, ctx.findingsCount - 1);
 
-If you want to keep going, the Pro plan (185 EUR / month) unlocks:
+  // Two genuinely different situations, so two genuinely different
+  // emails. Sending the "you have unread findings" version to someone
+  // who paid and read them all is how an automated sequence destroys
+  // the credibility of everything else it sends.
+  const opening =
+    ctx.wasPaywalled && hidden > 0
+      ? `Two weeks ago you audited a document against ${scope}. We found ${ctx.findingsCount} compliance gaps${
+          ctx.riskScore !== null ? ` and scored it ${ctx.riskScore}/100` : ''
+        }.
 
-  - Unlimited audits (vs 1 per month on the free tier)
-  - AI editor — automatically rewrites non-compliant clauses while preserving your legal register
+You have read one of them. The other ${hidden} are still in your report, waiting.
+
+  ${reportUrl}`
+      : `Two weeks ago you audited a document against ${scope}${
+          ctx.riskScore !== null ? `, and it scored ${ctx.riskScore}/100` : ''
+        }. Thanks for putting us to work.
+
+  ${reportUrl}`;
+
+  // Derived from PLAN_CREDITS so the number in the email cannot drift
+  // away from the number the webhook actually grants. The previous
+  // copy promised "unlimited audits (vs 1 per month on the free tier)":
+  // Pro grants 100 a month, and the free tier is one audit ever, not
+  // one a month. Both halves were false, in writing, from a company
+  // that sells compliance.
+  const body = `${opening}
+
+The Pro plan (185 EUR / month) adds:
+
+  - ${PLAN_CREDITS.pro} audits per month
+  - The full findings list on every report, with article-level citations
+  - AI editor — rewrites a non-compliant clause while preserving your legal register
   - Cross-framework audits — one document against GDPR + Qatar PDPPL + Saudi PDPL in a single run
 
-Launch promo code, -20% valid for 7 days: LAUNCH20
-
   ${PRICING_URL()}
+
+Starter is ${PLAN_CREDITS.starter} audits a month if that fits better.
 
 Any question, or would you rather book a 15-minute demo? Just reply to this email.
 
 — The LexyFlow team
 legal@lexyflow.com`;
+
+  const subject =
+    ctx.wasPaywalled && hidden > 0
+      ? `${hidden} compliance gaps you haven't read yet`
+      : 'Your LexyFlow audit, two weeks on';
+
   return sendLifecycle({
     to,
     subject,
     text: body,
-    html: renderLifecycleHtml('Unlock the Pro plan', body, 'See the pricing', PRICING_URL()),
+    html: renderLifecycleHtml(
+      ctx.wasPaywalled && hidden > 0 ? `${hidden} findings still unread` : 'Your audit, two weeks on',
+      body,
+      ctx.wasPaywalled && hidden > 0 ? 'Open my report' : 'See the plans',
+      ctx.wasPaywalled && hidden > 0 ? reportUrl : PRICING_URL()
+    ),
     logTag: 'lifecycle_upgrade'
   });
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { sendLifecycleNudge, sendLifecycleUpgrade } from '@/lib/email';
+import { alertOps } from '@/lib/alert';
+import { sendLifecycleNudge, sendLifecycleUpgrade, type UpgradeContext } from '@/lib/email';
+import { FRAMEWORKS } from '@/lib/legal-frameworks';
 import { supabaseService } from '@/lib/supabase';
 
 /**
@@ -123,7 +125,22 @@ async function run() {
     }
     const email = await ownerEmail(org.id);
     if (!email) { stats.upgrade_skipped++; continue; }
-    const sent = await sendLifecycleUpgrade(email);
+
+    // Read the audit this email is actually about. Pitching features to
+    // someone whose document we finished analysing two weeks ago wastes
+    // the only argument that is specific to them, and we already have
+    // every number it needs.
+    const context = await upgradeContext(db, org.id);
+    if (!context) {
+      // The audit count above said there is one, so failing to read it
+      // is a real anomaly rather than an empty state. Send nothing: a
+      // generic upgrade email is exactly what this change removes.
+      console.error('[cron/lifecycle-emails] upgrade_context_missing', { orgId: org.id });
+      alertOps('cron.lifecycle_upgrade_context_missing', { orgId: org.id });
+      stats.upgrade_skipped++;
+      continue;
+    }
+    const sent = await sendLifecycleUpgrade(email, context);
     if (sent) {
       await db.from('organizations').update({ lifecycle_upgrade_sent_at: new Date().toISOString() }).eq('id', org.id);
       stats.upgrade_sent++;
@@ -132,6 +149,53 @@ async function run() {
 
   console.log('[cron/lifecycle-emails] run complete', stats);
   return NextResponse.json({ ok: true, ...stats });
+}
+
+/**
+ * Gather the facts the upgrade email speaks about: the org's most
+ * recent completed audit, how many findings it produced, and whether
+ * the paywall withheld any of them.
+ *
+ * Returns null rather than a hollow default. An email that says "we
+ * found 0 gaps" or omits the numbers entirely is worse than no email,
+ * and the caller treats null as an anomaly worth alerting on.
+ */
+async function upgradeContext(
+  db: ReturnType<typeof supabaseService>,
+  orgId: string
+): Promise<UpgradeContext | null> {
+  const { data: audit } = await db
+    .from('audits')
+    .select('id, risk_score, frameworks, credit_consumed')
+    .eq('organization_id', orgId)
+    .eq('status', 'completed')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const row = audit as
+    | { id: string; risk_score: number | null; frameworks: string[] | null; credit_consumed: boolean | null }
+    | null;
+  if (!row) return null;
+
+  const { count } = await db
+    .from('audit_findings')
+    .select('id', { head: true, count: 'exact' })
+    .eq('audit_id', row.id);
+
+  return {
+    auditId: row.id,
+    riskScore: row.risk_score,
+    findingsCount: count ?? 0,
+    // The paywall withholds findings only when no credit paid for the
+    // report — see isPaywalled. Mirroring that exact condition is what
+    // keeps the email's claim true from the reader's side, because the
+    // reader can check it by opening the report.
+    wasPaywalled: row.credit_consumed !== true,
+    frameworkNames: (row.frameworks ?? [])
+      .map((id) => FRAMEWORKS.find((f) => f.id === id)?.name)
+      .filter((name): name is string => Boolean(name))
+  };
 }
 
 /**
