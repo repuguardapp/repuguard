@@ -20,12 +20,18 @@ import { ANONYMOUS_ORG_ID, applyPaywall, isPaywalled } from '../src/lib/paywall'
  */
 
 describe('isPaywalled', () => {
-  it('paywalls free-tier owners of a real-org audit', () => {
+  const ORG = '11111111-1111-1111-1111-111111111111';
+
+  it('paywalls the free-trial audit of a free-tier owner', () => {
+    // The one case the paywall is for: no credit was spent, so nobody
+    // has paid for this report. Showing the score and one real finding
+    // is the pitch.
     expect(
       isPaywalled({
-        organizationId: '11111111-1111-1111-1111-111111111111',
+        organizationId: ORG,
         viewerOwnsAudit: true,
-        viewerTier: 'free'
+        viewerTier: 'free',
+        creditConsumed: false
       })
     ).toBe(true);
   });
@@ -33,9 +39,63 @@ describe('isPaywalled', () => {
   it('does NOT paywall paid-tier owners', () => {
     expect(
       isPaywalled({
-        organizationId: '11111111-1111-1111-1111-111111111111',
+        organizationId: ORG,
         viewerOwnsAudit: true,
-        viewerTier: 'paid'
+        viewerTier: 'paid',
+        creditConsumed: false
+      })
+    ).toBe(false);
+  });
+
+  /**
+   * The regression this exists for. Tier is read from the
+   * subscriptions table at render time, so an org whose plan had ended
+   * read as 'free' — while still holding prepaid credits it was free
+   * to spend. We took the credit, ran the audit, and hid four findings
+   * out of five behind an upgrade banner. We had already been paid for
+   * those four.
+   */
+  it('does NOT paywall a report a credit was spent on, even once the plan has ended', () => {
+    expect(
+      isPaywalled({
+        organizationId: ORG,
+        viewerOwnsAudit: true,
+        viewerTier: 'free',
+        creditConsumed: true
+      })
+    ).toBe(false);
+  });
+
+  it('never revokes a purchased report retroactively', () => {
+    // A customer on Starter for three months who cancels keeps the
+    // reports from months one and two. For a digital good already
+    // supplied, taking it back is not a paywall, it is a repossession.
+    const whileSubscribed = isPaywalled({
+      organizationId: ORG,
+      viewerOwnsAudit: true,
+      viewerTier: 'paid',
+      creditConsumed: true
+    });
+    const afterCancelling = isPaywalled({
+      organizationId: ORG,
+      viewerOwnsAudit: true,
+      viewerTier: 'free',
+      creditConsumed: true
+    });
+    expect(whileSubscribed).toBe(afterCancelling);
+    expect(afterCancelling).toBe(false);
+  });
+
+  it('keeps pre-0014 audits readable for anyone still subscribed', () => {
+    // Rows written before the credit_consumed column exists carry
+    // false whether or not they were paid for. The tier check is what
+    // keeps them open, which is why both conditions are kept.
+    expect(
+      isPaywalled({
+        organizationId: ORG,
+        viewerOwnsAudit: true,
+        viewerTier: 'paid',
+        creditConsumed: false
       })
     ).toBe(false);
   });
@@ -49,9 +109,10 @@ describe('isPaywalled', () => {
     // paywall logic honest: it isn't an auth boundary.
     expect(
       isPaywalled({
-        organizationId: '11111111-1111-1111-1111-111111111111',
+        organizationId: ORG,
         viewerOwnsAudit: false,
-        viewerTier: 'free'
+        viewerTier: 'free',
+        creditConsumed: false
       })
     ).toBe(false);
   });
@@ -66,7 +127,8 @@ describe('isPaywalled', () => {
       isPaywalled({
         organizationId: ANONYMOUS_ORG_ID,
         viewerOwnsAudit: true,
-        viewerTier: 'free'
+        viewerTier: 'free',
+        creditConsumed: false
       })
     ).toBe(false);
   });

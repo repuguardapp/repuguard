@@ -46,6 +46,12 @@ interface AuditDetailRow {
   language: string;
   created_at: string;
   completed_at: string | null;
+  /**
+   * Nullable because rows written before migration 0014 predate the
+   * column. Those are treated as unpaid here and kept readable by the
+   * subscription check instead — see isPaywalled.
+   */
+  credit_consumed: boolean | null;
 }
 
 // ANONYMOUS_ORG_ID is the placeholder /audit (and the embed widget)
@@ -65,7 +71,7 @@ export default async function AuditDetailPage({ params }: PageProps) {
 
   const { data: audit } = await supabase
     .from('audits')
-    .select('id,organization_id,document_hash,document_ciphertext,frameworks,status,risk_score,summary,language,created_at,completed_at')
+    .select('id,organization_id,document_hash,document_ciphertext,frameworks,status,risk_score,summary,language,created_at,completed_at,credit_consumed')
     .eq('id', params.auditId)
     .maybeSingle();
 
@@ -111,7 +117,10 @@ export default async function AuditDetailPage({ params }: PageProps) {
   const paywalled = isPaywalled({
     organizationId: a.organization_id,
     viewerOwnsAudit,
-    viewerTier
+    viewerTier,
+    // A credit was spent on this specific report, so it is paid for
+    // whatever the account's subscription looks like today.
+    creditConsumed: a.credit_consumed === true
   });
 
   // Only a completed audit is a report. Without this gate the page

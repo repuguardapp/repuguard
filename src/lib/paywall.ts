@@ -25,12 +25,37 @@ export interface PaywallContext {
   viewerOwnsAudit: boolean;
   /** Tier the audit's owner is currently on. */
   viewerTier: ViewerTier;
+  /**
+   * True iff producing THIS report consumed an audit credit.
+   *
+   * Recorded on the audit row at the moment it is created, so it is a
+   * fact about the purchase and not about the account's state today.
+   */
+  creditConsumed: boolean;
 }
 
 /**
  * Decide whether to paywall this audit for this viewer.
  *
- * Three conditions all must hold:
+ * The rule, stated plainly: a report the customer paid for is theirs,
+ * for ever. The paywall's job is to convert someone who has NOT paid
+ * for the report in front of them — which is exactly one case, the
+ * free-trial audit.
+ *
+ * That was not what the code did. Tier is read from the subscriptions
+ * table at render time, so an org whose subscription had ended read as
+ * 'free' — while still holding prepaid credits it was free to spend.
+ * The result was the worst possible combination: we took the credit,
+ * ran the audit, and showed one finding out of five with an upgrade
+ * banner over the other four. We had already been paid for those four.
+ *
+ * It also revoked access retroactively. A customer on Starter for
+ * three months who cancelled lost the reports from months one and two
+ * — reports that were delivered, and paid for, while the plan was
+ * active. For a digital good already supplied, that is not a paywall,
+ * it is a repossession.
+ *
+ * So four conditions must ALL hold:
  *   1. The audit isn't an anonymous-org public-share submission
  *      (those are share-link contracts and never get paywalled —
  *      they were created with no logged-in subject and have no
@@ -39,13 +64,27 @@ export interface PaywallContext {
  *      earlier in the request; this guard is defence-in-depth so
  *      that if a future refactor accidentally lets a non-owner
  *      through, they still don't see the full unpaywalled report.
- *   3. The owner's tier is free.
+ *   3. The owner's tier is free TODAY. An active subscriber sees
+ *      everything, as before.
+ *   4. And no credit was spent producing this report.
+ *
+ * Conditions 3 and 4 together are deliberately more generous than
+ * either alone. Audits predating migration 0014 carry
+ * credit_consumed = false whether or not they were paid for, and the
+ * tier check is what keeps those readable for anyone still
+ * subscribed. No customer loses access to a report they can read
+ * today.
+ *
+ * What a subscription still buys is unchanged and is the honest
+ * pitch: running NEW audits, and the AI editor. Ongoing work needs an
+ * ongoing plan. A report already written does not.
  */
 export function isPaywalled(ctx: PaywallContext): boolean {
   return (
     ctx.organizationId !== ANONYMOUS_ORG_ID &&
     ctx.viewerOwnsAudit &&
-    ctx.viewerTier === 'free'
+    ctx.viewerTier === 'free' &&
+    !ctx.creditConsumed
   );
 }
 
