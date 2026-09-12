@@ -22,10 +22,9 @@ import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
  * count). On any failure we return a structured error body the client
  * can render directly to the user.
  *
- * No polling, no background task, no waitUntil. The whole request
- * fits inside Vercel Pro's 300s maxDuration; Anthropic and OpenAI are
- * configured with explicit per-call timeouts (240s / 90s) so we have
- * comfortable headroom.
+ * No polling, no background task, no waitUntil. The whole request has
+ * to fit inside the function's maxDuration; Anthropic and OpenAI are
+ * configured with explicit per-call timeouts (240s / 90s).
  *
  * Why we run on the Node.js runtime (not Edge):
  *   • pdf-parse + mammoth ship Node-only code paths (Buffer, fs).
@@ -33,7 +32,28 @@ import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
  *     on every exit path (Zero-Knowledge guarantee).
  */
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+
+/**
+ * MUST stay equal to the value declared for this path in vercel.json.
+ *
+ * This used to read 300 while vercel.json asked for 800, and Vercel
+ * does not document which of the two wins for an App Router handler —
+ * so the real ceiling was unknowable by reading the code, which is the
+ * part that actually matters here. Under the pessimistic reading the
+ * function was being killed at 300s.
+ *
+ * That is not theoretical. A two-framework audit measured at 182s, and
+ * pass 1 retries once with a doubled token budget when the model
+ * truncates — which roughly doubles that. The kill lands after the
+ * credit is consumed and before the audit row is written, so it leaves
+ * exactly the trace we found on 10 Sep and could not explain: a credit
+ * spent, no audit row, no error anywhere.
+ *
+ * 800 is the Fluid Compute ceiling and what vercel.json already
+ * requests. Aligning removes the ambiguity rather than betting on a
+ * precedence rule Vercel has not written down.
+ */
+export const maxDuration = 800;
 
 /**
  * Cost protection. Tighter on IP than on org, and plan-aware: a paying

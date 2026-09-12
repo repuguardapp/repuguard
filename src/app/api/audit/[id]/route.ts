@@ -13,22 +13,45 @@ import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
  * (those require auth + RLS via the dashboard). Designed to be called
  * unauthenticated by the user who just submitted the audit.
  *
- * Self-healing: if a row has been at status='running' or 'pending' for
- * longer than the worst-case backend pipeline (Anthropic 240s + OpenAI
- * 90s + extraction + persistence + buffer ≈ 6 minutes), we know the
- * waitUntil background task was killed (Vercel function instance
- * recycled mid-flight). There is nobody to flip the row to 'failed',
- * so the GET endpoint does it itself on the next poll. This guarantees
- * every audit eventually resolves to a terminal status, and the
- * front-end never sees an indefinite spinner regardless of what
- * happened on the backend.
+ * Self-healing: once a row has been at status='running' or 'pending'
+ * for longer than the audit function can possibly live, we know the
+ * background task was killed (instance recycled, OOM, deploy landing
+ * mid-audit). There is nobody left to flip the row to 'failed', so the
+ * GET endpoint does it itself on the next poll. This guarantees every
+ * audit eventually resolves to a terminal status, and the front-end
+ * never sees an indefinite spinner regardless of what happened on the
+ * backend.
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const Params = z.object({ id: z.string().uuid() });
 
-const RUNAWAY_THRESHOLD_MS = 6 * 60 * 1_000; // 6 min — see header comment
+/**
+ * How long an audit may legitimately stay unfinished before this
+ * endpoint declares it dead and refunds the credit.
+ *
+ * This MUST exceed the audit function's maxDuration (800s), and the
+ * margin is the whole point. It used to be 6 minutes, chosen against a
+ * "worst-case pipeline ≈ 6 min" estimate rather than against the
+ * platform ceiling — so a legitimately slow audit still running at
+ * 361s would be declared failed and refunded by the very poll the user
+ * is watching, while the pipeline carried on and later wrote
+ * 'completed' over it. The customer gets both a refund and a report,
+ * and our numbers stop meaning anything.
+ *
+ * The estimate was also never safe to trust: pass 1 retries once with
+ * a doubled budget on truncation, which no "worst case" derived from a
+ * single pass can account for.
+ *
+ * Three thresholds, deliberately ordered, none of them equal:
+ *   800s (13m20) — the function is killed by the platform, for certain
+ *   15 min       — this poll heals it, so the waiting user gets an
+ *                  answer without waiting on a cron tick
+ *   20 min       — /api/cron/reap-audits sweeps whatever never got
+ *                  polled at all (a closed tab)
+ */
+const RUNAWAY_THRESHOLD_MS = 15 * 60 * 1_000;
 
 export async function GET(_request: Request, ctx: { params: { id: string } }) {
   const parsed = Params.safeParse(ctx.params);
