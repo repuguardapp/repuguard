@@ -170,7 +170,11 @@
     "supabase_write_failed": "Impossible d'enregistrer le rapport. Veuillez réessayer.",
     "findings_insert_failed": "Nous n'avons pas pu enregistrer l'intégralité des constatations. Plutôt que d'afficher un rapport incomplet, nous préférons ne rien afficher. Votre crédit a été remboursé — veuillez réessayer.",
     "audit_stream_truncated": "La connexion a été interrompue. Veuillez réessayer.",
-    "audit_no_stream": "Le serveur n'a pas envoyé de réponse. Veuillez réessayer."
+    "audit_no_stream": "Le serveur n'a pas envoyé de réponse. Veuillez réessayer.",
+    "boundaryTitle": "Une erreur est survenue sur cette page",
+    "boundaryBody": "L'erreur a été signalée automatiquement à notre équipe. Vous pouvez réessayer ou revenir à votre tableau de bord.",
+    "boundaryRetry": "Réessayer",
+    "boundaryHome": "Retour au tableau de bord"
   },
   "report": {
     "title": "Rapport d'audit de conformité",

@@ -170,7 +170,11 @@
     "supabase_write_failed": "No pudimos guardar el informe. Reinténtalo.",
     "findings_insert_failed": "No pudimos guardar todos los hallazgos, así que preferimos no mostrar un informe incompleto. Tu crédito ha sido reembolsado; reinténtalo.",
     "audit_stream_truncated": "La conexión se interrumpió. Reinténtalo.",
-    "audit_no_stream": "El servidor no envió respuesta. Reinténtalo."
+    "audit_no_stream": "El servidor no envió respuesta. Reinténtalo.",
+    "boundaryTitle": "Algo salió mal en esta página",
+    "boundaryBody": "El error se ha notificado automáticamente a nuestro equipo. Puede volver a intentarlo o regresar a su panel.",
+    "boundaryRetry": "Reintentar",
+    "boundaryHome": "Volver al panel"
   },
   "report": {
     "title": "Informe de auditoría de cumplimiento",
