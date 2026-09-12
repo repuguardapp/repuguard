@@ -385,5 +385,21 @@
   },
   "legalNotice": {
     "body": "Dieses Dokument wird auf Englisch als maßgebliche Rechtsversion bereitgestellt. Fragen oder Anfragen auf Deutsch: legal@lexyflow.com."
+  },
+  "decisions": {
+    "indexTitle": "Bußgeldentscheidungen",
+    "indexLead": "Bußgelder, Anordnungen und Leitlinien der Datenschutz- und KI-Aufsichtsbehörden, verständlich zusammengefasst und mit Link zur Originalentscheidung.",
+    "empty": "Noch keine Entscheidungen veröffentlicht.",
+    "sourceLabel": "Primärquelle",
+    "authority": "Behörde",
+    "date": "Datum der Entscheidung",
+    "articles": "Zitierte Vorschriften",
+    "fine": "Bußgeld",
+    "outcome": "Ergebnis",
+    "ctaTitle": "Ist Ihre eigene Dokumentation betroffen?",
+    "ctaBody": "Prüfen Sie eine Richtlinie, einen Vertrag oder einen AVV gegen dasselbe Regelwerk. Etwa eine Minute.",
+    "cta": "Mein Dokument prüfen",
+    "relatedTitle": "Betroffene Regelwerke",
+    "disclaimer": "Zusammenfassung von LexyFlow auf Grundlage der oben verlinkten Entscheidung. Keine Rechtsberatung. Bei Abweichungen gilt die Originalentscheidung."
   }
 }

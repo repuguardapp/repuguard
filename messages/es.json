@@ -385,5 +385,21 @@
   },
   "legalNotice": {
     "body": "Este documento se proporciona en inglés como la versión legal autorizada. Para preguntas o solicitudes en español: legal@lexyflow.com."
+  },
+  "decisions": {
+    "indexTitle": "Resoluciones sancionadoras",
+    "indexLead": "Multas, requerimientos y directrices de las autoridades de protección de datos e IA, resumidos en lenguaje claro con enlace a la resolución original.",
+    "empty": "Aún no hay resoluciones publicadas.",
+    "sourceLabel": "Fuente primaria",
+    "authority": "Autoridad",
+    "date": "Fecha de la resolución",
+    "articles": "Disposiciones citadas",
+    "fine": "Multa",
+    "outcome": "Resultado",
+    "ctaTitle": "¿Está expuesta su documentación?",
+    "ctaBody": "Audite una política, un contrato o un DPA frente al mismo marco. Alrededor de un minuto.",
+    "cta": "Auditar mi documento",
+    "relatedTitle": "Marcos afectados",
+    "disclaimer": "Resumen redactado por LexyFlow a partir de la resolución enlazada. No constituye asesoramiento jurídico. En caso de discrepancia, prevalece la resolución original."
   }
 }

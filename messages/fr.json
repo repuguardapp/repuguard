@@ -385,5 +385,21 @@
   },
   "legalNotice": {
     "body": "Ce document fait foi en anglais comme version juridique de référence. Pour toute question ou demande en français : legal@lexyflow.com."
+  },
+  "decisions": {
+    "indexTitle": "Décisions de sanction",
+    "indexLead": "Amendes, injonctions et lignes directrices des autorités de protection des données et de l'IA, résumées en langage clair avec un lien vers la décision d'origine.",
+    "empty": "Aucune décision publiée pour le moment.",
+    "sourceLabel": "Source primaire",
+    "authority": "Autorité",
+    "date": "Date de la décision",
+    "articles": "Dispositions visées",
+    "fine": "Amende",
+    "outcome": "Issue",
+    "ctaTitle": "Votre documentation est-elle exposée ?",
+    "ctaBody": "Auditez une politique, un contrat ou un DPA au regard du même référentiel. Environ une minute.",
+    "cta": "Auditer mon document",
+    "relatedTitle": "Référentiels concernés",
+    "disclaimer": "Résumé rédigé par LexyFlow à partir de la décision liée ci-dessus. Il ne constitue pas un conseil juridique. En cas de divergence, la décision d'origine prévaut."
   }
 }

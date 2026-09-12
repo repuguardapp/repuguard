@@ -385,5 +385,21 @@
   },
   "legalNotice": {
     "body": "This document is provided in English as the authoritative legal version. Questions or requests in another language: legal@lexyflow.com."
+  },
+  "decisions": {
+    "indexTitle": "Enforcement decisions",
+    "indexLead": "Fines, orders and guidance from data-protection and AI regulators, summarised in plain language with a link to the original decision.",
+    "empty": "No decisions published yet.",
+    "sourceLabel": "Primary source",
+    "authority": "Authority",
+    "date": "Decision date",
+    "articles": "Provisions cited",
+    "fine": "Fine",
+    "outcome": "Outcome",
+    "ctaTitle": "Is your own documentation exposed to this?",
+    "ctaBody": "Audit a policy, contract or DPA against the same framework. Takes about a minute.",
+    "cta": "Audit my document",
+    "relatedTitle": "Frameworks concerned",
+    "disclaimer": "Summary written by LexyFlow from the decision linked above. It is not legal advice. Where the two differ, the original decision governs."
   }
 }

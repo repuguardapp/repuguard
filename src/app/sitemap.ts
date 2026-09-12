@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { discoverLocales } from '@/i18n/locales.server';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
+import { listPublishedSlugs } from '@/lib/legal-decisions';
 import { CURATED_PAIRS } from '@/lib/seo-routes';
 
 /**
@@ -23,7 +24,18 @@ import { CURATED_PAIRS } from '@/lib/seo-routes';
  * shard into sitemap-core.xml / sitemap-compliance.xml /
  * sitemap-compare.xml and ship a sitemap index.
  */
-const CORE_ROUTES = ['', '/pricing', '/audit', '/docs', '/trust', '/sample-report'];
+const CORE_ROUTES = ['', '/pricing', '/audit', '/docs', '/trust', '/sample-report', '/decisions'];
+
+/**
+ * Regenerated hourly rather than frozen at build time.
+ *
+ * The first three families are enumerated in code and would be fine as
+ * a build artefact. The legal-watch corpus is not: it grows between
+ * deploys, and a sitemap baked at build would advertise whatever
+ * existed the last time we shipped — which is the opposite of what a
+ * freshness-driven corpus needs from a crawler.
+ */
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://example.com';
@@ -62,5 +74,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  return [...core, ...frameworkPages, ...comparisonPages];
+  // The legal-watch corpus. Unlike the three families above this one
+  // grows on its own, so it is read from the database rather than
+  // enumerated in code. A failed read yields an empty list and a logged
+  // error — a sitemap short of a few pages is recoverable, a sitemap
+  // that throws takes the whole file down with it.
+  const slugs = await listPublishedSlugs();
+  const decisionPages = slugs.flatMap((slug) =>
+    locales.map((locale) => ({
+      url: `${base}/${locale}/decisions/${slug}`,
+      lastModified: now,
+      // These are dated records of something that already happened;
+      // once published they do not change.
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: { languages: langMap(`/decisions/${slug}`) }
+    }))
+  );
+
+  return [...core, ...frameworkPages, ...comparisonPages, ...decisionPages];
 }

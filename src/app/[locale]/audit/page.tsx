@@ -12,9 +12,32 @@ export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: { locale: string };
+  searchParams?: { frameworks?: string | string[] };
 }
 
-export default async function AuditPage({ params: { locale } }: PageProps) {
+/**
+ * Frameworks requested in the URL, validated against the catalogue.
+ *
+ * This is what makes the decision pages a funnel entrance rather than a
+ * reference shelf: a reader who has just seen a regulator fine someone
+ * under GDPR Art. 13 arrives here with GDPR already ticked instead of
+ * an empty form.
+ *
+ * Unknown ids are dropped rather than trusted. The value comes from a
+ * URL anyone can edit, and a bad id that reached the engine would
+ * silently narrow the audit's scope — the 10 Sep failure, arriving by
+ * a different door.
+ */
+function requestedFrameworks(raw: string | string[] | undefined): string[] {
+  if (!raw) return [];
+  const ids = (Array.isArray(raw) ? raw : [raw])
+    .flatMap((value) => value.split(','))
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return [...new Set(ids)].filter((id) => FRAMEWORKS.some((f) => f.id === id));
+}
+
+export default async function AuditPage({ params: { locale }, searchParams }: PageProps) {
   unstable_setRequestLocale(locale);
   const t = await getTranslations('audit');
 
@@ -53,9 +76,15 @@ export default async function AuditPage({ params: { locale } }: PageProps) {
   // Saudi org lands with `saudi_pdpl` already checked. Falls back to
   // empty selection (user picks manually) when the country has no
   // framework in our matrix — better than guessing wrong.
-  const defaultFrameworkIds = orgRow?.country
-    ? frameworksForCountry(orgRow.country).map((f) => f.id)
-    : [];
+  // An explicit request from the URL wins over the country guess: the
+  // reader asked for these, we only inferred the others.
+  const fromUrl = requestedFrameworks(searchParams?.frameworks);
+  const defaultFrameworkIds =
+    fromUrl.length > 0
+      ? fromUrl
+      : orgRow?.country
+        ? frameworksForCountry(orgRow.country).map((f) => f.id)
+        : [];
 
   // Pass the full errors namespace as a flat dict so the client
   // component can do labels.errors[code] without a server round-trip.
