@@ -12,14 +12,16 @@
     "src/app/api/cron/lifecycle-emails/route.ts": { "maxDuration": 60, "memory": 512 },
     "src/app/api/cron/reap-audits/route.ts":      { "maxDuration": 60, "memory": 512 },
     "src/app/api/cron/watch-legal/route.ts":      { "maxDuration": 60,  "memory": 512 },
-    "src/app/api/cron/extract-legal/route.ts":    { "maxDuration": 300, "memory": 512 }
+    "src/app/api/cron/extract-legal/route.ts":    { "maxDuration": 300, "memory": 512 },
+    "src/app/api/cron/localize-legal/route.ts":   { "maxDuration": 300, "memory": 512 }
   },
   "crons": [
     { "path": "/api/cron/purge",            "schedule": "0 4 * * *" },
     { "path": "/api/cron/lifecycle-emails", "schedule": "0 9 * * *" },
     { "path": "/api/cron/reap-audits",      "schedule": "*/5 * * * *" },
     { "path": "/api/cron/watch-legal",      "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/extract-legal",    "schedule": "30 */6 * * *" }
+    { "path": "/api/cron/extract-legal",    "schedule": "30 */6 * * *" },
+    { "path": "/api/cron/localize-legal",   "schedule": "45 */6 * * *" }
   ],
   "headers": [
     {
