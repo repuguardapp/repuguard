@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { redactQueryString, redactUrl } from './src/lib/sentry-scrub';
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -61,6 +62,14 @@ function scrubPII(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
       delete event.request.headers['cookie'];
       delete event.request.headers['x-api-key'];
     }
+    // The browser reports the page URL, and an operator who opened an
+    // admin endpoint in a tab has the credential in it.
+    if (typeof event.request.query_string === 'string') {
+      event.request.query_string = redactQueryString(event.request.query_string);
+    }
+    if (event.request.url) {
+      event.request.url = redactUrl(event.request.url);
+    }
   }
   return event;
 }
@@ -70,6 +79,13 @@ function scrubBreadcrumb(crumb: Sentry.Breadcrumb): Sentry.Breadcrumb | null {
     if (crumb.data) {
       delete crumb.data['body'];
       delete crumb.data['Authorization'];
+    }
+  }
+  // Navigation breadcrumbs carry from/to URLs whatever the category.
+  if (crumb.data) {
+    for (const key of ['url', 'from', 'to']) {
+      const value = crumb.data[key];
+      if (typeof value === 'string') crumb.data[key] = redactUrl(value);
     }
   }
   return crumb;

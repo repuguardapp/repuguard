@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { redactQueryString, redactUrl } from './src/lib/sentry-scrub';
 
 const dsn = process.env.SENTRY_DSN;
 
@@ -44,12 +45,14 @@ function scrubPII(event: Sentry.ErrorEvent): Sentry.ErrorEvent {
       delete event.request.headers['x-api-key'];
     }
   }
-  // Strip query strings that might carry tokens.
+  // Strip credentials out of query strings and URLs. The key list is
+  // shared with the client and edge configs so the three cannot drift
+  // — see src/lib/sentry-scrub.ts for why that matters.
   if (event.request?.query_string && typeof event.request.query_string === 'string') {
-    event.request.query_string = event.request.query_string.replace(
-      /(token_hash|code|access_token|refresh_token)=[^&]+/gi,
-      '$1=REDACTED'
-    );
+    event.request.query_string = redactQueryString(event.request.query_string);
+  }
+  if (event.request?.url) {
+    event.request.url = redactUrl(event.request.url);
   }
   return event;
 }
