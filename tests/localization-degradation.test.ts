@@ -145,3 +145,112 @@ describe('Pass 2 localization — degradation instead of total loss', () => {
     expect(mockAlertOps).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Once the pivot cache removed pass 1 from repeat audits, pass 2 became
+ * the entire remaining wait: one sequential request generating six to
+ * seven thousand tokens. Chunking translates the findings concurrently
+ * for the same token count — so what these tests protect is that the
+ * chunks are actually in flight together, and that reassembly keeps
+ * every translation on its own finding.
+ */
+describe('Pass 2 localization — concurrent chunks', () => {
+  const many = {
+    summary: 'Nine gaps identified.',
+    riskScore: 61,
+    findings: Array.from({ length: 9 }, (_, i) => ({
+      framework: 'gdpr',
+      citation: `GDPR Art. ${i + 1}`,
+      severity: 'medium' as const,
+      title: `Gap ${i}`,
+      body: `Body ${i}`,
+      recommendation: `Fix ${i}`,
+      evidence: `Evidence ${i}`
+    }))
+  };
+
+  async function localizeMany(targetLanguage = 'fr') {
+    const { localizeReport } = await import('../src/lib/multi-pass-engine');
+    return localizeReport(many, targetLanguage);
+  }
+
+  /** Translate a chunk request into a plausible reply of the same size. */
+  function replyFor(call: { messages: { role: string; content: string }[] }) {
+    const payload = JSON.parse(call.messages[1]!.content) as {
+      summary?: string;
+      findings: { title: string }[];
+    };
+    return openAiReply({
+      ...(payload.summary ? { summary: `FR:${payload.summary}` } : {}),
+      findings: payload.findings.map((f) => ({
+        title: `FR:${f.title}`,
+        body: 'b',
+        recommendation: 'r'
+      }))
+    });
+  }
+
+  it('issues every chunk before any of them resolves, and reassembles in order', async () => {
+    // Hold each request open until all of them have been made. If the
+    // implementation ever goes back to awaiting one chunk at a time
+    // this deadlocks and the test times out rather than passing quietly.
+    const release: (() => void)[] = [];
+    mockCreate.mockImplementation(
+      (call: { messages: { role: string; content: string }[] }) =>
+        new Promise((resolve) => {
+          release.push(() => resolve(replyFor(call)));
+        })
+    );
+
+    const pending = localizeMany('fr');
+    // Let the synchronous fan-out run.
+    await vi.waitFor(() => expect(release).toHaveLength(3));
+    release.forEach((fn) => fn());
+
+    const { report, language } = await pending;
+    expect(language).toBe('fr');
+    // 9 findings at 4 per chunk.
+    expect(mockCreate).toHaveBeenCalledTimes(3);
+    expect(report.summary).toBe('FR:Nine gaps identified.');
+    // Order survived the fan-out: finding i still carries its own text.
+    report.findings.forEach((f, i) => {
+      expect(f.title).toBe(`FR:Gap ${i}`);
+      expect(f.citation).toBe(`GDPR Art. ${i + 1}`);
+      expect(f.evidence).toBe(`Evidence ${i}`);
+    });
+  });
+
+  it('sends the summary once, with the first chunk only', async () => {
+    mockCreate.mockImplementation((call: { messages: { role: string; content: string }[] }) =>
+      Promise.resolve(replyFor(call))
+    );
+
+    await localizeMany('fr');
+    const payloads = mockCreate.mock.calls.map(
+      (c) => JSON.parse((c[0] as { messages: { content: string }[] }).messages[1]!.content) as { summary?: string }
+    );
+    expect(payloads.filter((p) => p.summary !== undefined)).toHaveLength(1);
+    expect(payloads[0]?.summary).toBe('Nine gaps identified.');
+  });
+
+  it('degrades the whole report to English when one chunk fails', async () => {
+    // A report half in French and half in English reads as broken, and
+    // the reader cannot tell which half to trust.
+    let call = 0;
+    mockCreate.mockImplementation((c: { messages: { role: string; content: string }[] }) => {
+      call += 1;
+      if (call === 2) return Promise.resolve(openAiReply({ findings: [] }));
+      return Promise.resolve(replyFor(c));
+    });
+
+    const { report, language } = await localizeMany('fr');
+    expect(language).toBe('en');
+    expect(report.findings).toHaveLength(9);
+    report.findings.forEach((f, i) => expect(f.title).toBe(`Gap ${i}`));
+    expect(report.summary).toBe('Nine gaps identified.');
+    expect(mockAlertOps).toHaveBeenCalledWith(
+      'audit.localization_degraded',
+      expect.objectContaining({ reason: 'findings_count_mismatch' })
+    );
+  });
+});

@@ -542,31 +542,40 @@ export async function localizeReport(
   }
 }
 
-async function localizeOrThrow(
-  pass1: AuditPassResult,
-  targetLanguage: string,
-  fallbackToEnglish: (reason: string, extra?: Record<string, unknown>) => {
-    report: AuditPassResult;
-    language: string;
-  }
-): Promise<{ report: AuditPassResult; language: string }> {
+/**
+ * Findings per translation request.
+ *
+ * Pass 2 used to translate every finding in one call, which made it the
+ * whole remaining wait once the pivot cache removed pass 1: twelve
+ * findings is six to seven thousand output tokens generated
+ * sequentially. Chunking lets them translate concurrently for exactly
+ * the same number of tokens — the only added cost is the system prompt
+ * repeated per request, a couple of hundred tokens.
+ *
+ * Four keeps a typical report to two or three parallel requests rather
+ * than a burst that invites provider rate limiting.
+ */
+const LOCALIZATION_CHUNK_SIZE = 4;
 
-  const payload = {
-    summary: pass1.summary,
-    findings: pass1.findings.map((f) => ({
-      title: f.title,
-      body: f.body,
-      recommendation: f.recommendation
-    }))
-  };
+const ChunkSchema = z.object({
+  summary: z.string().optional(),
+  findings: z.array(LocalizedFindingSchema)
+});
 
+type ChunkOutcome =
+  | { ok: true; summary?: string; findings: z.infer<typeof LocalizedFindingSchema>[] }
+  | { ok: false; reason: string; extra: Record<string, unknown> };
+
+async function translateChunk(
+  payload: { summary?: string; findings: { title: string; body: string; recommendation: string }[] },
+  targetLanguage: string
+): Promise<ChunkOutcome> {
   const completion = await openai().chat.completions.create({
     model: OPENAI_MODEL,
     temperature: 0,
-    // Was unset, so a long report could run into the model's output
-    // ceiling and come back as truncated (but syntactically plausible)
-    // JSON. Explicit and generous — a 30-finding translation is well
-    // under this — and it makes finish_reason meaningful below.
+    // Generous for a four-finding chunk, and it makes finish_reason
+    // meaningful: a truncated response is detected rather than parsed
+    // as if it were complete.
     max_tokens: 16384,
     response_format: { type: 'json_object' },
     messages: [
@@ -579,11 +588,6 @@ async function localizeOrThrow(
           'findings[].recommendation. Keep array length and order identical.',
           'Do NOT translate citations, framework names, statute numbers, or',
           'evidence quotations — those are passed through unchanged.',
-          // RTL targets (Arabic, Hebrew, Persian, Urdu): use Modern Standard
-          // register, Latin numerals (1, 2, 3) so article numbers and dates
-          // stay legible inside an RTL paragraph, and never emit Unicode
-          // bidi control marks (U+202A..U+202E, U+2066..U+2069). Glyph
-          // direction is handled by the HTML dir attribute downstream.
           'For Arabic / Hebrew / Persian / Urdu output: use Modern Standard',
           'register, keep numerals in Latin digits, and emit no bidi control',
           'characters.',
@@ -596,46 +600,93 @@ async function localizeOrThrow(
 
   const choice = completion.choices[0];
   const raw = choice?.message?.content;
-  if (!raw) return fallbackToEnglish('empty_translation');
+  if (!raw) return { ok: false, reason: 'empty_translation', extra: {} };
   if (choice?.finish_reason === 'length') {
     // Truncated mid-JSON. Parsing it would either throw or, worse,
     // succeed on a partial array.
-    return fallbackToEnglish('truncated', { finishReason: choice.finish_reason });
+    return { ok: false, reason: 'truncated', extra: { finishReason: choice.finish_reason } };
   }
 
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(raw);
   } catch (err) {
-    // json_object mode makes this unlikely but not impossible; an
-    // unguarded JSON.parse here used to take the whole audit down.
-    return fallbackToEnglish('json_parse_failed', {
-      error: err instanceof Error ? err.message : String(err)
-    });
+    return {
+      ok: false,
+      reason: 'json_parse_failed',
+      extra: { error: err instanceof Error ? err.message : String(err) }
+    };
   }
 
-  const localized = LocalizationSchema.safeParse(parsedJson);
-  if (!localized.success) {
-    return fallbackToEnglish('schema_mismatch', { zodError: localized.error.message });
+  const parsed = ChunkSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    return { ok: false, reason: 'schema_mismatch', extra: { zodError: parsed.error.message } };
   }
-  if (localized.data.findings.length !== pass1.findings.length) {
-    // Do NOT try to salvage this positionally. If the translator
-    // dropped or merged an entry, every subsequent index shifts, and
-    // we would staple finding N's translated text onto finding N-1's
-    // citation and verbatim evidence — a compliance report that
-    // misattributes a quote to the wrong statute is worse than an
-    // untranslated one.
-    return fallbackToEnglish('findings_count_mismatch', {
-      expected: pass1.findings.length,
-      received: localized.data.findings.length
-    });
+  if (parsed.data.findings.length !== payload.findings.length) {
+    // Do NOT salvage this positionally. If the translator dropped or
+    // merged an entry, every later index shifts, and we would staple
+    // one finding's translated text onto another's citation and
+    // verbatim evidence — a compliance report that misattributes a
+    // quote to the wrong statute is worse than an untranslated one.
+    return {
+      ok: false,
+      reason: 'findings_count_mismatch',
+      extra: { expected: payload.findings.length, received: parsed.data.findings.length }
+    };
   }
+
+  return {
+    ok: true,
+    // Spread rather than assign: under exactOptionalPropertyTypes an
+    // absent summary and a summary set to undefined are different types.
+    ...(parsed.data.summary !== undefined ? { summary: parsed.data.summary } : {}),
+    findings: parsed.data.findings
+  };
+}
+
+async function localizeOrThrow(
+  pass1: AuditPassResult,
+  targetLanguage: string,
+  fallbackToEnglish: (reason: string, extra?: Record<string, unknown>) => {
+    report: AuditPassResult;
+    language: string;
+  }
+): Promise<{ report: AuditPassResult; language: string }> {
+  const batches: { title: string; body: string; recommendation: string }[][] = [];
+  for (let i = 0; i < pass1.findings.length; i += LOCALIZATION_CHUNK_SIZE) {
+    batches.push(
+      pass1.findings.slice(i, i + LOCALIZATION_CHUNK_SIZE).map((f) => ({
+        title: f.title,
+        body: f.body,
+        recommendation: f.recommendation
+      }))
+    );
+  }
+  // A fully compliant document has no findings and still has a summary
+  // to translate.
+  if (batches.length === 0) batches.push([]);
+
+  const outcomes = await Promise.all(
+    batches.map((findings, index) =>
+      translateChunk({ ...(index === 0 ? { summary: pass1.summary } : {}), findings }, targetLanguage)
+    )
+  );
+
+  // One bad batch fails the whole translation rather than producing a
+  // report half in the target language and half in English — a
+  // compliance document that changes language midway reads as broken,
+  // and the reader cannot tell which half to trust.
+  const failure = outcomes.find((o): o is Extract<ChunkOutcome, { ok: false }> => !o.ok);
+  if (failure) return fallbackToEnglish(failure.reason, failure.extra);
+
+  const translated = outcomes.flatMap((o) => (o.ok ? o.findings : []));
+  const summary = outcomes[0]?.ok ? outcomes[0].summary : undefined;
 
   const report = {
-    summary: localized.data.summary,
+    summary: summary ?? pass1.summary,
     riskScore: pass1.riskScore,
     findings: pass1.findings.map((original, i) => {
-      const tr = localized.data.findings[i];
+      const tr = translated[i];
       return {
         ...original,
         title: tr?.title ?? original.title,
