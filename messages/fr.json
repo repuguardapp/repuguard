@@ -208,10 +208,11 @@
       "info": "info"
     },
     "stateRunningTitle": "Audit en cours",
-    "stateRunningBody": "Cet audit n'est pas encore terminé. Rafraîchissez la page dans quelques instants.",
+    "stateRunningBody": "Cet audit s'exécute sur nos serveurs. La page se met à jour toute seule — vous pouvez fermer cet onglet et y revenir quand vous voulez.",
     "stateFailedTitle": "Audit non abouti",
     "stateFailedBody": "Cet audit s'est interrompu avant d'avoir produit un rapport. Aucune conclusion ne peut en être tirée — ni dans un sens, ni dans l'autre. Si un crédit a été consommé, il vous a été rendu.",
-    "stateFailedCta": "Lancer un nouvel audit"
+    "stateFailedCta": "Lancer un nouvel audit",
+    "stateRunningElapsed": "Temps écoulé"
   },
   "editor": {
     "title": "Éditeur de document",

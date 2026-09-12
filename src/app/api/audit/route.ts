@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { z } from 'zod';
 import { logAccess } from '@/lib/access-log';
 import { alertOps } from '@/lib/alert';
@@ -14,17 +15,32 @@ import { hashDocument, wipeBuffer } from '@/lib/zero-knowledge';
 import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
 
 /**
- * Synchronous audit endpoint — single request, single response.
+ * Asynchronous audit endpoint — accept, answer, then work.
  *
- * The caller POSTs the document and the audit metadata. We hold the
- * connection open through extraction + Multi-Pass + persistence, then
- * return the full audit envelope (audit id + risk score + findings
- * count). On any failure we return a structured error body the client
- * can render directly to the user.
+ * The caller POSTs the document and the audit metadata. Everything
+ * that can be decided quickly is decided on the request: validation,
+ * the org guard, rate limits, the credit gate, text extraction, and a
+ * check for an identical report we have already produced. Then the
+ * audit row is opened as 'running', the caller gets a 202 with its id,
+ * and the minutes-long part runs on after the response.
  *
- * No polling, no background task, no waitUntil. The whole request has
- * to fit inside the function's maxDuration; Anthropic and OpenAI are
- * configured with explicit per-call timeouts (240s / 90s).
+ * It used to hold the connection open for the whole pipeline, behind
+ * an NDJSON stream that emitted a whitespace heartbeat every ten
+ * seconds — because iOS Safari and some carrier proxies abort a fetch
+ * that transmits nothing for about a minute. That kept the browser
+ * happy and solved nothing underneath: a closed tab, a phone going to
+ * sleep or a dropped connection still destroyed an audit the customer
+ * had already paid for, and the report only existed once the request
+ * survived to its end.
+ *
+ * Now the audit belongs to the database from the moment it is paid
+ * for. The customer can close the tab and come back to it.
+ *
+ * The contract this buys, and the reason the row is opened first:
+ * every audit reaches a terminal status. The background pipeline
+ * writes one on every path it can reach; the polling endpoint heals a
+ * row abandoned past 15 minutes; the reaper sweeps at 20 what was
+ * never polled at all. All three refund.
  *
  * Why we run on the Node.js runtime (not Edge):
  *   • pdf-parse + mammoth ship Node-only code paths (Buffer, fs).
@@ -354,454 +370,444 @@ export async function POST(request: Request) {
     }
   };
 
-  // ---- 4. Slow path — wrapped in a streaming response --------------
-  // iOS Safari (and a few mobile carriers' transparent proxies) abort
-  // HTTP fetches that don't transmit any bytes for ~60s. The audit
-  // pipeline can take 90-120s on a non-trivial document, so a naive
-  // `await runMultiPass(); return NextResponse.json(...)` reaches the
-  // browser as a "Load failed" TypeError before our reply lands.
-  //
-  // Fix: stream a ReadableStream that emits a whitespace heartbeat
-  // every 10s. The bytes keep the connection technically active; the
-  // final chunk is the real JSON envelope. JSON.parse() ignores
-  // leading whitespace, so the body parses cleanly on the client.
-  //
-  // Status code is always 200 for the streamed path — the success vs
-  // failure discrimination happens via the `ok` field in the final
-  // chunk. The fast-path checks above (rate limit, credits, etc.)
-  // still return proper 4xx codes immediately.
+
+  // ---- 4. Extraction ------------------------------------------------
+  // Runs before we answer, because the document hash is part of the
+  // audit's identity and we cannot open its row without one. It is the
+  // only genuinely fast stage of the pipeline (parsing bytes, no
+  // network), so it costs the caller a moment, not a wait.
   const buffer = Buffer.from(await file.arrayBuffer());
   const filename = file instanceof File ? file.name : undefined;
   const mime = file.type || undefined;
 
-  const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const enc = new TextEncoder();
+  let extracted;
+  try {
+    extracted = await extractText(buffer, { filename, mime });
+    log('extracted', {
+      type: extracted.type,
+      charCount: extracted.charCount,
+      redactionCount: extracted.redactionCount
+    });
+  } catch (err) {
+    wipeBuffer(buffer);
+    await refundIfNeeded('extraction_failed');
+    return errorJson('extraction_failed', err instanceof Error ? err.message : String(err), 422);
+  }
 
-      /**
-       * Stream wire format: newline-delimited JSON (NDJSON).
-       *   {"type":"progress","progress":10,"stage":"upload"}\n
-       *   {"type":"progress","progress":30,"stage":"extraction"}\n
-       *   {"type":"progress","progress":60,"stage":"analysis"}\n
-       *   {"type":"progress","progress":90,"stage":"writing"}\n
-       *   {"type":"final","ok":true,...}\n
-       *
-       * The client parses one JSON object per line. Progress events
-       * drive the UI bar; the final event is exactly one envelope and
-       * either redirects (ok:true) or shows the failure card (ok:false).
-       */
-      const send = (payload: Record<string, unknown>) => {
-        try {
-          controller.enqueue(enc.encode(JSON.stringify(payload) + '\n'));
-        } catch {
-          // controller is closed — nothing to do.
-        }
+  const documentHash = hashDocument(extracted.text);
+
+  // ---- 5. Replay an identical report before paying for it again -----
+  // This check used to run only after the audit had been produced, so
+  // an exact repeat cost a full pipeline — roughly $0.20 and three
+  // minutes — before we discovered we already had the answer. Opening
+  // the row up front means we can ask the question first.
+  //
+  // The scope is matched in JS rather than through PostgREST array
+  // equality, for the same reason the pivot cache does: getting that
+  // comparison wrong fails silently, and a dedup check that silently
+  // never matches is indistinguishable from not having one.
+  const { data: priorRows } = await db
+    .from('audits')
+    .select('id, risk_score, frameworks')
+    .eq('organization_id', meta.organizationId)
+    .eq('document_hash', documentHash)
+    .eq('language', meta.targetLanguage)
+    .eq('status', 'completed');
+
+  const wantedScope = [...meta.frameworks].sort().join(',');
+  const prior = (priorRows as { id: string; risk_score: number; frameworks: string[] }[] | null)
+    ?.find((r) => [...(r.frameworks ?? [])].sort().join(',') === wantedScope);
+
+  if (prior) {
+    wipeBuffer(buffer);
+    await refundIfNeeded('idempotent_replay');
+    log('idempotent_replay', { auditId: prior.id });
+    const { count } = await db
+      .from('audit_findings')
+      .select('*', { count: 'exact', head: true })
+      .eq('audit_id', prior.id);
+    return NextResponse.json({
+      ok: true,
+      auditId: prior.id,
+      status: 'completed',
+      riskScore: prior.risk_score,
+      findingsCount: count ?? 0,
+      redirect: `/dashboard/${prior.id}`,
+      replay: true
+    });
+  }
+
+  // ---- 6. Envelope-encrypt the document (opt-in retention) ----------
+  // Done before the row is opened so the ciphertext lands in the same
+  // INSERT. On any crypto failure we proceed without retention —
+  // Zero-Knowledge fallback is strictly safer than a half-encrypted row.
+  const { data: retentionRow } = await db
+    .from('organizations')
+    .select('retain_documents')
+    .eq('id', meta.organizationId)
+    .maybeSingle();
+  const retain = (retentionRow as { retain_documents?: boolean } | null)?.retain_documents ?? false;
+
+  // Buffers are encoded as Postgres bytea hex literals (\\x…). The
+  // supabase-js JSON serializer doesn't natively know about Buffer,
+  // so doing the encoding ourselves is both explicit and portable.
+  const toBytea = (b: Buffer) => `\\x${b.toString('hex')}`;
+  let cryptoFields: {
+    document_ciphertext: string;
+    document_iv: string;
+    document_auth_tag: string;
+    document_encrypted_at: string;
+  } | null = null;
+  if (retain) {
+    try {
+      const enc = encryptDocument(extracted.text);
+      cryptoFields = {
+        document_ciphertext: toBytea(enc.ciphertext),
+        document_iv: toBytea(enc.iv),
+        document_auth_tag: toBytea(enc.authTag),
+        document_encrypted_at: new Date().toISOString()
       };
+      log('document_encrypted', { bytes: enc.ciphertext.length });
+    } catch (err) {
+      log('encryption_skipped', { reason: err instanceof Error ? err.message : String(err) });
+    }
+  }
 
-      const progress = (pct: number, stage: string) => {
-        send({ type: 'progress', progress: pct, stage });
-      };
+  // The raw bytes have now been parsed and, if retained, encrypted.
+  // Nothing downstream reads them again.
+  wipeBuffer(buffer);
 
-      // Heartbeat keeps iOS Safari from aborting on idle if a stage
-      // genuinely takes >60s (Multi-Pass on a large doc). Plain space
-      // fits between NDJSON lines without confusing the parser
-      // (line-by-line readers skip empty lines).
-      const heartbeat = setInterval(() => {
-        try {
-          controller.enqueue(enc.encode(' \n'));
-        } catch {
-          /* controller closed */
-        }
-      }, 10_000);
+  // ---- 7. Open the audit row ----------------------------------------
+  // `language` here is the language the customer ASKED for. Pass 2 can
+  // degrade to English, and the closing update records what was
+  // actually DELIVERED — see finishAudit.
+  //
+  // This insert cannot hit the dedup index: since migration 0016 that
+  // index covers completed rows only, precisely so an attempt never
+  // occupies the slot of a report.
+  const { data: opened, error: openErr } = await db
+    .from('audits')
+    .insert({
+      organization_id: meta.organizationId,
+      document_hash: documentHash,
+      frameworks: meta.frameworks,
+      status: 'running',
+      language: meta.targetLanguage,
+      // Whether this audit cost a credit is knowable only here.
+      // Recording it is what lets the reaper and the polling endpoint
+      // refund an abandoned audit without handing free credits to
+      // free-trial runs that never spent one.
+      credit_consumed: !usingFreeTrial,
+      ...(cryptoFields ?? {})
+    })
+    .select('id')
+    .single();
 
-      const finish = (payload: Record<string, unknown>) => {
-        clearInterval(heartbeat);
-        send({ type: 'final', ...payload });
-        controller.close();
-      };
+  if (openErr || !opened) {
+    log('supabase_write_failed', { code: openErr?.code, message: openErr?.message });
+    alertOps('audit.open_failed', {
+      error: openErr?.message ?? 'insert returned no id',
+      frameworks: meta.frameworks
+    });
+    await refundIfNeeded('supabase_write_failed');
+    return errorJson(
+      'supabase_write_failed',
+      openErr?.message ?? 'audit row insert returned no id',
+      500
+    );
+  }
 
-      // Stage 1: upload received (we're already past the Buffer copy).
-      progress(10, 'upload');
+  const auditId = (opened as { id: string }).id;
+  log('audit_opened', { auditId });
 
-      // Stage 2: extraction
-      progress(20, 'extraction_start');
-      let extracted;
-      try {
-        extracted = await extractText(buffer, { filename, mime });
-        log('extracted', { type: extracted.type, charCount: extracted.charCount, redactionCount: extracted.redactionCount });
-        progress(35, 'extraction_done');
-      } catch (err) {
-        wipeBuffer(buffer);
-        await refundIfNeeded('extraction_failed');
-        finish({ ok: false, error: 'extraction_failed', detail: err instanceof Error ? err.message : String(err) });
-        return;
-      }
+  await logAccess({
+    organizationId: meta.organizationId,
+    action: 'audit_created',
+    auditId,
+    ip,
+    userAgent: request.headers.get('user-agent')
+  });
 
-      // Stage 3: AI analysis (the longest phase — Multi-Pass)
-      progress(45, 'analysis_start');
-      let report;
-      try {
-        log('multipass_start');
-        // The pivot cache makes a second language nearly free: pass 1
-        // is language-independent, so only the translation is billed.
-        // Keyed on the org too — two customers can upload the same
-        // public document, and neither may read findings produced from
-        // the other's upload.
-        const pivotKey = {
-          organization_id: meta.organizationId,
-          document_hash: hashDocument(extracted.text),
-          frameworks: meta.frameworks
-        };
-        report = await runMultiPassAudit(
-          {
-            documentText: extracted.text,
-            frameworks: meta.frameworks,
-            targetLanguage: meta.targetLanguage
-          },
-          {
-            read: async () => {
-              // Matched in JS rather than with .eq() on the array
-              // column, for the same reason the replay lookup does:
-              // PostgREST array equality is a shape we do not control,
-              // and getting it wrong here fails silently — the cache
-              // would simply never hit, and we would go on paying for
-              // pass 1 twice while believing we had fixed it. Rows are
-              // at most one per framework scope for a given document.
-              const { data } = await db
-                .from('audit_pass1_cache')
-                .select('pivot, frameworks')
-                .eq('organization_id', pivotKey.organization_id)
-                .eq('document_hash', pivotKey.document_hash);
+  // ---- 8. Hand the slow work to the platform ------------------------
+  // Everything above answers in a second or two. Everything below takes
+  // minutes, and used to be held open on the customer's connection —
+  // which meant a closed tab, a sleeping phone or a carrier proxy
+  // timing out destroyed an audit they had already paid for. The whole
+  // NDJSON stream and its ten-second whitespace heartbeat existed only
+  // to survive that; with the work off the request there is nothing
+  // left to keep alive.
+  //
+  // waitUntil keeps the invocation running after the response is sent.
+  // It does NOT extend maxDuration — the ceiling is still 800s — so the
+  // row can still be abandoned by an eviction or a deploy. That is what
+  // the polling endpoint's self-heal (15 min) and the reaper (20 min)
+  // are for, and both refund.
+  waitUntil(
+    runAuditPipeline({
+      auditId,
+      documentText: extracted.text,
+      documentHash,
+      organizationId: meta.organizationId,
+      frameworks: meta.frameworks,
+      targetLanguage: meta.targetLanguage,
+      usingFreeTrial,
+      startedAt: t0
+    })
+  );
 
-              const wanted = [...pivotKey.frameworks].sort().join(',');
-              const row = (data as { pivot?: unknown; frameworks?: string[] }[] | null)
-                ?.find((r) => [...(r.frameworks ?? [])].sort().join(',') === wanted);
-              const hit = row?.pivot ?? null;
-              if (hit) log('pivot_cache_hit', { documentHash: pivotKey.document_hash });
-              return hit;
-            },
-            write: async (pivot) => {
-              await db
-                .from('audit_pass1_cache')
-                .upsert({ ...pivotKey, pivot }, { onConflict: 'organization_id,document_hash,frameworks' });
-            }
-          }
-        );
-        report.documentHash = hashDocument(extracted.text);
-        log('multipass_done', { findings: report.findings.length, riskScore: report.riskScore });
-        progress(85, 'analysis_done');
-      } catch (err) {
-        wipeBuffer(buffer);
-        const { code, detail } = classifyAiError(err);
-        log('multipass_failed', { code, detail });
-        // The credit is refunded and the user sees a clean error, so
-        // nothing escalates on its own — but this is the product
-        // failing to deliver. An expired or missing provider key shows
-        // up here and nowhere else.
-        alertOps('audit.multipass_failed', {
-          code,
-          detail,
-          frameworks: meta.frameworks,
-          targetLanguage: meta.targetLanguage
-        });
-        await refundIfNeeded(code);
-        finish({ ok: false, error: code, detail });
-        return;
-      }
+  return NextResponse.json(
+    {
+      ok: true,
+      auditId,
+      status: 'running',
+      poll: `/api/audit/${auditId}`,
+      redirect: `/dashboard/${auditId}`
+    },
+    { status: 202, headers: { 'Cache-Control': 'no-store' } }
+  );
+}
 
-      // Stage 4: writing — persistence to Postgres
-      progress(90, 'writing_start');
+/* ------------------------------------------------------------------ */
+/* Background pipeline                                                */
+/* ------------------------------------------------------------------ */
 
-      // Envelope-encrypt the extracted text iff the org has opted into
-      // retention (default true since migration 0009; the anonymous-org
-      // placeholder is forced to false there). On any crypto failure
-      // we proceed without retention — Zero-Knowledge fallback is
-      // strictly safer than a half-encrypted row.
-      const { data: orgRow } = await db
-        .from('organizations')
-        .select('retain_documents')
-        .eq('id', meta.organizationId)
-        .maybeSingle();
-      const retain = (orgRow as { retain_documents?: boolean } | null)?.retain_documents ?? false;
+interface PipelineInput {
+  auditId: string;
+  documentText: string;
+  documentHash: string;
+  organizationId: string;
+  frameworks: FrameworkId[];
+  targetLanguage: string;
+  usingFreeTrial: boolean;
+  startedAt: number;
+}
 
-      // Buffers are encoded as Postgres bytea hex literals (\\x…). The
-      // supabase-js JSON serializer doesn't natively know about Buffer,
-      // so doing the encoding ourselves is both explicit and portable.
-      const toBytea = (b: Buffer) => `\\x${b.toString('hex')}`;
-      let cryptoFields: {
-        document_ciphertext: string;
-        document_iv: string;
-        document_auth_tag: string;
-        document_encrypted_at: string;
-      } | null = null;
-      if (retain) {
-        try {
-          const enc = encryptDocument(extracted.text);
-          cryptoFields = {
-            document_ciphertext: toBytea(enc.ciphertext),
-            document_iv: toBytea(enc.iv),
-            document_auth_tag: toBytea(enc.authTag),
-            document_encrypted_at: new Date().toISOString()
-          };
-          log('document_encrypted', { bytes: enc.ciphertext.length });
-        } catch (err) {
-          log('encryption_skipped', { reason: err instanceof Error ? err.message : String(err) });
-        }
-      }
+/**
+ * Everything that takes minutes, run after the response has been sent.
+ *
+ * Contract: this function must ALWAYS leave the audit row in a terminal
+ * status. It is the only thing standing between a customer and a
+ * spinner that never stops — and unlike the request path, there is
+ * nobody on the other end to show an error to, so every failure has to
+ * be written down rather than returned.
+ */
+async function runAuditPipeline(input: PipelineInput): Promise<void> {
+  const db = supabaseService();
+  const log = (step: string, extra: Record<string, unknown> = {}) =>
+    console.log(
+      '[audit]',
+      JSON.stringify({ step, t: Date.now() - input.startedAt, auditId: input.auditId, ...extra })
+    );
 
-      // Wipe as early as we can — Multi-Pass and (optionally) the
-      // encryption step have consumed the text. The extracted.text
-      // string itself is not in `buffer`; it'll be GC'd when this
-      // closure returns.
-      wipeBuffer(buffer);
+  const refund = async (reason: string) => {
+    if (input.usingFreeTrial) {
+      log('refund_skipped_free_trial', { reason });
+      return;
+    }
+    const { error } = await db.rpc('refund_audit_credit', { p_org_id: input.organizationId });
+    if (error) log('refund_failed', { reason, error: error.message });
+    else log('credit_refunded', { reason });
+  };
 
-      // Persist audit row. `audit` is reassignable because a unique
-      // violation against an unusable earlier row is resolved by
-      // overwriting that row and carrying on with its id.
-      const { data: insertedAudit, error: insertErr } = await db
-        .from('audits')
-        .insert({
-          organization_id: meta.organizationId,
-          document_hash: report.documentHash,
-          frameworks: report.frameworks,
-          status: 'completed',
-          risk_score: report.riskScore,
-          summary: report.summary,
-          language: report.language,
-          completed_at: report.generatedAt,
-          // Whether this audit cost a credit is knowable only here.
-          // Recording it is what lets /api/cron/reap-audits refund an
-          // audit it finds abandoned, without handing free credits to
-          // free-trial runs that never spent one.
-          credit_consumed: !usingFreeTrial,
-          ...(cryptoFields ?? {})
-        })
-        .select('id')
-        .single();
+  const fail = async (code: string, detail: string) => {
+    const { error } = await db
+      .from('audits')
+      .update({ status: 'failed', error_message: `${code}: ${detail}` })
+      // Never overwrite a row something else already resolved — the
+      // polling endpoint's self-heal and the reaper both write here.
+      .eq('id', input.auditId)
+      .in('status', ['pending', 'running']);
+    if (error) {
+      // Now the row really can hang: we failed to record the failure.
+      // The reaper is the last line, and it only sweeps rows still in a
+      // non-terminal status — which this one is.
+      log('fail_write_failed', { code, error: error.message });
+      alertOps('audit.fail_write_failed', { auditId: input.auditId, code, error: error.message });
+    }
+    await refund(code);
+  };
 
-      let audit: { id: string } | null = (insertedAudit as { id: string } | null) ?? null;
+  // ---- AI analysis -------------------------------------------------
+  let report;
+  try {
+    log('multipass_start');
+    // The pivot cache makes a second language nearly free: pass 1 is
+    // language-independent, so only the translation is billed. Keyed on
+    // the org too — two customers can upload the same public document,
+    // and neither may read findings produced from the other's upload.
+    const pivotKey = {
+      organization_id: input.organizationId,
+      document_hash: input.documentHash,
+      frameworks: input.frameworks
+    };
+    report = await runMultiPassAudit(
+      {
+        documentText: input.documentText,
+        frameworks: input.frameworks,
+        targetLanguage: input.targetLanguage
+      },
+      {
+        read: async () => {
+          // Matched in JS rather than with .eq() on the array column:
+          // PostgREST array equality is a shape we do not control, and
+          // getting it wrong here fails silently — the cache would
+          // simply never hit, and we would go on paying for pass 1
+          // twice while believing we had fixed it.
+          const { data } = await db
+            .from('audit_pass1_cache')
+            .select('pivot, frameworks')
+            .eq('organization_id', pivotKey.organization_id)
+            .eq('document_hash', pivotKey.document_hash);
 
-      if (insertErr || !audit) {
-        // PG 23505 = unique violation. Our audits_dedup_idx enforces
-        // (organization_id, document_hash, language) uniqueness, so
-        // hitting this means the exact same audit (same org, same
-        // bytes, same target language) already exists. Idempotent
-        // retry: surface the existing row instead of failing, and
-        // refund the credit because we re-ran the AI for nothing.
-        if (insertErr?.code === '23505') {
-          // The dedup key includes the framework scope, so this triple
-          // can legitimately match several rows (same document, same
-          // language, audited against different regulations). Match the
-          // scope in JS rather than relying on PostgREST array equality
-          // — and never hand back an audit run against a different set
-          // of regulations than the one that was asked for.
-          const { data: candidates, error: lookupErr } = await db
-            .from('audits')
-            .select('id, risk_score, frameworks, status')
-            .eq('organization_id', meta.organizationId)
-            .eq('document_hash', report.documentHash)
-            .eq('language', report.language);
-
-          const wanted = [...report.frameworks].sort().join(',');
-          const existing = (candidates as
-            | { id: string; risk_score: number; frameworks: string[]; status: string }[]
-            | null)
-            ?.find((c) => [...(c.frameworks ?? [])].sort().join(',') === wanted);
-
-          // Only a completed audit is worth replaying. A failed one is
-          // a record of something that did not work, and handing it
-          // back discards the audit we just produced: on 11 Sep a
-          // GDPR + EU AI Act run finished with 12 findings after 182
-          // seconds, collided with an earlier failed row for the same
-          // document, and the customer was shown that failure instead.
-          // Overwrite the stale row with the result we now have.
-          if (existing && !lookupErr && existing.status !== 'completed') {
-            log('replacing_unusable_audit', { auditId: existing.id, previousStatus: existing.status });
-            alertOps('audit.replaced_unusable_row', {
-              auditId: existing.id,
-              previousStatus: existing.status,
-              frameworks: report.frameworks
-            });
-
-            const { error: overwriteErr } = await db
-              .from('audits')
-              .update({
-                document_hash: report.documentHash,
-                frameworks: report.frameworks,
-                status: 'completed',
-                risk_score: report.riskScore,
-                summary: report.summary,
-                language: report.language,
-                completed_at: report.generatedAt,
-                error_message: null,
-                ...(cryptoFields ?? {})
-              })
-              .eq('id', existing.id);
-
-            if (!overwriteErr) {
-              // Clear any partial findings from the previous attempt so
-              // the report cannot mix two runs.
-              await db.from('audit_findings').delete().eq('audit_id', existing.id);
-              audit = { id: existing.id };
-            }
-          }
-
-          if (!audit && existing && !lookupErr) {
-            log('idempotent_replay', { auditId: existing.id });
-            await refundIfNeeded('idempotent_replay');
-            const { count: existingFindingsCount } = await db
-              .from('audit_findings')
-              .select('*', { count: 'exact', head: true })
-              .eq('audit_id', existing.id);
-            progress(100, 'done');
-            finish({
-              ok: true,
-              auditId: existing.id,
-              riskScore: existing.risk_score,
-              findingsCount: existingFindingsCount ?? 0,
-              redirect: `/dashboard/${existing.id}`,
-              replay: true
-            });
-            return;
-          }
-        }
-
-        // Reached only when nothing above recovered a usable row —
-        // `audit` is set when an unusable earlier row was overwritten,
-        // and the replay path above returns on its own.
-        if (!audit) {
-          log('supabase_write_failed', {
-            code: insertErr?.code,
-            message: insertErr?.message,
-            hint: insertErr?.hint
-          });
-          await refundIfNeeded('supabase_write_failed');
-          finish({
-            ok: false,
-            error: 'supabase_write_failed',
-            detail: insertErr?.message ?? 'audit row insert returned no id'
-          });
-          return;
-        }
-      }
-      log('audit_persisted', { auditId: audit.id });
-
-      // Free-trial bookkeeping: flip the org flag now that the audit
-      // row exists. Failure to flip is logged but not fatal — worst
-      // case the user gets a second freebie on the next attempt, and
-      // we'd rather over-serve than fail-close on a paid step.
-      if (usingFreeTrial) {
-        const { error: flagErr } = await db
-          .from('organizations')
-          .update({ free_audit_used: true })
-          .eq('id', meta.organizationId);
-        if (flagErr) {
-          log('free_audit_flag_failed', { error: flagErr.message });
-        } else {
-          log('free_audit_consumed');
-        }
-      }
-
-      await logAccess({
-        organizationId: meta.organizationId,
-        action: 'audit_created',
-        auditId: audit.id,
-        ip,
-        userAgent: request.headers.get('user-agent')
-      });
-
-      // Persist findings (best-effort — audit row already saved)
-      if (report.findings.length > 0) {
-        const { error: findingsErr } = await db.from('audit_findings').insert(
-          report.findings.map((f) => ({
-            audit_id: audit.id,
-            framework_id: f.framework,
-            citation: f.citation,
-            severity: f.severity,
-            title: f.title,
-            body: f.body,
-            recommendation: f.recommendation,
-            evidence: f.evidence
-          }))
-        );
-        if (findingsErr) {
-          // This is a single batch insert: an error means ZERO of the
-          // findings were stored while the engine had produced several.
-          // The audit row is already saved as `completed`, so leaving it
-          // there publishes a report whose findings list is empty — and
-          // the UI renders an empty list as "no findings, your document
-          // is compliant". A risk score of 78 next to "you are compliant"
-          // is not a degraded report, it is a false one, and in a
-          // compliance product that is the most damaging thing we can
-          // ship. Fail the audit instead, and give the credit back.
-          log('findings_insert_failed', { error: findingsErr.message, auditId: audit.id });
-          alertOps('audit.findings_insert_failed', {
-            auditId: audit.id,
-            error: findingsErr.message,
-            frameworks: meta.frameworks,
-            expectedFindings: report.findings.length
-          });
-
+          const wanted = [...pivotKey.frameworks].sort().join(',');
+          const row = (data as { pivot?: unknown; frameworks?: string[] }[] | null)?.find(
+            (r) => [...(r.frameworks ?? [])].sort().join(',') === wanted
+          );
+          const hit = row?.pivot ?? null;
+          if (hit) log('pivot_cache_hit', { documentHash: pivotKey.document_hash });
+          return hit;
+        },
+        write: async (pivot) => {
           await db
-            .from('audits')
-            .update({
-              status: 'failed',
-              error_message: `findings_insert_failed: ${findingsErr.message}`
-            })
-            .eq('id', audit.id);
-
-          await refundIfNeeded('findings_insert_failed');
-          finish({
-            ok: false,
-            error: 'findings_insert_failed',
-            detail: findingsErr.message
-          });
-          return;
+            .from('audit_pass1_cache')
+            .upsert(
+              { ...pivotKey, pivot },
+              { onConflict: 'organization_id,document_hash,frameworks' }
+            );
         }
-        log('findings_persisted', { count: report.findings.length });
       }
+    );
+    log('multipass_done', { findings: report.findings.length, riskScore: report.riskScore });
+  } catch (err) {
+    const { code, detail } = classifyAiError(err);
+    log('multipass_failed', { code, detail });
+    // The credit is refunded and the customer sees a clean failure, so
+    // nothing escalates on its own — but this is the product failing to
+    // deliver. An expired or missing provider key shows up here and
+    // nowhere else.
+    alertOps('audit.multipass_failed', {
+      auditId: input.auditId,
+      code,
+      detail,
+      frameworks: input.frameworks,
+      targetLanguage: input.targetLanguage
+    });
+    await fail(code, detail);
+    return;
+  }
 
-      log('done', { auditId: audit.id });
-
-      // Analytics — funnel step "audit_completed". Fire-and-forget;
-      // even if PostHog is down we still ship the success envelope
-      // to the client. The captured payload lets the PostHog
-      // funnel filter by risk_score band (e.g. "viewers who saw a
-      // critical finding converted at X%") and by framework mix
-      // (which regulations are driving the most paid upgrades).
-      await captureServerEvent({
-        distinctId: meta.organizationId,
-        event: 'audit_completed',
-        properties: {
-          audit_id: audit.id,
-          risk_score: report.riskScore,
-          findings_count: report.findings.length,
-          frameworks: meta.frameworks,
-          target_language: meta.targetLanguage,
-          using_free_trial: usingFreeTrial
-        }
+  // ---- Findings ----------------------------------------------------
+  // Written BEFORE the row is marked completed. The row's status is
+  // what the report page trusts, so a 'completed' row whose findings
+  // never landed renders as "no findings, your document is compliant"
+  // next to a risk score of 78 — not a degraded report, a false one,
+  // and in a compliance product the most damaging thing we can ship.
+  if (report.findings.length > 0) {
+    const { error: findingsErr } = await db.from('audit_findings').insert(
+      report.findings.map((f) => ({
+        audit_id: input.auditId,
+        framework_id: f.framework,
+        citation: f.citation,
+        severity: f.severity,
+        title: f.title,
+        body: f.body,
+        recommendation: f.recommendation,
+        evidence: f.evidence
+      }))
+    );
+    if (findingsErr) {
+      log('findings_insert_failed', { error: findingsErr.message });
+      alertOps('audit.findings_insert_failed', {
+        auditId: input.auditId,
+        error: findingsErr.message,
+        frameworks: input.frameworks,
+        expectedFindings: report.findings.length
       });
+      await fail('findings_insert_failed', findingsErr.message);
+      return;
+    }
+    log('findings_persisted', { count: report.findings.length });
+  }
 
-      progress(100, 'done');
-      finish({
-        ok: true,
-        auditId: audit.id,
-        riskScore: report.riskScore,
-        findingsCount: report.findings.length,
-        redirect: `/dashboard/${audit.id}`
-      });
+  // ---- Close the row -----------------------------------------------
+  // `language` becomes the language actually DELIVERED, which is not
+  // always the one requested: pass 2 degrades to English rather than
+  // publish a half-translated compliance report.
+  const { error: closeErr } = await db
+    .from('audits')
+    .update({
+      status: 'completed',
+      risk_score: report.riskScore,
+      summary: report.summary,
+      language: report.language,
+      completed_at: report.generatedAt,
+      error_message: null
+    })
+    .eq('id', input.auditId)
+    .in('status', ['pending', 'running']);
+
+  if (closeErr) {
+    // 23505 against audits_dedup_idx means an identical report was
+    // delivered while this one was running. The commonest way is a
+    // degradation: the customer asked for Arabic, pass 2 failed, and
+    // the English report they already had is the same report. We are
+    // not going to store it twice, and we are not going to charge for
+    // rediscovering it.
+    if (closeErr.code === '23505') {
+      const { data: twins } = await db
+        .from('audits')
+        .select('id, frameworks')
+        .eq('organization_id', input.organizationId)
+        .eq('document_hash', input.documentHash)
+        .eq('language', report.language)
+        .eq('status', 'completed');
+      const wanted = [...input.frameworks].sort().join(',');
+      const twin = (twins as { id: string; frameworks: string[] }[] | null)?.find(
+        (t) => [...(t.frameworks ?? [])].sort().join(',') === wanted
+      );
+
+      log('duplicate_on_close', { deliveredLanguage: report.language, twinId: twin?.id });
+      // Clean up the findings we just wrote for a row nobody will read.
+      await db.from('audit_findings').delete().eq('audit_id', input.auditId);
+      await fail(
+        'duplicate_report',
+        twin ? `an identical report already exists: ${twin.id}` : 'an identical report already exists'
+      );
+      return;
+    }
+
+    log('close_failed', { error: closeErr.message });
+    alertOps('audit.close_failed', { auditId: input.auditId, error: closeErr.message });
+    await fail('supabase_write_failed', closeErr.message);
+    return;
+  }
+
+  // ---- Bookkeeping -------------------------------------------------
+  // Free-trial flag flips only now that a report exists. Failure to
+  // flip is logged but not fatal — worst case the customer gets a
+  // second freebie, and we would rather over-serve than fail closed.
+  if (input.usingFreeTrial) {
+    const { error: flagErr } = await db
+      .from('organizations')
+      .update({ free_audit_used: true })
+      .eq('id', input.organizationId);
+    if (flagErr) log('free_audit_flag_failed', { error: flagErr.message });
+    else log('free_audit_consumed');
+  }
+
+  await captureServerEvent({
+    distinctId: input.organizationId,
+    event: 'audit_completed',
+    properties: {
+      audit_id: input.auditId,
+      risk_score: report.riskScore,
+      findings_count: report.findings.length,
+      frameworks: input.frameworks,
+      target_language: input.targetLanguage,
+      delivered_language: report.language,
+      using_free_trial: input.usingFreeTrial
     }
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      // Disable any in-path buffering: we need the heartbeat bytes to
-      // hit the wire immediately, not get pooled into a 64 KB chunk
-      // by an upstream proxy.
-      'Cache-Control': 'no-store',
-      'X-Accel-Buffering': 'no'
-    }
-  });
+  log('done', { riskScore: report.riskScore, findings: report.findings.length });
 }

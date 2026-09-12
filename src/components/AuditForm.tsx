@@ -277,55 +277,33 @@ export function AuditForm({
         throw new AuditError(body.error ?? 'generic');
       }
 
-      // Slow-path: NDJSON stream. One JSON object per line:
-      //   {"type":"progress","progress":35,"stage":"extraction_done"}
-      //   {"type":"progress","progress":85,"stage":"analysis_done"}
-      //   ...
-      //   {"type":"final","ok":true,"redirect":"/dashboard/..."}
-      // Heartbeat lines are bare whitespace/empty — skipped.
-      if (!res.body) throw new Error('audit_no_stream');
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = '';
+      // The endpoint accepts the audit and answers immediately:
+      //   202 {"ok":true,"auditId":"…","status":"running","redirect":"…"}
+      //   200 {"ok":true,"auditId":"…","status":"completed","replay":true,…}
+      //
+      // There is no stream to read any more. The audit row exists
+      // before we get here, so the report page can render its progress
+      // and the work survives this tab being closed — which is the
+      // whole point of the change.
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        auditId?: string;
+        redirect?: string;
+        error?: string;
+        detail?: string;
+      };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-
-        let nl: number;
-        while ((nl = buf.indexOf('\n')) >= 0) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line) continue;
-
-          let evt: { type?: string; progress?: number; ok?: boolean; redirect?: string; error?: string; detail?: string };
-          try {
-            evt = JSON.parse(line);
-          } catch {
-            // Garbage line — extremely unlikely with our server, but
-            // we'd rather skip than crash the whole audit on it.
-            continue;
-          }
-
-          if (evt.type === 'progress' && typeof evt.progress === 'number') {
-            setView({ phase: 'running', progress: evt.progress });
-          } else if (evt.type === 'final') {
-            if (evt.ok && evt.redirect) {
-              window.location.assign(withLocale(evt.redirect));
-              return;
-            }
-            // Final event with ok:false carries the structured code;
-            // log the technical detail and surface only the code so
-            // the FailedCard can localize it.
-            if (evt.detail) console.error('[audit] server error detail:', evt.error, evt.detail);
-            throw new AuditError(evt.error ?? 'generic');
-          }
-        }
+      if (!body.ok || !body.redirect) {
+        if (body.detail) console.error('[audit] server error detail:', body.error, body.detail);
+        throw new AuditError(body.error ?? 'generic');
       }
 
-      // Stream ended without a `final` event — the server died mid-flight.
-      throw new AuditError('audit_stream_truncated');
+      // Hand over to the report page rather than waiting here. It is
+      // the one place that knows how to render an audit in any state,
+      // and landing on it immediately means the address bar now holds
+      // something the customer can come back to.
+      window.location.assign(withLocale(body.redirect));
+      return;
     } catch (err) {
       const code = err instanceof AuditError ? err.code : 'generic';
       if (!(err instanceof AuditError)) console.error('[audit] client error:', err);

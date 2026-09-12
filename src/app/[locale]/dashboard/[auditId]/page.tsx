@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowLeft, CheckCircle2, FileWarning, Info, Lock, Pencil
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
+import { AuditLiveStatus } from '@/components/AuditLiveStatus';
 import { DeleteAuditButton } from '@/components/DeleteAuditButton';
 import { PaywallTracker } from '@/components/PaywallTracker';
 import { PrintButton } from '@/components/PrintButton';
@@ -120,7 +121,7 @@ export default async function AuditDetailPage({ params }: PageProps) {
   // already showed it as failed; opening it told the customer the
   // opposite. An audit that did not finish has no verdict to give.
   if (a.status !== 'completed') {
-    return <AuditNotReady status={a.status} locale={params.locale} />;
+    return <AuditNotReady status={a.status} locale={params.locale} auditId={params.auditId} />;
   }
 
   const { data: findings } = await supabase
@@ -326,8 +327,17 @@ export default async function AuditDetailPage({ params }: PageProps) {
  * `pending` / `running` are transient; the page does not live-update
  * yet, so it says so rather than implying it will.
  */
-async function AuditNotReady({ status, locale }: { status: string; locale: string }) {
+async function AuditNotReady({
+  status,
+  locale,
+  auditId
+}: {
+  status: string;
+  locale: string;
+  auditId: string;
+}) {
   const t = await getTranslations('report');
+  const tAudit = await getTranslations('audit');
   const running = status === 'running' || status === 'pending';
 
   return (
@@ -353,9 +363,23 @@ async function AuditNotReady({ status, locale }: { status: string; locale: strin
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <p className="text-sm text-muted-foreground">
-            {running ? t('stateRunningBody') : t('stateFailedBody')}
-          </p>
+          {running ? (
+            // Live: polls the audit's status and re-renders this page
+            // as a report the moment it lands. The audit is running on
+            // the server whether or not this tab stays open — closing
+            // it no longer destroys anything.
+            <AuditLiveStatus
+              auditId={auditId}
+              labels={{
+                title: t('stateRunningTitle'),
+                body: t('stateRunningBody'),
+                phases: tAudit.raw('processing.phases') as readonly string[],
+                elapsed: t('stateRunningElapsed')
+              }}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('stateFailedBody')}</p>
+          )}
           {!running && (
             <Button asChild size="sm" className="justify-self-start">
               <Link href="/audit" locale={locale}>

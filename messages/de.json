@@ -208,10 +208,11 @@
       "info": "Info"
     },
     "stateRunningTitle": "Prüfung läuft",
-    "stateRunningBody": "Diese Prüfung ist noch nicht abgeschlossen. Aktualisieren Sie die Seite in Kürze.",
+    "stateRunningBody": "Diese Prüfung läuft auf unseren Servern. Die Seite aktualisiert sich von selbst — Sie können diesen Tab schließen und jederzeit zurückkehren.",
     "stateFailedTitle": "Prüfung nicht abgeschlossen",
     "stateFailedBody": "Diese Prüfung wurde abgebrochen, bevor ein Bericht entstand. Daraus lässt sich in keine Richtung eine Aussage ableiten. Ein verbrauchtes Guthaben wurde erstattet.",
-    "stateFailedCta": "Neue Prüfung starten"
+    "stateFailedCta": "Neue Prüfung starten",
+    "stateRunningElapsed": "Verstrichene Zeit"
   },
   "editor": {
     "title": "Dokumenten-Editor",
