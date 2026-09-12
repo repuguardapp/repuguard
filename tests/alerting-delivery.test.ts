@@ -125,10 +125,29 @@ describe('GET /api/admin/selftest-alerting', () => {
     return { status: res.status, body: (await res.json()) as Record<string, unknown> };
   }
 
-  it('refuses without the admin secret', async () => {
-    const { status } = await call('https://lexyflow.com/api/admin/selftest-alerting');
+  it('refuses a wrong secret without saying anything else', async () => {
+    const { status, body } = await call(
+      'https://lexyflow.com/api/admin/selftest-alerting?secret=wrong'
+    );
     expect(status).toBe(403);
+    expect(body).toEqual({ error: 'forbidden' });
     expect(mockCaptureMessage).not.toHaveBeenCalled();
+  });
+
+  /**
+   * An unconfigured endpoint and a mistyped secret are different
+   * problems with different fixes. Collapsing both into 403 leaves the
+   * operator guessing precisely when they are trying to establish
+   * whether the environment is wired up — and there is no secret to
+   * protect when none is configured.
+   */
+  it('says plainly when no secret is configured at all', async () => {
+    delete process.env['ADMIN_SELFTEST_SECRET'];
+    const { status, body } = await call(
+      'https://lexyflow.com/api/admin/selftest-alerting?secret=anything'
+    );
+    expect(status).toBe(503);
+    expect(body['error']).toBe('selftest_not_configured');
   });
 
   it('reports plainly that the SDK is inert instead of a green tick', async () => {

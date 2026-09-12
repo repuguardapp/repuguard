@@ -35,7 +35,25 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const provided = url.searchParams.get('secret');
   const expected = process.env.ADMIN_SELFTEST_SECRET;
-  if (!expected || provided !== expected) {
+
+  // "No secret is configured" and "you sent the wrong secret" are
+  // different operational facts and deserve different answers. Saying
+  // the endpoint is unconfigured reveals nothing about any secret's
+  // value — there isn't one — while collapsing both into 403 leaves
+  // the operator guessing at exactly the moment they are trying to
+  // find out whether their environment is wired up.
+  if (!expected) {
+    return NextResponse.json(
+      {
+        error: 'selftest_not_configured',
+        hint: 'ADMIN_SELFTEST_SECRET is not set in this environment. Add it in Vercel and redeploy.'
+      },
+      { status: 503 }
+    );
+  }
+  if (provided !== expected) {
+    // Deliberately says nothing more: past this point the value is a
+    // real secret and the response must not become an oracle.
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
