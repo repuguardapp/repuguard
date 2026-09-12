@@ -79,6 +79,25 @@ describe('audit timeout invariants', () => {
     expect(pollHealMinutes).toBeLessThan(cronReapMinutes);
   });
 
+  it('keeps every route that declares a ceiling agreeing with vercel.json', () => {
+    // Generalised from the audit route, where a 300/800 disagreement
+    // meant the real ceiling could not be known by reading the code.
+    // The same trap is open on every function listed here.
+    for (const [path, config] of Object.entries(vercelJson.functions)) {
+      let source: string;
+      try {
+        source = read(path);
+      } catch {
+        // vercel.json may list a path that no longer exists; that is a
+        // separate problem and the assertion below catches it.
+        expect.fail(`vercel.json lists ${path}, which is not in the repo`);
+      }
+      const match = source.match(/export const maxDuration = (\d+)/);
+      if (!match?.[1]) continue; // No route-level export: vercel.json alone decides.
+      expect(Number(match[1]), `${path} disagrees with vercel.json`).toBe(config.maxDuration);
+    }
+  });
+
   it('keeps every audit function within the platform ceiling', () => {
     // 800s is the Fluid Compute maximum. A larger value is rejected at
     // deploy time, which is a bad place to find out.

@@ -4,9 +4,10 @@ import OpenAI from 'openai';
 let anthropicClient: Anthropic | null = null;
 let openaiClient: OpenAI | null = null;
 
-// Vercel Pro caps function duration at 300s. We give the underlying API
-// calls slightly less so the SDK throws a clean timeout error in our
-// catch block — and the audit row flips to status='failed' with a
+// The audit function's ceiling is 800s (see vercel.json and the
+// maxDuration export in /api/audit). We give the underlying API calls
+// less than that so the SDK throws a clean timeout error in our catch
+// block — and the audit row flips to status='failed' with a
 // useful error_message — rather than letting the function instance be
 // killed mid-call (which leaves the row stuck at status='running').
 const ANTHROPIC_TIMEOUT_MS = 240_000; // 4 min
@@ -36,3 +37,20 @@ export function openai(): OpenAI {
 // drop-in replacement. Override via env if a future model warrants it.
 export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6';
 export const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4o';
+
+/**
+ * Model for the legal-watch extraction pass.
+ *
+ * Deliberately NOT the audit workhorse. Extraction reads a regulator's
+ * press release and pulls out five facts — which authority, what date,
+ * which articles, how much, what outcome. That is a reading task, not
+ * legal reasoning, and running it on Sonnet would multiply the cost of
+ * the acquisition engine by roughly fifteen for no gain in accuracy on
+ * facts that are printed verbatim in the source.
+ *
+ * At a realistic steady state — a handful of publications a day across
+ * four regulators — this keeps the whole content pipeline under a euro
+ * a month, which is what "budget zero" has to mean in practice.
+ */
+export const ANTHROPIC_EXTRACTION_MODEL =
+  process.env.ANTHROPIC_EXTRACTION_MODEL ?? 'claude-haiku-4-5-20251001';

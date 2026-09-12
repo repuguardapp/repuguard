@@ -101,6 +101,33 @@ describe('parseFeed — hostile input', () => {
   });
 });
 
+describe('htmlToText — what the extraction prompt actually reads', () => {
+  it('drops script and style bodies rather than only their tags', async () => {
+    const { htmlToText } = await import('../src/lib/feeds');
+    const html =
+      '<html><head><style>.a{color:red}</style></head>' +
+      '<body><script>var x=1;alert(x)</script><p>Décision rendue.</p></body></html>';
+    const text = htmlToText(html);
+
+    // Stripping tags alone would leave minified JavaScript in the
+    // middle of text we pay a model to read.
+    expect(text).not.toContain('alert');
+    expect(text).not.toContain('color:red');
+    expect(text).toContain('Décision rendue.');
+  });
+
+  it('keeps words either side of a block boundary apart', async () => {
+    const { htmlToText } = await import('../src/lib/feeds');
+    expect(htmlToText('<li>CNIL</li><li>ICO</li>')).toBe('CNIL\nICO');
+  });
+
+  it('caps the length it will hand to the model', async () => {
+    const { htmlToText } = await import('../src/lib/feeds');
+    const long = `<p>${'mot '.repeat(10_000)}</p>`;
+    expect(htmlToText(long, 500).length).toBeLessThanOrEqual(500);
+  });
+});
+
 describe('the legal-watch corpus is licence-aware by construction', () => {
   it('never seeds a source we may not use commercially', async () => {
     const { readFileSync } = await import('node:fs');

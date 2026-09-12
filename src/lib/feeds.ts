@@ -73,6 +73,33 @@ function date(raw: string | null): string | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
+/**
+ * Reduce a regulator's HTML page to readable text.
+ *
+ * Not a general-purpose converter — the only consumer is the
+ * extraction prompt, which needs prose and is unharmed by lost
+ * structure. Script and style bodies are dropped first: their contents
+ * are not markup, so stripping tags alone would leave minified
+ * JavaScript in the middle of the text we pay a model to read.
+ */
+export function htmlToText(html: string, maxChars = 12_000): string {
+  const text = html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, ' ')
+    // Block boundaries become spaces so words either side do not fuse.
+    .replace(/<\/(p|div|li|h[1-6]|tr|section|article)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n');
+  return decode(text.replace(/<[^>]*>/g, ' '))
+    .replace(/[ \t]+/g, ' ')
+    // An opening tag also collapses to a space, which would otherwise
+    // leave every line indented by the markup it came from.
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, maxChars);
+}
+
 export function parseFeed(xml: string): ParsedFeed {
   const blocks = xml.match(/<(item|entry)\b[\s\S]*?<\/\1>/gi) ?? [];
   const items: FeedItem[] = [];
