@@ -41,6 +41,24 @@ interface SourceRow {
   last_error: string | null;
 }
 
+/**
+ * What to call a source's state, using both columns rather than one.
+ *
+ * Reading last_status alone printed "never polled" next to a poll
+ * timestamp from this morning — which happens whenever the status is
+ * cleared without the timestamp, as it is after a URL is corrected.
+ * A console that contradicts itself in two adjacent lines is worse
+ * than one that says nothing, because it is the thing you check when
+ * you already distrust the system.
+ */
+function healthLabel(source: SourceRow): string {
+  if (source.last_status === 'ok') return 'ok';
+  if (source.last_status === 'error') return 'error';
+  if (!source.last_polled_at) return 'never polled';
+  // Status cleared but a poll has happened: the URL changed since.
+  return 'awaiting recheck';
+}
+
 const JOBS = [
   { path: '/api/cron/watch-legal', label: 'Run watch now' },
   { path: '/api/cron/extract-legal', label: 'Run extraction now' },
@@ -106,13 +124,11 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{source.name}</span>
                 <Badge variant="outline">{source.jurisdiction}</Badge>
-                {/* A source that has never been polled is not "ok" and
-                    must not look like it. */}
                 <Badge
                   variant={source.last_status === 'ok' ? 'secondary' : 'outline'}
                   className={source.last_status === 'error' ? 'border-destructive text-destructive' : ''}
                 >
-                  {source.last_status ?? 'never polled'}
+                  {healthLabel(source)}
                 </Badge>
                 {!source.enabled ? <Badge variant="outline">disabled</Badge> : null}
               </div>
