@@ -32,9 +32,31 @@
  * what LexyFlow publishes in seven languages.
  */
 
-/** Ordinary surfaces: dashboard, reports, audit. */
+/**
+ * Ordinary surfaces: dashboard, reports, audit.
+ *
+ * The idle window is what a customer actually experiences, and it is
+ * deliberately measured in hours rather than days.
+ *
+ * Closing the browser does not end a Supabase session. The refresh
+ * token lives in persistent storage so the SDK can renew silently, and
+ * that is the framework's design, not a setting — Supabase's own
+ * guidance is to give the cookies a far-future expiry and let the auth
+ * server decide validity. Trying to force a browser-close logout by
+ * shortening cookie lifetimes fights that design and does not work
+ * reliably anyway: iOS keeps tabs alive for weeks, so the same
+ * customer would be logged out on a laptop and not on a phone.
+ *
+ * A short idle window produces the behaviour people expect from a
+ * serious tool — close it in the evening, sign in again tomorrow —
+ * without depending on a browser event we cannot trust. Twenty-four
+ * hours keeps someone working through a report signed in across a
+ * lunch break and a meeting, and asks a returning customer for one
+ * magic-link click, which is roughly twenty seconds against a product
+ * they open deliberately and not many times a day.
+ */
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-export const SESSION_MAX_IDLE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const SESSION_MAX_IDLE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Admin surfaces. Deliberately short: approving an item in the legal

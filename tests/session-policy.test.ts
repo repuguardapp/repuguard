@@ -42,9 +42,20 @@ describe('the time-box', () => {
   });
 
   it('expires a session left untouched past the inactivity window', () => {
+    // The behaviour a customer notices: close the browser in the
+    // evening, sign in again tomorrow. Reached through an idle window
+    // rather than a browser-close event, which cannot be trusted —
+    // iOS keeps tabs alive for weeks, so the same person would be
+    // logged out on a laptop and not on a phone.
     expect(
-      evaluateSession({ createdAt: ago(10 * DAY), refreshedAt: ago(8 * DAY) }, DEFAULT, NOW)
+      evaluateSession({ createdAt: ago(3 * DAY), refreshedAt: ago(26 * HOUR) }, DEFAULT, NOW)
     ).toEqual({ valid: false, reason: 'expired_idle' });
+  });
+
+  it('keeps someone signed in across a lunch break and a meeting', () => {
+    expect(
+      evaluateSession({ createdAt: ago(3 * DAY), refreshedAt: ago(5 * HOUR) }, DEFAULT, NOW)
+    ).toEqual({ valid: true });
   });
 
   it('dates a never-refreshed session from its creation, not from epoch', () => {
@@ -126,5 +137,13 @@ describe('the durations are defensible to a security questionnaire', () => {
   it('keeps the inactivity window well inside the lifetime', () => {
     // An idle timeout at or above the time-box would never fire.
     expect(SESSION_MAX_IDLE_MS).toBeLessThan(SESSION_MAX_AGE_MS);
+  });
+
+  it('measures inactivity in hours, not days', () => {
+    // A week of inactivity on a product holding compliance reports —
+    // which contain names, home addresses and tax identifiers — is not
+    // a policy an enterprise security review would accept, and it is
+    // not what a customer expects from a serious tool either.
+    expect(SESSION_MAX_IDLE_MS).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
   });
 });
