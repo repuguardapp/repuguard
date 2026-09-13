@@ -86,7 +86,8 @@ const TOOL = {
       articles: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Provisions cited, as the source writes them. e.g. ["GDPR Art. 13", "GDPR Art. 32"].'
+        description:
+          'Provisions cited, with the instrument named in ENGLISH and the article number kept exactly as the source gives it. A French source writing "RGPD Art. 12" becomes "GDPR Art. 12"; the same for LGPD, APPI and the Gulf regimes. e.g. ["GDPR Art. 13", "GDPR Art. 32"].'
       },
       fine_eur: { type: 'number', description: 'Fine in euros. Omit entirely if no fine, or if the currency is not euros.' },
       outcome: { type: 'string', enum: ['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'] },
@@ -105,6 +106,8 @@ const SYSTEM = [
   'You are not a commentator. You state what a document says and nothing more:',
   'no advice, no interpretation, no speculation about consequences.',
   'Never assert a fact the source does not state — omit the field instead.',
+  'Name statutes by their English abbreviation even when the source is in',
+  'another language, so the corpus reads consistently across all of it.',
   'The summary must be your own sentences, not the source\'s, and must contain',
   'only what the source establishes.'
 ].join(' ');

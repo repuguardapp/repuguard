@@ -43,11 +43,29 @@ const FETCH_TIMEOUT_MS = 15_000;
  */
 const MAX_ITEMS_PER_SOURCE = 40;
 
+/**
+ * Consecutive failures before a source switches itself off.
+ *
+ * A feed that no longer exists would otherwise alert four times a day,
+ * for ever. That is how an alerting channel stops being read, and it
+ * would discredit the alerts that matter alongside it — the ICO
+ * withdrew every one of its RSS feeds pending a redesign, so ours was
+ * never coming back.
+ *
+ * Five runs is a day and a quarter: long enough that a regulator's
+ * maintenance window or a bad afternoon does not disable anything,
+ * short enough that a genuinely dead feed goes quiet within two days.
+ * Re-enabling is deliberate, which is right — a dead feed returns only
+ * when somebody has found its replacement.
+ */
+const DISABLE_AFTER_CONSECUTIVE_FAILURES = 5;
+
 interface SourceRow {
   id: string;
   name: string;
   feed_url: string;
   licence: string;
+  consecutive_failures: number | null;
 }
 
 interface SourceResult {
@@ -56,6 +74,8 @@ interface SourceResult {
   discovered: number;
   skipped: number;
   error?: string;
+  /** Set when this run was the one that switched the source off. */
+  disabled?: boolean;
 }
 
 export async function GET(request: Request) {
@@ -77,7 +97,7 @@ async function watch() {
 
   const { data, error } = await db
     .from('legal_sources')
-    .select('id, name, feed_url, licence')
+    .select('id, name, feed_url, licence, consecutive_failures')
     .eq('enabled', true);
 
   if (error) {
@@ -122,6 +142,40 @@ async function pollSource(
       .eq('id', source.id);
   };
 
+  /**
+   * Record a failure, and switch the source off once it has failed
+   * often enough that it is not coming back on its own.
+   */
+  const fail = async (error: string): Promise<SourceResult> => {
+    const streak = (source.consecutive_failures ?? 0) + 1;
+    const giveUp = streak >= DISABLE_AFTER_CONSECUTIVE_FAILURES;
+    await stamp({
+      last_status: 'error',
+      last_error: error,
+      consecutive_failures: streak,
+      ...(giveUp
+        ? {
+            enabled: false,
+            disabled_reason: `Auto-disabled after ${streak} consecutive failures. Last error: ${error}`
+          }
+        : {})
+    });
+    if (giveUp) {
+      console.warn('[cron/watch-legal] source_auto_disabled', { source: source.id, streak, error });
+      // Said once, at the moment it happens. After this the source is
+      // disabled and silent — which is the whole point.
+      alertOps('cron.watch_legal_source_disabled', { source: source.id, streak, error });
+    }
+    return {
+      source: source.id,
+      ok: false,
+      discovered: 0,
+      skipped: 0,
+      error,
+      ...(giveUp ? { disabled: true } : {})
+    };
+  };
+
   let xml: string;
   try {
     const res = await fetch(source.feed_url, {
@@ -132,16 +186,10 @@ async function pollSource(
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       cache: 'no-store'
     });
-    if (!res.ok) {
-      const error = `http_${res.status}`;
-      await stamp({ last_status: 'error', last_error: error });
-      return { source: source.id, ok: false, discovered: 0, skipped: 0, error };
-    }
+    if (!res.ok) return await fail(`http_${res.status}`);
     xml = await res.text();
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    await stamp({ last_status: 'error', last_error: error });
-    return { source: source.id, ok: false, discovered: 0, skipped: 0, error };
+    return await fail(err instanceof Error ? err.message : String(err));
   }
 
   const { items, skipped } = parseFeed(xml);
@@ -150,9 +198,7 @@ async function pollSource(
     // quiet day: it is what a moved feed serving an HTML redirect page
     // looks like. Saying "ok, 0 items" here is how a dead source stays
     // dead for months.
-    const error = `no_items (skipped ${skipped}, ${xml.length} bytes)`;
-    await stamp({ last_status: 'error', last_error: error });
-    return { source: source.id, ok: false, discovered: 0, skipped, error };
+    return await fail(`no_items (skipped ${skipped}, ${xml.length} bytes)`);
   }
 
   const rows = items.slice(0, MAX_ITEMS_PER_SOURCE).map((item) => ({
@@ -174,12 +220,11 @@ async function pollSource(
     .upsert(rows, { onConflict: 'source_id,external_id', ignoreDuplicates: true })
     .select('id');
 
-  if (insertErr) {
-    await stamp({ last_status: 'error', last_error: insertErr.message });
-    return { source: source.id, ok: false, discovered: 0, skipped, error: insertErr.message };
-  }
+  if (insertErr) return await fail(insertErr.message);
 
-  await stamp({ last_status: 'ok', last_error: null });
+  // A success clears the streak: an intermittent feed must never creep
+  // up to the threshold over weeks of alternating runs.
+  await stamp({ last_status: 'ok', last_error: null, consecutive_failures: 0 });
   return {
     source: source.id,
     ok: true,

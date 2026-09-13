@@ -150,3 +150,44 @@ describe('the legal-watch corpus is licence-aware by construction', () => {
     expect(sql).toContain('2011/833');
   });
 });
+
+describe('a dead source stops shouting', () => {
+  it('encodes the auto-disable rule and the streak reset', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/watch-legal/route.ts'),
+      'utf8'
+    );
+
+    // A feed that no longer exists would otherwise alert four times a
+    // day for ever. That is how an alerting channel stops being read,
+    // and it discredits the alerts that matter alongside it — the ICO
+    // withdrew every one of its RSS feeds, so ours was never coming
+    // back.
+    expect(source).toContain('DISABLE_AFTER_CONSECUTIVE_FAILURES');
+    expect(source).toContain('cron.watch_legal_source_disabled');
+
+    // A success must clear the streak, or an intermittent feed creeps
+    // up to the threshold over weeks of alternating runs.
+    expect(source).toContain("last_status: 'ok', last_error: null, consecutive_failures: 0");
+  });
+});
+
+describe('the extraction pivot is one language', () => {
+  it('tells the model to name statutes in English whatever the source', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+      'utf8'
+    );
+
+    // The first two real extractions came back with "RGPD Art. 12" from
+    // a French source and "GDPR Art. 32" from another. On an English
+    // page "RGPD" is simply wrong, and a corpus that names the same
+    // statute two ways splits its own search traffic.
+    expect(source).toContain('named in ENGLISH');
+    expect(source).toContain('English abbreviation even when the source is in');
+  });
+});
