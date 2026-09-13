@@ -36,7 +36,7 @@ export async function GET() {
         signedIn: false,
         isAdmin: false,
         allowlistConfigured,
-        hint: 'No session on this request. Sign in at /login first — the admin page reads the same cookie.'
+        hint: 'No session on this request. Sign in at /login first; the admin page reads the same cookie. If you are in a private window, the magic link must be opened in that same window.'
       },
       { headers: { 'Cache-Control': 'no-store' } }
     );
@@ -55,8 +55,8 @@ export async function GET() {
       hint: isAdmin
         ? 'You are on the allowlist. /admin/legal-queue will render.'
         : allowlistConfigured
-          ? 'ADMIN_EMAILS is set but does not contain this address. Compare it character for character — matching is case-insensitive but whitespace and commas are not forgiving.'
-          : 'ADMIN_EMAILS is not set in this environment. Add it in Vercel and redeploy — an unset allowlist means nobody is an admin, by design.'
+          ? 'ADMIN_EMAILS is set but does not contain this address. Compare it character for character: matching is case-insensitive, but whitespace and commas are not forgiving.'
+          : 'ADMIN_EMAILS is not set in this environment. Add it in Vercel and redeploy: an unset allowlist means nobody is an admin, by design.'
     },
     { headers: { 'Cache-Control': 'no-store' } }
   );

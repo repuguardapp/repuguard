@@ -1,7 +1,7 @@
 import { ExternalLink, ShieldAlert } from 'lucide-react';
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { LegalReviewButtons } from '@/components/LegalReviewButtons';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,10 +51,20 @@ interface QueueRow {
 export default async function LegalQueuePage({ params }: { params: { locale: string } }) {
   unstable_setRequestLocale(params.locale);
 
-  // 404 rather than 403: an internal tool should not confirm it exists
-  // to someone who has no business here.
+  // Two different situations, two different answers.
+  //
+  // No session at all — including one the twelve-hour admin policy has
+  // expired — means sign in. A dead end here sent the operator round
+  // three separate diagnostics before we learned the session had
+  // simply lapsed, and redirecting leaks nothing: every protected page
+  // on the site does the same.
+  //
+  // A signed-in stranger still gets 404. That is where secrecy
+  // actually matters: the existence of this queue is not something a
+  // logged-in visitor needs confirmed.
   const user = await getCurrentAdminUser();
-  if (!user || !isAdminEmail(user.email)) notFound();
+  if (!user) redirect(`/${params.locale}/login?next=/${params.locale}/admin/legal-queue`);
+  if (!isAdminEmail(user.email)) notFound();
 
   const db = supabaseService();
   const { data, error } = await db

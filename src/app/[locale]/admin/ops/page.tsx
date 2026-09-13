@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale } from 'next-intl/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { CronRunButton } from '@/components/CronRunButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,8 +50,11 @@ const JOBS = [
 export default async function OpsPage({ params }: { params: { locale: string } }) {
   unstable_setRequestLocale(params.locale);
 
+  // Signed out (or an expired admin session) goes to login; a
+  // signed-in stranger gets 404. See the note in legal-queue.
   const user = await getCurrentAdminUser();
-  if (!user || !isAdminEmail(user.email)) notFound();
+  if (!user) redirect(`/${params.locale}/login?next=/${params.locale}/admin/ops`);
+  if (!isAdminEmail(user.email)) notFound();
 
   const db = supabaseService();
   const [{ data: sources }, { data: counts }] = await Promise.all([
