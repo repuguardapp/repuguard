@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
+import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
 import { htmlToText } from '@/lib/feeds';
 import { supabaseService } from '@/lib/supabase';
@@ -116,21 +117,13 @@ interface DevelopmentRow {
   published_at: string | null;
 }
 
-function isAuthorized(request: Request): boolean {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) return process.env.NODE_ENV !== 'production';
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${expected}`) return true;
-  return new URL(request.url).searchParams.get('secret') === expected;
-}
-
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!(await isCronAuthorized(request))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   return extract();
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!(await isCronAuthorized(request))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   return extract();
 }
 
