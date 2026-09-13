@@ -46,6 +46,41 @@ function resend(): Resend | null {
 }
 
 /* ------------------------------------------------------------------ */
+/* Operational digest                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The daily operational digest, to the ADMIN_EMAILS allowlist.
+ *
+ * Plain text on purpose. It is read on a phone, first thing, and its
+ * whole job is to be scanned in ten seconds — an HTML shell with a
+ * logo and a call-to-action button would make it look like the
+ * marketing mail it must never be confused with.
+ */
+export async function sendOpsDigest(
+  to: string[],
+  subject: string,
+  text: string
+): Promise<boolean> {
+  const r = resend();
+  if (!r) {
+    console.warn('[email] ops_digest resend_disabled (RESEND_API_KEY unset)');
+    return false;
+  }
+  try {
+    const { error } = await r.emails.send({ from: FROM, to, subject, text });
+    if (error) {
+      console.error('[email] ops_digest send_failed', { error: error.message });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[email] ops_digest threw', err);
+    return false;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Audit completed                                                    */
 /* ------------------------------------------------------------------ */
 
