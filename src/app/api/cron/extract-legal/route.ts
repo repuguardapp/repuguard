@@ -82,7 +82,11 @@ const TOOL = {
       },
       reject_reason: { type: 'string', description: 'Why it is not relevant. Required when relevant is false.' },
       authority: { type: 'string', description: 'Issuing body, in English. e.g. "CNIL", "EDPB", "ICO".' },
-      decision_date: { type: 'string', description: 'ISO date YYYY-MM-DD. Omit if the source does not state one.' },
+      decision_date: {
+        type: 'string',
+        description:
+          'ISO date YYYY-MM-DD of the DECISION itself, not of its announcement. Regulators routinely publish weeks after ruling: a CNIL page opens "Le 3 septembre 2026, la CNIL a prononcé une sanction" while its own reference at the foot reads "Délibération n°SAN-2026-009 du 21 juillet 2026". When the source gives a deliberation, judgment or decision reference with its own date, that date wins over the date in the prose. Omit the field entirely if no date is stated.'
+      },
       articles: {
         type: 'array',
         items: { type: 'string' },
@@ -106,6 +110,9 @@ const SYSTEM = [
   'You are not a commentator. You state what a document says and nothing more:',
   'no advice, no interpretation, no speculation about consequences.',
   'Never assert a fact the source does not state — omit the field instead.',
+  'A publication date is not a decision date. Prefer the date carried by',
+  'the formal act — deliberation, judgment, decision reference — over the',
+  'date the announcement was written.',
   'Name statutes by their English abbreviation even when the source is in',
   'another language, so the corpus reads consistently across all of it.',
   'The summary must be your own sentences, not the source\'s, and must contain',

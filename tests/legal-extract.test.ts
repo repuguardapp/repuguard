@@ -289,3 +289,27 @@ describe('one decision, one page — whatever reported it', () => {
     expect(body['rejected']).toBe(0);
   });
 });
+
+describe('a publication date is not a decision date', () => {
+  it('tells the model which date wins when the source gives both', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+      'utf8'
+    );
+
+    // Found on the first item ever reviewed. The CNIL page opens "Le 3
+    // septembre 2026, la CNIL a prononcé une sanction" and carries, at
+    // its foot, "Délibération n°SAN-2026-009 du 21 juillet 2026". The
+    // model took the prose date, which is when the sanction was
+    // announced, not when it was decided.
+    //
+    // Our page labels the field "Decision date" and puts it in the
+    // title, and a compliance officer citing the ruling cites the
+    // deliberation. Every CNIL sanction page has this shape, so the
+    // defect was systematic rather than a one-off slip.
+    expect(source).toContain('not of its announcement');
+    expect(source).toContain('A publication date is not a decision date');
+  });
+});
