@@ -26,11 +26,17 @@ interface Journal {
 let journal: Journal;
 let queue: Record<string, unknown>[];
 let toolInput: Record<string, unknown> | (() => Record<string, unknown>);
+/** What the cross-source twin lookup finds. Empty means no duplicate. */
+let twinRows: { id: string; fine_eur: number | null }[];
 
 function chain(result: unknown): Record<string, unknown> {
   const self: Record<string, unknown> = {
     select: () => chain(result),
     eq: () => chain(result),
+    in: () => chain(result),
+    // findTwin's query is the only one that ends on .neq(), so this is
+    // where the duplicate lookup gets its own answer.
+    neq: () => chain({ data: twinRows, error: null }),
     order: () => chain(result),
     limit: () => chain(result),
     maybeSingle: async () => result,
@@ -104,6 +110,7 @@ beforeEach(() => {
   vi.resetModules();
   journal = { updates: [], modelCalls: 0, fetched: [] };
   queue = [ITEM];
+  twinRows = [];
   toolInput = GOOD_EXTRACTION;
   // No CRON_SECRET configured: the route then allows the call outside
   // production, which is what lets these tests exercise it at all.
@@ -238,5 +245,47 @@ describe('reading the source degrades rather than blocks', () => {
     }));
     const body = await run();
     expect(body['extracted']).toBe(1);
+  });
+});
+
+describe('one decision, one page — whatever reported it', () => {
+  /**
+   * The uniqueness key is (source_id, external_id): idempotent per feed,
+   * blind across feeds. The CNIL fine against EXTIA arrived twice —
+   * once from cnil.fr, once from the EDPB newsroom that republishes it.
+   * Two rows become two pages describing the same decision, which is
+   * duplicate content on our own domain, where the pages compete with
+   * each other and the corpus looks padded.
+   */
+  it('rejects the second report of a decision, naming the first', async () => {
+    const twinId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    twinRows = [{ id: twinId, fine_eur: GOOD_EXTRACTION.fine_eur }];
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(1);
+    expect(body['extracted']).toBe(0);
+    const patch = journal.updates[0]!.patch;
+    expect(patch['status']).toBe('rejected');
+    expect(String(patch['rejected_reason'])).toContain('duplicate of');
+    expect(String(patch['rejected_reason'])).toContain(twinId);
+  });
+
+  it('is not fooled by a different fine on the same day', async () => {
+    // Same authority, same date, different amount: two real decisions.
+    twinRows = [{ id: 'other', fine_eur: 999 }];
+    const body = await run();
+    expect(body['extracted']).toBe(1);
+  });
+
+  it('never calls an undated decision a duplicate', async () => {
+    // With no date there is nothing to match on, and guessing would
+    // silently drop a real decision — far worse than publishing one
+    // twice.
+    twinRows = [{ id: 'other', fine_eur: GOOD_EXTRACTION.fine_eur }];
+    toolInput = { ...GOOD_EXTRACTION, decision_date: undefined };
+    const body = await run();
+    expect(body['extracted']).toBe(1);
+    expect(body['rejected']).toBe(0);
   });
 });

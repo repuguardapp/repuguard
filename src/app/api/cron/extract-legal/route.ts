@@ -231,6 +231,34 @@ async function extractOne(
     throw new Error('relevant item returned without a usable summary');
   }
 
+  // Two sources, one decision. The uniqueness key is
+  // (source_id, external_id), which makes polling idempotent per feed
+  // and does nothing across feeds — so the CNIL fine against EXTIA
+  // arrived twice, once from cnil.fr and once from the EDPB newsroom
+  // that republishes it. Two rows would become two pages describing
+  // the same decision, which is duplicate content on our own domain:
+  // the pages compete with each other and the corpus looks padded.
+  //
+  // The facts are what identify a decision, so they are what we
+  // deduplicate on: same authority, same date, same amount. Checked
+  // here rather than with a database constraint because the facts only
+  // exist once extraction has run, and because the loser must be
+  // recorded as a duplicate rather than rejected by a failed insert
+  // nobody can read afterwards.
+  const twin = await findTwin(db, item.id, out);
+  if (twin) {
+    await db
+      .from('legal_developments')
+      .update({
+        status: 'rejected',
+        rejected_reason: `duplicate of ${twin} (same authority, date and amount, reported by another source)`,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', item.id);
+    stats.rejected += 1;
+    return;
+  }
+
   await db
     .from('legal_developments')
     .update({
@@ -247,6 +275,42 @@ async function extractOne(
     .eq('id', item.id);
 
   stats.extracted += 1;
+}
+
+/**
+ * Another row describing the same decision, if one exists.
+ *
+ * Only rows that are still alive count: a previous duplicate that was
+ * itself rejected must not make a third copy look like a duplicate of
+ * something nobody can see.
+ *
+ * A decision with no date and no amount has nothing to match on, so it
+ * is never treated as a duplicate — guessing there would silently drop
+ * a real decision, which is far worse than publishing one twice.
+ */
+async function findTwin(
+  db: ReturnType<typeof supabaseService>,
+  selfId: string,
+  facts: z.infer<typeof Extraction>
+): Promise<string | null> {
+  if (!facts.authority || !facts.decision_date) return null;
+
+  const { data, error } = await db
+    .from('legal_developments')
+    .select('id, fine_eur')
+    .eq('authority', facts.authority)
+    .eq('decision_date', facts.decision_date)
+    .in('status', ['extracted', 'approved', 'published'])
+    .neq('id', selfId);
+  if (error) return null;
+
+  const rows = (data as { id: string; fine_eur: number | null }[] | null) ?? [];
+  const match = rows.find((r) => {
+    const mine = facts.fine_eur ?? null;
+    const theirs = r.fine_eur === null ? null : Number(r.fine_eur);
+    return mine === theirs;
+  });
+  return match?.id ?? null;
 }
 
 /**
