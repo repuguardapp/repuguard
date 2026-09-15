@@ -55,7 +55,7 @@ export async function GET() {
       hint: isAdmin
         ? 'You are on the allowlist. /admin/legal-queue will render.'
         : allowlistConfigured
-          ? 'ADMIN_EMAILS is set but does not contain this address. Compare it character for character: matching is case-insensitive, but whitespace and commas are not forgiving.'
+          ? 'ADMIN_EMAILS is set but does not contain this address. Matching lowercases both sides and trims surrounding spaces, so neither case nor spacing is the problem — the address itself differs. Add it to ADMIN_EMAILS (comma-separated) and redeploy, or sign in with an address already on the list.'
           : 'ADMIN_EMAILS is not set in this environment. Add it in Vercel and redeploy: an unset allowlist means nobody is an admin, by design.'
     },
     { headers: { 'Cache-Control': 'no-store' } }

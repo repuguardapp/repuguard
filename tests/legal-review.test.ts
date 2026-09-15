@@ -157,3 +157,32 @@ describe('what approval and rejection actually record', () => {
     expect(journal.patches).toHaveLength(0);
   });
 });
+
+describe('the allowlist matches the way whoami says it does', () => {
+  /**
+   * The diagnostic endpoint told an operator that "whitespace and
+   * commas are not forgiving" while isAdminEmail trims and lowercases
+   * both sides. A diagnostic that gives false advice sends the reader
+   * hunting for a problem that is not there — worse than saying
+   * nothing, because it is read at the moment they are already stuck.
+   */
+  it('ignores case and surrounding spaces, as the hint now claims', async () => {
+    const { isAdminEmail } = await import('../src/lib/admin');
+
+    process.env['ADMIN_EMAILS'] = ' Owner@LexyFlow.com , second@example.com ';
+    expect(isAdminEmail('owner@lexyflow.com')).toBe(true);
+    expect(isAdminEmail('  SECOND@example.com  ')).toBe(true);
+    expect(isAdminEmail('stranger@example.com')).toBe(false);
+  });
+
+  it('says so in the hint rather than blaming spacing', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/admin/whoami/route.ts'),
+      'utf8'
+    );
+    expect(source).toContain('neither case nor spacing is the problem');
+    expect(source).not.toContain('not forgiving');
+  });
+});
