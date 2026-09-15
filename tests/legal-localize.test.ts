@@ -276,3 +276,34 @@ describe('an item that should not have been approved is refused', () => {
     expect(journal.localeRows).toHaveLength(0);
   });
 });
+
+describe('a published page is visible immediately', () => {
+  it('revalidates every locale path and the sitemap', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/localize-legal/route.ts'),
+      'utf8'
+    );
+
+    // The public pages are cached for an hour. Without an explicit
+    // revalidation, approving an item and then looking at the site
+    // shows the state from up to an hour ago — indistinguishable from
+    // a publication that silently failed.
+    expect(source).toContain('revalidatePath');
+    expect(source).toContain('/decisions/${item.slug}');
+    expect(source).toContain("revalidatePath('/sitemap.xml')");
+  });
+
+  it('never loses the page over a cache hint', () => {
+    // The item IS published by this point, and the hourly
+    // revalidation catches up on its own.
+    const { readFileSync } = require('node:fs') as typeof import('node:fs');
+    const { join } = require('node:path') as typeof import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/localize-legal/route.ts'),
+      'utf8'
+    );
+    expect(source).toContain('revalidate_failed');
+  });
+});

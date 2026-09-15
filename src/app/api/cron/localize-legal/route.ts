@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
@@ -162,6 +163,29 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
     .eq('id', item.id)
     .eq('status', 'approved');
   if (statusErr) throw new Error(`status write failed: ${statusErr.message}`);
+
+  // The public pages are cached for an hour, which is right for a
+  // corpus that grows a few times a day and wrong for the moment it
+  // grows. Without this, approving something and looking at the site
+  // shows the state from up to an hour ago — indistinguishable from a
+  // publication that silently failed, which is exactly the confusion
+  // this codebase keeps paying for.
+  //
+  // Failures here are logged, never thrown: the item IS published, and
+  // the hourly revalidation will catch up on its own. Losing the page
+  // over a cache hint would be the wrong trade.
+  try {
+    for (const locale of ['en', ...TARGET_LOCALES]) {
+      revalidatePath(`/${locale}/decisions`);
+      revalidatePath(`/${locale}/decisions/${item.slug}`);
+    }
+    revalidatePath('/sitemap.xml');
+  } catch (err) {
+    console.warn('[cron/localize-legal] revalidate_failed', {
+      id: item.id,
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
 }
 
 /**
