@@ -44,10 +44,7 @@ const TARGET_LOCALES = ['fr', 'es', 'de', 'pt-br', 'ja', 'ar'] as const;
  */
 const MAX_ITEMS_PER_RUN = 4;
 
-const Translated = z.object({
-  title: z.string().min(1),
-  summary: z.string().min(1)
-});
+const Translated = z.object({ summary: z.string().min(1) });
 
 interface ApprovedRow {
   id: string;
@@ -119,12 +116,11 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
     throw new Error('approved item is missing its summary or slug');
   }
 
-  const titleEn = buildTitle(item);
-
   // The six run concurrently: same token count, a fraction of the wall
   // clock, and each one's failure is independent until we collect them.
+  // Only the summary is sent — the title is assembled per locale below.
   const results = await Promise.allSettled(
-    TARGET_LOCALES.map((locale) => translate(titleEn, item.summary_en!, locale))
+    TARGET_LOCALES.map((locale) => translate(item.summary_en!, locale))
   );
 
   const failures = results
@@ -142,16 +138,13 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
     // English is the pivot: a person approved these exact words, so
     // they are stored verbatim rather than round-tripped through a
     // model that could only degrade them.
-    { development_id: item.id, locale: 'en', title: titleEn, summary: item.summary_en },
-    ...TARGET_LOCALES.map((locale, i) => {
-      const value = (results[i] as PromiseFulfilledResult<z.infer<typeof Translated>>).value;
-      return {
-        development_id: item.id,
-        locale,
-        title: value.title,
-        summary: value.summary
-      };
-    })
+    { development_id: item.id, locale: 'en', title: buildTitle(item, 'en'), summary: item.summary_en },
+    ...TARGET_LOCALES.map((locale, i) => ({
+      development_id: item.id,
+      locale,
+      title: buildTitle(item, locale),
+      summary: (results[i] as PromiseFulfilledResult<z.infer<typeof Translated>>).value.summary
+    }))
   ];
 
   const { error: writeErr } = await db
@@ -172,26 +165,54 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
 }
 
 /**
- * Our own headline, assembled from the facts.
+ * The one word in the headline that is ours rather than the law's.
+ *
+ * Everything else in a title — the authority, the amount, the article
+ * numbers, the date — is a proper noun or a figure and stays put in
+ * every language. The outcome is the exception, and leaving it in
+ * English is what made the Arabic and Japanese pages read as
+ * untranslated: the H1 was "CNIL — €500,000 fine — GDPR Art. 32 —
+ * 2026-07-21" on all seven.
+ *
+ * Translated here rather than by the model, because a title is a URL's
+ * public face and an identity: it must be identical every time it is
+ * rendered, and a model asked to translate a string that is nine parts
+ * proper noun will sometimes return it untouched and sometimes
+ * transliterate the lot.
+ */
+const OUTCOME_LABEL: Record<string, Record<string, string>> = {
+  fine:         { en: 'fine',        fr: 'amende',        es: 'multa',           de: 'Bußgeld',        'pt-br': 'multa',        ja: '制裁金',   ar: 'غرامة' },
+  reprimand:    { en: 'reprimand',   fr: 'blâme',         es: 'apercibimiento',  de: 'Verwarnung',     'pt-br': 'advertência',  ja: '戒告',     ar: 'توبيخ' },
+  ban:          { en: 'ban',         fr: 'interdiction',  es: 'prohibición',     de: 'Verbot',         'pt-br': 'proibição',    ja: '禁止',     ar: 'حظر' },
+  order:        { en: 'order',       fr: 'injonction',    es: 'requerimiento',   de: 'Anordnung',      'pt-br': 'determinação', ja: '命令',     ar: 'أمر' },
+  guidance:     { en: 'guidance',    fr: 'lignes directrices', es: 'directrices', de: 'Leitlinien',    'pt-br': 'diretrizes',   ja: 'ガイドライン', ar: 'إرشادات' },
+  court_ruling: { en: 'court ruling', fr: 'décision de justice', es: 'sentencia', de: 'Gerichtsurteil', 'pt-br': 'decisão judicial', ja: '判決', ar: 'حكم قضائي' },
+  other:        { en: 'decision',    fr: 'décision',      es: 'resolución',      de: 'Entscheidung',   'pt-br': 'decisão',      ja: '決定',     ar: 'قرار' }
+};
+
+/**
+ * Our own headline, assembled from the facts, in one language.
  *
  * Never the regulator's — their headline is their prose. These are
  * facts, which carry no copyright, and the result is more useful than
  * a borrowed title: consistent across the whole corpus, and carrying
  * the terms a compliance officer actually searches for.
  */
-function buildTitle(item: ApprovedRow): string {
+function buildTitle(item: ApprovedRow, locale: string): string {
   const parts: string[] = [];
   parts.push(item.authority ?? 'Regulator');
 
   if (item.fine_eur !== null && item.fine_eur > 0) {
-    const amount = new Intl.NumberFormat('en', {
+    // `-u-nu-latn` forces Latin digits: Arabic would otherwise render
+    // ٥٠٠٬٠٠٠, which nobody searching for this fine will ever type.
+    const amount = new Intl.NumberFormat(`${locale}-u-nu-latn`, {
       style: 'currency',
       currency: 'EUR',
       maximumFractionDigits: 0
     }).format(item.fine_eur);
-    parts.push(`${amount} fine`);
+    parts.push(`${amount} ${OUTCOME_LABEL['fine']?.[locale] ?? 'fine'}`);
   } else if (item.outcome) {
-    parts.push(item.outcome.replace(/_/g, ' '));
+    parts.push(OUTCOME_LABEL[item.outcome]?.[locale] ?? item.outcome.replace(/_/g, ' '));
   }
 
   if (item.articles && item.articles.length > 0) {
@@ -206,7 +227,6 @@ function buildTitle(item: ApprovedRow): string {
 }
 
 async function translate(
-  titleEn: string,
   summaryEn: string,
   targetLanguage: string
 ): Promise<z.infer<typeof Translated>> {
@@ -226,10 +246,10 @@ async function translate(
           'exactly as written.',
           'For Arabic output use Modern Standard Arabic, keep numerals in',
           'Latin digits, and emit no bidi control characters.',
-          'Return JSON with exactly the keys "title" and "summary".'
+          'Return JSON with exactly the key "summary".'
         ].join(' ')
       },
-      { role: 'user', content: JSON.stringify({ title: titleEn, summary: summaryEn }) }
+      { role: 'user', content: JSON.stringify({ summary: summaryEn }) }
     ]
   });
 

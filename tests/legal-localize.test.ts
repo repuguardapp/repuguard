@@ -57,10 +57,7 @@ function install() {
                 {
                   finish_reason: 'stop',
                   message: {
-                    content: JSON.stringify({
-                      title: `${target}:${payload['title']}`,
-                      summary: `${target}:${payload['summary']}`
-                    })
+                    content: JSON.stringify({ summary: `${target}:${payload['summary']}` })
                   }
                 }
               ]
@@ -181,6 +178,59 @@ describe('the headline is ours, not the regulator\'s', () => {
     expect(journal.localeRows.find((r) => r['locale'] === 'en')!['title']).toContain(
       'court ruling'
     );
+  });
+
+  it('writes the headline in each language, not English seven times', async () => {
+    await run();
+    const title = (locale: string) =>
+      String(journal.localeRows.find((r) => r['locale'] === locale)!['title']);
+
+    // The first real publication put "CNIL — €300,000 fine — GDPR Art.
+    // 13 — 2026-09-09" on the Arabic and Japanese pages too. A title is
+    // nine parts proper noun, so a model told not to translate statute
+    // names, amounts or dates correctly returned the whole thing
+    // untouched — including the one word that was ours.
+    expect(title('fr')).toContain('amende');
+    expect(title('ja')).toContain('制裁金');
+    expect(title('ar')).toContain('غرامة');
+    expect(title('de')).toContain('Bußgeld');
+
+    // And the parts that must NOT move stay put in every language.
+    for (const locale of ['fr', 'ja', 'ar', 'de', 'es', 'pt-br']) {
+      expect(title(locale)).toContain('CNIL');
+      expect(title(locale)).toContain('GDPR Art. 13');
+      expect(title(locale)).toContain('2026-09-09');
+    }
+  });
+
+  it('keeps Arabic numerals Latin, because that is what people type', async () => {
+    await run();
+    const ar = String(journal.localeRows.find((r) => r['locale'] === 'ar')!['title']);
+
+    // Intl would otherwise render ٣٠٠٬٠٠٠ — correct Arabic, and
+    // unsearchable: nobody looking for this fine will type it that way.
+    expect(ar).toContain('300,000');
+    expect(ar).not.toMatch(/[٠-٩]/);
+  });
+
+  it('translates the outcome word when there is no fine', async () => {
+    queue = [{ ...ITEM, fine_eur: null, outcome: 'guidance' }];
+    await run();
+    const title = (locale: string) =>
+      String(journal.localeRows.find((r) => r['locale'] === locale)!['title']);
+
+    expect(title('fr')).toContain('lignes directrices');
+    expect(title('ja')).toContain('ガイドライン');
+  });
+
+  it('asks the model for the summary alone', async () => {
+    await run();
+    // The title is structured data assembled in code. Sending it to a
+    // model would cost tokens to get the same string back, and would
+    // make a URL's public face non-deterministic.
+    for (const call of journal.translated) {
+      expect(Object.keys(call.payload)).toEqual(['summary']);
+    }
   });
 
   it('keeps the title short when many articles were cited', async () => {
