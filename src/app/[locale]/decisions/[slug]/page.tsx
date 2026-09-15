@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { auditHrefFor, getPublishedDecision } from '@/lib/legal-decisions';
+import { frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
 
 /**
  * One enforcement decision.
@@ -62,7 +63,7 @@ export default async function DecisionPage({ params }: PageProps) {
   if (decision.authority) facts.push({ label: t('authority'), value: decision.authority });
   if (decision.decisionDate) facts.push({ label: t('date'), value: decision.decisionDate });
   if (decision.outcome) {
-    facts.push({ label: t('outcome'), value: decision.outcome.replace(/_/g, ' ') });
+    facts.push({ label: t('outcome'), value: outcomeLabel(decision.outcome, params.locale) });
   }
   if (decision.fineEur !== null) {
     facts.push({
@@ -90,7 +91,7 @@ export default async function DecisionPage({ params }: PageProps) {
         <div className="flex flex-wrap items-center gap-2">
           {decision.frameworks.map((framework) => (
             <Badge key={framework.id} variant="secondary">
-              {framework.name}
+              {frameworkLabel(framework, params.locale)}
             </Badge>
           ))}
         </div>
@@ -178,7 +179,7 @@ export default async function DecisionPage({ params }: PageProps) {
                   href={`/compliance/${framework.id}`}
                   className="text-sm underline underline-offset-4"
                 >
-                  {framework.name}
+                  {frameworkLabel(framework, params.locale)}
                 </Link>
               </li>
             ))}

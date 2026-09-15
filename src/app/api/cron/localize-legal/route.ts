@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { OPENAI_MODEL, openai } from '@/lib/ai-clients';
+import { outcomeLabel } from '@/lib/legal-labels';
 import { supabaseService } from '@/lib/supabase';
 
 /**
@@ -189,38 +190,22 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
 }
 
 /**
- * The one word in the headline that is ours rather than the law's.
- *
- * Everything else in a title — the authority, the amount, the article
- * numbers, the date — is a proper noun or a figure and stays put in
- * every language. The outcome is the exception, and leaving it in
- * English is what made the Arabic and Japanese pages read as
- * untranslated: the H1 was "CNIL — €500,000 fine — GDPR Art. 32 —
- * 2026-07-21" on all seven.
- *
- * Translated here rather than by the model, because a title is a URL's
- * public face and an identity: it must be identical every time it is
- * rendered, and a model asked to translate a string that is nine parts
- * proper noun will sometimes return it untouched and sometimes
- * transliterate the lot.
- */
-const OUTCOME_LABEL: Record<string, Record<string, string>> = {
-  fine:         { en: 'fine',        fr: 'amende',        es: 'multa',           de: 'Bußgeld',        'pt-br': 'multa',        ja: '制裁金',   ar: 'غرامة' },
-  reprimand:    { en: 'reprimand',   fr: 'blâme',         es: 'apercibimiento',  de: 'Verwarnung',     'pt-br': 'advertência',  ja: '戒告',     ar: 'توبيخ' },
-  ban:          { en: 'ban',         fr: 'interdiction',  es: 'prohibición',     de: 'Verbot',         'pt-br': 'proibição',    ja: '禁止',     ar: 'حظر' },
-  order:        { en: 'order',       fr: 'injonction',    es: 'requerimiento',   de: 'Anordnung',      'pt-br': 'determinação', ja: '命令',     ar: 'أمر' },
-  guidance:     { en: 'guidance',    fr: 'lignes directrices', es: 'directrices', de: 'Leitlinien',    'pt-br': 'diretrizes',   ja: 'ガイドライン', ar: 'إرشادات' },
-  court_ruling: { en: 'court ruling', fr: 'décision de justice', es: 'sentencia', de: 'Gerichtsurteil', 'pt-br': 'decisão judicial', ja: '判決', ar: 'حكم قضائي' },
-  other:        { en: 'decision',    fr: 'décision',      es: 'resolución',      de: 'Entscheidung',   'pt-br': 'decisão',      ja: '決定',     ar: 'قرار' }
-};
-
-/**
  * Our own headline, assembled from the facts, in one language.
  *
  * Never the regulator's — their headline is their prose. These are
  * facts, which carry no copyright, and the result is more useful than
  * a borrowed title: consistent across the whole corpus, and carrying
  * the terms a compliance officer actually searches for.
+ *
+ * Everything in it but one word is a proper noun or a figure and stays
+ * put in every language. The outcome is that word, and leaving it in
+ * English is what made the Arabic and Japanese pages read as
+ * untranslated: the H1 was "CNIL — €500,000 fine — GDPR Art. 32 —
+ * 2026-07-21" on all seven. It is translated in code rather than by the
+ * model because a title is a URL's public face and an identity — it has
+ * to render identically every time, and a model handed a string that is
+ * nine parts proper noun will sometimes return it untouched and
+ * sometimes transliterate the lot.
  */
 function buildTitle(item: ApprovedRow, locale: string): string {
   const parts: string[] = [];
@@ -234,9 +219,9 @@ function buildTitle(item: ApprovedRow, locale: string): string {
       currency: 'EUR',
       maximumFractionDigits: 0
     }).format(item.fine_eur);
-    parts.push(`${amount} ${OUTCOME_LABEL['fine']?.[locale] ?? 'fine'}`);
+    parts.push(`${amount} ${outcomeLabel('fine', locale)}`);
   } else if (item.outcome) {
-    parts.push(OUTCOME_LABEL[item.outcome]?.[locale] ?? item.outcome.replace(/_/g, ' '));
+    parts.push(outcomeLabel(item.outcome, locale));
   }
 
   if (item.articles && item.articles.length > 0) {

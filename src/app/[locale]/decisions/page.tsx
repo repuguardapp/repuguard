@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { listPublishedDecisions } from '@/lib/legal-decisions';
+import { frameworkLabel } from '@/lib/legal-labels';
 
 /**
  * Index of published enforcement decisions.
@@ -70,7 +71,7 @@ export default async function DecisionsIndexPage({ params }: PageProps) {
                     ) : null}
                     {decision.frameworks.map((framework) => (
                       <Badge key={framework.id} variant="outline">
-                        {framework.name}
+                        {frameworkLabel(framework, params.locale)}
                       </Badge>
                     ))}
                   </div>
