@@ -2,12 +2,13 @@ import { ExternalLink, ShieldAlert } from 'lucide-react';
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
+import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { LegalReviewButtons } from '@/components/LegalReviewButtons';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { supabaseService } from '@/lib/supabase';
-import { getCurrentAdminUser } from '@/lib/supabase-server';
+import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 
 /**
  * The legal review queue — the only screen the acquisition engine ever
@@ -62,9 +63,23 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
   // A signed-in stranger still gets 404. That is where secrecy
   // actually matters: the existence of this queue is not something a
   // logged-in visitor needs confirmed.
-  const user = await getCurrentAdminUser();
+  // Four distinct situations, four distinct answers. Collapsing any of
+  // them is what cost three days: a blank page, then a silent bounce to
+  // the dashboard, both indistinguishable from an outage.
+  //
+  //   no session          -> sign in, and come back here afterwards
+  //   not on the allowlist-> 404, because the queue's existence is not
+  //                          something a signed-in stranger needs
+  //   allowlisted but the
+  //   admin time-box has
+  //   expired             -> say so; /login would only bounce them to
+  //                          the dashboard, since the ordinary session
+  //                          is still perfectly valid
+  //   otherwise           -> the page
+  const user = await getCurrentUser();
   if (!user) redirect(`/${params.locale}/login?next=/${params.locale}/admin/legal-queue`);
   if (!isAdminEmail(user.email)) notFound();
+  if (!(await getCurrentAdminUser())) return <AdminSessionExpired email={user.email ?? null} />;
 
   const db = supabaseService();
   const { data, error } = await db

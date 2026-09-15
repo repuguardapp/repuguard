@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
+import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { CronRunButton } from '@/components/CronRunButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { supabaseService } from '@/lib/supabase';
-import { getCurrentAdminUser } from '@/lib/supabase-server';
+import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 
 /**
  * Operator console for the legal-watch pipeline.
@@ -68,11 +69,11 @@ const JOBS = [
 export default async function OpsPage({ params }: { params: { locale: string } }) {
   unstable_setRequestLocale(params.locale);
 
-  // Signed out (or an expired admin session) goes to login; a
-  // signed-in stranger gets 404. See the note in legal-queue.
-  const user = await getCurrentAdminUser();
+  // Same four-way guard as the review queue — see the note there.
+  const user = await getCurrentUser();
   if (!user) redirect(`/${params.locale}/login?next=/${params.locale}/admin/ops`);
   if (!isAdminEmail(user.email)) notFound();
+  if (!(await getCurrentAdminUser())) return <AdminSessionExpired email={user.email ?? null} />;
 
   const db = supabaseService();
   const [{ data: sources }, { data: counts }] = await Promise.all([

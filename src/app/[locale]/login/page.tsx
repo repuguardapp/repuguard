@@ -8,6 +8,29 @@ import { getCurrentUser } from '@/lib/supabase-server';
 
 interface PageProps {
   params: { locale: string };
+  searchParams?: { next?: string };
+}
+
+/**
+ * Where to send a visitor who is already signed in.
+ *
+ * Protected pages redirect here with `?next=` so the visitor returns to
+ * what they asked for. This page ignored it and always went to the
+ * dashboard, which turned every such redirect into a dead end: ask for
+ * the admin queue, get bounced to login, get bounced to the dashboard,
+ * and never learn why. Three rounds of that is how an afternoon
+ * disappears.
+ *
+ * Only a same-origin path is honoured. A value starting with `//` is a
+ * schema-relative URL to another host, and `next=https://evil.test`
+ * would turn our login page into an open redirect — the classic way a
+ * phishing link borrows a domain's credibility.
+ */
+function safeNext(next: string | undefined, locale: string): string {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) {
+    return `/${locale}/dashboard`;
+  }
+  return next;
 }
 
 export async function generateMetadata({ params: { locale } }: PageProps) {
@@ -20,7 +43,7 @@ export async function generateMetadata({ params: { locale } }: PageProps) {
   };
 }
 
-export default async function LoginPage({ params: { locale } }: PageProps) {
+export default async function LoginPage({ params: { locale }, searchParams }: PageProps) {
   unstable_setRequestLocale(locale);
   const t = await getTranslations('auth');
 
@@ -36,7 +59,7 @@ export default async function LoginPage({ params: { locale } }: PageProps) {
   // signed-in state is honoured.
   const user = await getCurrentUser();
   if (user) {
-    redirect(`/${locale}/dashboard`);
+    redirect(safeNext(searchParams?.next, locale));
   }
 
   // Surface the SignInForm's label bundle on the server so the client
