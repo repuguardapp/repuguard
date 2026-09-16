@@ -190,7 +190,7 @@
     "editLocked": "Débloquer l'éditeur IA",
     "paywallTeaserBadge": "Aperçu — passez Pro",
     "paywallTitle": "{count, plural, one {# lacune supplémentaire masquée} other {# lacunes supplémentaires masquées}}",
-    "paywallBody": "Votre rapport gratuit vous montre le score global et la première lacune détectée. L'analyse complète et l'éditeur correctif IA sont réservés aux clients Pro et Enterprise.",
+    "paywallBody": "Votre rapport gratuit vous montre le score de risque global et les trois lacunes les plus graves en intégralité, chacune avec sa citation. Les lacunes restantes et l’éditeur correctif IA sont réservés aux clients Pro et Enterprise.",
     "paywallBenefit1": "{count, plural, one {Accès à la # lacune masquée avec recommandations} other {Accès aux # lacunes masquées avec recommandations}}",
     "paywallBenefit2": "Éditeur IA pour corriger chaque clause en un clic",
     "paywallBenefit3": "Stockage chiffré AES-256-GCM + DPA signé + Trust Center",

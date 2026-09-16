@@ -190,7 +190,7 @@
     "editLocked": "AI エディタをアンロック",
     "paywallTeaserBadge": "プレビュー — Pro にアップグレード",
     "paywallTitle": "他に {count} 件の指摘が非表示です",
-    "paywallBody": "無料レポートでは総合スコアと最初の指摘事項のみ表示されます。完全な分析と AI 修正エディタは Pro および Enterprise のお客様限定です。",
+    "paywallBody": "無料レポートでは、総合リスクスコアと、重大度の高い上位3件の指摘事項を根拠条文つきで全文表示します。残りの指摘事項と AI 修正エディタは Pro および Enterprise のお客様限定です。",
     "paywallBenefit1": "非表示の {count} 件の指摘事項とその推奨対応にアクセス",
     "paywallBenefit2": "非準拠の各条項をワンクリックで修正する AI エディタ",
     "paywallBenefit3": "AES-256-GCM 暗号化ストレージ + 署名済み DPA + Trust Center",

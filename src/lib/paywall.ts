@@ -96,15 +96,43 @@ export interface PaywallSlice<T> {
 }
 
 /**
+ * How many findings the free trial shows in full.
+ *
+ * It was one, and one was the wrong number. We sell exhaustiveness —
+ * every clause of a document checked against every article of a
+ * regulation — and then demonstrated it with a single finding above an
+ * upgrade banner. A one-item report is not a sample of a thorough
+ * audit; it looks like the whole of a shallow one, which is the
+ * opposite of the claim it was meant to support.
+ *
+ * Three costs nothing. The audit has already run and been paid for by
+ * us in full: the model calls, the rule cross-referencing and the
+ * rewrite drafting all happen before this function is reached, and the
+ * withheld rows are sitting in the database either way. The only thing
+ * this number changes is how much of work already done we let the
+ * prospect see.
+ *
+ * It is also enough to show the shape of the product — a critical, a
+ * high and a medium, each with its citation and its suggested rewrite —
+ * while leaving the rest of a typical fifteen-finding report behind the
+ * wall. The rows arrive ordered by the severity enum
+ * (critical < high < medium < low < info), so the three shown are the
+ * three that matter most, never three arbitrary ones.
+ */
+export const FREE_TRIAL_VISIBLE_FINDINGS = 3;
+
+/**
  * Apply the paywall cut to a list of findings (or any row collection
  * with the same shape).
  *
  * Contract — the things tests pin:
  *   • paywalled=false → visible === input rows, hidden === 0. No-op.
- *   • paywalled=true  → visible has at most 1 row (the teaser),
- *                       hidden === max(0, rows.length - 1).
+ *   • paywalled=true  → visible has at most FREE_TRIAL_VISIBLE_FINDINGS
+ *                       rows, hidden === the remainder.
  *   • Empty input     → visible === [], hidden === 0 even when
  *                       paywalled (no "negative" hidden count).
+ *   • Order preserved → the caller's ordering IS the severity
+ *                       ordering, so the slice must never reorder.
  *
  * The function never mutates its input; the slice is a fresh array.
  */
@@ -112,7 +140,7 @@ export function applyPaywall<T>(rows: readonly T[], paywalled: boolean): Paywall
   if (!paywalled) {
     return { visible: [...rows], hidden: 0 };
   }
-  const visible = rows.slice(0, 1);
+  const visible = rows.slice(0, FREE_TRIAL_VISIBLE_FINDINGS);
   const hidden = Math.max(0, rows.length - visible.length);
   return { visible, hidden };
 }

@@ -190,7 +190,7 @@
     "editLocked": "Unlock the AI editor",
     "paywallTeaserBadge": "Preview — upgrade to Pro",
     "paywallTitle": "{count, plural, one {# additional finding hidden} other {# additional findings hidden}}",
-    "paywallBody": "Your free report shows the overall score and the first detected finding. Full analysis and the AI corrective editor are reserved for Pro and Enterprise customers.",
+    "paywallBody": "Your free report shows the overall risk score and the three most severe findings in full, each with its citation. The remaining findings and the AI corrective editor are reserved for Pro and Enterprise customers.",
     "paywallBenefit1": "{count, plural, one {Access to the # hidden finding with full recommendations} other {Access to the # hidden findings with full recommendations}}",
     "paywallBenefit2": "AI editor to rewrite each non-compliant clause in one click",
     "paywallBenefit3": "AES-256-GCM encrypted storage + signed DPA + Trust Center",

@@ -190,7 +190,7 @@
     "editLocked": "KI-Editor freischalten",
     "paywallTeaserBadge": "Vorschau — auf Pro upgraden",
     "paywallTitle": "{count, plural, one {# weiterer Befund verborgen} other {# weitere Befunde verborgen}}",
-    "paywallBody": "Ihr kostenloser Bericht zeigt das Gesamtergebnis und den ersten erkannten Befund. Die vollständige Analyse und der KI-Korrektureditor sind Pro- und Enterprise-Kunden vorbehalten.",
+    "paywallBody": "Ihr kostenloser Bericht zeigt den Gesamt-Risikowert und die drei schwerwiegendsten Befunde vollständig, jeweils mit Fundstelle. Die übrigen Befunde und der KI-Korrektureditor sind Pro- und Enterprise-Kunden vorbehalten.",
     "paywallBenefit1": "{count, plural, one {Zugriff auf den # verborgenen Befund mit Empfehlungen} other {Zugriff auf die # verborgenen Befunde mit Empfehlungen}}",
     "paywallBenefit2": "KI-Editor zum Korrigieren jeder nicht-konformen Klausel mit einem Klick",
     "paywallBenefit3": "AES-256-GCM verschlüsselte Speicherung + signierter DPA + Trust Center",

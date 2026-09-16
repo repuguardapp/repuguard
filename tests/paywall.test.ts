@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ANONYMOUS_ORG_ID, applyPaywall, isPaywalled } from '../src/lib/paywall';
+import {
+  ANONYMOUS_ORG_ID,
+  applyPaywall,
+  FREE_TRIAL_VISIBLE_FINDINGS,
+  isPaywalled
+} from '../src/lib/paywall';
 
 /**
  * Pre-launch paywall contract — these tests pin the server-side
@@ -151,11 +156,35 @@ describe('applyPaywall — server-side teaser slicing', () => {
     expect(result.visible.map((f) => f.id)).toEqual(fakeFindings.map((f) => f.id));
   });
 
-  it('free tier: visible list contains EXACTLY the first finding and nothing else', () => {
+  it('free tier: visible list is exactly the first three findings', () => {
     const result = applyPaywall(fakeFindings, true);
-    expect(result.visible).toHaveLength(1);
-    expect(result.visible[0]?.id).toBe('f1');
-    expect(result.hidden).toBe(4);
+    expect(result.visible).toHaveLength(3);
+    expect(result.visible.map((f) => f.id)).toEqual(['f1', 'f2', 'f3']);
+    expect(result.hidden).toBe(2);
+  });
+
+  it('free tier: shows the three MOST SEVERE, never three arbitrary ones', () => {
+    // The caller orders by the severity enum
+    // (critical < high < medium < low < info) and this function must
+    // preserve that order. A teaser made of "low, info, info" would
+    // argue against the product rather than for it.
+    const result = applyPaywall(fakeFindings, true);
+    expect(result.visible.map((f) => f.severity)).toEqual(['critical', 'high', 'medium']);
+  });
+
+  it('shows one finding for every one the constant allows', () => {
+    // Pins the slice to the documented constant, so raising or
+    // lowering the teaser is a one-line change that the suite follows
+    // rather than a change that silently breaks these expectations.
+    const many = Array.from({ length: 20 }, (_, i) => ({
+      id: `g${i}`,
+      severity: 'high',
+      title: `t${i}`,
+      evidence: `e${i}`
+    }));
+    const result = applyPaywall(many, true);
+    expect(result.visible).toHaveLength(FREE_TRIAL_VISIBLE_FINDINGS);
+    expect(result.hidden).toBe(20 - FREE_TRIAL_VISIBLE_FINDINGS);
   });
 
   it('free tier: withheld findings are not present anywhere in the result object', () => {
@@ -168,7 +197,7 @@ describe('applyPaywall — server-side teaser slicing', () => {
     // immediately fail.
     const result = applyPaywall(fakeFindings, true);
     const serialised = JSON.stringify(result);
-    for (const f of fakeFindings.slice(1)) {
+    for (const f of fakeFindings.slice(FREE_TRIAL_VISIBLE_FINDINGS)) {
       expect(serialised).not.toContain(f.id);
       expect(serialised).not.toContain(f.title);
       expect(serialised).not.toContain(f.evidence);
@@ -192,14 +221,17 @@ describe('applyPaywall — server-side teaser slicing', () => {
     expect(result.hidden).toBe(0);
   });
 
-  it('single-finding input: paywalled still shows the one finding, hidden=0', () => {
-    // Edge case where paywall would be visually pointless. We still
-    // expose the one finding (the teaser), but hidden must not go
-    // negative — historically a `length - visible.length` calc here
-    // produced a `-1` before the Math.max guard landed.
-    const oneRow = [fakeFindings[0]!];
-    const result = applyPaywall(oneRow, true);
-    expect(result.visible).toHaveLength(1);
-    expect(result.hidden).toBe(0);
+  it('fewer findings than the teaser allows: shows them all, hidden=0', () => {
+    // Edge case where the paywall is visually pointless. We expose
+    // what there is, but hidden must not go negative — historically a
+    // `length - visible.length` calc here produced a `-1` before the
+    // Math.max guard landed, and widening the teaser from one to three
+    // widens the range of inputs that hit it.
+    for (const size of [1, 2, 3]) {
+      const rows = fakeFindings.slice(0, size);
+      const result = applyPaywall(rows, true);
+      expect(result.visible, `${size} rows`).toHaveLength(size);
+      expect(result.hidden, `${size} rows`).toBe(0);
+    }
   });
 });

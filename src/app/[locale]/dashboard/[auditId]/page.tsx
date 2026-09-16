@@ -140,8 +140,8 @@ export default async function AuditDetailPage({ params }: PageProps) {
     .order('severity', { ascending: true });
 
   const allRows: FindingRow[] = (findings ?? []) as FindingRow[];
-  // In paywall mode we only render the first finding in full; the
-  // rest are surfaced as a count + locked CTA card. The full data
+  // In paywall mode we render the three most severe findings in full;
+  // the rest are surfaced as a count + locked CTA card. The full data
   // never reaches the client when paywalled — applyPaywall does the
   // server-side slice so the withheld findings never enter the HTML
   // (or the RSC flight payload).

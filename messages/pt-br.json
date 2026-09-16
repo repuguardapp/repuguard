@@ -190,7 +190,7 @@
     "editLocked": "Desbloquear o editor IA",
     "paywallTeaserBadge": "Prévia — assine Pro",
     "paywallTitle": "{count, plural, one {# achado adicional oculto} other {# achados adicionais ocultos}}",
-    "paywallBody": "Seu relatório gratuito mostra a pontuação geral e o primeiro achado detectado. A análise completa e o editor corretivo IA são reservados aos clientes Pro e Enterprise.",
+    "paywallBody": "Seu relatório gratuito mostra a pontuação geral de risco e os três achados mais graves na íntegra, cada um com sua citação. Os demais achados e o editor corretivo com IA são reservados aos clientes Pro e Enterprise.",
     "paywallBenefit1": "{count, plural, one {Acesso ao # achado oculto com recomendações} other {Acesso aos # achados ocultos com recomendações}}",
     "paywallBenefit2": "Editor IA para corrigir cada cláusula não conforme em um clique",
     "paywallBenefit3": "Armazenamento criptografado AES-256-GCM + DPA assinado + Trust Center",
