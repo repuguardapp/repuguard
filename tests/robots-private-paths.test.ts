@@ -13,7 +13,7 @@ import robots from '../src/app/robots';
  */
 
 const LOCALES = ['en', 'fr', 'es', 'de', 'pt-br', 'ja', 'ar'];
-const PRIVATE = ['/dashboard/', '/admin/', '/onboarding', '/embed/', '/monitoring/'];
+const PRIVATE = ['/dashboard/', '/admin/', '/onboarding', '/embed/', '/monitoring/', '/auth/confirm'];
 
 function crawlerRule() {
   const rules = robots().rules;

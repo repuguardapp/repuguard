@@ -125,7 +125,8 @@
     "newHereSuffix": "primero — sin cuenta.",
     "errorService": "El servicio de email no está disponible temporalmente. Reinténtalo en un momento.",
     "errorRateLimited": "Demasiados intentos. Espera un momento y reinténtalo.",
-    "errorGeneric": "Algo salió mal. Reinténtalo."
+    "errorGeneric": "Algo salió mal. Reinténtalo.",
+    "linkFailed": "Ese enlace de acceso no se pudo usar: lo más probable es que haya caducado o que ya se abriera. Escribe tu correo abajo y te enviamos uno nuevo."
   },
   "onboarding": {
     "title": "Bienvenido a LexyFlow.",
@@ -520,5 +521,11 @@
     "websiteOf": "Sitio de {name}",
     "noticeBody": "Avisamos con 30 días de antelación antes de añadir un subencargado. El cliente puede oponerse por motivos razonables y, de no haber solución, rescindir sin penalización conforme a la cláusula 4 del DPA.",
     "questions": "¿Alguna duda?"
+  },
+  "authConfirm": {
+    "title": "Confirma tu acceso",
+    "body": "Has abierto un enlace de acceso a LexyFlow. Pulsa el botón de abajo para terminar y entrar en tu panel.",
+    "cta": "Acceder a LexyFlow",
+    "reassurance": "Este paso adicional existe porque los filtros de correo corporativo abren los enlaces automáticamente. Exigir una pulsación impide que el filtro gaste tu enlace antes que tú."
   }
 }

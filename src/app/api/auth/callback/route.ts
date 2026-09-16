@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { supabaseService } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,9 +8,42 @@ export const dynamic = 'force-dynamic';
 /**
  * Magic-link landing endpoint.
  *
- * Supabase redirects the user here with `?code=…` (PKCE flow) or
- * `?token_hash=…&type=email` (legacy). We exchange whichever we
- * received for a session cookie and 303-redirect to `next`.
+ * A GET NO LONGER SIGNS ANYONE IN. This is the whole point of the file.
+ *
+ * Of 345 accounts, 46 confirmed their email and all 46 "signed in" —
+ * and four organisations exist. So 42 sessions were created and then
+ * used for nothing at all: not a form abandoned halfway, nothing. The
+ * median gap between requesting a link and confirming it was 23
+ * seconds, with values at 3, 7 and 8 seconds, spread across dozens of
+ * unrelated corporate domains. Corporate mailboxes confirmed at 31.7%,
+ * consumer mailboxes at 3.2% — a tenfold gap that tracks whether the
+ * employer runs a mail security product, not whether the person was
+ * interested.
+ *
+ * That is Defender Safe Links, Proofpoint URL Defense and Mimecast
+ * doing their job: fetching every URL in an inbound message to check it
+ * for malware. This route was a GET that consumed a one-time token, so
+ * the scanner spent the link on arrival and the human who clicked ten
+ * minutes later was told it had expired. We were not losing prospects
+ * to a weak product. We were locking them out of the door.
+ *
+ * So the flow is now two steps:
+ *
+ *   GET   → records the open, redirects to /{locale}/auth/confirm with
+ *           the token still unspent. Any number of scanners may do this
+ *           and nothing happens.
+ *   POST  → the interstitial's form. Exchanges the token, sets the
+ *           cookies, redirects onward.
+ *
+ * Scanners follow links. They do not fill in forms. That asymmetry is
+ * the entire mechanism, and it is the standard mitigation because
+ * nothing else survives contact with a product whose job is to click
+ * things before you do.
+ *
+ * The one-click cost is real and it buys something beyond the fix: a
+ * screen that names the product and the action before a session is
+ * created, which is also what a person should see before being logged
+ * in by an email.
  *
  * Why this route does NOT use `createSupabaseServerClient` from
  * lib/supabase-server.ts:
@@ -28,6 +62,14 @@ export const dynamic = 'force-dynamic';
  * response object before returning it. We build the response up
  * front and pass its mutator into the Supabase server client.
  */
+
+/**
+ * Step one: hand the token to a page with a button on it.
+ *
+ * Deliberately does nothing that cannot be repeated. A scanner may
+ * open this a dozen times; a browser may prefetch it; a user may
+ * refresh it. None of that spends the token.
+ */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
@@ -35,30 +77,53 @@ export async function GET(request: NextRequest) {
   const type = url.searchParams.get('type');
   const rawNext = url.searchParams.get('next');
 
-  // Resolve where to drop the freshly-signed-in user.
-  //
-  // The magic-link route sets `emailRedirectTo` to a locale-aware
-  // `/<locale>/dashboard`, which Supabase forwards to the email hook
-  // and the email hook splices in as `?next=`. If that chain breaks
-  // anywhere — Supabase config drift, hook misconfiguration, legacy
-  // verify URL — `next` arrives missing, blank, "/", or pointing
-  // back at `/api/auth/callback` (recursive loop). In every one of
-  // those cases the user lands on the public landing page after a
-  // successful auth, which looks indistinguishable from being signed
-  // out: the bug surfaced in prod on the May 22 magic-link test and
-  // wrecks the "I just logged in" moment.
-  //
-  // Hard rule: a magic link is an *authentication intent*. We never
-  // honour a `next` that would drop the user on `/`. We coerce to
-  // `/dashboard` and let the middleware prefix the locale from the
-  // session cookie / Accept-Language.
+  if (!code && !(tokenHash && type)) return redirectToLogin(url, 'missing_token', rawNext);
+
+  recordTouch('visited', request.headers.get('user-agent'), type);
+
+  const confirm = new URL(`/${localeFrom(rawNext)}/auth/confirm`, url.origin);
+  if (code) confirm.searchParams.set('code', code);
+  if (tokenHash) confirm.searchParams.set('token_hash', tokenHash);
+  if (type) confirm.searchParams.set('type', type);
+  confirm.searchParams.set('next', resolveAuthDestination(rawNext));
+
+  const response = NextResponse.redirect(confirm, { status: 303 });
+  // Nothing about this hop may be cached or kept by an intermediary:
+  // the URL carries a live credential.
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  response.headers.set('Referrer-Policy', 'no-referrer');
+  return response;
+}
+
+/**
+ * Step two: the interstitial's form. This is where the session is made.
+ */
+export async function POST(request: NextRequest) {
+  const url = new URL(request.url);
+
+  // Same-origin only. Without this, a hostile page could auto-submit
+  // its own magic-link token from the victim's browser and sign them
+  // into an account the attacker controls — login CSRF, whose payoff
+  // is every document the victim uploads afterwards.
+  const origin = request.headers.get('origin');
+  if (origin && origin !== url.origin) {
+    console.error('[auth/callback] cross_origin_post', { origin });
+    return redirectToLogin(url, 'bad_origin', null);
+  }
+
+  const form = await request.formData();
+  const code = str(form.get('code'));
+  const tokenHash = str(form.get('token_hash'));
+  const type = str(form.get('type'));
+  const rawNext = str(form.get('next'));
+
   const safeNext = resolveAuthDestination(rawNext);
-  const response = NextResponse.redirect(new URL(safeNext, url.origin));
+  const response = NextResponse.redirect(new URL(safeNext, url.origin), { status: 303 });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnon) {
-    return redirectToLogin(url, 'env_not_configured');
+    return redirectToLogin(url, 'env_not_configured', rawNext);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnon, {
@@ -79,7 +144,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error('[auth/callback] exchangeCodeForSession failed', error.message);
-      return redirectToLogin(url, 'exchange_failed');
+      return redirectToLogin(url, 'exchange_failed', rawNext);
     }
   } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
@@ -88,14 +153,55 @@ export async function GET(request: NextRequest) {
     });
     if (error) {
       console.error('[auth/callback] verifyOtp failed', error.message);
-      return redirectToLogin(url, 'verify_failed');
+      return redirectToLogin(url, 'verify_failed', rawNext);
     }
   } else {
-    return redirectToLogin(url, 'missing_token');
+    return redirectToLogin(url, 'missing_token', rawNext);
   }
 
+  recordTouch('confirmed', request.headers.get('user-agent'), type);
   console.log('[auth/callback] session established', { redirectTo: safeNext });
   return response;
+}
+
+function str(value: FormDataEntryValue | null): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
+ * Record that a link was opened, and how far it got.
+ *
+ * Fire-and-forget: a telemetry write must never be the reason a
+ * customer cannot sign in. Carries the user agent — which is what
+ * separates a scanner from a browser, since they identify themselves —
+ * and no email, no token and no IP address.
+ */
+function recordTouch(stage: 'visited' | 'confirmed', userAgent: string | null, linkType: string | null): void {
+  void (async () => {
+    try {
+      await supabaseService()
+        .from('auth_link_touches')
+        .insert({ stage, user_agent: userAgent?.slice(0, 500) ?? null, link_type: linkType });
+    } catch (err) {
+      console.warn('[auth/callback] touch_not_recorded', {
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  })();
+}
+
+/**
+ * The locale to show the interstitial in.
+ *
+ * Taken from `next`, which the email hook fills from the locale the
+ * visitor used when they asked for the link. Landing an Arabic-speaking
+ * visitor on an English confirmation screen would make the one screen
+ * standing between them and their account the least trustworthy thing
+ * they have seen from us.
+ */
+function localeFrom(rawNext: string | null): string {
+  const match = (rawNext ?? '').match(/^\/([a-z]{2}(?:-[a-z]{2})?)\//i);
+  return match?.[1]?.toLowerCase() ?? 'en';
 }
 
 /**
@@ -111,13 +217,18 @@ function resolveAuthDestination(rawNext: string | null): string {
   return rawNext;
 }
 
-function redirectToLogin(url: URL, reason: string) {
-  // Try to pull the locale from the original `next` so the user lands
-  // on /fr/login instead of bouncing to /en/login mid-flow.
-  const next = url.searchParams.get('next') ?? '';
-  const localeMatch = next.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\//i);
-  const locale = localeMatch?.[1] ?? 'en';
-  const dest = new URL(`/${locale}/login`, url.origin);
+/**
+ * Send someone back to sign in, in their own language.
+ *
+ * `nextHint` is passed explicitly because the two callers hold it in
+ * different places: on a GET it is a query parameter, on a POST it is a
+ * form field. Reading only the query string sent every French visitor
+ * with an expired link to /en/login — the same locale-drop that made
+ * the admin queue unreachable, reproduced in the one flow where the
+ * visitor is already having a bad time.
+ */
+function redirectToLogin(url: URL, reason: string, nextHint: string | null) {
+  const dest = new URL(`/${localeFrom(nextHint)}/login`, url.origin);
   dest.searchParams.set('error', reason);
-  return NextResponse.redirect(dest);
+  return NextResponse.redirect(dest, { status: 303 });
 }

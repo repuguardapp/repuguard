@@ -125,7 +125,8 @@
     "newHereSuffix": "zuerst — kein Konto nötig.",
     "errorService": "Der E-Mail-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich erneut.",
     "errorRateLimited": "Zu viele Versuche. Bitte warten Sie kurz und versuchen Sie es erneut.",
-    "errorGeneric": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    "errorGeneric": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "linkFailed": "Dieser Anmeldelink konnte nicht verwendet werden — er ist vermutlich abgelaufen oder wurde bereits geöffnet. Geben Sie unten Ihre E-Mail-Adresse ein, wir senden Ihnen einen neuen."
   },
   "onboarding": {
     "title": "Willkommen bei LexyFlow.",
@@ -520,5 +521,11 @@
     "websiteOf": "Website von {name}",
     "noticeBody": "Wir kündigen die Aufnahme eines neuen Unterauftragsverarbeiters 30 Tage im Voraus an. Kunden können aus berechtigtem Grund widersprechen und, wenn keine Lösung gefunden wird, nach Ziffer 4 des AVV ohne Nachteil kündigen.",
     "questions": "Fragen?"
+  },
+  "authConfirm": {
+    "title": "Anmeldung bestätigen",
+    "body": "Sie haben einen Anmeldelink für LexyFlow geöffnet. Tippen Sie auf die Schaltfläche unten, um die Anmeldung abzuschließen und Ihr Dashboard zu öffnen.",
+    "cta": "Bei LexyFlow anmelden",
+    "reassurance": "Diesen zusätzlichen Schritt gibt es, weil betriebliche E-Mail-Filter Links automatisch öffnen. Ein erforderlicher Klick stellt sicher, dass der Filter Ihren Link nicht vor Ihnen verbraucht."
   }
 }

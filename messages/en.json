@@ -125,7 +125,8 @@
     "newHereSuffix": "first — no account needed.",
     "errorService": "The email service is temporarily unavailable. Please try again in a moment.",
     "errorRateLimited": "Too many attempts. Please wait a moment and try again.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "linkFailed": "That sign-in link could not be used — it has most likely expired or was already opened. Enter your email below and we will send a fresh one."
   },
   "onboarding": {
     "title": "Welcome to LexyFlow.",
@@ -520,5 +521,11 @@
     "websiteOf": "{name} website",
     "noticeBody": "We give 30 days of notice before adding a sub-processor. Customers may object on reasonable grounds and, failing resolution, terminate without penalty under section 4 of the DPA.",
     "questions": "Questions?"
+  },
+  "authConfirm": {
+    "title": "Confirm your sign-in",
+    "body": "You opened a sign-in link for LexyFlow. Select the button below to finish and open your dashboard.",
+    "cta": "Sign in to LexyFlow",
+    "reassurance": "This extra step exists because corporate email filters open links automatically. Requiring a click means the filter cannot use your link before you do."
   }
 }

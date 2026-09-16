@@ -125,7 +125,8 @@
     "newHereSuffix": "d'abord — aucun compte nécessaire.",
     "errorService": "Le service d'email est temporairement indisponible. Veuillez réessayer dans un instant.",
     "errorRateLimited": "Trop de tentatives. Veuillez patienter avant de réessayer.",
-    "errorGeneric": "Une erreur est survenue. Veuillez réessayer."
+    "errorGeneric": "Une erreur est survenue. Veuillez réessayer.",
+    "linkFailed": "Ce lien de connexion n’a pas pu être utilisé — il a probablement expiré ou a déjà été ouvert. Saisissez votre email ci-dessous, nous vous en envoyons un nouveau."
   },
   "onboarding": {
     "title": "Bienvenue chez LexyFlow.",
@@ -520,5 +521,11 @@
     "websiteOf": "Site de {name}",
     "noticeBody": "Nous prévenons 30 jours à l’avance avant d’ajouter un sous-traitant. Le client peut s’y opposer pour un motif légitime et, à défaut de solution, résilier sans pénalité au titre de l’article 4 du DPA.",
     "questions": "Une question ?"
+  },
+  "authConfirm": {
+    "title": "Confirmez votre connexion",
+    "body": "Vous avez ouvert un lien de connexion à LexyFlow. Appuyez sur le bouton ci-dessous pour terminer et accéder à votre tableau de bord.",
+    "cta": "Se connecter à LexyFlow",
+    "reassurance": "Cette étape supplémentaire existe parce que les filtres de messagerie d’entreprise ouvrent les liens automatiquement. Exiger un appui garantit que le filtre ne consomme pas votre lien avant vous."
   }
 }

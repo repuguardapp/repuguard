@@ -125,7 +125,8 @@
     "newHereSuffix": "primeiro — sem conta necessária.",
     "errorService": "O serviço de email está temporariamente indisponível. Tente novamente em instantes.",
     "errorRateLimited": "Muitas tentativas. Aguarde um momento e tente novamente.",
-    "errorGeneric": "Algo deu errado. Tente novamente."
+    "errorGeneric": "Algo deu errado. Tente novamente.",
+    "linkFailed": "Não foi possível usar esse link de acesso — provavelmente expirou ou já foi aberto. Informe seu e-mail abaixo e enviaremos um novo."
   },
   "onboarding": {
     "title": "Bem-vindo ao LexyFlow.",
@@ -520,5 +521,11 @@
     "websiteOf": "Site da {name}",
     "noticeBody": "Avisamos com 30 dias de antecedência antes de incluir um suboperador. O cliente pode se opor por motivo razoável e, não havendo solução, rescindir sem penalidade nos termos da cláusula 4 do DPA.",
     "questions": "Dúvidas?"
+  },
+  "authConfirm": {
+    "title": "Confirme seu acesso",
+    "body": "Você abriu um link de acesso à LexyFlow. Toque no botão abaixo para concluir e abrir seu painel.",
+    "cta": "Entrar na LexyFlow",
+    "reassurance": "Esta etapa extra existe porque filtros de e-mail corporativo abrem os links automaticamente. Exigir um toque impede que o filtro gaste seu link antes de você."
   }
 }

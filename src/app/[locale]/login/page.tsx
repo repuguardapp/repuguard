@@ -8,7 +8,7 @@ import { getCurrentUser } from '@/lib/supabase-server';
 
 interface PageProps {
   params: { locale: string };
-  searchParams?: { next?: string };
+  searchParams?: { next?: string; error?: string };
 }
 
 /**
@@ -86,6 +86,21 @@ export default async function LoginPage({ params: { locale }, searchParams }: Pa
           <CardDescription>{t('signInTagline')}</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* A failed callback lands here with ?error=. It used to land
+              here silently, so someone whose link a mail scanner had
+              already spent saw a login form and no reason — the exact
+              dead end the interstitial exists to prevent, reproduced
+              one step later. The cause is not named: the visitor can do
+              nothing with "verify_failed", and the remedy is the same
+              for all of them. */}
+          {searchParams?.error ? (
+            <div
+              role="alert"
+              className="mb-6 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm leading-relaxed"
+            >
+              {t('linkFailed')}
+            </div>
+          ) : null}
           <SignInForm locale={locale} labels={labels} />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('newHere')}{' '}

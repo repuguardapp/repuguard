@@ -16,7 +16,17 @@ import type { MetadataRoute } from 'next';
  * common offenders inline for transparency.
  */
 
-const PRIVATE_PATHS = ['/api/', '/dashboard/', '/admin/', '/onboarding', '/monitoring/', '/embed/'];
+const PRIVATE_PATHS = [
+  '/api/',
+  '/dashboard/',
+  '/admin/',
+  '/onboarding',
+  '/monitoring/',
+  '/embed/',
+  // The sign-in interstitial. Its URL carries a live one-time
+  // token, and the page is meaningless without one.
+  '/auth/confirm'
+];
 
 /**
  * Every private path, in both the shape it is written above and the
