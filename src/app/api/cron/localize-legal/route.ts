@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { OPENAI_MODEL, openai } from '@/lib/ai-clients';
-import { outcomeLabel } from '@/lib/legal-labels';
+import { localizeInstrumentNames, outcomeLabel } from '@/lib/legal-labels';
 import { localizeDigitGroups } from '@/lib/number-format';
 import { supabaseService } from '@/lib/supabase';
 
@@ -151,8 +151,14 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
       // digits safe and leaves "300,000 euros" in a French sentence —
       // where a comma is the decimal mark and that reads as three
       // hundred. Separators only; the digits are never touched.
-      summary: localizeDigitGroups(
-        (results[i] as PromiseFulfilledResult<z.infer<typeof Translated>>).value.summary,
+      // Two deterministic passes over the model's prose, both of which
+      // only ever swap a token: thousands separators, then the name of
+      // the instrument. Neither can reach a digit or an article number.
+      summary: localizeInstrumentNames(
+        localizeDigitGroups(
+          (results[i] as PromiseFulfilledResult<z.infer<typeof Translated>>).value.summary,
+          locale
+        ),
         locale
       )
     }))

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
-import { authorityName, frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
+import {
+  authorityName,
+  frameworkLabel,
+  localizeInstrumentNames,
+  outcomeLabel
+} from '@/lib/legal-labels';
 
 /**
  * The two words on a decision page that are ours rather than the law's.
@@ -124,6 +129,53 @@ describe('the regulator is named as it names itself', () => {
       for (const locale of LOCALES) {
         expect(authorityName(framework.authority, locale), `${framework.id}/${locale}`).toBeTruthy();
       }
+    }
+  });
+});
+
+describe('the instrument is named as the prose names it', () => {
+  it('uses the local acronym in a sentence', () => {
+    // A published French card showed the badge RGPD and, two lines
+    // below, a summary saying GDPR. Both were right by their own rule
+    // and wrong together.
+    expect(localizeInstrumentNames("en vertu de l'Article 65(1)(a) GDPR", 'fr')).toBe(
+      "en vertu de l'Article 65(1)(a) RGPD"
+    );
+    expect(localizeInstrumentNames('gemäß Artikel 32 GDPR', 'de')).toContain('DSGVO');
+    expect(localizeInstrumentNames('el Artículo 6 GDPR', 'es')).toContain('RGPD');
+  });
+
+  it('leaves the languages that say GDPR alone', () => {
+    // Japanese and Arabic practitioners write the Latin acronym, and
+    // English is the pivot.
+    for (const locale of ['en', 'ja', 'ar']) {
+      expect(localizeInstrumentNames('GDPR Art. 32', locale), locale).toBe('GDPR Art. 32');
+    }
+  });
+
+  it('never touches UK GDPR', () => {
+    // A different instrument, with its own label and its own page.
+    expect(localizeInstrumentNames('the UK GDPR and the GDPR', 'fr')).toBe(
+      'the UK RGPD and the RGPD'.replace('UK RGPD', 'UK GDPR')
+    );
+  });
+
+  it('cannot reach a digit or an article number', () => {
+    const source = 'Une amende de 500 000 € au titre de GDPR Art. 65(1)(a) et GDPR Art. 9(2).';
+    const out = localizeInstrumentNames(source, 'fr');
+    expect(out.replace(/\D/g, '')).toBe(source.replace(/\D/g, ''));
+    expect(out).toContain('RGPD Art. 65(1)(a)');
+    expect(out).toContain('RGPD Art. 9(2)');
+  });
+
+  it('is idempotent and agrees with the badge', () => {
+    const gdpr = FRAMEWORKS.find((f) => f.id === 'gdpr')!;
+    for (const locale of LOCALES) {
+      const once = localizeInstrumentNames('under GDPR', locale);
+      expect(localizeInstrumentNames(once, locale), locale).toBe(once);
+      // The substitution and the badge come from the same table, so
+      // they cannot drift apart.
+      expect(once).toContain(frameworkLabel(gdpr, locale));
     }
   });
 });

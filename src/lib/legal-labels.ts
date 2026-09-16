@@ -320,3 +320,34 @@ const AUTHORITY_BY_LOCALE: Record<string, Record<string, string>> = {
 export function authorityName(authority: string, locale: string): string {
   return AUTHORITY_BY_LOCALE[authority]?.[locale] ?? authority;
 }
+
+/**
+ * Name the instrument as the language around it names it.
+ *
+ * A published French card carried the badge RGPD and, two lines below,
+ * a summary saying GDPR. Both were right by their own rule and wrong
+ * together: the badge comes from this file's acronym table, the
+ * summary from a model told never to translate statute names — an
+ * instruction that exists so "GDPR Art. 32" survives intact and stays
+ * searchable.
+ *
+ * The editorial answer is the one French legal writing already uses:
+ * RGPD in prose, GDPR in an article reference. So the structured
+ * fields — the `articles` column, the badges, the assembled titles —
+ * keep the canonical English form the audit engine cites, and the
+ * prose takes the reader's acronym.
+ *
+ * Done as a substitution rather than an instruction for the same
+ * reason the digit grouping is: a model invited to rewrite a citation
+ * is a model that can renumber an article. This touches one token and
+ * cannot reach a number.
+ *
+ * Drawn from the same table as the badges, so the two cannot drift.
+ * "UK GDPR" is left alone — it is a different instrument with its own
+ * label and its own page.
+ */
+export function localizeInstrumentNames(text: string, locale: string): string {
+  const local = SHORT_BY_LOCALE['gdpr']?.[locale];
+  if (!local || local === 'GDPR') return text;
+  return text.replace(/(?<!UK )\bGDPR\b/g, local);
+}
