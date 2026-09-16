@@ -392,6 +392,7 @@
     "empty": "Aún no hay resoluciones publicadas.",
     "sourceLabel": "Fuente primaria",
     "authority": "Autoridad",
+    "entity": "Organización",
     "date": "Fecha de la resolución",
     "articles": "Disposiciones citadas",
     "fine": "Multa",

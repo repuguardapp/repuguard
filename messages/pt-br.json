@@ -392,6 +392,7 @@
     "empty": "Nenhuma decisão publicada ainda.",
     "sourceLabel": "Fonte primária",
     "authority": "Autoridade",
+    "entity": "Organização",
     "date": "Data da decisão",
     "articles": "Dispositivos citados",
     "fine": "Multa",

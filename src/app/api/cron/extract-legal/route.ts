@@ -62,6 +62,7 @@ const Extraction = z.object({
   relevant: z.boolean(),
   reject_reason: z.string().optional(),
   authority: z.string().optional(),
+  entity: z.string().optional(),
   decision_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   articles: z.array(z.string()).optional(),
   fine_eur: z.number().nonnegative().optional(),
@@ -82,6 +83,11 @@ const TOOL = {
       },
       reject_reason: { type: 'string', description: 'Why it is not relevant. Required when relevant is false.' },
       authority: { type: 'string', description: 'Issuing body, in English. e.g. "CNIL", "EDPB", "ICO".' },
+      entity: {
+        type: 'string',
+        description:
+          'The organisation the decision was taken AGAINST, exactly as the source names it and with no descriptive words added: "EXTIA", "Hopital Prive de la Loire", "Meta Platforms Ireland". Not the authority, not a sector, not a category. Omit the field entirely for guidance, opinions, consultations and anything with no respondent — and omit it rather than guess when the source only alludes to "a company" or "a hospital", because this name goes in the headline of a public page in seven languages.'
+      },
       decision_date: {
         type: 'string',
         description:
@@ -107,6 +113,8 @@ const TOOL = {
 
 const SYSTEM = [
   'You extract facts from regulatory publications on data protection and AI.',
+  'The organisation sanctioned is the single most important field: name it',
+  'exactly as the source does, or omit it. Never infer it, never paraphrase it.',
   'You are not a commentator. You state what a document says and nothing more:',
   'no advice, no interpretation, no speculation about consequences.',
   'Never assert a fact the source does not state — omit the field instead.',
@@ -271,6 +279,7 @@ async function extractOne(
     .update({
       status: 'extracted',
       authority: out.authority ?? null,
+      entity: out.entity?.trim() || null,
       decision_date: out.decision_date ?? null,
       articles: out.articles ?? null,
       fine_eur: out.fine_eur ?? null,

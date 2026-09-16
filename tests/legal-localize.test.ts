@@ -101,6 +101,7 @@ const ITEM = {
   id: '11111111-2222-3333-4444-555555555555',
   slug: 'sanction-societe-x-a1b2c3',
   authority: 'CNIL',
+  entity: 'Société X',
   decision_date: '2026-09-09',
   articles: ['GDPR Art. 13', 'GDPR Art. 32'],
   fine_eur: 300000,
@@ -157,7 +158,49 @@ describe('the headline is ours, not the regulator\'s', () => {
 
     // Facts carry no copyright; a regulator's sentence does. And the
     // assembled form carries the terms a compliance officer searches.
-    expect(en['title']).toBe('CNIL — €300,000 fine — GDPR Art. 13, GDPR Art. 32 — 2026-09-09');
+    expect(en['title']).toBe(
+      'Société X — CNIL — €300,000 fine — GDPR Art. 13, 32 — 2026-09-09'
+    );
+  });
+
+  it('leads with the organisation, because that is what distinguishes it', async () => {
+    // The first two pages we published were headed "CNIL — €300,000
+    // fine — GDPR Art. 12, GDPR Art. 17 — 2026-07-21" and "CNIL —
+    // €500,000 fine — GDPR Art. 32, GDPR Art. 34 — 2026-07-21". Same
+    // authority, same date, nothing to tell them apart, and matching no
+    // query any human makes.
+    await run();
+    for (const locale of ['en', 'fr', 'ja', 'ar']) {
+      const title = String(journal.localeRows.find((r) => r['locale'] === locale)!['title']);
+      expect(title.startsWith('Société X —'), `${locale}: ${title}`).toBe(true);
+    }
+  });
+
+  it('keeps the authority-led shape when nothing was sanctioned', async () => {
+    // Guidance and opinions have no respondent. A header invented for
+    // them would be worse than a missing one.
+    queue = [{ ...ITEM, entity: null, fine_eur: null, outcome: 'guidance' }];
+    await run();
+    expect(journal.localeRows.find((r) => r['locale'] === 'en')!['title']).toBe(
+      'CNIL — guidance — GDPR Art. 13, 32 — 2026-09-09'
+    );
+  });
+
+  it('names the instrument once when the citations share it', async () => {
+    // "GDPR Art. 13, GDPR Art. 32" pushed the date past the ~60
+    // characters a search result shows — and the date is the part that
+    // makes a result look current.
+    await run();
+    const title = String(journal.localeRows.find((r) => r['locale'] === 'en')!['title']);
+    expect(title).toContain('GDPR Art. 13, 32');
+    expect(title.match(/GDPR/g)).toHaveLength(1);
+  });
+
+  it('names both instruments when they differ', async () => {
+    queue = [{ ...ITEM, articles: ['GDPR Art. 5', 'ePrivacy Art. 3'] }];
+    await run();
+    const title = String(journal.localeRows.find((r) => r['locale'] === 'en')!['title']);
+    expect(title).toContain('GDPR Art. 5, ePrivacy Art. 3');
   });
 
   it('never reads the feed headline at all', async () => {

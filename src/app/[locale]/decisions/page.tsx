@@ -62,13 +62,11 @@ export default async function DecisionsIndexPage({ params }: PageProps) {
             <li key={decision.id}>
               <Card className="transition-colors hover:border-foreground/20">
                 <CardHeader className="gap-2">
+                  {/* The authority and the date are the first and last
+                      segments of the title below. Repeating them here
+                      made every card look like every other card; the
+                      framework is the one badge that adds something. */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {decision.authority ? (
-                      <Badge variant="secondary">{decision.authority}</Badge>
-                    ) : null}
-                    {decision.decisionDate ? (
-                      <Badge variant="outline">{decision.decisionDate}</Badge>
-                    ) : null}
                     {decision.frameworks.map((framework) => (
                       <Badge key={framework.id} variant="outline">
                         {frameworkLabel(framework, params.locale)}
@@ -85,8 +83,11 @@ export default async function DecisionsIndexPage({ params }: PageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-                    {decision.summary}
+                  {/* Cut in the server, at a word boundary. line-clamp
+                      clipped mid-number and printed the year 2026 as
+                      "026" on the Arabic index. */}
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {decision.excerpt}
                   </p>
                 </CardContent>
               </Card>

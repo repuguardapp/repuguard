@@ -392,6 +392,7 @@
     "empty": "No decisions published yet.",
     "sourceLabel": "Primary source",
     "authority": "Authority",
+    "entity": "Organisation",
     "date": "Decision date",
     "articles": "Provisions cited",
     "fine": "Fine",

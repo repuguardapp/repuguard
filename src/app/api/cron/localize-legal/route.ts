@@ -52,6 +52,7 @@ interface ApprovedRow {
   id: string;
   slug: string | null;
   authority: string | null;
+  entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
   fine_eur: number | null;
@@ -74,7 +75,7 @@ async function localize() {
 
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, slug, authority, decision_date, articles, fine_eur, outcome, summary_en')
+    .select('id, slug, authority, entity, decision_date, articles, fine_eur, outcome, summary_en')
     .eq('status', 'approved')
     .order('reviewed_at', { ascending: true, nullsFirst: false })
     .limit(MAX_ITEMS_PER_RUN);
@@ -209,6 +210,17 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
  */
 function buildTitle(item: ApprovedRow, locale: string): string {
   const parts: string[] = [];
+
+  // The respondent leads, because it is the word that tells two
+  // decisions apart and the word people actually type. The first two
+  // pages we published were headed "CNIL — €300,000 fine — GDPR Art.
+  // 12, GDPR Art. 17 — 2026-07-21" and "CNIL — €500,000 fine — GDPR
+  // Art. 32, GDPR Art. 34 — 2026-07-21": same authority, same date,
+  // nothing to tell them apart, and matching no query anyone makes.
+  //
+  // Absent for guidance and opinions, which have no respondent — those
+  // keep the authority-first shape.
+  if (item.entity) parts.push(item.entity);
   parts.push(item.authority ?? 'Regulator');
 
   if (item.fine_eur !== null && item.fine_eur > 0) {
@@ -227,12 +239,34 @@ function buildTitle(item: ApprovedRow, locale: string): string {
   if (item.articles && item.articles.length > 0) {
     // Two is enough to be specific without becoming a list; a title
     // carrying nine article numbers helps nobody.
-    parts.push(item.articles.slice(0, 2).join(', '));
+    parts.push(compactArticles(item.articles.slice(0, 2)));
   }
 
   if (item.decision_date) parts.push(item.decision_date);
 
   return parts.join(' — ');
+}
+
+/**
+ * "GDPR Art. 12, GDPR Art. 17" → "GDPR Art. 12, 17".
+ *
+ * The instrument is named once. Repeating it is how the headline grew
+ * past the ~60 characters a search result shows, pushing the date — the
+ * part that makes a result look current — off the end.
+ *
+ * Only collapses a prefix the citations genuinely share; two different
+ * instruments are both named in full, because that is the case where
+ * the reader needs to see both.
+ */
+function compactArticles(articles: string[]): string {
+  if (articles.length < 2) return articles.join(', ');
+
+  const heads = articles.map((a) => a.replace(/\s+\S+$/, ''));
+  const shared = heads[0]!;
+  if (!shared || heads.some((h) => h !== shared)) return articles.join(', ');
+
+  const tails = articles.map((a) => a.slice(shared.length).trim());
+  return `${shared} ${tails.join(', ')}`;
 }
 
 async function translate(

@@ -43,6 +43,7 @@ interface QueueRow {
   raw_title: string;
   published_at: string | null;
   authority: string | null;
+  entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
   fine_eur: number | null;
@@ -88,7 +89,7 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
   const { data, error } = await db
     .from('legal_developments')
     .select(
-      'id, primary_url, raw_title, published_at, authority, decision_date, articles, fine_eur, outcome, summary_en, slug, legal_sources(name, licence)'
+      'id, primary_url, raw_title, published_at, authority, entity, decision_date, articles, fine_eur, outcome, summary_en, slug, legal_sources(name, licence)'
     )
     .eq('status', 'extracted')
     .order('published_at', { ascending: false, nullsFirst: false })
@@ -127,6 +128,15 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
         <Card key={row.id}>
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
+              {/* The name we are about to put in an H1 in seven
+                  languages. First badge, and marked when it is absent,
+                  because approving an enforcement decision that names
+                  nobody is almost always an extraction failure. */}
+              {row.entity ? (
+                <Badge>{row.entity}</Badge>
+              ) : row.outcome && ['fine', 'reprimand', 'ban', 'order'].includes(row.outcome) ? (
+                <Badge variant="destructive">entité non extraite</Badge>
+              ) : null}
               {row.authority ? <Badge variant="secondary">{row.authority}</Badge> : null}
               {row.decision_date ? <Badge variant="outline">{row.decision_date}</Badge> : null}
               {row.outcome ? <Badge variant="outline">{row.outcome}</Badge> : null}

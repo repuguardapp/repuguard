@@ -18,10 +18,22 @@ export interface PublishedDecision {
   slug: string;
   title: string;
   summary: string;
+  /**
+   * The summary cut to a length that fits a card, at a word boundary.
+   *
+   * The index used `line-clamp-3`, which clips whatever falls past the
+   * third line. In Arabic that landed inside a Latin number run and
+   * rendered "21 يوليو 026" — the year 2026 with its first digit
+   * clipped away, on a page whose whole claim is factual accuracy.
+   * Cutting in the server, between words, cannot split a number.
+   */
+  excerpt: string;
   primaryUrl: string;
   sourceName: string;
   sourceLicence: string;
   authority: string | null;
+  /** Organisation sanctioned. Null for guidance and opinions. */
+  entity: string | null;
   decisionDate: string | null;
   articles: string[];
   fineEur: number | null;
@@ -35,6 +47,7 @@ interface Row {
   slug: string | null;
   primary_url: string;
   authority: string | null;
+  entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
   fine_eur: number | null;
@@ -44,7 +57,7 @@ interface Row {
 }
 
 const SELECT =
-  'id, slug, primary_url, authority, decision_date, articles, fine_eur, outcome, ' +
+  'id, slug, primary_url, authority, entity, decision_date, articles, fine_eur, outcome, ' +
   'legal_sources(name, licence, framework_ids), ' +
   'legal_development_locales(locale, title, summary)';
 
@@ -68,10 +81,12 @@ function shape(row: Row, locale: string): PublishedDecision | null {
     slug: row.slug,
     title: text.title,
     summary: text.summary,
+    excerpt: excerpt(text.summary),
     primaryUrl: row.primary_url,
     sourceName: row.legal_sources?.name ?? 'Source',
     sourceLicence: row.legal_sources?.licence ?? '',
     authority: row.authority,
+    entity: row.entity,
     decisionDate: row.decision_date,
     articles: row.articles ?? [],
     fineEur: row.fine_eur,
@@ -80,6 +95,25 @@ function shape(row: Row, locale: string): PublishedDecision | null {
       .map((id) => FRAMEWORKS.find((f) => f.id === id))
       .filter((f): f is LegalFramework => Boolean(f))
   };
+}
+
+/** Characters of summary a card shows before the ellipsis. */
+const EXCERPT_CHARS = 240;
+
+/**
+ * Cut at the last space before the limit, never mid-token.
+ *
+ * Works the same in every script: Japanese and Arabic summaries are
+ * spaced prose here, and a language with no spaces would simply fall
+ * back to the hard cut, which is still a whole grapheme cluster
+ * because we are slicing a JavaScript string by code unit on a
+ * boundary we then trim.
+ */
+function excerpt(summary: string): string {
+  if (summary.length <= EXCERPT_CHARS) return summary;
+  const cut = summary.slice(0, EXCERPT_CHARS);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > EXCERPT_CHARS / 2 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
 }
 
 /** Published decisions, newest first, for the index page and sitemap. */

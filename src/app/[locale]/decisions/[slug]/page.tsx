@@ -60,6 +60,7 @@ export default async function DecisionPage({ params }: PageProps) {
   if (!decision) notFound();
 
   const facts: { label: string; value: string }[] = [];
+  if (decision.entity) facts.push({ label: t('entity'), value: decision.entity });
   if (decision.authority) facts.push({ label: t('authority'), value: decision.authority });
   if (decision.decisionDate) facts.push({ label: t('date'), value: decision.decisionDate });
   if (decision.outcome) {

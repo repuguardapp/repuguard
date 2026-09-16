@@ -392,6 +392,7 @@
     "empty": "Aucune décision publiée pour le moment.",
     "sourceLabel": "Source primaire",
     "authority": "Autorité",
+    "entity": "Organisation",
     "date": "Date de la décision",
     "articles": "Dispositions visées",
     "fine": "Amende",

@@ -392,6 +392,7 @@
     "empty": "Noch keine Entscheidungen veröffentlicht.",
     "sourceLabel": "Primärquelle",
     "authority": "Behörde",
+    "entity": "Organisation",
     "date": "Datum der Entscheidung",
     "articles": "Zitierte Vorschriften",
     "fine": "Bußgeld",
