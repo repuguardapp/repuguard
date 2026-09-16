@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { SUB_PROCESSORS } from '@/lib/sub-processors';
 import { appUrl } from '@/lib/app-url';
+import { jsonLdScript } from '@/lib/json-ld';
 
 interface PageProps {
   params: { locale: string };
@@ -88,7 +89,7 @@ export default async function TrustPage({ params }: PageProps) {
 
   return (
     <div className="py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
       <header className="mb-10 grid gap-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-emerald-600" aria-hidden />

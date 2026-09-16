@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { getSampleSnapshot } from '@/lib/sample-report-snapshot';
 import { appUrl } from '@/lib/app-url';
+import { jsonLdScript } from '@/lib/json-ld';
 
 interface PageProps {
   params: { locale: string };
@@ -90,7 +91,7 @@ export default async function SampleReportPage({ params: { locale } }: PageProps
   return (
     <>
       {jsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
       )}
 
       <div className="mx-auto max-w-3xl py-12">

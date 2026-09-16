@@ -1,0 +1,42 @@
+-- Anyone holding the anon key could read every anonymous audit.
+--
+-- Two policies granted SELECT to role `public` — which includes `anon`,
+-- and the anon key ships in the client bundle by design:
+--
+--   audits         "public read anonymous audits"
+--     using (organization_id = '00000000-0000-0000-0000-000000000000')
+--   audit_findings "public read anonymous audit findings"
+--     using (audit_id in (select id from audits where organization_id = '000…'))
+--
+-- The anonymous organisation is the marketing funnel: someone uploads a
+-- privacy policy, a contract or a DPA with no account. `audit_findings`
+-- carries an `evidence` column that quotes the clause it flagged. So
+-- the policies published, to anyone who can type a PostgREST URL, the
+-- text of strangers' contracts — not one document by guessing its id,
+-- but the whole table by asking for it.
+--
+-- Nothing of ours used them. Every reader of `audits` and
+-- `audit_findings` in this codebase is a server component or a route
+-- handler using the service role, which bypasses RLS entirely:
+--
+--   src/app/[locale]/dashboard/page.tsx            supabaseService()
+--   src/app/[locale]/dashboard/[auditId]/page.tsx  supabaseService()
+--   src/app/[locale]/dashboard/[auditId]/edit/...  supabaseService()
+--   src/app/api/audit/**                           supabaseService()
+--
+-- There are no browser-side Supabase clients in the app at all. The
+-- policies were latent exposure with no caller.
+--
+-- Today the table holds zero anonymous audits, so nothing has leaked.
+-- That is luck and it is running out: ninety-one /compliance pages
+-- invite exactly this upload, and the point of this month's work is to
+-- make people accept the invitation. Dropping the policies before the
+-- traffic arrives costs nothing; dropping them after would be a breach
+-- notification.
+--
+-- Share-link access to an anonymous report keeps working, because it
+-- never went through RLS: /dashboard/[auditId] renders server-side with
+-- the service role, and the unguessable UUID is the credential.
+
+drop policy if exists "public read anonymous audits" on public.audits;
+drop policy if exists "public read anonymous audit findings" on public.audit_findings;

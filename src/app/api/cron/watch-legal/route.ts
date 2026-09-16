@@ -3,6 +3,7 @@ import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { parseFeed } from '@/lib/feeds';
 import { supabaseService } from '@/lib/supabase';
+import { fetchExternal } from '@/lib/safe-fetch';
 
 /**
  * Legal watch — the intake of the Acquisition brain.
@@ -178,7 +179,7 @@ async function pollSource(
 
   let xml: string;
   try {
-    const res = await fetch(source.feed_url, {
+    const res = await fetchExternal(source.feed_url, {
       // Identify ourselves. A regulator blocking an anonymous scraper
       // is entirely reasonable, and a contactable user agent is the
       // difference between being rate-limited and being banned.

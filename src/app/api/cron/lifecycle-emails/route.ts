@@ -3,6 +3,7 @@ import { alertOps } from '@/lib/alert';
 import { sendLifecycleNudge, sendLifecycleUpgrade, type UpgradeContext } from '@/lib/email';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
 import { supabaseService } from '@/lib/supabase';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 /**
  * Daily lifecycle-email cron. Two conditional stages:
@@ -30,24 +31,16 @@ const UPGRADE_MIN_DAYS = 14;
 // the sending domain reputation with a burst of 500 emails at once.
 const BATCH_LIMIT = 100;
 
-function isAuthorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${secret}`) return true;
-  const url = new URL(request.url);
-  return url.searchParams.get('secret') === secret;
-}
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return run();
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return run();

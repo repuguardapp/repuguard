@@ -10,6 +10,7 @@ import { buildHreflangAlternates } from '@/lib/hreflang';
 import { authorityName, citationLabel, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { comparisonParams, parseFrameworkPairSlug } from '@/lib/seo-routes';
 import { appUrl } from '@/lib/app-url';
+import { jsonLdScript } from '@/lib/json-ld';
 
 /**
  * Comparison landing page between two compliance frameworks.
@@ -119,7 +120,7 @@ export default async function ComparisonPage({ params }: PageProps) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
 
       <section className="mx-auto max-w-3xl py-16 px-4">
         <div className="mb-4 flex items-center gap-2">

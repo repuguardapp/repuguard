@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 /**
  * Daily retention enforcement.
@@ -27,7 +28,7 @@ const WEBHOOK_RETENTION_DAYS = 90;
 const RATE_LIMIT_RETENTION_HOURS = 24;
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return runPurge();
@@ -35,28 +36,12 @@ export async function GET(request: Request) {
 
 /** POST is also accepted because some queue systems prefer it. */
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return runPurge();
 }
 
-function isAuthorized(request: Request): boolean {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) {
-    // In dev (no secret) we leave the route open so it can be exercised
-    // by Vitest or a local curl — never deploy without setting CRON_SECRET.
-    return process.env.NODE_ENV !== 'production';
-  }
-
-  // Vercel Cron sends `authorization: Bearer <CRON_SECRET>`.
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${expected}`) return true;
-
-  // Manual ping fallback.
-  const url = new URL(request.url);
-  return url.searchParams.get('secret') === expected;
-}
 
 async function runPurge() {
   const db = supabaseService();

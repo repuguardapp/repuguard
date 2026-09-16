@@ -1,6 +1,24 @@
 import 'server-only';
+import { timingSafeEqual } from 'node:crypto';
 import { isAdminEmail } from './admin';
 import { getCurrentAdminUser } from './supabase-server';
+
+/**
+ * Constant-time string comparison.
+ *
+ * `===` on a secret leaks its prefix through timing. Over the public
+ * internet the signal is buried in jitter and nobody has stolen a cron
+ * secret this way, but the shape is wrong and the fix is four lines —
+ * and this helper is the one place a future secret comparison will be
+ * copied from.
+ */
+function secretEquals(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  // Length is public; compare it first so timingSafeEqual gets equal
+  // buffers, which is its precondition.
+  return left.length === right.length && timingSafeEqual(left, right);
+}
 
 /**
  * Who may run a scheduled job.
@@ -39,13 +57,28 @@ export async function isCronAuthorized(request: Request): Promise<boolean> {
   if (!expected) {
     if (process.env.NODE_ENV !== 'production') return true;
   } else {
-    if (request.headers.get('authorization') === `Bearer ${expected}`) return true;
+    const header = request.headers.get('authorization');
+    if (header && secretEquals(header, `Bearer ${expected}`)) return true;
     // Query-string form kept for the platform's own retries and for
     // scripted callers that cannot set a header. Its value is redacted
     // before any event leaves us — see src/lib/sentry-scrub.ts.
-    if (new URL(request.url).searchParams.get('secret') === expected) return true;
+    const query = new URL(request.url).searchParams.get('secret');
+    if (query && secretEquals(query, expected)) return true;
   }
 
-  const user = await getCurrentAdminUser();
-  return Boolean(user && isAdminEmail(user.email));
+  // The operator path reads cookies, and cookies() throws outside a
+  // request scope — which is where a cron route runs when the platform
+  // invokes it, and where Vitest runs it. An auth check that throws
+  // answers 500, and a 500 from an auth check is indistinguishable
+  // from an outage: the operator retries, the alert fires, and nobody
+  // learns that the answer was simply "no".
+  //
+  // So the fallback fails closed and silently. Refusing is always a
+  // safe answer here; the machine path above is unaffected.
+  try {
+    const user = await getCurrentAdminUser();
+    return Boolean(user && isAdminEmail(user.email));
+  } catch {
+    return false;
+  }
 }

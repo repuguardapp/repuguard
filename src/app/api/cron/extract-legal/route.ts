@@ -6,6 +6,7 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
 import { htmlToText } from '@/lib/feeds';
 import { supabaseService } from '@/lib/supabase';
+import { fetchExternal } from '@/lib/safe-fetch';
 
 /**
  * Legal watch, pass 2 — turn a discovered item into structured facts.
@@ -343,7 +344,7 @@ async function findTwin(
 async function readSource(item: DevelopmentRow): Promise<string> {
   const fallback = [item.raw_title, item.raw_excerpt ?? ''].join('\n\n').trim();
   try {
-    const res = await fetch(item.primary_url, {
+    const res = await fetchExternal(item.primary_url, {
       headers: { 'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)' },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       cache: 'no-store'

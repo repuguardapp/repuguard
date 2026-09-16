@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
 import { supabaseService } from '@/lib/supabase';
+import { isCronAuthorized } from '@/lib/cron-auth';
 
 /**
  * Fail audits that stopped running and never said so.
@@ -46,7 +47,7 @@ interface StuckAudit {
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return reapAudits();
@@ -54,22 +55,12 @@ export async function GET(request: Request) {
 
 /** POST is also accepted because some queue systems prefer it. */
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!await isCronAuthorized(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   return reapAudits();
 }
 
-function isAuthorized(request: Request): boolean {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) {
-    return process.env.NODE_ENV !== 'production';
-  }
-  const auth = request.headers.get('authorization');
-  if (auth === `Bearer ${expected}`) return true;
-  const url = new URL(request.url);
-  return url.searchParams.get('secret') === expected;
-}
 
 async function reapAudits() {
   const db = supabaseService();

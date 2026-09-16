@@ -12,6 +12,7 @@ import { buildHreflangAlternates } from '@/lib/hreflang';
 import { authorityName, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { frameworkParams, frameworkPairKey, relatedFrameworks } from '@/lib/seo-routes';
 import { appUrl } from '@/lib/app-url';
+import { jsonLdScript } from '@/lib/json-ld';
 
 /**
  * Programmatic-SEO landing page for a single compliance framework.
@@ -127,7 +128,7 @@ export default async function FrameworkPage({ params }: PageProps) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
 
       <section className="mx-auto max-w-3xl py-16 px-4">
         <Badge variant="outline" className="mb-4">{framework.jurisdiction}</Badge>

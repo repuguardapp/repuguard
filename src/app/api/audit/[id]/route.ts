@@ -69,6 +69,35 @@ export async function GET(_request: Request, ctx: { params: { id: string } }) {
   if (error) return NextResponse.json({ error: 'lookup_failed' }, { status: 500 });
   if (!audit) return NextResponse.json({ error: 'not_found' },   { status: 404 });
 
+  // Whose audit is this?
+  //
+  // This route reads with the service role, which bypasses RLS, and it
+  // returned the status, the RISK SCORE and the findings count for any
+  // id to anyone who asked. The id is a UUID so it is not guessable,
+  // but it is not secret either: it sits in a dashboard URL, in a
+  // completion email, in browser history, and in the Referer header of
+  // anything that page ever links out to. "Hard to guess" is the
+  // security model of a share link, and a paying customer's compliance
+  // score is not a share link.
+  //
+  // It also had a side effect with no caller check: past the runaway
+  // threshold, a GET flips a stuck audit to `failed` and refunds a
+  // credit. Anyone holding an id could end someone else's in-flight
+  // audit.
+  //
+  // The anonymous organisation is the exception and keeps its old
+  // behaviour: those audits are created with no session, the browser
+  // polls this route while the upload runs, and the unguessable id IS
+  // the credential — the same contract /api/audit/[id]/document
+  // already applies in the other direction.
+  if (audit.organization_id !== ANONYMOUS_ORG_ID) {
+    const viewer = await getCurrentUser();
+    if (!viewer || organizationIdFromUser(viewer) !== audit.organization_id) {
+      // 404 rather than 403: whether an id exists is itself information.
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+  }
+
   // ---- Self-heal stuck rows --------------------------------------
   let effectiveStatus: string = audit.status;
   let effectiveError: string | null = audit.error_message ?? null;
