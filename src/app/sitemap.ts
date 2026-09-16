@@ -25,7 +25,20 @@ import { appUrl } from '@/lib/app-url';
  * shard into sitemap-core.xml / sitemap-compliance.xml /
  * sitemap-compare.xml and ship a sitemap index.
  */
-const CORE_ROUTES = ['', '/pricing', '/audit', '/docs', '/trust', '/sample-report', '/decisions'];
+// The two hubs are core routes, not programmatic ones: they are the
+// only internal links into 287 framework and comparison pages, and a
+// crawler that never reaches them never reaches those either.
+const CORE_ROUTES = [
+  '',
+  '/pricing',
+  '/audit',
+  '/docs',
+  '/trust',
+  '/sample-report',
+  '/decisions',
+  '/compliance',
+  '/compare'
+];
 
 /**
  * Regenerated hourly rather than frozen at build time.

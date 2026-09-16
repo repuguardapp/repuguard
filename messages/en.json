@@ -527,5 +527,16 @@
     "body": "You opened a sign-in link for LexyFlow. Select the button below to finish and open your dashboard.",
     "cta": "Sign in to LexyFlow",
     "reassurance": "This extra step exists because corporate email filters open links automatically. Requiring a click means the filter cannot use your link before you do."
+  },
+  "hubs": {
+    "complianceTitle": "Compliance frameworks we audit against",
+    "complianceLead": "Thirteen data-protection and AI regulations, each with what it covers, who enforces it, and a free audit that checks your own document against it.",
+    "compareTitle": "Compare two regulations side by side",
+    "compareLead": "Jurisdictions, supervisory authorities and citation levels, for the pairs a compliance officer actually evaluates together — plus an audit that runs both against one document.",
+    "authorityLabel": "Enforced by",
+    "seeAll": "All frameworks",
+    "seeComparisons": "All comparisons",
+    "seeDecisions": "Enforcement decisions",
+    "footerResources": "Resources"
   }
 }

@@ -527,5 +527,16 @@
     "body": "Você abriu um link de acesso à LexyFlow. Toque no botão abaixo para concluir e abrir seu painel.",
     "cta": "Entrar na LexyFlow",
     "reassurance": "Esta etapa extra existe porque filtros de e-mail corporativo abrem os links automaticamente. Exigir um toque impede que o filtro gaste seu link antes de você."
+  },
+  "hubs": {
+    "complianceTitle": "Os marcos regulatórios que auditamos",
+    "complianceLead": "Treze normas de proteção de dados e de inteligência artificial, cada uma com seu alcance, sua autoridade de controle e uma auditoria gratuita que confronta seu documento com o texto.",
+    "compareTitle": "Comparar duas normas",
+    "compareLead": "Jurisdições, autoridades de controle e nível de citação, para os pares que um responsável de conformidade realmente avalia juntos — com uma auditoria que confronta um mesmo documento com os dois textos.",
+    "authorityLabel": "Autoridade de controle",
+    "seeAll": "Todos os marcos",
+    "seeComparisons": "Todas as comparações",
+    "seeDecisions": "Decisões sancionadoras",
+    "footerResources": "Recursos"
   }
 }

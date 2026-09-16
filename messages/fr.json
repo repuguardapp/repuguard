@@ -527,5 +527,16 @@
     "body": "Vous avez ouvert un lien de connexion à LexyFlow. Appuyez sur le bouton ci-dessous pour terminer et accéder à votre tableau de bord.",
     "cta": "Se connecter à LexyFlow",
     "reassurance": "Cette étape supplémentaire existe parce que les filtres de messagerie d’entreprise ouvrent les liens automatiquement. Exiger un appui garantit que le filtre ne consomme pas votre lien avant vous."
+  },
+  "hubs": {
+    "complianceTitle": "Les référentiels que nous auditons",
+    "complianceLead": "Treize réglementations sur la protection des données et l’IA, chacune avec son champ d’application, son autorité de contrôle, et un audit gratuit qui confronte votre propre document au texte.",
+    "compareTitle": "Comparer deux réglementations",
+    "compareLead": "Juridictions, autorités de contrôle et niveau de citation, pour les paires qu’un responsable conformité évalue réellement ensemble — avec un audit qui confronte un même document aux deux textes.",
+    "authorityLabel": "Autorité de contrôle",
+    "seeAll": "Tous les référentiels",
+    "seeComparisons": "Tous les comparatifs",
+    "seeDecisions": "Décisions de sanction",
+    "footerResources": "Ressources"
   }
 }

@@ -527,5 +527,16 @@
     "body": "Sie haben einen Anmeldelink für LexyFlow geöffnet. Tippen Sie auf die Schaltfläche unten, um die Anmeldung abzuschließen und Ihr Dashboard zu öffnen.",
     "cta": "Bei LexyFlow anmelden",
     "reassurance": "Diesen zusätzlichen Schritt gibt es, weil betriebliche E-Mail-Filter Links automatisch öffnen. Ein erforderlicher Klick stellt sicher, dass der Filter Ihren Link nicht vor Ihnen verbraucht."
+  },
+  "hubs": {
+    "complianceTitle": "Die Regelwerke, gegen die wir prüfen",
+    "complianceLead": "Dreizehn Datenschutz- und KI-Regelwerke, jeweils mit Geltungsbereich, Aufsichtsbehörde und einem kostenlosen Audit, das Ihr eigenes Dokument gegen den Text prüft.",
+    "compareTitle": "Zwei Regelwerke gegenüberstellen",
+    "compareLead": "Geltungsbereiche, Aufsichtsbehörden und Zitierebenen — für die Paare, die Compliance-Verantwortliche tatsächlich zusammen bewerten, samt einem Audit gegen beide Texte zugleich.",
+    "authorityLabel": "Aufsichtsbehörde",
+    "seeAll": "Alle Regelwerke",
+    "seeComparisons": "Alle Vergleiche",
+    "seeDecisions": "Bußgeldentscheidungen",
+    "footerResources": "Ressourcen"
   }
 }

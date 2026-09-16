@@ -66,6 +66,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   const descriptor = getLocaleDescriptor(locale);
   const tNav = await getTranslations('nav');
   const tFooter = await getTranslations('footer');
+  const tHubs = await getTranslations('hubs');
   const tBilling = await getTranslations('billing');
 
   // Read the auth state on every layout render so the header reflects
@@ -147,6 +148,27 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
           <main className="container">{children}</main>
 
           <footer className="border-t">
+            {/* The resource row is not decoration. Google's URL
+                inspection said of every /compliance and /compare page:
+                "no referring page detected". The header and footer
+                linked to /, /audit, /dashboard, /docs, /dpa, /login,
+                /pricing, /privacy and /terms, and nowhere else — so 329
+                pages had no inbound link from anywhere on the site and
+                Google declined to index a single one of them. A sitemap
+                is a hint; a link is a path. This is the path, and it is
+                in the footer because the footer is on every page. */}
+            <div className="container flex flex-wrap justify-center gap-x-6 gap-y-2 border-b py-6 text-sm sm:justify-start">
+              <span className="font-medium text-foreground">{tHubs('footerResources')}</span>
+              <Link href="/compliance" className="text-muted-foreground hover:text-foreground">
+                {tHubs('seeAll')}
+              </Link>
+              <Link href="/compare" className="text-muted-foreground hover:text-foreground">
+                {tHubs('seeComparisons')}
+              </Link>
+              <Link href="/decisions" className="text-muted-foreground hover:text-foreground">
+                {tHubs('seeDecisions')}
+              </Link>
+            </div>
             <div className="container flex flex-col items-center justify-between gap-3 py-8 text-sm text-muted-foreground sm:flex-row">
               <span>{tFooter('copyright', { year: new Date().getFullYear() })}</span>
               <div className="flex flex-wrap gap-6">
