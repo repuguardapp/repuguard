@@ -50,6 +50,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function TrustPage({ params }: PageProps) {
   unstable_setRequestLocale(params.locale);
   const t = await getTranslations('trust');
+  // Role, region and purpose live in the catalogue, keyed by
+  // sub-processor id — this card used to print them in English on
+  // all seven locales, inside a page whose own copy was translated.
+  const sp = await getTranslations('subProcessors');
 
   // JSON-LD: Organization + AboutPage. The Organization graph
   // surfaces the security contact and DPO mailto in Google's
@@ -135,20 +139,20 @@ export default async function TrustPage({ params }: PageProps) {
         <p className="text-sm text-muted-foreground">{t('subProcessorsIntro')}</p>
         <div className="grid gap-3">
           {SUB_PROCESSORS.map((p) => (
-            <Card key={p.legalName}>
+            <Card key={p.id}>
               <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <CardTitle className="text-base">
                     {p.name} <span className="text-xs font-normal text-muted-foreground">— {p.legalName}</span>
                   </CardTitle>
                   <Badge variant="outline" className="text-[10px]">
-                    {p.region}
+                    {sp(`${p.id}.region`)}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{p.role}</p>
+                <p className="text-xs text-muted-foreground">{sp(`${p.id}.role`)}</p>
               </CardHeader>
               <CardContent className="grid gap-2 text-xs">
-                <p className="text-pretty">{p.purpose}</p>
+                <p className="text-pretty">{sp(`${p.id}.purpose`)}</p>
                 <div className="flex flex-wrap gap-1">
                   {p.certifications.map((c) => (
                     <Badge key={c} variant="secondary" className="text-[10px]">

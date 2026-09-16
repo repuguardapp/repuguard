@@ -401,5 +401,123 @@
     "cta": "Mein Dokument prüfen",
     "relatedTitle": "Betroffene Regelwerke",
     "disclaimer": "Zusammenfassung von LexyFlow auf Grundlage der oben verlinkten Entscheidung. Keine Rechtsberatung. Bei Abweichungen gilt die Originalentscheidung."
+  },
+  "frameworkPage": {
+    "metaTitle": "{name} — Compliance-Audit-Werkzeug | LexyFlow",
+    "metaDescription": "Automatisiertes {name}-Audit in 60 Sekunden. Laden Sie eine Richtlinie, einen Vertrag oder einen AVV hoch und erhalten Sie einen Risikowert, Fundstellen bis zur genauen Vorschrift und von der KI formulierte Neufassungen. Kostenlos testen, ohne Kreditkarte.",
+    "lead": "Automatisiertes Compliance-Audit gegen {name}. Laden Sie Ihre Datenschutzerklärung, Ihren AVV oder einen Vertrag hoch — LexyFlow liefert einen Risikowert, Fundstellen bis zur genauen Vorschrift des Textes und von der KI formulierte Neufassungen für die beanstandeten Klauseln. In 60 Sekunden. Kostenlos testen, ohne Kreditkarte.",
+    "ctaPrimary": "Dokument prüfen — kostenlos",
+    "ctaPricing": "Preise ansehen",
+    "jurisdiction": "Geltungsbereich",
+    "authority": "Aufsichtsbehörde",
+    "howTitle": "Wie LexyFlow gegen {name} prüft",
+    "how1": "Durchgang 1 — liest jede Klausel Ihres Dokuments und greift diejenigen heraus, die die Verarbeitung personenbezogener Daten berühren.",
+    "how2": "Durchgang 2 — gleicht jede dieser Klauseln mit {name} ab, anhand eines von RegTech-Juristen gepflegten Regelindex.",
+    "how3": "Risikowert — eine Zahl von 0 bis 100, mit einer Schwere je Feststellung: kritisch, hoch, mittel, gering, Hinweis.",
+    "how4": "KI-Neufassung — für jede nicht konforme Klausel ein Ersatztext, der das juristische Register des Originals wahrt und die auslösende Regel beantwortet.",
+    "whyTitle": "Warum LexyFlow statt einer Checkliste in einer Tabelle",
+    "why1": "Dokumente werden im Ruhezustand mit AES-256-GCM verschlüsselt, unter einem 32-Byte-Hauptschlüssel in einem europäischen Secret Store. Entschlüsselt wird im Arbeitsspeicher, nur für die Dauer der Anfrage.",
+    "why2": "Jeder Zugriff auf den Klartext wird in ein manipulationssicheres Protokoll geschrieben, das Sie selbst einsehen können — unter Sicherheit in Ihrem Dashboard.",
+    "why3": "Die endgültige Löschung stellt eine kryptografisch signierte Quittung aus, die Sie einer Aufsichtsbehörde als Löschnachweis vorlegen können.",
+    "relatedTitle": "Verwandte Regelwerke",
+    "finalTitle": "Prüfen Sie Ihr erstes Dokument kostenlos",
+    "finalBody": "Ohne Kreditkarte. Das Dokument wird nach 30 Tagen gelöscht, oder auf Wunsch sofort.",
+    "finalCta": "Kostenloses Audit starten",
+    "schemaHeadline": "{name} — Compliance-Audit",
+    "schemaProductDescription": "Automatisiertes Compliance-Audit gegen {name}"
+  },
+  "comparePage": {
+    "metaTitle": "{a} und {b} — Unterschiede und Audit-Werkzeug | LexyFlow",
+    "metaDescription": "Vergleichen Sie {a} und {b} Punkt für Punkt: Geltungsbereiche, Aufsichtsbehörden, Zitierebene — dazu ein kostenloses 60-Sekunden-Audit, das Ihr Dokument gegen beide Texte zugleich prüft.",
+    "lead": "Gegenüberstellung für Compliance-Verantwortliche, die zugleich in {jurisdictionA} und {jurisdictionB} tätig sind. Prüfen Sie ein beliebiges Dokument in 60 Sekunden gegen beide Texte — kostenlos, ohne Kreditkarte.",
+    "ctaPrimary": "Gegen beide prüfen — kostenlos",
+    "glanceTitle": "Auf einen Blick",
+    "thAttribute": "Merkmal",
+    "rowJurisdiction": "Geltungsbereich",
+    "rowAuthority": "Aufsichtsbehörde",
+    "rowCitation": "Zitiert bis zur Ebene",
+    "rowFullName": "Vollständige Bezeichnung des Textes",
+    "whoTitle": "Wer muss beide einhalten?",
+    "whoBody": "Jede Organisation, die personenbezogene Daten von Personen in {jurisdictionA} und in {jurisdictionB} verarbeitet, trägt beide Pflichtenkreise gleichzeitig. Die üblichen Profile: Konzerne mit einer Tochtergesellschaft in jedem Markt, B2B-SaaS-Anbieter mit Kunden in beiden Regionen, Zahlungs- und Logistikplattformen mit grenzüberschreitenden Datenflüssen, und jedes Unternehmen, das einen Datenaustauschvertrag mit einer dem anderen Text unterliegenden Gegenpartei schließt.",
+    "dualTitle": "Audit gegen zwei Regelwerke",
+    "dualBody": "LexyFlow nimmt {a} und {b} als Ziele eines einzigen Uploads. Das Audit liefert eine Matrix, die zeigt, welche Klauseln einem Text genügen, beiden oder keinem — mit Verweis auf die genaue Vorschrift in jedem. Die KI-Neufassung schlägt eine einzige Klausel vor, die beiden genügt.",
+    "deepDiveTitle": "Im Detail: {name}",
+    "deepDiveLink": "Vollständige Seite zu {name}",
+    "finalTitle": "Prüfen Sie Ihr erstes Dokument gegen beide — kostenlos",
+    "finalBody": "Sechzig Sekunden. Ohne Kreditkarte. Das Dokument wird nach 30 Tagen gelöscht, oder auf Wunsch sofort.",
+    "finalCta": "Audit gegen zwei Regelwerke starten",
+    "schemaHeadline": "{a} und {b} — die Unterschiede",
+    "faq1Q": "Worin unterscheiden sich {a} und {b}?",
+    "faq1A": "{a} gilt in {jurisdictionA} und wird dort von {authorityA} durchgesetzt. {b} gilt in {jurisdictionB} und wird dort von {authorityB} durchgesetzt. LexyFlow kann ein und dasselbe Dokument gegen beide prüfen und die Klauseln sichtbar machen, die dem einen genügen und dem anderen nicht.",
+    "faq2Q": "Muss ich {a} und {b} zugleich einhalten?",
+    "faq2A": "Wenn Ihre Organisation personenbezogene Daten von Personen in {jurisdictionA} und in {jurisdictionB} verarbeitet: ja, beide gelten gleichzeitig. Das Audit gegen zwei Regelwerke liefert eine einzige Matrix, die zeigt, welche Klauseln einem, beiden oder keinem genügen.",
+    "faq3Q": "Kann LexyFlow ein Dokument in einem Durchgang gegen {a} und {b} prüfen?",
+    "faq3A": "Ja. Wählen Sie beim Hochladen beide Regelwerke aus, dann ist jede Feststellung auf beide Texte bezogen. Der kostenlose Tarif umfasst ein solches Audit je Organisation."
+  },
+  "subProcessors": {
+    "category": {
+      "document_text": "Text des geprüften Dokuments",
+      "account": "Konto-Metadaten",
+      "billing": "Abrechnungsdaten",
+      "email": "E-Mail-Adresse",
+      "errors": "Fehlerereignisse"
+    },
+    "anthropic": {
+      "role": "KI — Durchgang 1 (Prüfung)",
+      "region": "Vereinigte Staaten",
+      "purpose": "Führt die juristische Multi-Pass-Analyse aus. Anthropic trainiert nicht mit API- und Business-Verkehr."
+    },
+    "openai": {
+      "role": "KI — Durchgang 2 (Lokalisierung)",
+      "region": "Vereinigte Staaten",
+      "purpose": "Übersetzt den Prüfbericht in die Sprache des Lesers. Für unseren API-Schlüssel ist die Datenspeicherung auf null gesetzt."
+    },
+    "supabase": {
+      "role": "Datenbank und Authentifizierung",
+      "region": "Europäische Union (Paris)",
+      "purpose": "Speichert Prüfberichte, Organisations-Metadaten und den Authentifizierungsstatus."
+    },
+    "stripe": {
+      "role": "Abrechnung",
+      "region": "Irland (EU)",
+      "purpose": "Wickelt Abonnementzahlungen, Mehrwährungspreise und die steuerliche Compliance ab."
+    },
+    "vercel": {
+      "role": "Hosting und Edge-Netzwerk",
+      "region": "Edge: weltweit — Funktionen: Paris (cdg1)",
+      "purpose": "Liefert die Anwendung aus. Die Audit-Pipeline läuft per Konfiguration in EU-Funktionen (cdg1)."
+    },
+    "resend": {
+      "role": "Transaktions-E-Mail",
+      "region": "Vereinigte Staaten",
+      "purpose": "Stellt die Anmelde-E-Mails per Magic Link und die Benachrichtigungen über abgeschlossene Prüfungen zu."
+    },
+    "sentry": {
+      "role": "Fehlerüberwachung",
+      "region": "Europäische Union (Frankfurt)",
+      "purpose": "Erfasst Server- und Browserfehler. Personenbezogene Daten werden im SDK entfernt: Anfragekörper, Cookies, Authentifizierungs-Header und Tokens im Query-String verlassen unseren Perimeter nie."
+    }
+  },
+  "integrations": {
+    "metaTitle": "Integrationen und Unterauftragsverarbeiter — LexyFlow",
+    "metaDescription": "Jeder Dritte, den LexyFlow einsetzt, was wir ihm übermitteln, wo er sitzt und welche Zertifizierungen er hat.",
+    "badge": "Für den Einkauf",
+    "title": "Integrationen und Unterauftragsverarbeiter",
+    "lead": "LexyFlow läuft auf einem kleinen, bewusst gewählten Kreis von Anbietern. Wir führen jeden davon öffentlich auf — mit den Daten, die wir übermitteln, der Region, in der er sitzt, und seinen Zertifizierungen. Einkaufsabteilungen können diese Seite für ihre Lieferantenprüfung nutzen.",
+    "seeAlso": "Siehe auch:",
+    "linkPrivacy": "Datenschutzerklärung",
+    "linkDpa": "Auftragsverarbeitungsvertrag",
+    "linkTerms": "AGB",
+    "zkTitle": "Zero-Knowledge-Zusage",
+    "zkBody": "Quelldokumente werden unmittelbar nach Abschluss der Prüfung aus dem Speicher gelöscht. Aufbewahrt werden nur der Bericht und ein SHA-256-Hash des Originals. Die unten genannten Unterauftragsverarbeiter erhalten ausschließlich die auf ihrer Karte aufgeführten Daten — nie Ihre Zugangsdaten, nie Ihre Abrechnungsdaten, sofern sie nicht der Abrechnungsdienstleister sind, und nie etwas, wozu wir uns nicht öffentlich verpflichtet haben.",
+    "labelRegion": "Region",
+    "labelData": "Übermittelte Daten",
+    "labelCertifications": "Zertifizierungen",
+    "labelTransfers": "Drittlandtransfers",
+    "labelDpa": "AVV",
+    "providerDpa": "AVV des Anbieters",
+    "websiteOf": "Website von {name}",
+    "noticeBody": "Wir kündigen die Aufnahme eines neuen Unterauftragsverarbeiters 30 Tage im Voraus an. Kunden können aus berechtigtem Grund widersprechen und, wenn keine Lösung gefunden wird, nach Ziffer 4 des AVV ohne Nachteil kündigen.",
+    "questions": "Fragen?"
   }
 }

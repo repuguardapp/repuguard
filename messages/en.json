@@ -401,5 +401,123 @@
     "cta": "Audit my document",
     "relatedTitle": "Frameworks concerned",
     "disclaimer": "Summary written by LexyFlow from the decision linked above. It is not legal advice. Where the two differ, the original decision governs."
+  },
+  "frameworkPage": {
+    "metaTitle": "{name} — compliance audit tool | LexyFlow",
+    "metaDescription": "Automated {name} audit in 60 seconds. Upload any policy, contract or DPA and get a risk score, citations down to the exact provision, and AI-drafted rewrites. Free trial, no credit card.",
+    "lead": "Automated compliance audit against {name}. Upload your privacy policy, your DPA or a contract — LexyFlow returns a risk score, citations down to the exact provision of the regulation, and AI-drafted rewrites for the clauses that fail. In 60 seconds. Free trial, no credit card.",
+    "ctaPrimary": "Audit your document — free",
+    "ctaPricing": "See pricing",
+    "jurisdiction": "Jurisdiction",
+    "authority": "Supervisory authority",
+    "howTitle": "How LexyFlow audits {name}",
+    "how1": "Pass 1 — reads every clause of your document and picks out the ones that touch the processing of personal data.",
+    "how2": "Pass 2 — checks each of those clauses against {name}, using a rule index curated by RegTech counsel.",
+    "how3": "Risk score — a figure out of 100, with a severity attached to each finding: critical, high, medium, low, informational.",
+    "how4": "AI rewrite — for every non-compliant clause, a replacement that keeps the legal register of the original and answers the rule that flagged it.",
+    "whyTitle": "Why LexyFlow rather than a checklist in a spreadsheet",
+    "why1": "Documents are encrypted at rest with AES-256-GCM, under a 32-byte master key held in a European secret store. Decryption happens in memory, for the duration of the request only.",
+    "why2": "Every access to plaintext is written to a tamper-evident ledger that you can read yourself, under Security in your dashboard.",
+    "why3": "Permanent deletion issues a cryptographically signed receipt you can hand to a regulator as proof of erasure.",
+    "relatedTitle": "Related frameworks",
+    "finalTitle": "Audit your first document free",
+    "finalBody": "No credit card. The document is deleted after 30 days, or on demand.",
+    "finalCta": "Start a free audit",
+    "schemaHeadline": "{name} — compliance audit",
+    "schemaProductDescription": "Automated compliance audit against {name}"
+  },
+  "comparePage": {
+    "metaTitle": "{a} vs {b} — differences and audit tool | LexyFlow",
+    "metaDescription": "Compare {a} and {b} side by side: jurisdictions, supervisory authorities, how each text is cited — plus a free 60-second audit that runs both against your document at once.",
+    "lead": "Side by side, for compliance officers working across {jurisdictionA} and {jurisdictionB}. Audit any document against both regulations in 60 seconds — free, no credit card.",
+    "ctaPrimary": "Audit against both — free",
+    "glanceTitle": "At a glance",
+    "thAttribute": "Attribute",
+    "rowJurisdiction": "Jurisdiction",
+    "rowAuthority": "Supervisory authority",
+    "rowCitation": "Cited down to",
+    "rowFullName": "Full name of the text",
+    "whoTitle": "Who has to comply with both?",
+    "whoBody": "Any organisation processing the personal data of residents of both {jurisdictionA} and {jurisdictionB} carries both sets of obligations at once. The usual profiles: groups with a subsidiary in each market, B2B SaaS vendors serving customers in both regions, payment and logistics platforms handling cross-border flows, and any business signing a data-sharing contract with a counterparty subject to the other text.",
+    "dualTitle": "Run a two-framework audit",
+    "dualBody": "LexyFlow takes {a} and {b} as targets on a single upload. The audit returns one matrix showing which clauses satisfy one text, both, or neither, with a pointer into the exact provision of each. The AI rewrite proposes a single clause that satisfies both.",
+    "deepDiveTitle": "In depth: {name}",
+    "deepDiveLink": "Full page on {name}",
+    "finalTitle": "Audit your first document against both — free",
+    "finalBody": "Sixty seconds. No credit card. The document is deleted after 30 days, or on demand.",
+    "finalCta": "Start a two-framework audit",
+    "schemaHeadline": "{a} vs {b} — the differences",
+    "faq1Q": "What is the difference between {a} and {b}?",
+    "faq1A": "{a} applies in {jurisdictionA}, where it is enforced by {authorityA}. {b} applies in {jurisdictionB}, where it is enforced by {authorityB}. LexyFlow can audit a single document against both and surface the clauses that pass one and fail the other.",
+    "faq2Q": "Do I have to comply with both {a} and {b}?",
+    "faq2A": "If your organisation processes the personal data of residents of both {jurisdictionA} and {jurisdictionB}, then yes — both apply at the same time. The two-framework audit returns a single matrix showing which clauses satisfy one, both, or neither.",
+    "faq3Q": "Can LexyFlow audit a document against {a} and {b} in one pass?",
+    "faq3A": "Yes. Select both frameworks when you upload, and every finding is cross-referenced to both texts. The free tier covers one such audit per organisation."
+  },
+  "subProcessors": {
+    "category": {
+      "document_text": "Audit document text",
+      "account": "Account metadata",
+      "billing": "Billing data",
+      "email": "Email address",
+      "errors": "Error events"
+    },
+    "anthropic": {
+      "role": "AI — pass 1 (audit)",
+      "region": "United States",
+      "purpose": "Runs the Multi-Pass legal analysis. Anthropic does not train on API and Business traffic."
+    },
+    "openai": {
+      "role": "AI — pass 2 (localisation)",
+      "region": "United States",
+      "purpose": "Translates the audit report into the reader’s language. Zero data retention is enabled on our API key."
+    },
+    "supabase": {
+      "role": "Database and authentication",
+      "region": "European Union (Paris)",
+      "purpose": "Stores audit reports, organisation metadata and authentication state."
+    },
+    "stripe": {
+      "role": "Billing",
+      "region": "Ireland (EU)",
+      "purpose": "Handles subscription payments, multi-currency pricing and tax compliance."
+    },
+    "vercel": {
+      "role": "Hosting and edge network",
+      "region": "Edge: worldwide — functions: Paris (cdg1)",
+      "purpose": "Serves the application. The audit pipeline runs in EU functions (cdg1) by configuration."
+    },
+    "resend": {
+      "role": "Transactional email",
+      "region": "United States",
+      "purpose": "Delivers magic-link sign-in emails and audit-completion notices."
+    },
+    "sentry": {
+      "role": "Error monitoring",
+      "region": "European Union (Frankfurt)",
+      "purpose": "Captures server and browser errors. Personal data is scrubbed in the SDK: request bodies, cookies, authentication headers and query-string tokens never leave our perimeter."
+    }
+  },
+  "integrations": {
+    "metaTitle": "Integrations and sub-processors — LexyFlow",
+    "metaDescription": "Every third party LexyFlow uses, what we send them, where they sit and which certifications they hold.",
+    "badge": "For procurement teams",
+    "title": "Integrations and sub-processors",
+    "lead": "LexyFlow runs on a small, deliberate set of providers. We list every one of them publicly, with the data we share, the region it sits in and the certifications it holds. Procurement teams can use this page as part of a vendor-risk review.",
+    "seeAlso": "See also:",
+    "linkPrivacy": "Privacy policy",
+    "linkDpa": "Data processing agreement",
+    "linkTerms": "Terms",
+    "zkTitle": "Zero-knowledge guarantee",
+    "zkBody": "Source documents are wiped from memory as soon as the audit completes. Only the report and a SHA-256 hash of the source are kept. The sub-processors below receive only the data listed on their own card — never your credentials, never your billing data unless they are the billing provider, never anything we have not committed to publicly.",
+    "labelRegion": "Region",
+    "labelData": "Data shared",
+    "labelCertifications": "Certifications",
+    "labelTransfers": "Cross-border transfers",
+    "labelDpa": "DPA",
+    "providerDpa": "Provider DPA",
+    "websiteOf": "{name} website",
+    "noticeBody": "We give 30 days of notice before adding a sub-processor. Customers may object on reasonable grounds and, failing resolution, terminate without penalty under section 4 of the DPA.",
+    "questions": "Questions?"
   }
 }

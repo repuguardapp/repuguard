@@ -401,5 +401,123 @@
     "cta": "Auditer mon document",
     "relatedTitle": "Référentiels concernés",
     "disclaimer": "Résumé rédigé par LexyFlow à partir de la décision liée ci-dessus. Il ne constitue pas un conseil juridique. En cas de divergence, la décision d'origine prévaut."
+  },
+  "frameworkPage": {
+    "metaTitle": "{name} — outil d’audit de conformité | LexyFlow",
+    "metaDescription": "Audit {name} automatisé en 60 secondes. Déposez une politique, un contrat ou un DPA et obtenez un score de risque, des citations jusqu’à la disposition exacte et des réécritures rédigées par l’IA. Essai gratuit, sans carte bancaire.",
+    "lead": "Audit de conformité automatisé au regard du {name}. Déposez votre politique de confidentialité, votre DPA ou un contrat — LexyFlow renvoie un score de risque, des citations jusqu’à la disposition exacte du texte et des réécritures rédigées par l’IA pour les clauses en défaut. En 60 secondes. Essai gratuit, sans carte bancaire.",
+    "ctaPrimary": "Auditer mon document — gratuit",
+    "ctaPricing": "Voir les tarifs",
+    "jurisdiction": "Juridiction",
+    "authority": "Autorité de contrôle",
+    "howTitle": "Comment LexyFlow audite le {name}",
+    "how1": "Passe 1 — lit chaque clause de votre document et isole celles qui touchent au traitement de données personnelles.",
+    "how2": "Passe 2 — confronte chacune de ces clauses au {name}, à partir d’un index de règles établi par des juristes RegTech.",
+    "how3": "Score de risque — une note sur 100, assortie d’une gravité par constat : critique, élevée, moyenne, faible, information.",
+    "how4": "Réécriture par l’IA — pour chaque clause non conforme, une clause de remplacement qui conserve le registre juridique de l’original et répond à la règle qui l’a signalée.",
+    "whyTitle": "Pourquoi LexyFlow plutôt qu’une checklist dans un tableur",
+    "why1": "Les documents sont chiffrés au repos en AES-256-GCM, sous une clé maître de 32 octets conservée dans un coffre européen. Le déchiffrement a lieu en mémoire, le temps de la requête seulement.",
+    "why2": "Chaque accès au texte en clair est inscrit dans un registre infalsifiable que vous pouvez consulter vous-même, dans la rubrique Sécurité de votre tableau de bord.",
+    "why3": "La suppression définitive émet un reçu signé cryptographiquement, opposable à une autorité comme preuve d’effacement.",
+    "relatedTitle": "Référentiels proches",
+    "finalTitle": "Auditez votre premier document gratuitement",
+    "finalBody": "Sans carte bancaire. Le document est supprimé au bout de 30 jours, ou à la demande.",
+    "finalCta": "Lancer un audit gratuit",
+    "schemaHeadline": "{name} — audit de conformité",
+    "schemaProductDescription": "Audit de conformité automatisé au regard du {name}"
+  },
+  "comparePage": {
+    "metaTitle": "{a} et {b} — différences et outil d’audit | LexyFlow",
+    "metaDescription": "Comparez {a} et {b} point par point : juridictions, autorités de contrôle, niveau de citation — et un audit gratuit de 60 secondes qui confronte votre document aux deux textes en même temps.",
+    "lead": "Comparaison point par point, pour les responsables conformité qui opèrent à la fois en {jurisdictionA} et en {jurisdictionB}. Auditez n’importe quel document au regard des deux textes en 60 secondes — gratuitement, sans carte bancaire.",
+    "ctaPrimary": "Auditer au regard des deux — gratuit",
+    "glanceTitle": "En un coup d’œil",
+    "thAttribute": "Critère",
+    "rowJurisdiction": "Juridiction",
+    "rowAuthority": "Autorité de contrôle",
+    "rowCitation": "Cité jusqu’à",
+    "rowFullName": "Intitulé complet du texte",
+    "whoTitle": "Qui doit se conformer aux deux ?",
+    "whoBody": "Toute organisation qui traite les données personnelles de résidents de {jurisdictionA} et de {jurisdictionB} supporte les deux séries d’obligations en même temps. Les profils habituels : les groupes disposant d’une filiale sur chaque marché, les éditeurs SaaS B2B servant des clients dans les deux régions, les plateformes de paiement et de logistique qui gèrent des flux transfrontaliers, et toute entreprise signant un contrat de partage de données avec une contrepartie soumise à l’autre texte.",
+    "dualTitle": "Lancer un audit sur deux référentiels",
+    "dualBody": "LexyFlow accepte {a} et {b} comme cibles d’un même dépôt. L’audit renvoie une matrice unique indiquant quelles clauses satisfont l’un des textes, les deux, ou aucun, avec un renvoi vers la disposition exacte de chacun. La réécriture par l’IA propose une clause unique qui satisfait les deux.",
+    "deepDiveTitle": "En détail : {name}",
+    "deepDiveLink": "Page complète sur {name}",
+    "finalTitle": "Auditez votre premier document au regard des deux — gratuit",
+    "finalBody": "Soixante secondes. Sans carte bancaire. Le document est supprimé au bout de 30 jours, ou à la demande.",
+    "finalCta": "Lancer l’audit sur deux référentiels",
+    "schemaHeadline": "{a} et {b} — les différences",
+    "faq1Q": "Quelle est la différence entre {a} et {b} ?",
+    "faq1A": "{a} s’applique en {jurisdictionA}, où il est mis en œuvre par {authorityA}. {b} s’applique en {jurisdictionB}, où il est mis en œuvre par {authorityB}. LexyFlow peut auditer un même document au regard des deux et faire ressortir les clauses qui passent l’un et échouent à l’autre.",
+    "faq2Q": "Dois-je me conformer à la fois à {a} et à {b} ?",
+    "faq2A": "Si votre organisation traite les données personnelles de résidents de {jurisdictionA} et de {jurisdictionB}, alors oui — les deux s’appliquent simultanément. L’audit sur deux référentiels renvoie une matrice unique montrant quelles clauses satisfont l’un, les deux, ou aucun.",
+    "faq3Q": "LexyFlow peut-il auditer un document au regard de {a} et de {b} en une seule passe ?",
+    "faq3A": "Oui. Sélectionnez les deux référentiels au moment du dépôt : chaque constat est rattaché aux deux textes. L’offre gratuite couvre un audit de ce type par organisation."
+  },
+  "subProcessors": {
+    "category": {
+      "document_text": "Texte du document audité",
+      "account": "Métadonnées de compte",
+      "billing": "Données de facturation",
+      "email": "Adresse e-mail",
+      "errors": "Événements d’erreur"
+    },
+    "anthropic": {
+      "role": "IA — passe 1 (audit)",
+      "region": "États-Unis",
+      "purpose": "Exécute l’analyse juridique Multi-Pass. Anthropic n’entraîne pas ses modèles sur le trafic API et Business."
+    },
+    "openai": {
+      "role": "IA — passe 2 (localisation)",
+      "region": "États-Unis",
+      "purpose": "Traduit le rapport d’audit dans la langue du lecteur. La rétention zéro est activée sur notre clé API."
+    },
+    "supabase": {
+      "role": "Base de données et authentification",
+      "region": "Union européenne (Paris)",
+      "purpose": "Conserve les rapports d’audit, les métadonnées d’organisation et l’état d’authentification."
+    },
+    "stripe": {
+      "role": "Facturation",
+      "region": "Irlande (UE)",
+      "purpose": "Traite les paiements d’abonnement, la tarification multidevise et la conformité fiscale."
+    },
+    "vercel": {
+      "role": "Hébergement et réseau de périphérie",
+      "region": "Périphérie : mondial — fonctions : Paris (cdg1)",
+      "purpose": "Sert l’application. Le pipeline d’audit s’exécute dans des fonctions UE (cdg1) par configuration."
+    },
+    "resend": {
+      "role": "E-mails transactionnels",
+      "region": "États-Unis",
+      "purpose": "Achemine les e-mails de connexion par lien magique et les notifications de fin d’audit."
+    },
+    "sentry": {
+      "role": "Supervision des erreurs",
+      "region": "Union européenne (Francfort)",
+      "purpose": "Capture les erreurs serveur et navigateur. Les données personnelles sont expurgées dans le SDK : corps de requête, cookies, en-têtes d’authentification et jetons en chaîne de requête ne quittent jamais notre périmètre."
+    }
+  },
+  "integrations": {
+    "metaTitle": "Intégrations et sous-traitants — LexyFlow",
+    "metaDescription": "Chaque tiers auquel LexyFlow fait appel, ce que nous lui transmettons, où il se trouve et quelles certifications il détient.",
+    "badge": "Pour les services achats",
+    "title": "Intégrations et sous-traitants",
+    "lead": "LexyFlow repose sur un ensemble restreint et assumé de prestataires. Nous les listons tous publiquement, avec les données que nous leur transmettons, la région où ils se trouvent et les certifications qu’ils détiennent. Les services achats peuvent utiliser cette page dans le cadre de leur évaluation des risques fournisseurs.",
+    "seeAlso": "À voir aussi :",
+    "linkPrivacy": "Politique de confidentialité",
+    "linkDpa": "Accord de traitement des données",
+    "linkTerms": "Conditions",
+    "zkTitle": "Garantie zéro connaissance",
+    "zkBody": "Les documents source sont effacés de la mémoire dès la fin de l’audit. Seuls le rapport et une empreinte SHA-256 du document sont conservés. Les sous-traitants ci-dessous ne reçoivent que les données indiquées sur leur fiche — jamais vos identifiants, jamais vos données de facturation sauf s’ils sont le prestataire de facturation, jamais rien à quoi nous ne nous soyons publiquement engagés.",
+    "labelRegion": "Région",
+    "labelData": "Données transmises",
+    "labelCertifications": "Certifications",
+    "labelTransfers": "Transferts hors UE",
+    "labelDpa": "DPA",
+    "providerDpa": "DPA du prestataire",
+    "websiteOf": "Site de {name}",
+    "noticeBody": "Nous prévenons 30 jours à l’avance avant d’ajouter un sous-traitant. Le client peut s’y opposer pour un motif légitime et, à défaut de solution, résilier sans pénalité au titre de l’article 4 du DPA.",
+    "questions": "Une question ?"
   }
 }
