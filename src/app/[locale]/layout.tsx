@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -86,12 +87,19 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   // before signing up for Tolt.
   const toltId = process.env.NEXT_PUBLIC_TOLT_ID;
 
+  // The per-request nonce minted in middleware. Next stamps its own
+  // inline scripts automatically; this is for the one third-party tag
+  // we render ourselves, which would otherwise be the single thing on
+  // the page our own CSP blocks.
+  const nonce = headers().get('x-nonce') ?? undefined;
+
   return (
     <html lang={descriptor.code} dir={descriptor.direction}>
       <head>
         {toltId && (
           <script
             async
+            nonce={nonce}
             src="https://cdn.tolt.io/tolt.js"
             data-tolt={toltId}
           />

@@ -19,9 +19,29 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        // /embed/* is a widget, meant to be framed by a customer's own
+        // site. X-Frame-Options: DENY applied to /:path* and therefore
+        // to the embed too, so the widget could not have worked in the
+        // one context it exists for. Its framing is governed by the
+        // CSP's frame-ancestors, set per request in middleware.
+        source: '/embed/:path*',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }
+        ]
+      },
+      {
+        // Everything except the embed widget. Next applies EVERY rule
+        // whose source matches, so a bare '/:path*' would re-add DENY
+        // on top of the embed's own rule above and the widget would
+        // still refuse to be framed.
+        source: '/((?!embed/).*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Kept alongside frame-ancestors for browsers that honour
+          // only the older header.
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
