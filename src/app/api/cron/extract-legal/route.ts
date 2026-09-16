@@ -97,7 +97,7 @@ const TOOL = {
         type: 'array',
         items: { type: 'string' },
         description:
-          'Provisions cited, with the instrument named in ENGLISH and the article number kept exactly as the source gives it. A French source writing "RGPD Art. 12" becomes "GDPR Art. 12"; the same for LGPD, APPI and the Gulf regimes. e.g. ["GDPR Art. 13", "GDPR Art. 32"].'
+          'Provisions the source NAMES IN SO MANY WORDS, with the instrument in ENGLISH and the number exactly as given. A French source writing "RGPD Art. 12" becomes "GDPR Art. 12"; the same for LGPD, APPI and the Gulf regimes. Keep sub-paragraphs when the source uses them: "Art. 9(2)", not "Art. 9". NEVER infer an article from the subject matter — guidelines on anonymisation are ABOUT the definition of personal data, but if the page does not write "Article 4" then Article 4 is not cited and does not belong here. An empty list is the correct answer for a page that discusses concepts without citing provisions. e.g. ["GDPR Art. 13", "GDPR Art. 32"].'
       },
       fine_eur: { type: 'number', description: 'Fine in euros. Omit entirely if no fine, or if the currency is not euros.' },
       outcome: { type: 'string', enum: ['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'] },
@@ -118,6 +118,9 @@ const SYSTEM = [
   'You are not a commentator. You state what a document says and nothing more:',
   'no advice, no interpretation, no speculation about consequences.',
   'Never assert a fact the source does not state — omit the field instead.',
+  'This applies hardest to article numbers: a provision that is thematically',
+  'obvious but textually absent is an inference, and inferences are published',
+  'as though we had read them in the text.',
   'A publication date is not a decision date. Prefer the date carried by',
   'the formal act — deliberation, judgment, decision reference — over the',
   'date the announcement was written.',

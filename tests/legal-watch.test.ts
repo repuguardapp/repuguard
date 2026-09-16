@@ -187,7 +187,28 @@ describe('the extraction pivot is one language', () => {
     // a French source and "GDPR Art. 32" from another. On an English
     // page "RGPD" is simply wrong, and a corpus that names the same
     // statute two ways splits its own search traffic.
-    expect(source).toContain('named in ENGLISH');
+    expect(source).toContain('in ENGLISH');
     expect(source).toContain('English abbreviation even when the source is in');
+  });
+
+  it('forbids inferring an article the source never names', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+      'utf8'
+    );
+
+    // The EDPB anonymisation guidelines came back citing "GDPR Art. 4".
+    // The page names Article 6 and Article 9(2) and nothing else — Art.
+    // 4 is what anonymisation is ABOUT, not what the source cites. It is
+    // a defensible reading and it is still an inference, and an
+    // inference published in a "Provisions cited" badge is indistinguishable
+    // from something we read in the text.
+    expect(source).toContain('NEVER infer an article from the subject matter');
+    expect(source).toContain('An empty list is the correct answer');
+    // And sub-paragraphs survive: Art. 65(1)(a) and Art. 9(2) are not
+    // Art. 65 and Art. 9.
+    expect(source).toContain('"Art. 9(2)", not "Art. 9"');
   });
 });
