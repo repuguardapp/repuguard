@@ -10,13 +10,24 @@ export const metadata: Metadata = {
   creator: 'LexyFlow',
   publisher: 'LexyFlow',
   formatDetection: { email: false, address: false, telephone: false },
-  // Google Search Console site ownership proof. Next.js emits this as
-  // <meta name="google-site-verification" content="…"> in the <head>
-  // of every page — the mechanism GSC's "HTML tag" verification method
-  // scans for on the domain root. Rendered from the root layout so the
-  // tag survives every locale switch and every route.
+  // Google Search Console site ownership proof. Next.js emits one
+  // <meta name="google-site-verification" content="…"> per entry in the
+  // <head> of every page — the mechanism GSC's "HTML tag" verification
+  // method scans for on the domain root. Rendered from the root layout
+  // so the tag survives every locale switch and every route.
+  //
+  // Two tokens, and both stay. The first belongs to the live
+  // https://lexyflow.com URL-prefix property. The second predates it
+  // and we no longer know which property issued it; Google re-checks
+  // verification periodically and unverifies a property whose tag has
+  // disappeared, so removing a token we cannot account for would be
+  // guessing with someone else's access. A second meta tag costs
+  // nothing.
   verification: {
-    google: '_QQ_7V3zGMR8THx2UL_wNglPTDdxPpwRYX3KVMNgyJY'
+    google: [
+      'Ben-84NFJzODylpQm-sJpv-iifiPQlOXq9Ll3iOIRcc',
+      '_QQ_7V3zGMR8THx2UL_wNglPTDdxPpwRYX3KVMNgyJY'
+    ]
   },
   openGraph: {
     type: 'website',
