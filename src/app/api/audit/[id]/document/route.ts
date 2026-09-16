@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAccess } from '@/lib/access-log';
-import { decryptDocument } from '@/lib/document-crypto';
+import { fromBytea, toBytea } from '@/lib/bytea';
+import { decryptDocument, encryptDocument, needsRewrap } from '@/lib/document-crypto';
 import { clientIpFrom } from '@/lib/rate-limit';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
@@ -33,14 +34,11 @@ interface AuditCryptoRow {
   document_ciphertext: string | null;   // bytea returned by PostgREST as '\\xHEX'
   document_iv: string | null;
   document_auth_tag: string | null;
+  /** Null on rows written before the keyring; the reader treats it as v1. */
+  document_key_id: string | null;
 }
 
-function fromBytea(hexLiteral: string): Buffer {
-  // PostgREST returns bytea as the same hex literal we wrote: '\x…'.
-  // Strip the prefix and decode.
-  const hex = hexLiteral.startsWith('\\x') ? hexLiteral.slice(2) : hexLiteral;
-  return Buffer.from(hex, 'hex');
-}
+
 
 export async function GET(
   request: Request,
@@ -50,7 +48,7 @@ export async function GET(
 
   const { data: auditRaw, error } = await db
     .from('audits')
-    .select('id,organization_id,document_ciphertext,document_iv,document_auth_tag')
+    .select('id,organization_id,document_ciphertext,document_iv,document_auth_tag,document_key_id')
     .eq('id', params.id)
     .maybeSingle();
 
@@ -77,13 +75,62 @@ export async function GET(
     plaintext = decryptDocument({
       ciphertext: fromBytea(audit.document_ciphertext),
       iv: fromBytea(audit.document_iv),
-      authTag: fromBytea(audit.document_auth_tag)
+      authTag: fromBytea(audit.document_auth_tag),
+      // Null on every row written before the keyring existed; the
+      // reader resolves that to v1, the pre-keyring key.
+      keyId: audit.document_key_id
     });
   } catch (err) {
     return NextResponse.json(
       { error: 'decrypt_failed', detail: err instanceof Error ? err.message : 'unknown' },
       { status: 500 }
     );
+  }
+
+  // Lazy rotation.
+  //
+  // This document is open in memory and we know it is sealed under a
+  // key that is no longer the active one, so re-sealing it costs one
+  // encrypt and one UPDATE. Doing it here rather than in a migration
+  // is what makes a retired key actually retirable: a keyring that can
+  // never shed a key has not rotated, it has only grown.
+  //
+  // Guarded on the ciphertext we read, so a concurrent re-wrap or a
+  // deletion between the read and this write leaves the row alone
+  // rather than overwriting someone else's work. Failures are logged
+  // and swallowed — the customer asked for their document, and a
+  // maintenance write must never be the reason they do not get it.
+  if (needsRewrap(audit.document_key_id)) {
+    try {
+      const resealed = encryptDocument(plaintext);
+      const { error: rewrapErr } = await db
+        .from('audits')
+        .update({
+          document_ciphertext: toBytea(resealed.ciphertext),
+          document_iv: toBytea(resealed.iv),
+          document_auth_tag: toBytea(resealed.authTag),
+          document_key_id: resealed.keyId
+        })
+        .eq('id', audit.id)
+        .eq('document_ciphertext', audit.document_ciphertext);
+      if (rewrapErr) {
+        console.warn('[audit/document] rewrap_failed', {
+          auditId: audit.id,
+          error: rewrapErr.message
+        });
+      } else {
+        console.log('[audit/document] rewrapped', {
+          auditId: audit.id,
+          from: audit.document_key_id ?? 'v1',
+          to: resealed.keyId
+        });
+      }
+    } catch (err) {
+      console.warn('[audit/document] rewrap_skipped', {
+        auditId: audit.id,
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
   }
 
   // Trust ledger: every plaintext access is visible to the customer

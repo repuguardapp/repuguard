@@ -5,6 +5,7 @@ import { logAccess } from '@/lib/access-log';
 import { alertOps } from '@/lib/alert';
 import { captureServerEvent } from '@/lib/analytics';
 import { extractText } from '@/lib/document-extractor';
+import { toBytea } from '@/lib/bytea';
 import { encryptDocument } from '@/lib/document-crypto';
 import { runMultiPassAudit } from '@/lib/multi-pass-engine';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
@@ -451,12 +452,12 @@ export async function POST(request: Request) {
   // Buffers are encoded as Postgres bytea hex literals (\\x…). The
   // supabase-js JSON serializer doesn't natively know about Buffer,
   // so doing the encoding ourselves is both explicit and portable.
-  const toBytea = (b: Buffer) => `\\x${b.toString('hex')}`;
   let cryptoFields: {
     document_ciphertext: string;
     document_iv: string;
     document_auth_tag: string;
     document_encrypted_at: string;
+    document_key_id: string;
   } | null = null;
   if (retain) {
     try {
@@ -465,11 +466,23 @@ export async function POST(request: Request) {
         document_ciphertext: toBytea(enc.ciphertext),
         document_iv: toBytea(enc.iv),
         document_auth_tag: toBytea(enc.authTag),
-        document_encrypted_at: new Date().toISOString()
+        document_encrypted_at: new Date().toISOString(),
+        // Stored beside the ciphertext so a future rotation can tell
+        // which key opens it. Without this, rotating the key destroys
+        // the document.
+        document_key_id: enc.keyId
       };
-      log('document_encrypted', { bytes: enc.ciphertext.length });
+      log('document_encrypted', { bytes: enc.ciphertext.length, keyId: enc.keyId });
     } catch (err) {
-      log('encryption_skipped', { reason: err instanceof Error ? err.message : String(err) });
+      // Retention is best-effort by design: a key problem must not cost
+      // the customer their audit. But it is silent by design too, and
+      // that is the part that was wrong — /trust and /integrations
+      // promise documents are encrypted and kept, and a missing or
+      // malformed DOCUMENT_ENCRYPTION_KEY would quietly stop honouring
+      // that promise for every upload until someone happened to look.
+      const reason = err instanceof Error ? err.message : String(err);
+      log('encryption_skipped', { reason });
+      alertOps('audit.document_encryption_unavailable', { reason });
     }
   }
 

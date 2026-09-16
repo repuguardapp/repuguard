@@ -1,4 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// document-crypto is `server-only` — a build-time guarantee that the
+// master key cannot be bundled into client JavaScript. Vitest is
+// neither, so the guard is stubbed rather than removed.
+vi.mock('server-only', () => ({}));
 import { randomBytes } from 'node:crypto';
 import {
   __resetKeyCacheForTests,
