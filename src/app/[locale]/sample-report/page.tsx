@@ -1,6 +1,6 @@
 import { AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, FileWarning, Info, ScrollText } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { SampleReportLocaleSwitcher } from '@/components/SampleReportLocaleSwitcher';
 import { TrustBadges } from '@/components/TrustBadges';
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function SampleReportPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('sampleReport');
   const tReport = await getTranslations('report');
   const snapshot = getSampleSnapshot();

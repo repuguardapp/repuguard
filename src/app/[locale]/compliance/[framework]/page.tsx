@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function FrameworkPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const framework = frameworkById(params.framework as FrameworkId);
   if (!framework) notFound();
 

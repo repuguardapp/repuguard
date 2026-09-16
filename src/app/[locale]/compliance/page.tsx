@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ComplianceHubPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('hubs');
 
   return (

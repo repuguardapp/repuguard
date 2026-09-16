@@ -1,5 +1,5 @@
 import { ArrowUpRight, ShieldCheck } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
@@ -21,7 +21,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations({ locale: params.locale, namespace: 'integrations' });
   const alternates = await buildHreflangAlternates('/integrations');
   return {
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function IntegrationsPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('integrations');
   const sp = await getTranslations('subProcessors');
 

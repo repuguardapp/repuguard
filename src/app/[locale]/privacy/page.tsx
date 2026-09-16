@@ -1,4 +1,4 @@
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { LegalShell } from '@/components/LegalShell';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 
@@ -7,7 +7,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const alternates = await buildHreflangAlternates('/privacy');
   return {
     title: 'Privacy Policy — LexyFlow',
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function PrivacyPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
 
   return (
     <LegalShell title="Privacy Policy" effective="January 1, 2026" locale={locale}>

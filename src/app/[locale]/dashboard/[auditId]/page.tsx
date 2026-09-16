@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, CheckCircle2, FileWarning, Info, Lock, Pencil, Sparkles } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { AuditLiveStatus } from '@/components/AuditLiveStatus';
@@ -64,7 +64,7 @@ interface AuditDetailRow {
 // carve-out and the paywall predicate cannot drift out of sync.
 
 export default async function AuditDetailPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('report');
 
   const supabase = createSupabaseServerClient();

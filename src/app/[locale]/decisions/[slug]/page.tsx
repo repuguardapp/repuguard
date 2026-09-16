@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, ExternalLink, Gavel } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function DecisionPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('decisions');
   const decision = await getPublishedDecision(params.slug, params.locale);
   if (!decision) notFound();

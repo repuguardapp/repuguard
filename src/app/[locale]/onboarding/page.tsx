@@ -1,4 +1,4 @@
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { OnboardingForm } from '@/components/OnboardingForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +41,7 @@ const LOCALE_DEFAULT_COUNTRY: Record<string, string> = {
 };
 
 export async function generateMetadata({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'onboarding' });
   return {
     title: `${t('title')} — LexyFlow`,
@@ -54,7 +54,7 @@ interface PageProps {
 }
 
 export default async function OnboardingPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('onboarding');
 
   const user = await getCurrentUser();

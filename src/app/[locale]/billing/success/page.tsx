@@ -1,5 +1,5 @@
 import { CheckCircle2, Coins } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { supabaseService } from '@/lib/supabase';
@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'billing' });
   return {
     title: `${t('successTitle')} — LexyFlow`,
@@ -53,7 +53,7 @@ export default async function BillingSuccessPage({
   params: { locale },
   searchParams
 }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('billing');
   const sessionId = searchParams.session_id;
   const credits = await fetchCreditsForCurrentOrg();

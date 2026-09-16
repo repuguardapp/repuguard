@@ -1,5 +1,5 @@
 import { ArrowUpRight, Coins, FileText, ShieldAlert, Sparkles } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { ManageBillingButton } from '@/components/ManageBillingButton';
@@ -39,7 +39,7 @@ export default async function DashboardPage({
   params: { locale },
   searchParams
 }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('dashboard');
   const tBilling = await getTranslations('billing');
 

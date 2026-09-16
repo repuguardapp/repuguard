@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { type ReactNode } from 'react';
 import { PostHogProvider } from '@/lib/analytics-client';
@@ -45,7 +45,7 @@ interface LayoutProps {
 
 export async function generateMetadata({ params }: LayoutProps): Promise<Metadata> {
   const { locale } = params;
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'meta' });
   const alternates = await buildHreflangAlternates('/');
   return {
@@ -62,7 +62,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   const available = await discoverLocales();
   if (!available.includes(locale.toLowerCase())) notFound();
 
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const messages = await getMessages();
   const descriptor = getLocaleDescriptor(locale);
   const tNav = await getTranslations('nav');

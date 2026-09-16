@@ -1,5 +1,5 @@
 import { headers } from 'next/headers';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CheckoutButton } from '@/components/CheckoutButton';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLocaleDescriptor } from '@/i18n/locales';
@@ -44,7 +44,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const alternates = await buildHreflangAlternates('/pricing');
   return {
     alternates: { canonical: `/${params.locale}/pricing`, languages: alternates }
@@ -62,7 +62,7 @@ const PLANS = ['starter', 'pro', 'enterprise'] as const;
 export const dynamic = 'force-dynamic';
 
 export default async function PricingPage({ params: { locale }, searchParams }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('pricing');
   const tNav = await getTranslations('nav');
   const descriptor = getLocaleDescriptor(locale);

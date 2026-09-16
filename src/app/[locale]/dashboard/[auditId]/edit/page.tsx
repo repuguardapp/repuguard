@@ -1,4 +1,4 @@
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { DocumentEditor, type EditorFinding } from '@/components/DocumentEditor';
@@ -42,7 +42,7 @@ const ANONYMOUS_ORG_ID = '00000000-0000-0000-0000-000000000000';
  * without anything being saved server-side.
  */
 export default async function AuditEditPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('editor');
 
   const supabase = createSupabaseServerClient();

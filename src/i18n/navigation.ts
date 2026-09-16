@@ -1,4 +1,4 @@
-import { createSharedPathnamesNavigation } from 'next-intl/navigation';
+import { createNavigation } from 'next-intl/navigation';
 import { NATIVE_LOCALE_CODES } from './locales';
 
 /**
@@ -15,8 +15,7 @@ import { NATIVE_LOCALE_CODES } from './locales';
  * and rewrites back to the visitor's prior locale — i.e. the user
  * could never actually leave French / Arabic / etc. to view English.
  */
-export const { Link, redirect, usePathname, useRouter } =
-  createSharedPathnamesNavigation({
-    locales: NATIVE_LOCALE_CODES as unknown as string[],
-    localePrefix: 'always'
-  });
+export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation({
+  locales: NATIVE_LOCALE_CODES as unknown as string[],
+  localePrefix: 'always'
+});

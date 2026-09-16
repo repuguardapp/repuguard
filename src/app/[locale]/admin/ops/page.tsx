@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { CronRunButton } from '@/components/CronRunButton';
@@ -67,7 +67,7 @@ const JOBS = [
 ];
 
 export default async function OpsPage({ params }: { params: { locale: string } }) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
 
   // Same four-way guard as the review queue — see the note there.
   // French for the same reason, too: one operator, and he reads French.

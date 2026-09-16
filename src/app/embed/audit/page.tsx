@@ -1,6 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { AuditForm } from '@/components/AuditForm';
 import { EmbedAutosize } from '@/components/EmbedAutosize';
 import { DEFAULT_LOCALE, getLocaleDescriptor, isNativeLocale } from '@/i18n/locales';
@@ -33,7 +33,7 @@ interface PageProps {
  */
 export default async function EmbedAuditPage({ searchParams }: PageProps) {
   const locale = isNativeLocale(searchParams.locale ?? '') ? searchParams.locale! : DEFAULT_LOCALE;
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'audit' });
   const messages = await getMessages({ locale });

@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react';
-import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { AuditForm } from '@/components/AuditForm';
 import { TrustBadges } from '@/components/TrustBadges';
@@ -38,7 +38,7 @@ function requestedFrameworks(raw: string | string[] | undefined): string[] {
 }
 
 export default async function AuditPage({ params: { locale }, searchParams }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('audit');
 
   // Tri-state auth gate (CEO-mandated):

@@ -1,5 +1,5 @@
 import { ArrowRight, Globe, Languages, ShieldCheck, Sparkles } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { discoverLocales } from '@/i18n/locales.server';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
@@ -13,7 +13,7 @@ interface PageProps {
 }
 
 export default async function HomePage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('home');
   const available = await discoverLocales();
   // Server-side auth check so the hero CTA matches the visitor's

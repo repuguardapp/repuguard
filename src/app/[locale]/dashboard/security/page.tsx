@@ -1,5 +1,5 @@
 import { ArrowLeft, FileText, KeyRound, Trash2 } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,7 @@ const ROW_LIMIT = 200;
  * they have no auth context to authenticate against.
  */
 export default async function SecurityActivityPage({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('security');
 
   const user = await getCurrentUser();

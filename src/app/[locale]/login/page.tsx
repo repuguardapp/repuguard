@@ -1,4 +1,4 @@
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { SignInForm } from '@/components/SignInForm';
@@ -34,7 +34,7 @@ function safeNext(next: string | undefined, locale: string): string {
 }
 
 export async function generateMetadata({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'auth' });
   const alternates = await buildHreflangAlternates('/login');
   return {
@@ -44,7 +44,7 @@ export async function generateMetadata({ params: { locale } }: PageProps) {
 }
 
 export default async function LoginPage({ params: { locale }, searchParams }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('auth');
 
   // Belt-and-braces redirect: never show the magic-link form to a

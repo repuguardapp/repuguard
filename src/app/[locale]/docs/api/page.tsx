@@ -1,4 +1,4 @@
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ENDPOINTS, type ApiEndpoint, type Stability } from '@/lib/api-manifest';
@@ -9,7 +9,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const alternates = await buildHreflangAlternates('/docs/api');
   return {
     title: 'API reference — LexyFlow',
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ApiDocsPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
 
   return (
     <div className="mx-auto max-w-4xl py-16">

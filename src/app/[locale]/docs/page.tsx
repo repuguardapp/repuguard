@@ -1,5 +1,5 @@
 import { Book, Code, Globe, Languages, ShieldCheck } from 'lucide-react';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
@@ -9,7 +9,7 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations({ locale: params.locale, namespace: 'docs' });
   const alternates = await buildHreflangAlternates('/docs');
   return {
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function DocsPage({ params: { locale } }: PageProps) {
-  unstable_setRequestLocale(locale);
+  setRequestLocale(locale);
   const t = await getTranslations('docs');
 
   const sections = [

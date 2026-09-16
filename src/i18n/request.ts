@@ -8,8 +8,14 @@ import { discoverLocales } from './locales.server';
  * back to the default locale dictionary so a partially-translated language
  * never breaks the UI mid-render.
  */
-export default getRequestConfig(async ({ locale }) => {
-  const requested = (locale ?? DEFAULT_LOCALE).toLowerCase();
+export default getRequestConfig(async ({ requestLocale }) => {
+  // v4 removed the `locale` argument in favour of `requestLocale`, a
+  // promise resolved from the route segment. Reading the old one would
+  // have yielded undefined, fallen through to DEFAULT_LOCALE, and
+  // rendered the entire site in English — in every language — with
+  // nothing failing to say so. TypeScript does not catch it: the
+  // destructured property simply would not exist.
+  const requested = ((await requestLocale) ?? DEFAULT_LOCALE).toLowerCase();
   const available = await discoverLocales();
   const resolved = available.includes(requested) ? requested : DEFAULT_LOCALE;
 

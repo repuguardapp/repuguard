@@ -1,6 +1,6 @@
 import { LogIn, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +53,7 @@ interface PageProps {
 }
 
 export default async function ConfirmSignInPage({ params, searchParams }: PageProps) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
   const t = await getTranslations('authConfirm');
 
   const code = searchParams?.code ?? '';

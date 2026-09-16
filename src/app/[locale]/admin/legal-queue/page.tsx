@@ -1,6 +1,6 @@
 import { ExternalLink, ShieldAlert } from 'lucide-react';
 import type { Metadata } from 'next';
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { LegalReviewButtons } from '@/components/LegalReviewButtons';
@@ -54,7 +54,7 @@ interface QueueRow {
 }
 
 export default async function LegalQueuePage({ params }: { params: { locale: string } }) {
-  unstable_setRequestLocale(params.locale);
+  setRequestLocale(params.locale);
 
   // Two different situations, two different answers.
   //

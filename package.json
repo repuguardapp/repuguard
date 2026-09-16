@@ -2,7 +2,7 @@
   "name": "lexyflow",
   "version": "0.1.0",
   "private": true,
-  "description": "LexyFlow \u2014 Global compliance, automated. Audits documents against GDPR, EU AI Act, LGPD and APPI, with a Multi-Pass engine that delivers reports in any language. lexyflow.com",
+  "description": "LexyFlow — Global compliance, automated. Audits documents against GDPR, EU AI Act, LGPD and APPI, with a Multi-Pass engine that delivers reports in any language. lexyflow.com",
   "homepage": "https://lexyflow.com",
   "repository": {
     "type": "git",
@@ -31,7 +31,7 @@
     "lucide-react": "^0.453.0",
     "mammoth": "^1.12.0",
     "next": "^14.2.5",
-    "next-intl": "^3.20.0",
+    "next-intl": "^4.14.5",
     "openai": "^4.55.0",
     "pdf-parse": "^1.1.4",
     "posthog-js": "^1.386.3",
