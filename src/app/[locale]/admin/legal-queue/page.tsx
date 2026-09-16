@@ -129,12 +129,24 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
           <CardHeader className="gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {/* The name we are about to put in an H1 in seven
-                  languages. First badge, and marked when it is absent,
-                  because approving an enforcement decision that names
-                  nobody is almost always an extraction failure. */}
+                  languages. First badge, and marked in red when it is
+                  absent from a sanction, because approving a fine that
+                  names nobody is almost always an extraction failure.
+                  
+                  `order` is deliberately NOT in that list. An EDPB
+                  Article 65 decision is an order addressed to a
+                  supervisory authority, not to a company: the NOYB
+                  cookie-banner case names VRT as the subject of an
+                  underlying complaint that has not been decided, and
+                  filling `entity` with VRT would have published
+                  "VRT — EDPB — order" in seven languages about a
+                  broadcaster the EDPB ordered nothing against. A red
+                  badge on a legitimate null is worse than no badge: it
+                  is what teaches a reviewer to click past the warning
+                  that matters. */}
               {row.entity ? (
                 <Badge>{row.entity}</Badge>
-              ) : row.outcome && ['fine', 'reprimand', 'ban', 'order'].includes(row.outcome) ? (
+              ) : row.outcome && ['fine', 'reprimand', 'ban'].includes(row.outcome) ? (
                 <Badge variant="destructive">entité non extraite</Badge>
               ) : null}
               {row.authority ? <Badge variant="secondary">{row.authority}</Badge> : null}
