@@ -20,15 +20,18 @@ import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
  * extracted facts side by side with a prominent link to the
  * regulator's own page, and nothing else competing for attention.
  *
- * English-only on purpose. It is an internal tool for one or two
- * people, and translating it into seven languages would be work that
- * serves nobody.
+ * In French, not in seven languages and not in English. It is an
+ * internal tool with one operator, and he works in French — putting it
+ * through next-intl would mean seven message files maintained for an
+ * audience of one, while leaving it in English meant an English panel
+ * sitting inside a French site, which is what shipped and what had to
+ * be corrected.
  */
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Legal review queue',
+  title: 'File de validation juridique',
   // An internal queue has no business in an index, and its rows quote
   // material we have not yet cleared for publication.
   robots: { index: false, follow: false }
@@ -96,25 +99,26 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
   return (
     <div className="mx-auto grid max-w-3xl gap-6 px-4 py-12 md:px-0">
       <header className="grid gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Legal review queue</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">File de validation juridique</h1>
         <p className="text-sm text-muted-foreground">
-          Approving clears an item for translation into six languages and publication on
-          lexyflow.com. Check each fact against the regulator&apos;s own page before you do — from
-          that moment it is something we say, not something a model produced.
+          Approuver déclenche la traduction en six langues et la publication sur lexyflow.com.
+          Vérifie chaque fait contre la page du régulateur avant de le faire — à partir de cet
+          instant, c&apos;est LexyFlow qui l&apos;affirme, plus un modèle qui l&apos;a produit.
         </p>
       </header>
 
       {error ? (
         <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="pt-6 text-sm">Queue unreadable: {error.message}</CardContent>
+          <CardContent className="pt-6 text-sm">File illisible : {error.message}</CardContent>
         </Card>
       ) : null}
 
       {rows.length === 0 && !error ? (
         <Card>
           <CardContent className="pt-6 text-sm text-muted-foreground">
-            Nothing waiting. Items appear here once the watcher finds a publication and the
-            extractor has read it — normally within twelve hours of a regulator posting.
+            Rien en attente. Les fiches arrivent ici une fois que la veille a repéré une
+            publication et que l&apos;extraction l&apos;a lue — en général dans les douze heures
+            suivant la mise en ligne par le régulateur.
           </CardContent>
         </Card>
       ) : null}
@@ -138,13 +142,22 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
           <CardContent className="grid gap-4">
             {/* What would actually be published. Shown first because it
                 is the thing being approved — the raw headline above is
-                only context. */}
+                only context.
+
+                The text itself stays English: it is the pivot the six
+                translations are produced from, and approving it is
+                approving those six. Labelled as such, because an
+                English paragraph inside a French panel otherwise reads
+                as one more thing that failed to translate. */}
             <div className="rounded-md border bg-muted/40 p-4">
               <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-                Summary we would publish
+                Résumé qui serait publié{' '}
+                <span className="normal-case tracking-normal">
+                  — pivot anglais, les six traductions en sont dérivées
+                </span>
               </div>
               <p className="text-sm leading-relaxed">
-                {row.summary_en ?? <span className="text-destructive">missing</span>}
+                {row.summary_en ?? <span className="text-destructive">manquant</span>}
               </p>
             </div>
 
@@ -165,7 +178,7 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4"
               >
-                Open the primary source
+                Ouvrir la source primaire
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
               {row.legal_sources ? (

@@ -27,7 +27,7 @@ import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Ops',
+  title: 'Exploitation',
   robots: { index: false, follow: false }
 };
 
@@ -54,22 +54,23 @@ interface SourceRow {
  */
 function healthLabel(source: SourceRow): string {
   if (source.last_status === 'ok') return 'ok';
-  if (source.last_status === 'error') return 'error';
-  if (!source.last_polled_at) return 'never polled';
+  if (source.last_status === 'error') return 'erreur';
+  if (!source.last_polled_at) return 'jamais relevée';
   // Status cleared but a poll has happened: the URL changed since.
-  return 'awaiting recheck';
+  return 'à revérifier';
 }
 
 const JOBS = [
-  { path: '/api/cron/watch-legal', label: 'Run watch now' },
-  { path: '/api/cron/extract-legal', label: 'Run extraction now' },
-  { path: '/api/cron/localize-legal', label: 'Run localisation now' }
+  { path: '/api/cron/watch-legal', label: 'Lancer la veille' },
+  { path: '/api/cron/extract-legal', label: "Lancer l'extraction" },
+  { path: '/api/cron/localize-legal', label: 'Lancer la localisation' }
 ];
 
 export default async function OpsPage({ params }: { params: { locale: string } }) {
   unstable_setRequestLocale(params.locale);
 
   // Same four-way guard as the review queue — see the note there.
+  // French for the same reason, too: one operator, and he reads French.
   const user = await getCurrentUser();
   if (!user) redirect(`/${params.locale}/login?next=/${params.locale}/admin/ops`);
   if (!isAdminEmail(user.email)) notFound();
@@ -95,10 +96,10 @@ export default async function OpsPage({ params }: { params: { locale: string } }
   return (
     <div className="mx-auto grid max-w-3xl gap-6 px-4 py-12 md:px-0">
       <header className="grid gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Ops</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Exploitation</h1>
         <p className="text-sm text-muted-foreground">
-          Signed in as {user.email}. These jobs also run on their own schedule; the buttons are for
-          when you need an answer now rather than in six hours.
+          Connecté en tant que {user.email}. Ces travaux tournent aussi tout seuls&nbsp;; les
+          boutons servent quand il faut une réponse maintenant plutôt que dans six heures.
         </p>
       </header>
 
@@ -139,7 +140,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               ) : null}
               {source.last_polled_at ? (
                 <p className="text-xs text-muted-foreground">
-                  last polled {new Date(source.last_polled_at).toISOString()}
+                  dernier relevé {new Date(source.last_polled_at).toISOString()}
                 </p>
               ) : null}
             </div>
@@ -149,7 +150,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Run a job</CardTitle>
+          <CardTitle className="text-base">Lancer un traitement</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-6">
           {JOBS.map((job) => (

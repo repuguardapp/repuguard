@@ -31,18 +31,18 @@ export function LegalReviewButtons({ developmentId }: { developmentId: string })
       });
       if (res.status === 409) {
         // Someone else, or another tab, already decided this one.
-        setError('Already reviewed — refreshing.');
+        setError('Déjà traitée — actualisation.');
         router.refresh();
         return;
       }
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(body.error ?? 'Failed');
+        setError(body.error ?? 'Échec');
         return;
       }
       router.refresh();
     } catch {
-      setError('Network error — nothing was changed.');
+      setError('Erreur réseau — rien n’a été modifié.');
     } finally {
       setBusy(null);
     }
@@ -51,7 +51,7 @@ export function LegalReviewButtons({ developmentId }: { developmentId: string })
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Button size="sm" disabled={busy !== null} onClick={() => decide('approve')}>
-        {busy === 'approve' ? 'Approving…' : 'Approve for publication'}
+        {busy === 'approve' ? 'Approbation…' : 'Approuver pour publication'}
       </Button>
       <Button
         size="sm"
@@ -59,7 +59,7 @@ export function LegalReviewButtons({ developmentId }: { developmentId: string })
         disabled={busy !== null}
         onClick={() => decide('reject')}
       >
-        {busy === 'reject' ? 'Rejecting…' : 'Reject'}
+        {busy === 'reject' ? 'Rejet…' : 'Rejeter'}
       </Button>
       {error ? <span className="text-sm text-destructive">{error}</span> : null}
     </div>

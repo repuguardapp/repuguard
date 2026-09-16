@@ -28,23 +28,24 @@ export function AdminSessionExpired({ email }: { email: string | null }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
-            Admin session expired
+            Session administrateur expirée
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <p className="text-sm text-muted-foreground">
-            You are signed in as {email ?? 'this account'} and you are on the allowlist, but admin
-            pages require a session opened less than {hours} hours ago. Approving an item publishes
-            a legal claim under our name in seven languages, which is not a decision an overnight
-            session should be able to take.
+            Tu es connecté avec {email ?? 'ce compte'} et tu es bien sur la liste
+            d&apos;autorisation, mais les pages d&apos;administration exigent une session ouverte
+            depuis moins de {hours} heures. Approuver une fiche publie une affirmation juridique
+            sous notre nom en sept langues — ce n&apos;est pas une décision qu&apos;une session
+            laissée ouverte toute la nuit doit pouvoir prendre.
           </p>
           <p className="text-sm text-muted-foreground">
-            Sign out and sign in again with the same address. Your ordinary dashboard session is
-            unaffected either way.
+            Déconnecte-toi et reconnecte-toi avec la même adresse. Ta session ordinaire du tableau
+            de bord n&apos;est affectée ni dans un cas ni dans l&apos;autre.
           </p>
           <form action="/api/auth/signout" method="post">
             <Button type="submit" size="sm">
-              Sign out and start again
+              Se déconnecter et recommencer
             </Button>
           </form>
         </CardContent>

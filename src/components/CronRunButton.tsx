@@ -31,7 +31,7 @@ export function CronRunButton({ path, label }: { path: string; label: string }) 
       }
       setResult(`HTTP ${res.status}\n${pretty}`);
     } catch (err) {
-      setResult(`Network error: ${err instanceof Error ? err.message : String(err)}`);
+      setResult(`Erreur réseau : ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
     }
@@ -41,7 +41,7 @@ export function CronRunButton({ path, label }: { path: string; label: string }) 
     <div className="grid gap-3">
       <div className="flex flex-wrap items-center gap-3">
         <Button size="sm" variant="outline" disabled={busy} onClick={run}>
-          {busy ? 'Running…' : label}
+          {busy ? 'En cours…' : label}
         </Button>
         <code className="text-xs text-muted-foreground">{path}</code>
       </div>
