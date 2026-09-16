@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createPortalSession } from '@/lib/stripe';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
+import { appUrl } from '@/lib/app-url';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'no_subscription' }, { status: 409 });
   }
 
-  const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const origin = request.headers.get('origin') ?? appUrl();
   const session = await createPortalSession({
     customerId: org.stripe_customer_id,
     origin,

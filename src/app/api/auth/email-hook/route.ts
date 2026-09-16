@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendMagicLinkEmail } from '@/lib/email';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Supabase "Send Email Hook" — Standard Webhook spec.
@@ -124,7 +125,7 @@ function verifyStandardWebhook(body: string, headers: Headers, secret: string): 
 
 function buildVerifyLink(emailData: z.infer<typeof HookPayload>['email_data']): string {
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ?? emailData.site_url ?? 'https://lexyflow.com';
+    appUrl();
 
   const url = new URL('/api/auth/callback', base);
   if (emailData.token_hash) url.searchParams.set('token_hash', emailData.token_hash);

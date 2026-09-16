@@ -3,6 +3,7 @@ import { discoverLocales } from '@/i18n/locales.server';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
 import { listPublishedSlugs } from '@/lib/legal-decisions';
 import { CURATED_PAIRS } from '@/lib/seo-routes';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Multilingual sitemap. Each canonical path is emitted once with an
@@ -38,7 +39,7 @@ const CORE_ROUTES = ['', '/pricing', '/audit', '/docs', '/trust', '/sample-repor
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://example.com';
+  const base = appUrl();
   const locales = await discoverLocales();
   const now = new Date();
   const langMap = (path: string): Record<string, string> =>

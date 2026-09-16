@@ -4,6 +4,7 @@ import { emailStringsFor, type AuditCompletedStrings } from './email-i18n';
 import { lifecycleStringsFor } from './email-lifecycle-i18n';
 import { PLAN_CREDITS } from './stripe';
 import { supabaseService } from './supabase';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Transactional email via Resend.
@@ -34,7 +35,7 @@ import { supabaseService } from './supabase';
  * the inbox shows "LexyFlow <hello@...>".
  */
 const FROM = process.env.RESEND_FROM ?? 'LexyFlow <onboarding@resend.dev>';
-const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? 'https://lexyflow.com';
+const APP_URL = () => appUrl();
 
 let client: Resend | null = null;
 function resend(): Resend | null {

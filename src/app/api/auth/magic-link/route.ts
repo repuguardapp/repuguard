@@ -4,6 +4,7 @@ import { alertOps } from '@/lib/alert';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { verifyTurnstileToken } from '@/lib/turnstile';
+import { appUrl } from '@/lib/app-url';
 
 export const runtime = 'nodejs';
 
@@ -85,7 +86,7 @@ async function handle(request: Request): Promise<Response> {
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
   }
 
-  const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const origin = request.headers.get('origin') ?? appUrl();
   const supabase = createSupabaseServerClient();
 
   // signInWithOtp can THROW (not just return an error) when Supabase

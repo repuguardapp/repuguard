@@ -4,6 +4,7 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { composeDigest, type DigestInput } from '@/lib/daily-digest';
 import { sendOpsDigest } from '@/lib/email';
 import { supabaseService } from '@/lib/supabase';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Pillar three of Jarvis — the operational brain.
@@ -55,7 +56,7 @@ async function digest() {
   const db = supabaseService();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const stuckCutoff = new Date(Date.now() - STUCK_AFTER_MINUTES * 60_000).toISOString();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://lexyflow.com';
+  const baseUrl = appUrl();
 
   const [
     auditsCompleted,
@@ -113,7 +114,7 @@ async function digest() {
     awaitingReview,
     corpus: await readCorpus(db),
     ...(await readSourceHealth(db)),
-    appUrl
+    appUrl: baseUrl
   };
 
   const composed = composeDigest(input);

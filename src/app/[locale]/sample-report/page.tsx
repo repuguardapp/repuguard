@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { getSampleSnapshot } from '@/lib/sample-report-snapshot';
+import { appUrl } from '@/lib/app-url';
 
 interface PageProps {
   params: { locale: string };
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${params.locale}/sample-report`,
+      canonical: `${appUrl()}/${params.locale}/sample-report`,
       languages: alternates
     },
     openGraph: { title, description, type: 'article', locale: params.locale },

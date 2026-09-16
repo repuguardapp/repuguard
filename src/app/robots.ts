@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Crawler policy.
@@ -68,7 +69,7 @@ const AI_TRAINING_USER_AGENTS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://lexyflow.com';
+  const base = appUrl();
 
   return {
     rules: [

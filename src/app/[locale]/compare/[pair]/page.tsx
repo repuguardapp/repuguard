@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { citationLabel, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { comparisonParams, parseFrameworkPairSlug } from '@/lib/seo-routes';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Comparison landing page between two compliance frameworks.
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${params.locale}/compare/${params.pair}`,
+      canonical: `${appUrl()}/${params.locale}/compare/${params.pair}`,
       languages: alternates
     },
     openGraph: { title, description, type: 'article', locale: params.locale },

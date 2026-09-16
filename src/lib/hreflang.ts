@@ -1,6 +1,7 @@
 import 'server-only';
 import { DEFAULT_LOCALE } from '@/i18n/locales';
 import { discoverLocales } from '@/i18n/locales.server';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Build the `<link rel="alternate" hreflang>` map for a given pathname.
@@ -13,7 +14,7 @@ import { discoverLocales } from '@/i18n/locales.server';
 export async function buildHreflangAlternates(
   pathWithoutLocale: string
 ): Promise<Record<string, string>> {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const base = appUrl();
   const cleanPath =
     pathWithoutLocale === '/' ? '' : pathWithoutLocale.replace(/^\/+/, '/');
 

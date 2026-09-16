@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { readAffiliateReferral } from '@/lib/affiliate';
 import { createCheckoutSession } from '@/lib/stripe';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
+import { appUrl } from '@/lib/app-url';
 
 export const runtime = 'nodejs';
 
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'organization_mismatch' }, { status: 403 });
   }
 
-  const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const origin = request.headers.get('origin') ?? appUrl();
 
   // Read the Tolt affiliate cookie from the request headers — never
   // from the request body. A malicious client could spoof a body

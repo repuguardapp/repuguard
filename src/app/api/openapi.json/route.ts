@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { buildOpenApiSpec } from '@/lib/openapi';
+import { appUrl } from '@/lib/app-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * to fetch this directly from the browser.
  */
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://lexyflow.com';
+  const baseUrl = appUrl();
   const spec = buildOpenApiSpec({ baseUrl });
 
   return NextResponse.json(spec, {

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { SUB_PROCESSORS } from '@/lib/sub-processors';
+import { appUrl } from '@/lib/app-url';
 
 interface PageProps {
   params: { locale: string };
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${params.locale}/trust`,
+      canonical: `${appUrl()}/${params.locale}/trust`,
       languages: alternates
     },
     openGraph: { title, description, type: 'article', locale: params.locale },
@@ -67,9 +68,9 @@ export default async function TrustPage({ params }: PageProps) {
     '@graph': [
       {
         '@type': 'Organization',
-        '@id': `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/#organization`,
+        '@id': `${appUrl()}/#organization`,
         name: 'LexyFlow',
-        url: process.env.NEXT_PUBLIC_APP_URL,
+        url: appUrl(),
         contactPoint: [
           { '@type': 'ContactPoint', contactType: 'Security', email: 'security@lexyflow.com' },
           { '@type': 'ContactPoint', contactType: 'Data Protection Officer', email: 'privacy@lexyflow.com' }
@@ -80,7 +81,7 @@ export default async function TrustPage({ params }: PageProps) {
         name: t('title'),
         description: t('intro'),
         inLanguage: params.locale,
-        about: { '@id': `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/#organization` }
+        about: { '@id': `${appUrl()}/#organization` }
       }
     ]
   };

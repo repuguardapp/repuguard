@@ -11,6 +11,7 @@ import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { frameworkParams, frameworkPairKey, relatedFrameworks } from '@/lib/seo-routes';
+import { appUrl } from '@/lib/app-url';
 
 /**
  * Programmatic-SEO landing page for a single compliance framework.
@@ -69,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/${params.locale}/compliance/${framework.id}`,
+      canonical: `${appUrl()}/${params.locale}/compliance/${framework.id}`,
       languages: alternates
     },
     openGraph: { title, description, type: 'article', locale: params.locale },

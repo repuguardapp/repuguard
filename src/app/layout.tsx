@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import { appUrl } from '@/lib/app-url';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(appUrl()),
   applicationName: 'LexyFlow',
   authors: [{ name: 'LexyFlow', url: 'https://lexyflow.com' }],
   creator: 'LexyFlow',
