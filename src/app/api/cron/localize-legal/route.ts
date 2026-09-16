@@ -297,6 +297,10 @@ async function translate(
           'exactly as written.',
           'For Arabic output use Modern Standard Arabic, keep numerals in',
           'Latin digits, and emit no bidi control characters.',
+          'Acronyms pass through untranslated but they are still words in',
+          'your sentence: give them the article, gender, elision and',
+          'agreement your language requires. French takes l\'EDPB, never',
+          'le EDPB.',
           'Return JSON with exactly the key "summary".'
         ].join(' ')
       },
