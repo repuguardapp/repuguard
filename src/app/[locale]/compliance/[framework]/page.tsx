@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { FRAMEWORKS, frameworkById, type FrameworkId } from '@/lib/legal-frameworks';
 import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { frameworkLabel, frameworkName } from '@/lib/legal-labels';
+import { authorityName, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { frameworkParams, frameworkPairKey, relatedFrameworks } from '@/lib/seo-routes';
 import { appUrl } from '@/lib/app-url';
 
@@ -164,7 +164,7 @@ export default async function FrameworkPage({ params }: PageProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-base">{framework.authority}</p>
+              <p className="text-base">{authorityName(framework.authority, params.locale)}</p>
             </CardContent>
           </Card>
         </div>

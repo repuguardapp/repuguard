@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
-import { frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
+import { authorityName, frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
 
 /**
  * The two words on a decision page that are ours rather than the law's.
@@ -81,6 +81,49 @@ describe('the framework badge', () => {
     // through to its full name and reintroduce the bug.
     for (const framework of FRAMEWORKS) {
       expect(frameworkLabel(framework, 'en'), framework.id).toBeTruthy();
+    }
+  });
+});
+
+describe('the regulator is named as it names itself', () => {
+  it('uses the official name where the body has one', () => {
+    // /compliance/gdpr read "Autorité de contrôle — European Data
+    // Protection Board" on the French page. In French that is not the
+    // body's name: EU institutions publish as the Comité européen de la
+    // protection des données in every official language.
+    expect(authorityName('European Data Protection Board', 'fr')).toBe(
+      'Comité européen de la protection des données'
+    );
+    expect(authorityName('European Data Protection Board', 'de')).toBe(
+      'Europäischer Datenschutzausschuss'
+    );
+    expect(authorityName('Office of the Privacy Commissioner of Canada', 'fr')).toBe(
+      'Commissariat à la protection de la vie privée du Canada'
+    );
+    expect(authorityName('Personal Information Protection Commission', 'ja')).toBe(
+      '個人情報保護委員会'
+    );
+  });
+
+  it('leaves a body that has only one name alone', () => {
+    // The ICO is the ICO in Paris, and SDAIA is SDAIA in Tokyo.
+    // Inventing a translation would make us look like we were guessing
+    // about the regulator whose decisions we summarise.
+    for (const locale of ['fr', 'de', 'es', 'pt-br', 'ja', 'ar']) {
+      expect(authorityName("Information Commissioner's Office", locale)).toBe(
+        "Information Commissioner's Office"
+      );
+      expect(authorityName('Saudi Data & AI Authority (SDAIA)', locale)).toBe(
+        'Saudi Data & AI Authority (SDAIA)'
+      );
+    }
+  });
+
+  it('never returns an empty string for any authority in any locale', () => {
+    for (const framework of FRAMEWORKS) {
+      for (const locale of LOCALES) {
+        expect(authorityName(framework.authority, locale), `${framework.id}/${locale}`).toBeTruthy();
+      }
     }
   });
 });

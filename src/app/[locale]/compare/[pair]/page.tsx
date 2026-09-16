@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { citationLabel, frameworkLabel, frameworkName } from '@/lib/legal-labels';
+import { authorityName, citationLabel, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { comparisonParams, parseFrameworkPairSlug } from '@/lib/seo-routes';
 import { appUrl } from '@/lib/app-url';
 
@@ -88,8 +88,8 @@ export default async function ComparisonPage({ params }: PageProps) {
     b: bName,
     jurisdictionA: a.jurisdiction,
     jurisdictionB: b.jurisdiction,
-    authorityA: a.authority,
-    authorityB: b.authority
+    authorityA: authorityName(a.authority, params.locale),
+    authorityB: authorityName(b.authority, params.locale)
   };
 
   // JSON-LD: Article + FAQPage. The FAQ block captures featured-
@@ -161,8 +161,8 @@ export default async function ComparisonPage({ params }: PageProps) {
               </tr>
               <tr>
                 <td className="px-4 py-3 font-medium text-muted-foreground">{t('rowAuthority')}</td>
-                <td className="px-4 py-3">{a.authority}</td>
-                <td className="px-4 py-3">{b.authority}</td>
+                <td className="px-4 py-3">{authorityName(a.authority, params.locale)}</td>
+                <td className="px-4 py-3">{authorityName(b.authority, params.locale)}</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-medium text-muted-foreground">{t('rowCitation')}</td>

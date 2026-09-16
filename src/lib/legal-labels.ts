@@ -267,3 +267,56 @@ export function citationLabel(style: string, locale: string): string {
   if (!row) return style;
   return row[locale] ?? row['en'] ?? style;
 }
+
+/**
+ * The name a supervisory authority goes by in the reader's language.
+ *
+ * Sparse on purpose. Most of these are proper nouns with one name —
+ * the ICO is the ICO in Paris, SDAIA is SDAIA in Tokyo — and inventing
+ * a translation for a body that has none would make us look like we
+ * were guessing about the regulator whose decisions we summarise.
+ *
+ * But four of them genuinely have official names in other languages,
+ * and the most visible one sits on our most important page: the
+ * /compliance/gdpr card read "Autorité de contrôle — European Data
+ * Protection Board", which in French is not the body's name. It is the
+ * Comité européen de la protection des données, and EU institutions
+ * publish under that name in every official language.
+ *
+ * Anything absent falls back to `FRAMEWORKS[].authority`, which is what
+ * the audit engine cites and stays untouched.
+ */
+const AUTHORITY_BY_LOCALE: Record<string, Record<string, string>> = {
+  'European Data Protection Board': {
+    fr: 'Comité européen de la protection des données',
+    es: 'Comité Europeo de Protección de Datos',
+    de: 'Europäischer Datenschutzausschuss',
+    'pt-br': 'Comité Europeu para a Proteção de Dados',
+    ja: '欧州データ保護会議',
+    ar: 'المجلس الأوروبي لحماية البيانات'
+  },
+  'European AI Office': {
+    fr: "Bureau européen de l'intelligence artificielle",
+    es: 'Oficina Europea de Inteligencia Artificial',
+    de: 'Europäisches Büro für Künstliche Intelligenz',
+    'pt-br': 'Gabinete Europeu para a Inteligência Artificial',
+    ja: '欧州AI事務局',
+    ar: 'المكتب الأوروبي للذكاء الاصطناعي'
+  },
+  // Canada legislates in both languages; this is the body's own French
+  // name, not a rendering of the English one.
+  'Office of the Privacy Commissioner of Canada': {
+    fr: 'Commissariat à la protection de la vie privée du Canada'
+  },
+  // Likewise the Japanese commission's own name.
+  'Personal Information Protection Commission': {
+    ja: '個人情報保護委員会'
+  },
+  ANPD: {
+    'pt-br': 'Autoridade Nacional de Proteção de Dados (ANPD)'
+  }
+};
+
+export function authorityName(authority: string, locale: string): string {
+  return AUTHORITY_BY_LOCALE[authority]?.[locale] ?? authority;
+}

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { appUrl } from '@/lib/app-url';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
-import { frameworkLabel, frameworkName } from '@/lib/legal-labels';
+import { authorityName, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 
 /**
  * The hub for /compliance/[framework].
@@ -74,7 +74,7 @@ export default async function ComplianceHubPage({ params }: PageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  {t('authorityLabel')} — {framework.authority}
+                  {t('authorityLabel')} — {authorityName(framework.authority, params.locale)}
                 </CardContent>
               </Card>
             </Link>
