@@ -110,6 +110,14 @@ export function parseListing(html: string, options: ListingOptions): ParsedFeed 
     const rawHref = match[1]!;
     const title = textOf(match[2] ?? '');
 
+    // An href that is only a fragment goes nowhere: it is the skip link,
+    // the "back to top", the accordion toggle. Resolved against the
+    // listing it becomes the listing's own URL, and the ICO's entire
+    // corpus — one row, across every run this pipeline has ever made —
+    // was its accessibility skip link, stored under the title "Skip to
+    // main content" while the source reported ok.
+    if (rawHref.startsWith('#')) continue;
+
     let absolute: URL;
     try {
       absolute = new URL(rawHref, baseUrl);

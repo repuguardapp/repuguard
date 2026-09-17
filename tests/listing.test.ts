@@ -271,3 +271,48 @@ describe('the section is not one of its own decisions', () => {
     ]);
   });
 });
+
+describe('the ICO collected its own skip link for months', () => {
+  /**
+   * Ground truth from production, not a hypothesis. The whole of what the
+   * ICO source ever discovered, across every run since it shipped, was a
+   * single row:
+   *
+   *   https://ico.org.uk/action-weve-taken/enforcement/
+   *   raw_title: "Skip to main content"
+   *
+   * The accessibility skip link. `href="#main-content"` resolved against
+   * the listing to the listing itself, and "Skip to main content" is
+   * twenty characters, so it passed the title check and became an item —
+   * one item, which is all `ok` requires. The United Kingdom has been
+   * green on the operations page and empty in the database.
+   *
+   * The failure is not the parse. It is that one usable-looking item is
+   * indistinguishable from a working source.
+   */
+
+  const ICO = `
+    <a href="#main-content">Skip to main content</a>
+    <a href="#top">Back to top</a>
+    <a href="/action-weve-taken/enforcement/">Enforcement action we have taken</a>`;
+
+  it('takes neither the skip link, nor the section, nor anything else here', () => {
+    const { items } = parseListing(ICO, {
+      itemPattern: '/action-weve-taken/enforcement/',
+      baseUrl: 'https://ico.org.uk/action-weve-taken/enforcement/'
+    });
+    // Zero is the honest answer, and zero is what turns the source red.
+    expect(items).toEqual([]);
+  });
+
+  it('still reads a real decision on the same page', () => {
+    const { items } = parseListing(
+      `${ICO}<a href="/action-weve-taken/enforcement/acme-ltd-monetary-penalty/">Acme Ltd fined for nuisance calls</a>`,
+      {
+        itemPattern: '/action-weve-taken/enforcement/',
+        baseUrl: 'https://ico.org.uk/action-weve-taken/enforcement/'
+      }
+    );
+    expect(items.map((i) => i.title)).toEqual(['Acme Ltd fined for nuisance calls']);
+  });
+});
