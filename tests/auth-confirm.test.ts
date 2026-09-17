@@ -136,7 +136,9 @@ describe('opening the link spends nothing', () => {
     const { GET } = await route();
     const res = await GET(get());
     expect(res.headers.get('cache-control')).toContain('no-store');
-    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+    // See the interstitial's own test: 'no-referrer' here is what makes
+    // the browser send an opaque Origin on the form POST that follows.
+    expect(res.headers.get('referrer-policy')).toBe('origin');
   });
 
   it('sends a link with no token to sign-in rather than to a broken page', async () => {
@@ -228,12 +230,35 @@ describe('submitting the form is what signs you in', () => {
     expect(journal.verified).toHaveLength(0);
   });
 
-  it('refuses an Origin that is not a URL at all', async () => {
+  it('accepts the opaque origin a no-referrer page produces, when the browser vouches for it', async () => {
+    // The refusal that actually happened, recorded as `bad_origin null`.
+    // The interstitial declared Referrer-Policy: no-referrer so its
+    // token could not leak — and under that policy the Fetch spec also
+    // serialises the document's origin as opaque, so our own page's form
+    // POST arrived carrying the literal string "null". Two correct
+    // security measures, each defeating the other.
     const { POST } = await route();
     await POST(
-      post({ token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' }, { origin: 'null' })
+      post(
+        { token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' },
+        { origin: 'null', 'sec-fetch-site': 'same-origin' }
+      )
+    );
+    expect(journal.verified).toHaveLength(1);
+  });
+
+  it('still refuses an opaque origin the browser calls cross-site', async () => {
+    // A sandboxed frame is how an attacker actually produces a null
+    // origin, and the browser says so in a header no page can forge.
+    const { POST } = await route();
+    await POST(
+      post(
+        { token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' },
+        { origin: 'null', 'sec-fetch-site': 'cross-site' }
+      )
     );
     expect(journal.verified).toHaveLength(0);
+    expect(journal.touches[0]!.detail).toContain('cross-site');
   });
 
   it('never honours a next that leaves our origin', async () => {
@@ -320,8 +345,15 @@ describe('the interstitial itself', () => {
     expect(source).not.toMatch(/useEffect|requestSubmit|\.submit\(\)|autoFocus.*submit/);
   });
 
-  it('keeps itself out of search results and referrers', () => {
+  it('keeps itself out of search results, and its token out of referrers', () => {
     expect(source).toContain('index: false');
-    expect(source).toContain("referrer: 'no-referrer'");
+    // 'origin' and not 'no-referrer'. The stricter policy is what made
+    // the browser send `Origin: null` on this page's own form POST, and
+    // the CSRF check refused a real sign-in. 'origin' sends the bare
+    // scheme and host — no path, no query — so the token still travels
+    // nowhere, and the Origin header survives. If anyone tightens this
+    // back to 'no-referrer', sign-in breaks again and this fails first.
+    expect(source).toContain("referrer: 'origin'");
+    expect(source).not.toContain("referrer: 'no-referrer'");
   });
 });

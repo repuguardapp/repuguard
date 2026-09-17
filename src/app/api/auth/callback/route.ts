@@ -96,7 +96,12 @@ export async function GET(request: NextRequest) {
   // Nothing about this hop may be cached or kept by an intermediary:
   // the URL carries a live credential.
   response.headers.set('Cache-Control', 'no-store, max-age=0');
-  response.headers.set('Referrer-Policy', 'no-referrer');
+  // 'origin' rather than 'no-referrer': the latter makes the browser
+  // serialise the resulting document's origin as opaque, so the
+  // interstitial's form POST arrives with `Origin: null` and the CSRF
+  // check refuses a real sign-in. 'origin' still sends no path and no
+  // query, so this URL's token travels nowhere.
+  response.headers.set('Referrer-Policy', 'origin');
   return response;
 }
 
@@ -110,10 +115,10 @@ export async function POST(request: NextRequest) {
   // own magic-link token from the victim's browser and sign them into an
   // account the attacker controls — login CSRF, whose payoff is every
   // document the victim uploads afterwards.
-  const origin = request.headers.get('origin');
-  if (origin && !isOurs(origin, request, url)) {
-    console.error('[auth/callback] cross_origin_post', { origin, seen: url.origin });
-    recordTouch('failed', request.headers.get('user-agent'), null, `bad_origin ${origin}`);
+  const refusal = crossSiteRefusal(request, url);
+  if (refusal) {
+    console.error('[auth/callback] cross_origin_post', { refusal, seen: url.origin });
+    recordTouch('failed', request.headers.get('user-agent'), null, `bad_origin ${refusal}`);
     return redirectToLogin(url, 'bad_origin', null);
   }
 
@@ -180,6 +185,45 @@ export async function POST(request: NextRequest) {
 
 function str(value: FormDataEntryValue | null): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
+ * Why this POST should be refused, or null to let it through.
+ *
+ * Returns a string rather than a boolean because the first version of this
+ * check refused a real sign-in and the log said only "cross_origin_post" —
+ * true but useless. The reason is now written to `auth_link_touches.detail`,
+ * which is how `Origin: null` was identified at all.
+ *
+ * `Origin: null` is the case worth explaining. It is not an absent header:
+ * the interstitial declared `Referrer-Policy: no-referrer`, so the token in
+ * its URL could not leak — and the Fetch spec, under that policy, also
+ * serialises the document's origin as OPAQUE. The browser therefore sent the
+ * literal string "null" on a same-origin form POST from our own page. Two
+ * correct security measures, each defeating the other.
+ *
+ * The policy is now 'origin', which sends no path and no query and leaves the
+ * header intact, so this should not recur. It is still tolerated here, but
+ * only with `Sec-Fetch-Site: same-origin` to vouch for it — a header the
+ * browser sets and no page can forge. A sandboxed frame, which is the real
+ * way an attacker produces a null origin, is announced as cross-site and
+ * still refused.
+ */
+function crossSiteRefusal(request: NextRequest, url: URL): string | null {
+  const origin = request.headers.get('origin');
+  const fetchSite = request.headers.get('sec-fetch-site');
+
+  // A browser old enough to omit Origin on a POST is older than any of
+  // this; refusing it would trade a real user for a hypothetical attack
+  // that Origin would not have stopped either.
+  if (!origin) return null;
+
+  if (origin === 'null') {
+    if (!fetchSite || fetchSite === 'same-origin' || fetchSite === 'none') return null;
+    return `null (sec-fetch-site: ${fetchSite})`;
+  }
+
+  return isOurs(origin, request, url) ? null : origin;
 }
 
 /**

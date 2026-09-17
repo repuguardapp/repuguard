@@ -37,9 +37,22 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Confirm sign-in',
   // The URL carries a live credential. It must not be indexed, and no
-  // referrer may carry it to a third party.
+  // referrer may carry it anywhere.
   robots: { index: false, follow: false },
-  referrer: 'no-referrer'
+  // 'origin', NOT 'no-referrer' — and the difference locked the founder
+  // out of his own product.
+  //
+  // Under 'no-referrer' the Fetch spec does not merely drop the Referer
+  // header: it serialises this document's origin as OPAQUE, so the form
+  // POST below arrives carrying `Origin: null`. The callback's CSRF check
+  // read that as a cross-site submission and refused a legitimate
+  // sign-in. Two correct security measures, each one defeating the other,
+  // and neither failing anywhere a server-side test could see it.
+  //
+  // 'origin' sends `https://lexyflow.com` and nothing else — no path, no
+  // query, so the token in this URL still travels nowhere — while leaving
+  // the Origin header intact for the check that has to read it.
+  referrer: 'origin'
 };
 
 interface PageProps {
