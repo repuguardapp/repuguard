@@ -36,6 +36,7 @@ interface SourceRow {
   name: string;
   jurisdiction: string;
   feed_url: string;
+  feed_kind: string;
   enabled: boolean;
   last_polled_at: string | null;
   last_status: string | null;
@@ -80,7 +81,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
   const [{ data: sources }, { data: counts }] = await Promise.all([
     db
       .from('legal_sources')
-      .select('id, name, jurisdiction, feed_url, enabled, last_polled_at, last_status, last_error')
+      .select('id, name, jurisdiction, feed_url, feed_kind, enabled, last_polled_at, last_status, last_error')
       .order('id'),
     db.from('legal_developments').select('status')
   ]);
@@ -126,6 +127,9 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{source.name}</span>
                 <Badge variant="outline">{source.jurisdiction}</Badge>
+                {/* A listing source fails differently from a feed: the
+                    page is alive and the pattern stopped matching. */}
+                <Badge variant="outline">{source.feed_kind}</Badge>
                 <Badge
                   variant={source.last_status === 'ok' ? 'secondary' : 'outline'}
                   className={source.last_status === 'error' ? 'border-destructive text-destructive' : ''}

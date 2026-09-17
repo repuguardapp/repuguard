@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { parseFeed } from '@/lib/feeds';
+import { parseListing } from '@/lib/listing';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -65,6 +66,8 @@ interface SourceRow {
   id: string;
   name: string;
   feed_url: string;
+  feed_kind: string;
+  item_pattern: string | null;
   licence: string;
   consecutive_failures: number | null;
 }
@@ -98,7 +101,7 @@ async function watch() {
 
   const { data, error } = await db
     .from('legal_sources')
-    .select('id, name, feed_url, licence, consecutive_failures')
+    .select('id, name, feed_url, feed_kind, item_pattern, licence, consecutive_failures')
     .eq('enabled', true);
 
   if (error) {
@@ -177,7 +180,7 @@ async function pollSource(
     };
   };
 
-  let xml: string;
+  let body: string;
   try {
     const res = await fetchExternal(source.feed_url, {
       // Identify ourselves. A regulator blocking an anonymous scraper
@@ -188,18 +191,34 @@ async function pollSource(
       cache: 'no-store'
     });
     if (!res.ok) return await fail(`http_${res.status}`);
-    xml = await res.text();
+    body = await res.text();
   } catch (err) {
     return await fail(err instanceof Error ? err.message : String(err));
   }
 
-  const { items, skipped } = parseFeed(xml);
+  // Two kinds of source, one pipeline past this point.
+  //
+  // RSS is the exception, not the rule: the ICO withdrew every one of
+  // its feeds, the Gulf authorities never had any, and Brazil and Japan
+  // publish news pages. A watcher that only speaks RSS is a watcher
+  // that can only ever cover Europe — on a product selling audits
+  // against thirteen frameworks.
+  const { items, skipped } =
+    source.feed_kind === 'html'
+      ? parseListing(body, {
+          itemPattern: source.item_pattern ?? '/',
+          baseUrl: source.feed_url
+        })
+      : parseFeed(body);
+
   if (items.length === 0) {
     // Reaching a URL that yields nothing usable is a failure, not a
     // quiet day: it is what a moved feed serving an HTML redirect page
     // looks like. Saying "ok, 0 items" here is how a dead source stays
-    // dead for months.
-    return await fail(`no_items (skipped ${skipped}, ${xml.length} bytes)`);
+    // dead for months. For a listing it also catches the other failure
+    // — the page is alive and item_pattern no longer matches anything,
+    // because the regulator reorganised their URLs.
+    return await fail(`no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes)`);
   }
 
   const rows = items.slice(0, MAX_ITEMS_PER_SOURCE).map((item) => ({
