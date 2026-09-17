@@ -192,3 +192,82 @@ describe('when it yields nothing, it says what was on the page', () => {
     expect(describeFeed('<feed><entry/><entry/></feed>')).toContain('entry×2');
   });
 });
+
+describe('a decision whose only link says "Leer más"', () => {
+  /**
+   * The AEPD publishes exactly that way: the headline sits in a heading
+   * and the sole link to the decision is the words "Leer más". Eight
+   * decisions on the page, eight links found, eight refused — the source
+   * reported "no items" while working perfectly.
+   *
+   * Refusing an entire national regulator over the wording of its anchors
+   * is the wrong trade, so the URL the authority itself chose becomes a
+   * provisional title. It is not invented: pass 2 reads the decision page
+   * and replaces it. Its only job is to make the row recognisable in the
+   * review queue.
+   */
+
+  const AEPD = `
+    <a href="/prensa-y-comunicacion/notas-de-prensa/la-aepd-sanciona-a-una-empresa-por-videovigilancia/">Leer más</a>
+    <a href="/prensa-y-comunicacion/notas-de-prensa/">Notas de prensa</a>`;
+
+  it('falls back to the regulator’s own slug', () => {
+    const { items } = parseListing(AEPD, {
+      itemPattern: '/notas-de-prensa/',
+      baseUrl: 'https://www.aepd.es/es/prensa-y-comunicacion/notas-de-prensa'
+    });
+    expect(items).toHaveLength(1);
+    expect(items[0]?.title).toBe('La aepd sanciona a una empresa por videovigilancia');
+  });
+
+  it('still refuses a slug that tells a reviewer nothing', () => {
+    // '/enforcement/short/' yields "short". A bad provisional title is
+    // worse than a skipped item, so it stays skipped and stays counted.
+    const { items, skipped } = parseListing(PAGE, {
+      itemPattern: '/action-weve-taken/enforcement/',
+      baseUrl: BASE
+    });
+    expect(items.map((i) => i.link)).not.toContain(`${BASE}short/`);
+    expect(skipped).toBeGreaterThan(0);
+  });
+
+  it('never turns a date path into a headline', () => {
+    const { items } = parseListing(`<a href="/news/2026/09/17/">▶</a>`, {
+      itemPattern: '/news/',
+      baseUrl: 'https://x.test/news/'
+    });
+    expect(items).toEqual([]);
+  });
+
+  it('shows whole paths, not only prefixes, when every link shares one', () => {
+    // Brazil's failure: 59 links all under /anpd/pt-br/ collapsed into a
+    // single bucket, which is the shape of the answer and not the answer.
+    const seen = describeListing(
+      `<a href="/anpd/pt-br/assuntos/noticias/uma-decisao-da-anpd/">Uma decisão</a>`,
+      { itemPattern: '/nope/', baseUrl: 'https://www.gov.br/anpd/pt-br/assuntos/noticias' }
+    );
+    expect(seen).toContain('deepest: /anpd/pt-br/assuntos/noticias/uma-decisao-da-anpd/');
+  });
+});
+
+describe('the section is not one of its own decisions', () => {
+  it('refuses the listing page’s link back to itself', () => {
+    // Found by the test above rather than in production: the AEPD page's
+    // own "Notas de prensa" link matches the item pattern and carries a
+    // perfectly good title, so it would have arrived in the review queue
+    // as a sanction. Every regulator links back to the index it is
+    // showing you.
+    const { items } = parseListing(
+      `<a href="/prensa-y-comunicacion/notas-de-prensa/">Notas de prensa</a>
+       <a href="/prensa-y-comunicacion/notas-de-prensa">Notas de prensa</a>
+       <a href="/prensa-y-comunicacion/notas-de-prensa/la-aepd-sanciona-a-una-empresa/">Leer más</a>`,
+      {
+        itemPattern: '/notas-de-prensa/',
+        baseUrl: 'https://www.aepd.es/es/prensa-y-comunicacion/notas-de-prensa'
+      }
+    );
+    expect(items.map((i) => i.link)).toEqual([
+      'https://www.aepd.es/prensa-y-comunicacion/notas-de-prensa/la-aepd-sanciona-a-una-empresa/'
+    ]);
+  });
+});

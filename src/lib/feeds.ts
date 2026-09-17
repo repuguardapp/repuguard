@@ -153,5 +153,13 @@ export function describeFeed(xml: string): string {
     .filter(Boolean)
     .join(' ');
 
-  return `root <${root}>${counts ? `; ${counts}` : '; no feed tags'}`;
+  // When a feed URL answers with a web page, that page says what happened
+  // — "Pagina non trovata", a consent wall, a portal error — and the root
+  // element alone does not. The Garante's RSS endpoint returned 88KB of
+  // HTML and the byte count could not distinguish a moved feed from a
+  // quiet regulator.
+  const title = xml.match(/<title[^>]*>([\s\S]{0,120}?)<\/title>/i)?.[1];
+  const named = title ? `; title "${title.replace(/\s+/g, ' ').trim()}"` : '';
+
+  return `root <${root}>${counts ? `; ${counts}` : '; no feed tags'}${named}`;
 }

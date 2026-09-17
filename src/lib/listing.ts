@@ -45,6 +45,35 @@ function textOf(html: string): string {
     .trim();
 }
 
+/**
+ * A provisional title read off the URL the regulator itself chose.
+ *
+ * Not an invention: `/notas-de-prensa/la-aepd-sanciona-a-una-empresa/` is
+ * the authority's own wording, and it is replaced wholesale by pass 2,
+ * which reads the decision page for every fact that is published. Its only
+ * job is to let a human recognise the row in the review queue.
+ *
+ * Deliberately strict, because a bad provisional title is worse than a
+ * skipped item: a slug has to look like a sentence — three words and
+ * twenty characters — before it is worth showing. `/enforcement/short/`
+ * yields "short", which tells a reviewer nothing, so it stays skipped and
+ * stays counted.
+ */
+function titleFromSlug(pathname: string): string | null {
+  const slug = pathname.split('/').filter(Boolean).pop() ?? '';
+  const words = slug
+    .replace(/\.(html?|php|aspx?|pdf)$/i, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (words.length < 20 || words.split(' ').length < 3) return null;
+  // Digits-only paths (/news/2026/09/17/) are a date, not a headline.
+  if (!/[a-z]{3}/i.test(words)) return null;
+
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export interface ListingOptions {
   /**
    * Which links are items. A plain substring of the path, not a regex:
@@ -93,7 +122,15 @@ export function parseListing(html: string, options: ListingOptions): ParsedFeed 
     // EUR-Lex text, to a PDF on another ministry's server; following
     // those would fill the queue with things nobody asked us to watch.
     if (absolute.origin !== origin) continue;
-    if (!absolute.pathname.includes(itemPattern)) continue;
+    const at = absolute.pathname.indexOf(itemPattern);
+    if (at === -1) continue;
+
+    // An item lives UNDER the section; it is not the section. Without
+    // this, the page's own "Notas de prensa" link matches the pattern,
+    // carries a perfectly good title, and enters the review queue as a
+    // decision — a listing page presented to a reviewer as a sanction.
+    // Every regulator links back to the index it is showing you.
+    if (absolute.pathname.slice(at + itemPattern.length).replace(/\/+$/, '') === '') continue;
 
     // The fragment is not part of the identity: /x#main and /x are one
     // decision, and treating them as two would publish it twice.
@@ -101,10 +138,16 @@ export function parseListing(html: string, options: ListingOptions): ParsedFeed 
     const link = absolute.toString();
     if (seen.has(link)) continue;
 
-    // A "read more" or an empty anchor around an image carries no
-    // title, and raw_title is what the reviewer reads first in the
-    // queue. Counted rather than guessed at.
-    if (title.length < 12) {
+    // A "read more" or an empty anchor around an image carries no title,
+    // and raw_title is what the reviewer reads first in the queue.
+    //
+    // The AEPD publishes exactly that way: the headline sits in a heading
+    // and the only link to the decision is the words "Leer más". Eight
+    // decisions per page, eight links found, eight refused — the source
+    // reported "no items" while working perfectly. Refusing a whole
+    // regulator over the wording of its anchors is the wrong trade.
+    const usable = title.length >= 12 ? title : titleFromSlug(absolute.pathname);
+    if (!usable) {
       skipped += 1;
       continue;
     }
@@ -112,7 +155,7 @@ export function parseListing(html: string, options: ListingOptions): ParsedFeed 
     seen.add(link);
     items.push({
       externalId: link,
-      title,
+      title: usable,
       link,
       // Never invented. Pass 2 reads the real date off the decision.
       publishedAt: null,
@@ -154,6 +197,7 @@ export function describeListing(html: string, options: ListingOptions): string {
 
   const prefixes = new Map<string, number>();
   const untitled: string[] = [];
+  const deep: string[] = [];
   let anchors = 0;
 
   for (const match of html.matchAll(ANCHOR)) {
@@ -166,10 +210,18 @@ export function describeListing(html: string, options: ListingOptions): string {
     if (absolute.origin !== origin) continue;
     anchors += 1;
 
-    // The first two segments are the shape of a section, which is what an
-    // item_pattern is: /es/prensa-y-comunicacion/, /pt-br/assuntos/.
-    const prefix = `/${absolute.pathname.split('/').filter(Boolean).slice(0, 2).join('/')}/`;
+    // Three segments, not two. Two was enough for Spain and told us
+    // nothing about Brazil, where the whole site lives under /anpd/pt-br/
+    // so every link collapsed to one useless bucket: "59 links, all in
+    // the same place" is the shape of the answer, not the answer.
+    const segments = absolute.pathname.split('/').filter(Boolean);
+    const prefix = `/${segments.slice(0, 3).join('/')}/`;
     prefixes.set(prefix, (prefixes.get(prefix) ?? 0) + 1);
+
+    // And a couple of whole paths, because a prefix census cannot show
+    // what an actual decision URL looks like. The deepest ones are the
+    // articles; navigation is always shallow.
+    if (segments.length >= 3) deep.push(absolute.pathname);
 
     if (absolute.pathname.includes(options.itemPattern) && untitled.length < 3) {
       const title = textOf(match[2] ?? '');
@@ -184,6 +236,13 @@ export function describeListing(html: string, options: ListingOptions): string {
     .join(' ');
 
   const parts = [`${anchors} same-origin links`, top || 'no same-origin links'];
+
+  const samples = [...new Set(deep)]
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 2)
+    .join(' ');
+  if (samples) parts.push(`deepest: ${samples}`);
+
   if (untitled.length > 0) parts.push(`pattern matched, no title: ${untitled.join(' ')}`);
   return parts.join('; ');
 }

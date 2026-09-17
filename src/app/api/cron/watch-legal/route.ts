@@ -35,8 +35,16 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-/** Feeds are small; anything slower than this is a source that is down. */
-const FETCH_TIMEOUT_MS = 15_000;
+/**
+ * Feeds are small; anything slower than this is a source that is down.
+ *
+ * 20s rather than 15s because the CNIL — the source that has never failed
+ * — timed out on a run where it had simply been slow. A transient timeout
+ * costs a real source a strike against the five that disable it, so the
+ * budget has to be generous enough that only a genuinely dead endpoint
+ * spends one.
+ */
+const FETCH_TIMEOUT_MS = 20_000;
 
 /**
  * Newest N entries per source per run. Regulator feeds carry 20-50
@@ -111,11 +119,30 @@ async function watch() {
   }
 
   const sources = (data ?? []) as SourceRow[];
-  const results: SourceResult[] = [];
 
-  for (const source of sources) {
-    results.push(await pollSource(db, source));
-  }
+  // Concurrently, not one after another.
+  //
+  // Nine sources at a 20-second budget each is three minutes of worst
+  // case against a 60-second function: the sources polled last would
+  // simply never be polled, and — because a source that is never reached
+  // is not a source that failed — nothing anywhere would say so. The
+  // slowest regulator would silently decide how much of Europe we watch.
+  //
+  // Nine parallel GETs to nine different authorities is not load on any
+  // of them; the whole run is now bounded by the slowest single fetch.
+  const results = await Promise.all(
+    sources.map(async (source): Promise<SourceResult> => {
+      try {
+        return await pollSource(db, source);
+      } catch (err) {
+        // pollSource handles its own failures; this is the one it did not
+        // anticipate, and one source must never cost us the other eight.
+        const message = err instanceof Error ? err.message : String(err);
+        console.error('[cron/watch-legal] source_threw', { source: source.id, error: message });
+        return { source: source.id, ok: false, discovered: 0, skipped: 0, error: message };
+      }
+    })
+  );
 
   const failed = results.filter((r) => !r.ok);
   const discovered = results.reduce((n, r) => n + r.discovered, 0);
@@ -186,7 +213,15 @@ async function pollSource(
       // Identify ourselves. A regulator blocking an anonymous scraper
       // is entirely reasonable, and a contactable user agent is the
       // difference between being rate-limited and being banned.
-      headers: { 'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)' },
+      headers: {
+        'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)',
+        // The EDPS answers 403. A request with no Accept header is a
+        // signature several WAFs treat as a bot worth refusing, and
+        // stating what we came for costs nothing. If it is still 403
+        // after this, they mean it and the source goes.
+        accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/html;q=0.8',
+        'accept-language': 'en;q=0.9'
+      },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       cache: 'no-store'
     });
