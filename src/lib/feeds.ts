@@ -133,3 +133,25 @@ export function parseFeed(xml: string): ParsedFeed {
 
   return { items, skipped };
 }
+
+/**
+ * What the document actually was, for when it parsed to nothing.
+ *
+ * A feed URL that yields zero items has usually stopped being a feed: the
+ * regulator moved it and now serves an HTML page, or a portal answers a
+ * consent wall with 200. `no_items (88388 bytes)` cannot tell those apart
+ * from a genuinely empty feed, and the sandbox cannot open the URL to look.
+ * The root element and the tags present answer it in one line.
+ */
+export function describeFeed(xml: string): string {
+  const root = xml.match(/<([a-z][\w:.-]*)\b/i)?.[1] ?? 'no element';
+  const counts = ['item', 'entry', 'channel', 'html', 'body']
+    .map((tagName) => {
+      const n = xml.match(new RegExp(`<${tagName}\\b`, 'gi'))?.length ?? 0;
+      return n > 0 ? `${tagName}×${n}` : null;
+    })
+    .filter(Boolean)
+    .join(' ');
+
+  return `root <${root}>${counts ? `; ${counts}` : '; no feed tags'}`;
+}

@@ -124,3 +124,66 @@ export function parseListing(html: string, options: ListingOptions): ParsedFeed 
 
   return { items, skipped };
 }
+
+/**
+ * What the page actually contained, for when it yielded nothing.
+ *
+ * `no_items (skipped 8, 138832 bytes)` says a fetch succeeded and a parse
+ * found nothing — true, and useless. It does not say whether the pattern
+ * matched nothing, or matched links whose anchors carry no text, and those
+ * are opposite repairs. Worse, the only way to find out was to open the
+ * regulator's page by hand, which this sandbox cannot reach: the source
+ * would then stay dead for as long as nobody happened to look.
+ *
+ * So on failure the poller now writes down what it saw — the commonest
+ * same-origin path prefixes, and the anchors that matched but were refused
+ * for having no usable title. That is enough to choose the right
+ * `item_pattern` from the error message alone, without reaching the site.
+ *
+ * Same principle as recording every way a sign-in can be refused: an
+ * instrument that reports only that something failed is an instrument for
+ * failures you already understood.
+ */
+export function describeListing(html: string, options: ListingOptions): string {
+  let origin: string;
+  try {
+    origin = new URL(options.baseUrl).origin;
+  } catch {
+    return 'base_url unparseable';
+  }
+
+  const prefixes = new Map<string, number>();
+  const untitled: string[] = [];
+  let anchors = 0;
+
+  for (const match of html.matchAll(ANCHOR)) {
+    let absolute: URL;
+    try {
+      absolute = new URL(match[1]!, options.baseUrl);
+    } catch {
+      continue;
+    }
+    if (absolute.origin !== origin) continue;
+    anchors += 1;
+
+    // The first two segments are the shape of a section, which is what an
+    // item_pattern is: /es/prensa-y-comunicacion/, /pt-br/assuntos/.
+    const prefix = `/${absolute.pathname.split('/').filter(Boolean).slice(0, 2).join('/')}/`;
+    prefixes.set(prefix, (prefixes.get(prefix) ?? 0) + 1);
+
+    if (absolute.pathname.includes(options.itemPattern) && untitled.length < 3) {
+      const title = textOf(match[2] ?? '');
+      if (title.length < 12) untitled.push(JSON.stringify(title));
+    }
+  }
+
+  const top = [...prefixes.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([path, count]) => `${path}×${count}`)
+    .join(' ');
+
+  const parts = [`${anchors} same-origin links`, top || 'no same-origin links'];
+  if (untitled.length > 0) parts.push(`pattern matched, no title: ${untitled.join(' ')}`);
+  return parts.join('; ');
+}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseListing } from '@/lib/listing';
+import { describeFeed } from '@/lib/feeds';
+import { describeListing, parseListing } from '@/lib/listing';
 
 /**
  * Reading a regulator's news page when it has no feed.
@@ -135,5 +136,59 @@ describe('the page changed under us', () => {
       { itemPattern: '/enf/', baseUrl: 'https://x.test/' }
     );
     expect(items[0]?.title).toBe('Société X fined & reprimanded by the authority');
+  });
+});
+
+describe('when it yields nothing, it says what was on the page', () => {
+  /**
+   * Four of nine sources failed on the first real run and the errors —
+   * `no_items (skipped 8, 138832 bytes)` — could not be acted on. They do
+   * not distinguish a pattern that matches nothing from a pattern that
+   * matches links whose anchors carry no text, and those need opposite
+   * repairs. The only other way to find out was to open the regulator's
+   * page by hand, which the build sandbox cannot reach: every one of those
+   * sources would have stayed dead until somebody happened to look.
+   */
+
+  it('names the sections it found, so a pattern can be chosen from the error alone', () => {
+    const seen = describeListing(PAGE, {
+      itemPattern: '/nothing-matches-this/',
+      baseUrl: BASE
+    });
+    expect(seen).toContain('/action-weve-taken/enforcement/');
+    expect(seen).toContain('same-origin links');
+  });
+
+  it('distinguishes "matched nothing" from "matched, but the anchors are empty"', () => {
+    // AEPD's failure exactly: eight links matched and every one was
+    // refused for having no usable title. Without this the two read the
+    // same in the error message.
+    const seen = describeListing(PAGE, {
+      itemPattern: '/action-weve-taken/enforcement/',
+      baseUrl: BASE
+    });
+    expect(seen).toContain('pattern matched, no title');
+    expect(seen).toContain('"news"');
+  });
+
+  it('says so plainly when nothing on the page is ours', () => {
+    const seen = describeListing('<a href="https://x.test/a-page/">Elsewhere entirely</a>', {
+      itemPattern: '/x/',
+      baseUrl: BASE
+    });
+    expect(seen).toContain('no same-origin links');
+  });
+
+  it('tells a feed that became a web page from a feed that is empty', () => {
+    // The Garante failure: 88KB fetched from a URL declared as RSS, zero
+    // items. A moved feed serving HTML and a genuinely quiet regulator
+    // are indistinguishable by byte count.
+    expect(describeFeed('<?xml version="1.0"?><rss><channel></channel></rss>')).toContain('channel');
+    // A consent wall served with a 200 from a URL we call RSS names
+    // itself: root <html>, and not an <item> in sight.
+    const wall = describeFeed('<!doctype html><html><body>Consent required</body></html>');
+    expect(wall).toContain('root <html>');
+    expect(wall).not.toContain('item');
+    expect(describeFeed('<feed><entry/><entry/></feed>')).toContain('entry×2');
   });
 });

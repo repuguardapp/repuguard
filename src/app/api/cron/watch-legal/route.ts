@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
-import { parseFeed } from '@/lib/feeds';
-import { parseListing } from '@/lib/listing';
+import { describeFeed, parseFeed } from '@/lib/feeds';
+import { describeListing, parseListing } from '@/lib/listing';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -218,7 +218,23 @@ async function pollSource(
     // dead for months. For a listing it also catches the other failure
     // — the page is alive and item_pattern no longer matches anything,
     // because the regulator reorganised their URLs.
-    return await fail(`no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes)`);
+    // Say what was on the page, not only that nothing was taken from it.
+    // "skipped 8, 138832 bytes" is true and cannot be acted on: it does
+    // not distinguish a pattern that matches nothing from a pattern that
+    // matches links whose anchors carry no text, and those need opposite
+    // repairs. The diagnosis has to travel in the error, because the only
+    // other way to get it is to open the regulator's page by hand.
+    const seen =
+      source.feed_kind === 'html'
+        ? describeListing(body, {
+            itemPattern: source.item_pattern ?? '/',
+            baseUrl: source.feed_url
+          })
+        : describeFeed(body);
+
+    return await fail(
+      `no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes) — ${seen}`
+    );
   }
 
   const rows = items.slice(0, MAX_ITEMS_PER_SOURCE).map((item) => ({
