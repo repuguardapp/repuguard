@@ -18,9 +18,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  */
 
 vi.mock('server-only', () => ({}));
+// waitUntil defers the telemetry write; in Vitest it must simply run.
+vi.mock('@vercel/functions', () => ({ waitUntil: (p: Promise<unknown>) => p }));
 
 interface Journal {
-  touches: { stage: string; user_agent: string | null; link_type: string | null }[];
+  touches: { stage: string; user_agent: string | null; link_type: string | null; detail?: string | null }[];
   verified: { token_hash?: string; type?: string }[];
   exchanged: string[];
 }
@@ -196,7 +198,12 @@ describe('the open is recorded, so we can tell a scanner from a person', () => {
     expect(journal.touches[0]!.user_agent).toContain('Barracuda');
     // No email, no token, no IP. We sell GDPR audits.
     expect(JSON.stringify(journal.touches[0])).not.toContain('abc123');
-    expect(Object.keys(journal.touches[0]!).sort()).toEqual(['link_type', 'stage', 'user_agent']);
+    expect(Object.keys(journal.touches[0]!).sort()).toEqual([
+      'detail',
+      'link_type',
+      'stage',
+      'user_agent'
+    ]);
   });
 
   it('records the confirmation separately, so the gap is measurable', async () => {
@@ -205,11 +212,19 @@ describe('the open is recorded, so we can tell a scanner from a person', () => {
     expect(journal.touches.map((t) => t.stage)).toEqual(['confirmed']);
   });
 
-  it('does not record a confirmation that failed', async () => {
+  it('records a failure, because an absence answers nothing', async () => {
+    // Recording only success made this table unable to answer the
+    // question it exists for: a missing `confirmed` row meant either
+    // the visitor never pressed the button, or pressed it and the token
+    // was already spent. Opposite diagnoses, indistinguishable.
     verifyFails = true;
     const { POST } = await route();
     await POST(post({ token_hash: 'stale', type: 'magiclink', next: '/fr/dashboard' }));
-    expect(journal.touches).toHaveLength(0);
+
+    expect(journal.touches.map((t) => t.stage)).toEqual(['failed']);
+    expect(journal.touches[0]!.detail).toContain('expired');
+    // Still nothing identifying, on a failure as on a success.
+    expect(JSON.stringify(journal.touches[0])).not.toContain('stale');
   });
 });
 

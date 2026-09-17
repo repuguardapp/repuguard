@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { waitUntil } from '@vercel/functions';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error('[auth/callback] exchangeCodeForSession failed', error.message);
+      recordTouch('failed', request.headers.get('user-agent'), type, error.message);
       return redirectToLogin(url, 'exchange_failed', rawNext);
     }
   } else if (tokenHash && type) {
@@ -153,6 +155,11 @@ export async function POST(request: NextRequest) {
     });
     if (error) {
       console.error('[auth/callback] verifyOtp failed', error.message);
+      // Recorded, because only recording success made the table unable
+      // to answer the question it exists for: a missing `confirmed` row
+      // could mean the visitor never pressed the button, or pressed it
+      // and the token was already spent. Those are opposite diagnoses.
+      recordTouch('failed', request.headers.get('user-agent'), type, error.message);
       return redirectToLogin(url, 'verify_failed', rawNext);
     }
   } else {
@@ -176,18 +183,36 @@ function str(value: FormDataEntryValue | null): string | null {
  * separates a scanner from a browser, since they identify themselves —
  * and no email, no token and no IP address.
  */
-function recordTouch(stage: 'visited' | 'confirmed', userAgent: string | null, linkType: string | null): void {
-  void (async () => {
-    try {
-      await supabaseService()
-        .from('auth_link_touches')
-        .insert({ stage, user_agent: userAgent?.slice(0, 500) ?? null, link_type: linkType });
-    } catch (err) {
-      console.warn('[auth/callback] touch_not_recorded', {
-        error: err instanceof Error ? err.message : String(err)
-      });
-    }
-  })();
+function recordTouch(
+  stage: 'visited' | 'confirmed' | 'failed',
+  userAgent: string | null,
+  linkType: string | null,
+  detail?: string
+): void {
+  // waitUntil, not a bare floating promise.
+  //
+  // Vercel freezes the function the moment the response is returned, so
+  // an unawaited write is a write that sometimes lands and sometimes
+  // does not. That is exactly how alertOps lost Sentry events last
+  // week, and I reintroduced it here yesterday. An instrument that
+  // reports intermittently is worse than none: it invites conclusions
+  // from an absence that means nothing.
+  waitUntil(
+    (async () => {
+      try {
+        await supabaseService().from('auth_link_touches').insert({
+          stage,
+          user_agent: userAgent?.slice(0, 500) ?? null,
+          link_type: linkType,
+          detail: detail?.slice(0, 200) ?? null
+        });
+      } catch (err) {
+        console.warn('[auth/callback] touch_not_recorded', {
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    })()
+  );
 }
 
 /**

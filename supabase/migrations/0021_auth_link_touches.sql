@@ -48,3 +48,25 @@ alter table public.auth_link_touches enable row level security;
 
 comment on table public.auth_link_touches is
   'One row per magic-link open. stage=visited is any opener including mail scanners; stage=confirmed is a real form submission. Carries no email, token or IP.';
+
+-- 0026, applied 17 September: the instrument could not answer its own
+-- question.
+--
+-- Only success was recorded, so a missing `confirmed` row meant either
+-- "the visitor never pressed the button" or "they pressed it and the
+-- token was already spent" — opposite diagnoses, indistinguishable. And
+-- the write was a floating promise, which on Vercel lands or does not
+-- depending on when the function freezes: the same mistake that lost
+-- Sentry events last week, reintroduced a day later in this file.
+alter table public.auth_link_touches
+  drop constraint if exists auth_link_touches_stage_check;
+
+alter table public.auth_link_touches
+  add constraint auth_link_touches_stage_check
+  check (stage in ('visited', 'confirmed', 'failed'));
+
+alter table public.auth_link_touches
+  add column if not exists detail text;
+
+comment on column public.auth_link_touches.detail is
+  'For stage=failed: the provider error, e.g. "Token has expired or is invalid". No email, no token.';

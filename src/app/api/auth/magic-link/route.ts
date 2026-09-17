@@ -132,6 +132,20 @@ async function handle(request: Request): Promise<Response> {
         status: error.status ?? null,
         code: error.code ?? null
       });
+
+      // A rate limit is the one failure the visitor must be told about.
+      //
+      // The uniform "check your inbox" exists so an attacker cannot
+      // learn whether an address is registered. A rate limit says
+      // nothing about the address — it is a fact about the REQUESTER,
+      // who already knows how many times they pressed the button. So
+      // reporting it leaks nothing, and not reporting it is what
+      // happened tonight: three requests refused by Supabase, three
+      // times "check your inbox", no email, and a product that looks
+      // broken while behaving exactly as designed.
+      if (error.status === 429 || error.code === 'over_email_send_rate_limit') {
+        return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+      }
     } else {
       console.log('[auth/magic-link] otp_send_queued');
     }
