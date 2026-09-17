@@ -5,6 +5,7 @@ import { lifecycleStringsFor } from './email-lifecycle-i18n';
 import { PLAN_CREDITS } from './stripe';
 import { supabaseService } from './supabase';
 import { appUrl } from '@/lib/app-url';
+import { isSuppressed } from '@/lib/email-suppression';
 
 /**
  * Transactional email via Resend.
@@ -123,6 +124,17 @@ export async function sendAuditCompletedEmail(args: AuditCompletedEmailArgs): Pr
 
     if (recipients.length === 0) return;
 
+    // Same gate, applied per recipient because this one can address a
+    // whole team: one suppressed member must not silence the report
+    // for the others.
+    const deliverable: string[] = [];
+    for (const address of recipients) {
+      const gate = await isSuppressed(address);
+      if (gate.blocked) console.warn('[email] audit_completed suppressed', { reason: gate.reason });
+      else deliverable.push(address);
+    }
+    if (deliverable.length === 0) return;
+
     const url = `${APP_URL()}/dashboard/${args.auditId}`;
     const severity = severityFor(args.riskScore);
     const strings = emailStringsFor(org.ui_locale);
@@ -130,7 +142,7 @@ export async function sendAuditCompletedEmail(args: AuditCompletedEmailArgs): Pr
 
     await r.emails.send({
       from: FROM,
-      to: recipients,
+      to: deliverable,
       subject,
       html: renderAuditCompletedHtml({ ...args, severity, url, orgName: org.name ?? 'your team', strings }),
       text: renderAuditCompletedText({ ...args, severity, url, strings })
@@ -218,6 +230,16 @@ export async function sendMagicLinkEmail(args: MagicLinkEmailArgs): Promise<void
       return;
     }
 
+    // Suppression gate. Writing again to a mailbox that has already
+    // hard-bounced or marked us as spam is what destroys a sending
+    // domain, and until now nothing recorded either. The ops digest is
+    // deliberately NOT gated: it goes to our own allowlist and
+    // silencing it would remove our own alerting.
+    const gate = await isSuppressed(args.to);
+    if (gate.blocked) {
+      console.warn('[email] magic_link suppressed', { reason: gate.reason });
+      return;
+    }
     const locale = (args.locale ?? 'en').toLowerCase();
     const subject = MAGIC_SUBJECT[locale] ?? MAGIC_SUBJECT.en!;
     const body = MAGIC_BODY[locale] ?? MAGIC_BODY.en!;
@@ -391,6 +413,16 @@ async function sendLifecycle(args: {
     const r = resend();
     if (!r) {
       console.warn(`[email] ${args.logTag} resend_disabled`);
+      return false;
+    }
+    // Suppression gate. Writing again to a mailbox that has already
+    // hard-bounced or marked us as spam is what destroys a sending
+    // domain, and until now nothing recorded either. The ops digest is
+    // deliberately NOT gated: it goes to our own allowlist and
+    // silencing it would remove our own alerting.
+    const gate = await isSuppressed(args.to);
+    if (gate.blocked) {
+      console.warn('[email] ${args.logTag} suppressed', { reason: gate.reason });
       return false;
     }
     const { data, error } = await r.emails.send({
