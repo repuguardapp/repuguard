@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { waitUntil } from '@vercel/functions';
 import { NextResponse, type NextRequest } from 'next/server';
+import { appUrl } from '@/lib/app-url';
 import { supabaseService } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
@@ -78,7 +79,10 @@ export async function GET(request: NextRequest) {
   const type = url.searchParams.get('type');
   const rawNext = url.searchParams.get('next');
 
-  if (!code && !(tokenHash && type)) return redirectToLogin(url, 'missing_token', rawNext);
+  if (!code && !(tokenHash && type)) {
+    recordTouch('failed', request.headers.get('user-agent'), type, 'missing_token on GET');
+    return redirectToLogin(url, 'missing_token', rawNext);
+  }
 
   recordTouch('visited', request.headers.get('user-agent'), type);
 
@@ -102,13 +106,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const url = new URL(request.url);
 
-  // Same-origin only. Without this, a hostile page could auto-submit
-  // its own magic-link token from the victim's browser and sign them
-  // into an account the attacker controls — login CSRF, whose payoff
-  // is every document the victim uploads afterwards.
+  // Same-site only. Without this, a hostile page could auto-submit its
+  // own magic-link token from the victim's browser and sign them into an
+  // account the attacker controls — login CSRF, whose payoff is every
+  // document the victim uploads afterwards.
   const origin = request.headers.get('origin');
-  if (origin && origin !== url.origin) {
-    console.error('[auth/callback] cross_origin_post', { origin });
+  if (origin && !isOurs(origin, request, url)) {
+    console.error('[auth/callback] cross_origin_post', { origin, seen: url.origin });
+    recordTouch('failed', request.headers.get('user-agent'), null, `bad_origin ${origin}`);
     return redirectToLogin(url, 'bad_origin', null);
   }
 
@@ -124,6 +129,7 @@ export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnon) {
+    recordTouch('failed', request.headers.get('user-agent'), type, 'env_not_configured');
     return redirectToLogin(url, 'env_not_configured', rawNext);
   }
 
@@ -163,6 +169,7 @@ export async function POST(request: NextRequest) {
       return redirectToLogin(url, 'verify_failed', rawNext);
     }
   } else {
+    recordTouch('failed', request.headers.get('user-agent'), type, 'missing_token on POST');
     return redirectToLogin(url, 'missing_token', rawNext);
   }
 
@@ -173,6 +180,60 @@ export async function POST(request: NextRequest) {
 
 function str(value: FormDataEntryValue | null): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+/**
+ * Is this POST coming from a page of ours?
+ *
+ * The first version compared the Origin header to `new URL(request.url).origin`
+ * and rejected anything else. It refused the founder's own sign-in on the
+ * first human attempt, and the auth logs proved where: Supabase never
+ * received a /verify call at all, so the refusal happened here, before any
+ * token was spent.
+ *
+ * `request.url` is reassembled by the runtime from forwarded headers, so its
+ * ORIGIN is not a reliable constant behind a proxy — the scheme can arrive as
+ * http from a TLS-terminating hop, and the host can be the platform's internal
+ * one rather than the one in the address bar. Comparing whole origins compares
+ * the proxy's bookkeeping. Comparing HOSTS compares what actually matters, and
+ * is the standard check: an attacker on evil.test cannot make their Origin
+ * carry our host, whatever any hop rewrites.
+ *
+ * So: accept the origin if its host matches any host this request is legitimately
+ * reachable under — the forwarded host, the Host header, the one the runtime
+ * reconstructed, or our configured canonical domain. Reject everything else,
+ * which is exactly the set of hosts an attacker can actually control.
+ */
+function isOurs(origin: string, request: NextRequest, url: URL): boolean {
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host.toLowerCase();
+  } catch {
+    // An Origin that is not a URL is either 'null' (a sandboxed frame or a
+    // redirect chain that dropped it) or malformed. Neither is us.
+    return false;
+  }
+
+  const ours = new Set<string>();
+  for (const candidate of [
+    request.headers.get('x-forwarded-host'),
+    request.headers.get('host'),
+    url.host,
+    hostOf(appUrl())
+  ]) {
+    // x-forwarded-host may legitimately be a comma-separated chain.
+    if (candidate) for (const h of candidate.split(',')) ours.add(h.trim().toLowerCase());
+  }
+
+  return ours.has(originHost);
+}
+
+function hostOf(value: string): string | null {
+  try {
+    return new URL(value).host;
+  } catch {
+    return null;
+  }
 }
 
 /**

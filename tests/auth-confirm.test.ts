@@ -69,10 +69,14 @@ function get(url = LINK, userAgent = 'Mozilla/5.0') {
   return new Request(url, { headers: { 'user-agent': userAgent } }) as never;
 }
 
-function post(fields: Record<string, string>, headers: Record<string, string> = {}) {
+function post(
+  fields: Record<string, string>,
+  headers: Record<string, string> = {},
+  url = 'https://lexyflow.com/api/auth/callback'
+) {
   const body = new FormData();
   for (const [k, v] of Object.entries(fields)) body.append(k, v);
-  return new Request('https://lexyflow.com/api/auth/callback', {
+  return new Request(url, {
     method: 'POST',
     body,
     headers: { 'user-agent': 'Mozilla/5.0', ...headers }
@@ -181,6 +185,57 @@ describe('submitting the form is what signs you in', () => {
     expect(new URL(res.headers.get('location')!).searchParams.get('error')).toBe('bad_origin');
   });
 
+  it('accepts our own origin when a proxy rewrote the scheme', async () => {
+    // The refusal that locked the founder out of his own product on the
+    // first human attempt. The check compared the Origin header to
+    // `new URL(request.url).origin`, and behind a TLS-terminating hop
+    // the runtime reassembles that URL as http — so the browser said
+    // https://lexyflow.com, the server said http://lexyflow.com, and a
+    // legitimate sign-in was answered as login CSRF. Supabase never even
+    // received a /verify call, which is how we know the refusal was ours.
+    const { POST } = await route();
+    await POST(
+      post(
+        { token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' },
+        { origin: 'https://lexyflow.com' },
+        'http://lexyflow.com/api/auth/callback'
+      )
+    );
+    expect(journal.verified).toHaveLength(1);
+  });
+
+  it('accepts the host a proxy forwards, not only the one it reconstructed', async () => {
+    const { POST } = await route();
+    await POST(
+      post(
+        { token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' },
+        { origin: 'https://www.lexyflow.com', 'x-forwarded-host': 'www.lexyflow.com' },
+        'https://internal.vercel.app/api/auth/callback'
+      )
+    );
+    expect(journal.verified).toHaveLength(1);
+  });
+
+  it('still refuses a host we are not reachable under, whatever the scheme', async () => {
+    const { POST } = await route();
+    await POST(
+      post(
+        { token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' },
+        { origin: 'http://lexyflow.com.evil.test' },
+        'http://lexyflow.com/api/auth/callback'
+      )
+    );
+    expect(journal.verified).toHaveLength(0);
+  });
+
+  it('refuses an Origin that is not a URL at all', async () => {
+    const { POST } = await route();
+    await POST(
+      post({ token_hash: 'abc', type: 'magiclink', next: '/fr/dashboard' }, { origin: 'null' })
+    );
+    expect(journal.verified).toHaveLength(0);
+  });
+
   it('never honours a next that leaves our origin', async () => {
     const { POST } = await route();
     const res = await POST(post({ token_hash: 'a', type: 'magiclink', next: '//evil.test/x' }));
@@ -225,6 +280,23 @@ describe('the open is recorded, so we can tell a scanner from a person', () => {
     expect(journal.touches[0]!.detail).toContain('expired');
     // Still nothing identifying, on a failure as on a success.
     expect(JSON.stringify(journal.touches[0])).not.toContain('stale');
+  });
+
+  it('records every way the POST can be refused, not only the ones we expected', async () => {
+    // The table was built to say where sign-in breaks, and then said
+    // nothing on the night it broke: three of the five failure paths
+    // returned before writing a row, so a real refusal was
+    // indistinguishable from a visitor who closed the tab. An instrument
+    // that is silent about the cases you did not predict is an
+    // instrument for the cases you did not need it for.
+    const { POST } = await route();
+
+    await POST(post({ token_hash: 'a', type: 'magiclink' }, { origin: 'https://evil.test' }));
+    await POST(post({ next: '/fr/dashboard' }));
+
+    expect(journal.touches.map((t) => t.stage)).toEqual(['failed', 'failed']);
+    expect(journal.touches[0]!.detail).toContain('bad_origin');
+    expect(journal.touches[1]!.detail).toContain('missing_token');
   });
 });
 
