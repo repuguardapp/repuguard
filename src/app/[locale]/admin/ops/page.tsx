@@ -42,6 +42,7 @@ interface SourceRow {
   last_status: string | null;
   last_error: string | null;
   last_item_count: number | null;
+  verified_at: string | null;
 }
 
 /**
@@ -55,6 +56,15 @@ interface SourceRow {
  * you already distrust the system.
  */
 function healthLabel(source: SourceRow): string {
+  // A source that has never produced an item is a candidate, not a
+  // breakage. Six Gulf authorities were added from a sandbox that can open
+  // none of their pages, so their first URLs are considered starting
+  // points and are expected to be wrong. Printing "erreur" next to them
+  // would make the row that says "we do not watch Saudi Arabia yet" look
+  // identical to the row that says "the CNIL went down last night".
+  if (!source.verified_at && source.last_status !== 'ok') {
+    return source.enabled ? 'candidat' : 'candidat abandonné';
+  }
   // "ok" with the number attached. `items.length > 0` is all ok has ever
   // meant, and the ICO was green for the whole life of this pipeline on a
   // single row that turned out to be its accessibility skip link. "ok, 8"
@@ -89,7 +99,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
     db
       .from('legal_sources')
       .select(
-        'id, name, jurisdiction, feed_url, feed_kind, enabled, last_polled_at, last_status, last_error, last_item_count'
+        'id, name, jurisdiction, feed_url, feed_kind, enabled, last_polled_at, last_status, last_error, last_item_count, verified_at'
       )
       .order('id'),
     db.from('legal_developments').select('status')
@@ -141,7 +151,15 @@ export default async function OpsPage({ params }: { params: { locale: string } }
                 <Badge variant="outline">{source.feed_kind}</Badge>
                 <Badge
                   variant={source.last_status === 'ok' ? 'secondary' : 'outline'}
-                  className={source.last_status === 'error' ? 'border-destructive text-destructive' : ''}
+                  // Red is reserved for something that broke. A candidate
+                  // whose URL has not been found yet is unfinished work,
+                  // not a fault, and colouring the two the same way is how
+                  // a console stops being read.
+                  className={
+                    source.last_status === 'error' && source.verified_at
+                      ? 'border-destructive text-destructive'
+                      : ''
+                  }
                 >
                   {healthLabel(source)}
                 </Badge>
@@ -149,7 +167,13 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               </div>
               <code className="break-all text-xs text-muted-foreground">{source.feed_url}</code>
               {source.last_error ? (
-                <p className="text-xs text-destructive">{source.last_error}</p>
+                <p
+                  className={
+                    source.verified_at ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'
+                  }
+                >
+                  {source.last_error}
+                </p>
               ) : null}
               {source.last_polled_at ? (
                 <p className="text-xs text-muted-foreground">

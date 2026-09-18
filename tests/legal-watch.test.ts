@@ -269,3 +269,112 @@ describe('finding the feed a source should have had', () => {
     expect(source).toContain('if (candidate === feedUrl) continue;');
   });
 });
+
+describe('a source that never worked is not a source that broke', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'src/app/api/cron/watch-legal/route.ts'),
+    'utf8'
+  );
+
+  /**
+   * We sell audits against six Gulf regimes and watched none of them.
+   * Adding those authorities means adding URLs nobody here can open — the
+   * build sandbox reaches no regulator domain — so the first honest
+   * description of each is "candidate", and each is expected to fail while
+   * the prober narrows the path down.
+   *
+   * Under the ordinary rule that is five failures, about thirty hours:
+   * every Gulf source would have switched itself off before anyone had
+   * read a single probe report, and would have sent twenty alerts on the
+   * way. The alerting channel would have been trained to be ignored by the
+   * six sources it was reporting on.
+   */
+
+  it('gives a candidate a longer rope than a source that regressed', () => {
+    expect(source).toContain('DISABLE_UNVERIFIED_AFTER = 20');
+    expect(source).toContain('DISABLE_AFTER_CONSECUTIVE_FAILURES = 5');
+    expect(source).toContain(
+      'const limit = unverified ? DISABLE_UNVERIFIED_AFTER : DISABLE_AFTER_CONSECUTIVE_FAILURES;'
+    );
+  });
+
+  it('does not alert on a candidate failing, which is the expected case', () => {
+    expect(source).toContain('const brokenAlerts = failed.filter((f) => !f.unverified);');
+    // The run-level alert takes the filtered list, not the raw one.
+    const alertCall = source.slice(source.indexOf("alertOps('cron.watch_legal_source_failed'"));
+    expect(alertCall.slice(0, 250)).toContain('brokenAlerts.map');
+  });
+
+  it('still says something the day it gives up on a jurisdiction we sell', () => {
+    // Abandoning Saudi Arabia is worth one line even though each
+    // individual failure on the way was not.
+    const disabled = source.slice(source.indexOf("alertOps('cron.watch_legal_source_disabled'"));
+    expect(disabled.slice(0, 200)).toContain('unverified');
+  });
+
+  it('stops being a candidate the first time it produces an item', () => {
+    expect(source).toContain("verified_at: new Date().toISOString()");
+    // Written once. Re-stamping it on every success would make the column
+    // mean "last time it worked", which is last_polled_at's job.
+    expect(source).toContain('...(source.verified_at ? {} : {');
+  });
+
+  it('searches wider for a source that has never worked', () => {
+    // Probing for a feed beside a 404 answers a question we are not
+    // asking: for these the failure is the listing path itself.
+    expect(source).toContain('probeCandidates(source.feed_url, !source.verified_at)');
+    expect(source).toContain("paths.push('/en/news'");
+  });
+
+  it('bounds the whole search, not each request', () => {
+    // So the path list can grow without anyone recomputing whether the
+    // function still fits inside its sixty seconds.
+    expect(source).toContain('PROBE_BUDGET_MS');
+    expect(source).toContain('if (Date.now() > deadline)');
+  });
+});
+
+describe('the Gulf sources claim no permission they do not have', () => {
+  const sql = fs.readFileSync(
+    path.join(__dirname, '..', 'supabase', 'migrations', '0029_gulf_sources.sql'),
+    'utf8'
+  );
+
+  it('covers every Gulf regime the product sells', async () => {
+    const { FRAMEWORKS } = await import('../src/lib/legal-frameworks');
+    const gulf = FRAMEWORKS.filter((f) =>
+      ['SA', 'AE', 'QA', 'BH', 'KW', 'OM'].includes(f.jurisdiction)
+    );
+
+    // Six frameworks on the pricing page, six in the audit engine, and
+    // until today none in the corpus behind them.
+    expect(gulf).toHaveLength(6);
+    for (const framework of gulf) {
+      expect(sql).toContain(`'${framework.id}'`);
+    }
+  });
+
+  it('never invents an open licence for an authority that publishes none', () => {
+    // The European rows cite Etalab, the OGL, Decision 2011/833/EU —
+    // real permissions. No Gulf authority publishes one, and a plausible
+    // licence string written to make the column look uniform would be a
+    // compliance company citing a permission that does not exist. That is
+    // the single most dangerous thing this table could contain.
+    const inserts = sql.slice(sql.indexOf('insert into public.legal_sources'));
+    for (const claim of ['Open Government Licence', 'Etalab', '2011/833', 'CC BY', 'public domain']) {
+      expect(inserts).not.toContain(claim);
+    }
+    expect(inserts).toContain('No published reuse licence');
+    // And it states what the pipeline actually does instead.
+    expect(inserts).toContain('never rendered or indexed');
+  });
+
+  it('adds them as candidates rather than asserting they work', () => {
+    // verified_at is left null on purpose: the sandbox that wrote these
+    // URLs cannot open a single one of them. Checked against the insert
+    // rather than the file, which explains the choice at length.
+    const inserts = sql.slice(sql.indexOf('insert into public.legal_sources'));
+    expect(inserts).not.toContain('verified_at');
+    expect(inserts).toContain('on conflict (id) do nothing');
+  });
+});

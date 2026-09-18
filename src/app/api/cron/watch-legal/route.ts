@@ -52,6 +52,9 @@ const FETCH_TIMEOUT_MS = 20_000;
  */
 const PROBE_TIMEOUT_MS = 4_000;
 
+/** And a ceiling on the whole search, whatever the list grows to. */
+const PROBE_BUDGET_MS = 20_000;
+
 /**
  * Newest N entries per source per run. Regulator feeds carry 20-50
  * items and we poll four times a day, so this is never a limit in
@@ -76,6 +79,24 @@ const MAX_ITEMS_PER_SOURCE = 40;
  */
 const DISABLE_AFTER_CONSECUTIVE_FAILURES = 5;
 
+/**
+ * The same rule for a source that has never worked at all.
+ *
+ * A source that broke and a source that was never right are opposite
+ * situations, and five runs is the wrong answer to the second. We sell
+ * audits against six Gulf regimes and watch none of them; adding those
+ * authorities means adding URLs nobody here can open, because the build
+ * sandbox reaches no regulator domain. The first honest description of
+ * such a source is "candidate", and a candidate would be switched off
+ * about thirty hours later — less time than it takes to read what the
+ * prober found and try the next path. Every Gulf source would be dead
+ * before it had taught us anything.
+ *
+ * Twenty runs is five days: several probe reports, several corrections,
+ * and still a bounded life for a URL that is simply wrong.
+ */
+const DISABLE_UNVERIFIED_AFTER = 20;
+
 interface SourceRow {
   id: string;
   name: string;
@@ -84,6 +105,8 @@ interface SourceRow {
   item_pattern: string | null;
   licence: string;
   consecutive_failures: number | null;
+  /** First poll that produced items. Null means it has never worked. */
+  verified_at: string | null;
 }
 
 interface SourceResult {
@@ -92,6 +115,8 @@ interface SourceResult {
   discovered: number;
   skipped: number;
   error?: string;
+  /** True while the source has never once produced an item: a candidate. */
+  unverified?: boolean;
   /** Set when this run was the one that switched the source off. */
   disabled?: boolean;
 }
@@ -115,7 +140,9 @@ async function watch() {
 
   const { data, error } = await db
     .from('legal_sources')
-    .select('id, name, feed_url, feed_kind, item_pattern, licence, consecutive_failures')
+    .select(
+      'id, name, feed_url, feed_kind, item_pattern, licence, consecutive_failures, verified_at'
+    )
     .eq('enabled', true);
 
   if (error) {
@@ -153,12 +180,26 @@ async function watch() {
   const failed = results.filter((r) => !r.ok);
   const discovered = results.reduce((n, r) => n + r.discovered, 0);
 
+  // A candidate that fails is not news.
+  //
+  // A source that stops reporting looks exactly like a regulator having a
+  // quiet month, and only the alert tells the two apart — but that is a
+  // statement about sources which once worked. A Gulf authority added with
+  // a URL nobody here could open is EXPECTED to fail, probably several
+  // times, while the prober narrows it down. Alerting on that trains us to
+  // ignore the channel, which costs far more than the six sources it is
+  // reporting on.
+  const brokenAlerts = failed.filter((f) => !f.unverified);
+
   if (failed.length > 0) {
-    // A source that stops reporting looks exactly like a regulator
-    // having a quiet month. Only the alert tells the two apart.
-    console.warn('[cron/watch-legal] sources_failed', { failed: failed.map((f) => f.source) });
+    console.warn('[cron/watch-legal] sources_failed', {
+      broken: brokenAlerts.map((f) => f.source),
+      candidates: failed.filter((f) => f.unverified).map((f) => f.source)
+    });
+  }
+  if (brokenAlerts.length > 0) {
     alertOps('cron.watch_legal_source_failed', {
-      failed: failed.map((f) => ({ source: f.source, error: f.error }))
+      failed: brokenAlerts.map((f) => ({ source: f.source, error: f.error }))
     });
   }
   if (discovered > 0) {
@@ -184,15 +225,25 @@ async function watch() {
  * gov.br runs Plone, whose feeds sit at `<section>/RSS`; WordPress and Drupal
  * answer at `/feed`; most sites keep something at `/rss.xml`.
  *
+ * A SOURCE THAT HAS NEVER WORKED GETS A WIDER SEARCH
+ *
+ * For a Gulf authority added from outside with a URL nobody could open,
+ * the failure is usually the listing path itself, and probing for feeds
+ * beside a 404 answers a question we are not asking. So an unverified
+ * source also gets the conventional places a government site keeps its
+ * news, and the report carries how many same-origin links each page
+ * holds — which is what says whether a page is built on the server or in
+ * the browser, the distinction that has cost us the ICO and the ANPD.
+ *
  * DELIBERATELY SMALL AND POLITE
  *
- * Four paths, four seconds each, sequential, and never while a source is
- * healthy. A working source probes nothing; a broken one costs its host
- * sixteen requests a day at the very most. Anything more enthusiastic than
- * that is a crawler, and we are a subscriber — the difference matters to
- * the people whose pages these are, and to whether they keep answering us.
+ * Sequential, four seconds each, under a hard twenty-second budget for the
+ * whole search, and never while a source is healthy. A working source
+ * probes nothing. Anything more enthusiastic than this is a crawler, and
+ * we are a subscriber — the difference matters to the people whose pages
+ * these are, and to whether they keep answering us at all.
  */
-async function probeCandidates(feedUrl: string): Promise<string | null> {
+async function probeCandidates(feedUrl: string, unverified = false): Promise<string | null> {
   let base: URL;
   try {
     base = new URL(feedUrl);
@@ -202,9 +253,22 @@ async function probeCandidates(feedUrl: string): Promise<string | null> {
 
   const stem = base.pathname.replace(/\/+$/, '');
   const paths = [`${stem}/RSS`, `${stem}/feed`, `${stem}/rss.xml`, '/rss.xml'];
+  if (unverified) {
+    paths.push('/en/news', '/news', '/en/media-center/news', '/en/media-centre/news');
+  }
+
+  // One budget for the whole search rather than one per request, so the
+  // list can grow without anyone having to recompute whether the function
+  // still fits inside its sixty seconds.
+  const deadline = Date.now() + PROBE_BUDGET_MS;
 
   const findings: string[] = [];
   for (const path of paths) {
+    if (Date.now() > deadline) {
+      findings.push('(budget spent)');
+      break;
+    }
+
     const candidate = new URL(path, base.origin).toString();
     if (candidate === feedUrl) continue;
 
@@ -212,7 +276,8 @@ async function probeCandidates(feedUrl: string): Promise<string | null> {
       const res = await fetchExternal(candidate, {
         headers: {
           'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)',
-          accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9'
+          accept:
+            'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/html;q=0.8'
         },
         signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
         cache: 'no-store'
@@ -223,10 +288,19 @@ async function probeCandidates(feedUrl: string): Promise<string | null> {
       if (!res.ok) continue;
 
       // 200 is not enough: a site that answers every URL with its homepage
-      // would report four feeds and have none. Read enough to see whether
-      // an item ever appears.
-      const head = (await res.text()).slice(0, 4000);
-      findings.push(`${path} → ${describeFeed(head)}`);
+      // would report four feeds and have none.
+      const head = (await res.text()).slice(0, 60_000);
+
+      // For a page, the same-origin link count is the one number that
+      // matters: it says whether the list is rendered on the server or
+      // assembled in the browser. The ICO's enforcement page answers 200
+      // with 38 links and not a decision among them, and no pattern will
+      // ever read it.
+      const shape = /<(rss|feed)\b/i.test(head.slice(0, 500))
+        ? describeFeed(head)
+        : describeListing(head, { itemPattern: '/', baseUrl: candidate });
+
+      findings.push(`${path} → ${shape}`);
     } catch {
       // A probe that times out tells us nothing and must cost nothing.
     }
@@ -252,7 +326,11 @@ async function pollSource(
    */
   const fail = async (error: string): Promise<SourceResult> => {
     const streak = (source.consecutive_failures ?? 0) + 1;
-    const giveUp = streak >= DISABLE_AFTER_CONSECUTIVE_FAILURES;
+    // A source that broke and a source that was never right are opposite
+    // situations, and the five-run rule answers only the first.
+    const unverified = !source.verified_at;
+    const limit = unverified ? DISABLE_UNVERIFIED_AFTER : DISABLE_AFTER_CONSECUTIVE_FAILURES;
+    const giveUp = streak >= limit;
     await stamp({
       last_status: 'error',
       last_error: error,
@@ -260,15 +338,25 @@ async function pollSource(
       ...(giveUp
         ? {
             enabled: false,
-            disabled_reason: `Auto-disabled after ${streak} consecutive failures. Last error: ${error}`
+            disabled_reason: unverified
+              ? `Never produced an item in ${streak} polls. The URL is probably wrong and the probe findings in last_error are where to look next.`
+              : `Auto-disabled after ${streak} consecutive failures. Last error: ${error}`
           }
         : {})
     });
     if (giveUp) {
-      console.warn('[cron/watch-legal] source_auto_disabled', { source: source.id, streak, error });
+      console.warn('[cron/watch-legal] source_auto_disabled', {
+        source: source.id,
+        streak,
+        unverified,
+        error
+      });
       // Said once, at the moment it happens. After this the source is
-      // disabled and silent — which is the whole point.
-      alertOps('cron.watch_legal_source_disabled', { source: source.id, streak, error });
+      // disabled and silent — which is the whole point. A candidate that
+      // never worked still says so here: giving up on a jurisdiction we
+      // sell audits against is worth one line, even when each individual
+      // failure was not.
+      alertOps('cron.watch_legal_source_disabled', { source: source.id, streak, unverified, error });
     }
     return {
       source: source.id,
@@ -276,6 +364,7 @@ async function pollSource(
       discovered: 0,
       skipped: 0,
       error,
+      unverified,
       ...(giveUp ? { disabled: true } : {})
     };
   };
@@ -299,7 +388,7 @@ async function pollSource(
       cache: 'no-store'
     });
     if (!res.ok) {
-      const candidates = await probeCandidates(source.feed_url);
+      const candidates = await probeCandidates(source.feed_url, !source.verified_at);
       return await fail(`http_${res.status}${candidates ? ` | candidates: ${candidates}` : ''}`);
     }
     body = await res.text();
@@ -351,7 +440,7 @@ async function pollSource(
     // URL, and finding one meant guessing from a sandbox that cannot reach
     // a single regulator domain: one guess per six-hour run, each costing
     // a day. The production system can simply look.
-    const candidates = await probeCandidates(source.feed_url);
+    const candidates = await probeCandidates(source.feed_url, !source.verified_at);
 
     return await fail(
       `no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes) — ${seen}${
@@ -392,7 +481,11 @@ async function pollSource(
     last_status: 'ok',
     last_error: null,
     consecutive_failures: 0,
-    last_item_count: items.length
+    last_item_count: items.length,
+    // The moment this source stopped being a candidate. Written once and
+    // never again: from here on a failure means something changed, and the
+    // ordinary five-run rule applies.
+    ...(source.verified_at ? {} : { verified_at: new Date().toISOString() })
   });
   return {
     source: source.id,
