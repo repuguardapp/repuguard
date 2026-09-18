@@ -41,6 +41,7 @@ interface SourceRow {
   last_polled_at: string | null;
   last_status: string | null;
   last_error: string | null;
+  last_item_count: number | null;
 }
 
 /**
@@ -54,7 +55,13 @@ interface SourceRow {
  * you already distrust the system.
  */
 function healthLabel(source: SourceRow): string {
-  if (source.last_status === 'ok') return 'ok';
+  // "ok" with the number attached. `items.length > 0` is all ok has ever
+  // meant, and the ICO was green for the whole life of this pipeline on a
+  // single row that turned out to be its accessibility skip link. "ok, 8"
+  // and "ok, 1" are different claims, and only one of them needs a look.
+  if (source.last_status === 'ok') {
+    return source.last_item_count === null ? 'ok' : `ok, ${source.last_item_count}`;
+  }
   if (source.last_status === 'error') return 'erreur';
   if (!source.last_polled_at) return 'jamais relevée';
   // Status cleared but a poll has happened: the URL changed since.
@@ -81,7 +88,9 @@ export default async function OpsPage({ params }: { params: { locale: string } }
   const [{ data: sources }, { data: counts }] = await Promise.all([
     db
       .from('legal_sources')
-      .select('id, name, jurisdiction, feed_url, feed_kind, enabled, last_polled_at, last_status, last_error')
+      .select(
+        'id, name, jurisdiction, feed_url, feed_kind, enabled, last_polled_at, last_status, last_error, last_item_count'
+      )
       .order('id'),
     db.from('legal_developments').select('status')
   ]);

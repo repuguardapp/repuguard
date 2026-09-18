@@ -47,6 +47,12 @@ export const maxDuration = 60;
 const FETCH_TIMEOUT_MS = 20_000;
 
 /**
+ * Probes are speculative, so they get a fraction of the real budget: four
+ * of them at 4s is 16s on top of a 20s fetch, inside a 60-second function.
+ */
+const PROBE_TIMEOUT_MS = 4_000;
+
+/**
  * Newest N entries per source per run. Regulator feeds carry 20-50
  * items and we poll four times a day, so this is never a limit in
  * steady state — it is a bound on the first run against a fat feed.
@@ -162,6 +168,73 @@ async function watch() {
   return NextResponse.json({ ok: failed.length === 0, discovered, results });
 }
 
+/**
+ * Ask the regulator's own server where its feed lives.
+ *
+ * The ICO and Brazil's ANPD both build their listings in the browser: the
+ * HTML a crawler receives genuinely does not contain the decisions, so no
+ * `item_pattern` can read them and the repair is a different URL. Finding
+ * one meant guessing from a build sandbox that cannot reach a single
+ * regulator domain — one guess per six-hour run, each costing a day, each
+ * verified only by a red badge the next morning.
+ *
+ * The production function has the network access the sandbox does not. So
+ * on failure — and only on failure — it tries the handful of paths that
+ * publishing platforms conventionally use, and writes down what came back.
+ * gov.br runs Plone, whose feeds sit at `<section>/RSS`; WordPress and Drupal
+ * answer at `/feed`; most sites keep something at `/rss.xml`.
+ *
+ * DELIBERATELY SMALL AND POLITE
+ *
+ * Four paths, four seconds each, sequential, and never while a source is
+ * healthy. A working source probes nothing; a broken one costs its host
+ * sixteen requests a day at the very most. Anything more enthusiastic than
+ * that is a crawler, and we are a subscriber — the difference matters to
+ * the people whose pages these are, and to whether they keep answering us.
+ */
+async function probeCandidates(feedUrl: string): Promise<string | null> {
+  let base: URL;
+  try {
+    base = new URL(feedUrl);
+  } catch {
+    return null;
+  }
+
+  const stem = base.pathname.replace(/\/+$/, '');
+  const paths = [`${stem}/RSS`, `${stem}/feed`, `${stem}/rss.xml`, '/rss.xml'];
+
+  const findings: string[] = [];
+  for (const path of paths) {
+    const candidate = new URL(path, base.origin).toString();
+    if (candidate === feedUrl) continue;
+
+    try {
+      const res = await fetchExternal(candidate, {
+        headers: {
+          'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)',
+          accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9'
+        },
+        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+        cache: 'no-store'
+      });
+
+      // A 404 is the common answer and is not worth reporting; it is the
+      // absence of news. What matters is a path that exists.
+      if (!res.ok) continue;
+
+      // 200 is not enough: a site that answers every URL with its homepage
+      // would report four feeds and have none. Read enough to see whether
+      // an item ever appears.
+      const head = (await res.text()).slice(0, 4000);
+      findings.push(`${path} → ${describeFeed(head)}`);
+    } catch {
+      // A probe that times out tells us nothing and must cost nothing.
+    }
+  }
+
+  return findings.length > 0 ? findings.join(' ; ') : null;
+}
+
 async function pollSource(
   db: ReturnType<typeof supabaseService>,
   source: SourceRow
@@ -225,7 +298,10 @@ async function pollSource(
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       cache: 'no-store'
     });
-    if (!res.ok) return await fail(`http_${res.status}`);
+    if (!res.ok) {
+      const candidates = await probeCandidates(source.feed_url);
+      return await fail(`http_${res.status}${candidates ? ` | candidates: ${candidates}` : ''}`);
+    }
     body = await res.text();
   } catch (err) {
     return await fail(err instanceof Error ? err.message : String(err));
@@ -267,8 +343,20 @@ async function pollSource(
           })
         : describeFeed(body);
 
+    // And go looking for the feed this source should have been.
+    //
+    // The ICO and the ANPD both build their listings in the browser, so
+    // there is no pattern that reads them — the page a crawler receives
+    // genuinely does not contain the decisions. The repair is a different
+    // URL, and finding one meant guessing from a sandbox that cannot reach
+    // a single regulator domain: one guess per six-hour run, each costing
+    // a day. The production system can simply look.
+    const candidates = await probeCandidates(source.feed_url);
+
     return await fail(
-      `no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes) — ${seen}`
+      `no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes) — ${seen}${
+        candidates ? ` | candidates: ${candidates}` : ''
+      }`
     );
   }
 
@@ -295,7 +383,17 @@ async function pollSource(
 
   // A success clears the streak: an intermittent feed must never creep
   // up to the threshold over weeks of alternating runs.
-  await stamp({ last_status: 'ok', last_error: null, consecutive_failures: 0 });
+  // The count, not only the colour. `items.length > 0` is all "ok" has
+  // ever meant, and the ICO spent this pipeline's entire existence green
+  // on one row that was its accessibility skip link. A source reporting
+  // ok on one item is usually harvesting furniture; "ok, 8" and "ok, 1"
+  // are visibly different claims, and only one of them needs looking at.
+  await stamp({
+    last_status: 'ok',
+    last_error: null,
+    consecutive_failures: 0,
+    last_item_count: items.length
+  });
   return {
     source: source.id,
     ok: true,

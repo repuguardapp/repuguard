@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseFeed } from '../src/lib/feeds';
 
@@ -170,7 +172,17 @@ describe('a dead source stops shouting', () => {
 
     // A success must clear the streak, or an intermittent feed creeps
     // up to the threshold over weeks of alternating runs.
-    expect(source).toContain("last_status: 'ok', last_error: null, consecutive_failures: 0");
+    //
+    // Matched on the three fields rather than on one line of formatting:
+    // the previous version asserted the exact source line and failed the
+    // day a fourth field was added beside it, which is a test reporting on
+    // the shape of the code instead of on what it does.
+    const success = source.slice(source.indexOf("last_status: 'ok'"));
+    expect(success).toContain('last_error: null');
+    expect(success.slice(0, 400)).toContain('consecutive_failures: 0');
+
+    // And the count, because `items.length > 0` is all ok has ever meant.
+    expect(success.slice(0, 400)).toContain('last_item_count: items.length');
   });
 });
 
@@ -210,5 +222,50 @@ describe('the extraction pivot is one language', () => {
     // And sub-paragraphs survive: Art. 65(1)(a) and Art. 9(2) are not
     // Art. 65 and Art. 9.
     expect(source).toContain('"Art. 9(2)", not "Art. 9"');
+  });
+});
+
+describe('finding the feed a source should have had', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'src/app/api/cron/watch-legal/route.ts'),
+    'utf8'
+  );
+
+  /**
+   * The ICO and Brazil's ANPD both build their listings in the browser, so
+   * the HTML a crawler receives genuinely does not contain the decisions:
+   * no item_pattern can read them and the repair is a different URL.
+   * Finding one meant guessing from a build sandbox that cannot reach a
+   * single regulator domain — one guess per six-hour run, each verified
+   * only by a red badge the next morning. The production function has the
+   * network access the sandbox does not, so it looks instead.
+   */
+
+  it('probes only when a source has already failed', () => {
+    // A healthy source must cost its host exactly one request. Probing on
+    // every run would turn a subscriber into a crawler, which is how you
+    // stop being answered at all.
+    const successPath = source.slice(source.indexOf("last_status: 'ok'"));
+    expect(successPath).not.toContain('probeCandidates');
+
+    expect(source).toContain('const candidates = await probeCandidates');
+  });
+
+  it('keeps the probe small enough to be polite', () => {
+    // Four paths at four seconds. Sixteen requests a day to a broken
+    // source's host, at the very most, and none at all to a working one.
+    expect(source).toContain('PROBE_TIMEOUT_MS = 4_000');
+    const probe = source.slice(source.indexOf('const paths = ['));
+    expect(probe.slice(0, 200).match(/`?\$?\{?stem\}?[^,]*`?/g)?.length).toBeLessThanOrEqual(5);
+  });
+
+  it('does not report a 200 as a feed without looking at it', () => {
+    // A site answering every URL with its homepage would otherwise report
+    // four feeds and have none.
+    expect(source).toContain('describeFeed(head)');
+  });
+
+  it('never probes the URL that just failed', () => {
+    expect(source).toContain('if (candidate === feedUrl) continue;');
   });
 });
