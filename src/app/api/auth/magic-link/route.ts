@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
+import { isStructurallyUndeliverable } from '@/lib/email-suppression';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { verifyTurnstileToken } from '@/lib/turnstile';
@@ -60,15 +61,37 @@ async function handle(request: Request): Promise<Response> {
   // automated scanning (dotted-gmail obfuscation, SMS-gateway
   // "emails", role-based corporate addresses — none of it real
   // signups) since well before any known incident, at a steady
-  // background rate. verifyTurnstileToken() is a no-op until
-  // TURNSTILE_SECRET_KEY is configured in the environment, so this
-  // is inert until that's set up. Runs BEFORE the credential checks
-  // below so a failed captcha never reaches Supabase or spends a
-  // Resend send.
+  // background rate. Runs BEFORE the credential checks below so a failed
+  // captcha never reaches Supabase or spends a Resend send.
+  //
+  // verifyTurnstileToken used to return true whenever TURNSTILE_SECRET_KEY
+  // was absent — in every environment — so one missing variable turned this
+  // gate off while leaving it looking present. It now fails closed in
+  // production. If signups start returning captcha_failed, the secret is
+  // not set in Vercel, and that is the answer rather than a new mystery.
   const captchaOk = await verifyTurnstileToken(body.turnstileToken, ip);
   if (!captchaOk) {
     console.warn('[auth/magic-link] captcha_failed', { ip });
     return NextResponse.json({ error: 'captcha_failed' }, { status: 400 });
+  }
+
+  // Refuse an address that cannot receive a magic link, before creating an
+  // account for it.
+  //
+  // This check existed and was only consulted on the way out, in
+  // lib/email.ts, which meant we happily created the account first. The
+  // signup table now holds carrier SMS gateways — one of them marked
+  // "confirmed" — alongside published corporate inboxes that never asked
+  // for anything. Each one cost a Resend send, a row, and a point of the
+  // confirmation rate that several of this month's decisions were based on.
+  //
+  // Answered as a 400 rather than the uniform 200, because this says
+  // nothing about whether the address is registered: it is a fact about the
+  // shape of the string the visitor typed, which they can see themselves.
+  const undeliverable = isStructurallyUndeliverable(body.email);
+  if (undeliverable) {
+    console.warn('[auth/magic-link] undeliverable_address', { reason: undeliverable });
+    return NextResponse.json({ error: 'undeliverable_address' }, { status: 400 });
   }
 
   // Hard-fail when the email pipeline is misconfigured server-side.

@@ -163,3 +163,62 @@ describe('every outbound path goes through the gate', () => {
     expect(digest).not.toContain('isSuppressed');
   });
 });
+
+describe('what the signup table taught us', () => {
+  /**
+   * Of 345 accounts, the segment that looked like a prospect list turned
+   * out to contain Valve's subpoena inbox, 7-Eleven's ethics line and press
+   * desk, a charity's accounts-payable address, three carrier SMS gateways,
+   * eleven addresses on one domain and two typo-squatted domains. It is a
+   * harvested contact list being injected into the signup form, and it ran
+   * through September.
+   *
+   * On that evidence I withdrew a recommendation I had made repeatedly —
+   * to re-engage "123 corporate prospects". Sending unsolicited commercial
+   * mail to a published subpoena inbox would have burned the sending domain
+   * our own login depends on, from a company that sells the prevention of
+   * exactly that.
+   */
+
+  it('refuses the published inboxes that were actually in our table', async () => {
+    const { isStructurallyUndeliverable } = await lib();
+    for (const address of [
+      'subpoenainquiries@valvesoftware.com',
+      'askspeakout@7-11.com',
+      'mediaqueries@7eleven.com.au',
+      'accountspayable@cbwm.org',
+      'webmaster@example.com'
+    ]) {
+      expect(isStructurallyUndeliverable(address), address).not.toBeNull();
+    }
+  });
+
+  it('catches an SMS gateway by its telephone local part, not only its domain', async () => {
+    const { isStructurallyUndeliverable } = await lib();
+    // There are dozens of carrier bridges worldwide and enumerating the
+    // domains is a losing game; the address shape gives it away.
+    expect(isStructurallyUndeliverable('7725196304@tmomail.net')).not.toBeNull();
+    expect(isStructurallyUndeliverable('4915112345678@sms.unknown-carrier.example')).toContain(
+      'telephone'
+    );
+  });
+
+  it('never turns away the person we are built for', async () => {
+    const { isStructurallyUndeliverable } = await lib();
+    // A data protection officer writes from dpo@, privacy@, compliance@,
+    // legal@ or security@. A general "block role accounts" rule would
+    // refuse our entire buyer persona to catch a handful of bots — the
+    // most expensive kind of correct-looking fix.
+    for (const address of [
+      'dpo@company.com',
+      'privacy@company.com',
+      'compliance@company.com',
+      'legal@company.com',
+      'security@korper.nl',
+      'info@small-firm.fr',
+      'contact@cabinet.fr'
+    ]) {
+      expect(isStructurallyUndeliverable(address), address).toBeNull();
+    }
+  });
+});

@@ -26,7 +26,22 @@ const NEVER_DELIVERABLE = [
   'mms.att.net'
 ];
 
-/** Local parts that are a function, not a person, and never sign up. */
+/**
+ * Local parts that are a function, not a person, and never sign up.
+ *
+ * DELIBERATELY NARROW, AND THE NARROWNESS IS THE HARD PART.
+ *
+ * Our buyer is a data protection officer. `dpo@`, `privacy@`,
+ * `compliance@`, `legal@` and `security@` are exactly the addresses that
+ * person uses, so a general "block role accounts" rule would turn away the
+ * one visitor we are built for. What goes here is only what no buyer ever
+ * is: a mail-system function, or a published corporate inbox for something
+ * we do not sell.
+ *
+ * The last four were read off our own signup table — Valve's subpoena
+ * inbox, 7-Eleven's ethics line and press desk, a charity's accounts
+ * payable. Nobody at those addresses asked for a compliance audit.
+ */
 const ROLE_LOCAL_PARTS = new Set([
   'abuse',
   'postmaster',
@@ -34,7 +49,13 @@ const ROLE_LOCAL_PARTS = new Set([
   'no-reply',
   'mailer-daemon',
   'bounce',
-  'bounces'
+  'bounces',
+  'webmaster',
+  'hostmaster',
+  'subpoenainquiries',
+  'mediaqueries',
+  'askspeakout',
+  'accountspayable'
 ]);
 
 export function isStructurallyUndeliverable(email: string): string | null {
@@ -47,6 +68,12 @@ export function isStructurallyUndeliverable(email: string): string | null {
 
   const local = address.slice(0, at);
   if (ROLE_LOCAL_PARTS.has(local)) return `${local}@ is a role address`;
+
+  // A local part that is only digits is a telephone number, which is how
+  // every carrier SMS bridge is addressed. Catches the gateways whose
+  // domains are not in the list above — there are dozens of them
+  // worldwide and enumerating them all is a losing game.
+  if (/^\+?\d{7,}$/.test(local)) return 'local part is a telephone number';
 
   return null;
 }
