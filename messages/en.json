@@ -425,8 +425,7 @@
     "finalTitle": "Audit your first document free",
     "finalBody": "No credit card. The document is deleted after 30 days, or on demand.",
     "finalCta": "Start a free audit",
-    "schemaHeadline": "{name} — compliance audit",
-    "schemaProductDescription": "Automated compliance audit against {name}"
+    "schemaHeadline": "{name} — compliance audit"
   },
   "comparePage": {
     "metaTitle": "{a} vs {b} — differences and audit tool | LexyFlow",

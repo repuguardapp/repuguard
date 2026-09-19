@@ -425,8 +425,7 @@
     "finalTitle": "Auditez votre premier document gratuitement",
     "finalBody": "Sans carte bancaire. Le document est supprimé au bout de 30 jours, ou à la demande.",
     "finalCta": "Lancer un audit gratuit",
-    "schemaHeadline": "{name} — audit de conformité",
-    "schemaProductDescription": "Audit de conformité automatisé au regard du {name}"
+    "schemaHeadline": "{name} — audit de conformité"
   },
   "comparePage": {
     "metaTitle": "{a} et {b} — différences et outil d’audit | LexyFlow",

@@ -425,8 +425,7 @@
     "finalTitle": "Prüfen Sie Ihr erstes Dokument kostenlos",
     "finalBody": "Ohne Kreditkarte. Das Dokument wird nach 30 Tagen gelöscht, oder auf Wunsch sofort.",
     "finalCta": "Kostenloses Audit starten",
-    "schemaHeadline": "{name} — Compliance-Audit",
-    "schemaProductDescription": "Automatisiertes Compliance-Audit gegen {name}"
+    "schemaHeadline": "{name} — Compliance-Audit"
   },
   "comparePage": {
     "metaTitle": "{a} und {b} — Unterschiede und Audit-Werkzeug | LexyFlow",

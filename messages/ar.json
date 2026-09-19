@@ -425,8 +425,7 @@
     "finalTitle": "دقّق مستندك الأول مجانًا",
     "finalBody": "دون بطاقة. يُحذف المستند بعد 30 يومًا، أو عند الطلب.",
     "finalCta": "ابدأ تدقيقًا مجانيًا",
-    "schemaHeadline": "{name} — تدقيق الامتثال",
-    "schemaProductDescription": "تدقيق آلي للامتثال لـ {name}"
+    "schemaHeadline": "{name} — تدقيق الامتثال"
   },
   "comparePage": {
     "metaTitle": "{a} و{b} — الفروق وأداة التدقيق | LexyFlow",

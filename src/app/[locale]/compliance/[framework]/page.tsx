@@ -26,7 +26,7 @@ import { jsonLdScript } from '@/lib/json-ld';
  * SEO surface this page owns:
  *   • <title> with framework full name + "audit tool" intent
  *   • Unique meta description per framework × locale combination
- *   • JSON-LD Article + Product schema for rich results
+ *   • JSON-LD Article + Legislation schema for rich results
  *   • hreflang to every locale variant of this exact framework
  *   • Internal links to GDPR comparison + 3 related frameworks
  *     (drives PageRank into commercial-investigation comparison
@@ -89,9 +89,9 @@ export default async function FrameworkPage({ params }: PageProps) {
   const name = frameworkName(framework, params.locale);
   const related = relatedFrameworks(framework.id, 4);
 
-  // JSON-LD: Article for the page itself + Product for LexyFlow's
-  // audit capability. Two graphs concatenated in one <script> so
-  // Google reads them as a connected entity.
+  // JSON-LD: Article for the page itself and Legislation for the
+  // regulation it describes, in one <script> so Google reads them as a
+  // connected entity.
   //
   // Localised along with the page. `inLanguage` claims this locale, and
   // structured data that contradicts the visible text in the language
@@ -110,19 +110,20 @@ export default async function FrameworkPage({ params }: PageProps) {
         author: { '@type': 'Organization', name: 'LexyFlow' },
         publisher: { '@type': 'Organization', name: 'LexyFlow' },
         inLanguage: params.locale
-      },
-      {
-        '@type': 'Product',
-        name: t('schemaHeadline', { name }),
-        description: t('schemaProductDescription', { name }),
-        brand: { '@type': 'Brand', name: 'LexyFlow' },
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'EUR',
-          availability: 'https://schema.org/InStock'
-        }
       }
+      // No Product node here, and not because Google warned about a
+      // missing `review` field.
+      //
+      // This page is a guide to a regulation. Declaring it a Product priced
+      // at zero euros was wrong twice over: it is not a product, and the
+      // product it gestures at is not free — we have paid plans. Google's
+      // warning asked for reviews and an aggregate rating, and the only way
+      // to supply those on 637 pages would have been to invent them, which
+      // is fabricated review data on a site that sells compliance audits.
+      //
+      // Removing the claim is the honest way to clear the warning. The
+      // Article and Legislation nodes above already describe what this page
+      // actually is.
     ]
   };
 

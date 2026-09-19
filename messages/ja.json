@@ -425,8 +425,7 @@
     "finalTitle": "最初の1件を無料で監査",
     "finalBody": "カード登録は不要です。書類は30日後、またはご要望があればその時点で削除されます。",
     "finalCta": "無料で監査を始める",
-    "schemaHeadline": "{name} — コンプライアンス監査",
-    "schemaProductDescription": "{name} に対する自動コンプライアンス監査"
+    "schemaHeadline": "{name} — コンプライアンス監査"
   },
   "comparePage": {
     "metaTitle": "{a} と {b} — 相違点と監査ツール | LexyFlow",

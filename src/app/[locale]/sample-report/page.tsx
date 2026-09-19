@@ -61,7 +61,7 @@ export default async function SampleReportPage({ params: { locale } }: PageProps
   const snapshot = getSampleSnapshot();
 
   // JSON-LD — only emit when we have a real snapshot to describe.
-  // Marking up a "regenerating" placeholder as Article + Product
+  // Marking up a "regenerating" placeholder as Article + SoftwareApplication
   // would be misleading to search engines.
   const jsonLd = snapshot
     ? {
@@ -78,10 +78,17 @@ export default async function SampleReportPage({ params: { locale } }: PageProps
             inLanguage: locale
           },
           {
-            '@type': 'Product',
-            name: 'LexyFlow Compliance Audit',
-            description: 'Automated audit of any privacy policy or DPA against GDPR, EU AI Act, and the six GCC data-protection regulations.',
-            brand: { '@type': 'Brand', name: 'LexyFlow' },
+            // SoftwareApplication, not Product. This page demonstrates a
+            // hosted tool, and the free tier it describes is real — an
+            // audit runs here with no account. Product asked for reviews
+            // and an aggregate rating we do not have, and the only way to
+            // supply them would have been to make them up.
+            '@type': 'SoftwareApplication',
+            name: 'LexyFlow',
+            applicationCategory: 'BusinessApplication',
+            description:
+              'Automated audit of any privacy policy or DPA against GDPR, the EU AI Act, and thirteen further data-protection regimes.',
+            operatingSystem: 'Web',
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' }
           }
         ]

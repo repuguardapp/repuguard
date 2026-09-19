@@ -425,8 +425,7 @@
     "finalTitle": "Audita tu primer documento gratis",
     "finalBody": "Sin tarjeta. El documento se elimina a los 30 días, o cuando lo pidas.",
     "finalCta": "Empezar una auditoría gratuita",
-    "schemaHeadline": "{name} — auditoría de cumplimiento",
-    "schemaProductDescription": "Auditoría de cumplimiento automatizada frente a {name}"
+    "schemaHeadline": "{name} — auditoría de cumplimiento"
   },
   "comparePage": {
     "metaTitle": "{a} frente a {b} — diferencias y herramienta de auditoría | LexyFlow",
