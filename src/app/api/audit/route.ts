@@ -14,6 +14,7 @@ import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 import { FREE_TIER_MAX_BYTES, getTierForOrg } from '@/lib/tier';
 import { hashDocument, wipeBuffer } from '@/lib/zero-knowledge';
 import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
+import { recordOutreachEvent } from '@/lib/outreach';
 
 /**
  * Asynchronous audit endpoint — accept, answer, then work.
@@ -195,6 +196,14 @@ export async function POST(request: Request) {
   } catch (err) {
     return errorJson('invalid_metadata', err instanceof Error ? err.message : String(err), 400);
   }
+
+  // Attribution for the automated outreach. `ref` is the opaque token from
+  // the email link the visitor followed; it identifies a message, not a
+  // person, and it is absent for everyone who arrived any other way. The
+  // helper fails silently by design — a customer's audit must never fail
+  // because our funnel bookkeeping did.
+  const outreachRef = typeof form.get('ref') === 'string' ? (form.get('ref') as string) : null;
+  await recordOutreachEvent(outreachRef, 'audit_started');
 
   // ---- 1b. Org spoof guard ------------------------------------------
   // The anonymous-org UUID is the public-share-link placeholder and
@@ -564,7 +573,8 @@ export async function POST(request: Request) {
       frameworks: meta.frameworks,
       targetLanguage: meta.targetLanguage,
       usingFreeTrial,
-      startedAt: t0
+      startedAt: t0,
+      outreachRef
     })
   );
 
@@ -593,6 +603,13 @@ interface PipelineInput {
   targetLanguage: string;
   usingFreeTrial: boolean;
   startedAt: number;
+  /**
+   * Opaque outreach token, when the visitor arrived from a cold email.
+   * Carried down here rather than looked up again because the completion
+   * happens minutes later, after the response has gone, and the form data
+   * no longer exists at that point.
+   */
+  outreachRef: string | null;
 }
 
 /**
@@ -758,6 +775,12 @@ async function runAuditPipeline(input: PipelineInput): Promise<void> {
     })
     .eq('id', input.auditId)
     .in('status', ['pending', 'running']);
+
+  // The conversion this whole outreach machine exists to count: a stranger
+  // who received one email, uploaded their own document, and waited for the
+  // result. Recorded after the row is closed, so it can never be counted
+  // for an audit that did not finish.
+  if (!closeErr) await recordOutreachEvent(input.outreachRef, 'audit_completed');
 
   if (closeErr) {
     // 23505 against audits_dedup_idx means an identical report was

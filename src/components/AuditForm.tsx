@@ -257,6 +257,17 @@ export function AuditForm({
     setView({ phase: 'running', progress: 5 });
 
     const form = new FormData(event.currentTarget);
+
+    // Carry the outreach token if this visitor arrived from a cold email.
+    //
+    // Read from the address bar rather than threaded through as a prop:
+    // the token belongs to the visit, not to the page, and it survives the
+    // locale redirect and any client-side navigation between landing and
+    // submitting. Shape-checked here as well as on the server, so a
+    // hand-edited URL cannot put arbitrary text into a database column.
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (ref && /^[A-Za-z0-9_-]{16,64}$/.test(ref)) form.append('ref', ref);
+
     try {
       const res = await fetch('/api/audit', { method: 'POST', body: form });
 
