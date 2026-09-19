@@ -1,0 +1,12 @@
+name = "lexyflow-inbound"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# The route the Worker posts to. Not a secret — the secret is the HMAC key,
+# and the endpoint refuses anything unsigned.
+[vars]
+TARGET_URL = "https://lexyflow.com/api/webhooks/inbound"
+
+# INBOUND_WEBHOOK_SECRET is set with `wrangler secret put`, never here.
+# It must match the value in Vercel exactly; if the two ever drift, every
+# message gets a 401 and the only symptom is that replies stop arriving.

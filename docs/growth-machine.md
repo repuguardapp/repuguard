@@ -154,36 +154,67 @@ Non négociables, et notre produit vend leur respect :
 
 ---
 
-## Où Make sert, et où il ne sert pas
+## Réception des réponses — sans Make ✅
 
-**Il ne sert pas** à l'envoi ni à la planification : Vercel Cron, Postgres et
-notre code font déjà ça, gratuitement, avec les tests qui vont avec. Ajouter
-Make là serait une dépendance payante pour un `setInterval`.
+Make est retiré. Il devait interroger une boîte IMAP et faire un POST : une
+dépendance payante, un tiers dans le chemin des données personnelles de nos
+prospects, et un schéma de signature choisi par un fournisseur plutôt que par
+nous.
 
-**Il sert à une chose que nous n'avons pas : recevoir les réponses.**
+**Cloudflare Email Routing + Email Workers** fait la même chose gratuitement,
+sans limite de volume, en s'exécutant à l'instant où le courrier arrive.
 
 ```
-Boîte go@lexyflow.com  (IMAP)
+replies+<token>@go.lexyflow.com
         │
         ▼
-Make — déclencheur « Watch Emails »
-        │
-        ├─ extrait : expéditeur, sujet, corps
-        │
+Cloudflare Email Worker         infra/cloudflare-email-worker/
+        │  signe HMAC-SHA256 sur <timestamp>.<corps>
         ▼
-POST https://lexyflow.com/api/outreach/reply
-        en-tête  x-outreach-secret: <secret partagé>
-        corps    { from, subject, body }
+POST /api/webhooks/inbound      ✅ construit
+        │
+        ├─ vérifie la signature, refuse au-delà de 5 minutes
+        ├─ idempotence sur Message-ID
+        ├─ détecte les absences par les en-têtes (RFC 3834), sans appel modèle
+        ├─ classe avec Haiku : interested / question / refusal / unsubscribe / unknown
+        └─ écrit l'événement, désabonne si demandé
 ```
 
-L'endpoint `/api/outreach/reply` reste à écrire : il retrouve le contact par
-l'adresse, enregistre un événement `replied`, et classe la réponse en
-`intéressé` / `pas intéressé` / `désabonnement` avec un appel modèle court.
+### Déploiement
 
-**Point que je dois signaler** : une réponse humaine sans réponse en retour est
-pire que pas d'e-mail du tout. La classification automatique te dit *qu'il faut*
-répondre ; quelqu'un devra le faire. C'est la seule part de la boucle qui ne
-s'automatise pas sans coûter la réputation qu'elle construit.
+```bash
+# 1. Cloudflare → zone → Email → Email Routing : activer
+# 2. Router replies@go.lexyflow.com vers le Worker
+cd infra/cloudflare-email-worker
+npx wrangler secret put INBOUND_WEBHOOK_SECRET   # même valeur que dans Vercel
+npx wrangler deploy
+```
+
+### Pourquoi pas les autres
+
+| Solution | Verdict |
+|---|---|
+| **Cloudflare Email Workers** | gratuit, sans limite, signature sous notre contrôle |
+| SendGrid Inbound Parse | gratuit mais non signé — on sécurise par un secret dans l'URL, qui finit dans les journaux |
+| Resend Inbound | même compte que le transactionnel : le risque qu'on cherche à séparer |
+| Mailgun Routes | signé correctement, mais l'entrant sort du palier gratuit |
+
+---
+
+## Ce qui reste à écrire
+
+Rien d'obligatoire pour démarrer. Deux choses utiles quand le volume arrivera :
+
+- **Le collecteur d'adresses DPO** (décision 2 ci-dessus) — une journée.
+- **Un envoi séquencé** piloté par Vercel Cron, lisant `outreach_contacts`
+  en statut `new`, respectant la montée en charge. Une demi-journée, et elle
+  ne vaut d'être faite qu'une fois le domaine d'envoi en place.
+
+**Le point que je dois répéter** : une réponse humaine sans réponse en retour
+est pire que pas d'e-mail du tout. La classification te dit *qu'il faut*
+répondre — `interested` et `question` sur le tableau de bord. Quelqu'un devra
+le faire. C'est la seule part de la boucle qui ne s'automatise pas sans
+détruire la réputation qu'elle construit.
 
 ---
 
