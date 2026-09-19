@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
-import { describeFeed, parseFeed } from '@/lib/feeds';
+import { describeFeed, parseFeed, type FeedItem, type ParsedFeed } from '@/lib/feeds';
 import { describeListing, parseListing } from '@/lib/listing';
+import { parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -275,8 +276,22 @@ async function probeCandidates(feedUrl: string, unverified = false): Promise<str
   // server answers anything. One extra request, only on a source that has
   // already failed.
   const canary = `/${crypto.randomUUID()}`;
-  if (await answersAnything(new URL(canary, base.origin).toString())) {
-    return `site answers 200 to ${canary} — catch-all, no path here can be trusted`;
+  const catchAll = await answersAnything(new URL(canary, base.origin).toString());
+
+  // Then ask the site where its sitemaps are, rather than guessing.
+  //
+  // This is the one that matters for a single-page application, and it is
+  // worth doing even on a catch-all host: robots.txt is served by
+  // everything, costs one request, and is the only file on a domain whose
+  // purpose is to tell automated clients what to fetch. A site that builds
+  // its listing in the browser still has to be findable, so the list exists
+  // as XML somewhere — and the site itself will say where.
+  const advertised = await findSitemaps(base.origin);
+
+  if (catchAll) {
+    return `site answers 200 to ${canary} — catch-all, no path here can be trusted${
+      advertised ? ` | robots.txt: ${advertised}` : ''
+    }`;
   }
 
   const findings: string[] = [];
@@ -326,7 +341,32 @@ async function probeCandidates(feedUrl: string, unverified = false): Promise<str
     }
   }
 
+  if (advertised) findings.unshift(`robots.txt: ${advertised}`);
   return findings.length > 0 ? findings.join(' ; ') : null;
+}
+
+/**
+ * What sitemaps does this site say it has?
+ *
+ * Reported rather than adopted. A sitemap URL found here is a candidate an
+ * operator points a source at deliberately, with the right item_pattern —
+ * the poller does not start reading someone's whole estate because their
+ * robots.txt mentioned a file.
+ */
+async function findSitemaps(origin: string): Promise<string | null> {
+  try {
+    const res = await fetchExternal(`${origin}/robots.txt`, {
+      headers: { 'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)' },
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+      cache: 'no-store'
+    });
+    if (!res.ok) return null;
+
+    const found = sitemapsFromRobots((await res.text()).slice(0, 20_000), origin);
+    return found.length > 0 ? found.join(' ') : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -348,6 +388,71 @@ async function answersAnything(url: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Turn a fetched body into items, whichever kind of source this is.
+ *
+ * The sitemap branch is the only one that may fetch again: large sites
+ * split their sitemap by section and year and publish an index naming the
+ * parts. Following that is not crawling — it is reading a table of contents
+ * the site wrote for exactly this purpose — but it is still someone else's
+ * server, so it is bounded hard: the children whose names look like the
+ * section we want, three of them at most, one level deep and never
+ * recursive. A sitemap index that points at another index is a site we
+ * leave alone.
+ */
+async function readSource(source: SourceRow, body: string): Promise<ParsedFeed> {
+  if (source.feed_kind === 'html') {
+    return parseListing(body, {
+      itemPattern: source.item_pattern ?? '/',
+      baseUrl: source.feed_url
+    });
+  }
+
+  if (source.feed_kind !== 'sitemap') return parseFeed(body);
+
+  const pattern = source.item_pattern ?? '/';
+  const first = parseSitemap(body, { itemPattern: pattern, baseUrl: source.feed_url });
+  if (first.items.length > 0 || first.indexes.length === 0) return first;
+
+  // Prefer the children that name the section we are after; a site with
+  // forty sitemaps has one or two that could hold decisions, and fetching
+  // the rest would be reading their whole estate to find a news page.
+  const token = pattern.replace(/^\/|\/$/g, '').split('/').pop() ?? '';
+  const ranked = [...first.indexes].sort((a, b) => {
+    const score = (u: string) => (token && u.includes(token) ? 0 : 1);
+    return score(a) - score(b);
+  });
+
+  const items: FeedItem[] = [];
+  let skipped = first.skipped;
+
+  for (const child of ranked.slice(0, 3)) {
+    try {
+      const res = await fetchExternal(child, {
+        headers: {
+          'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)',
+          accept: 'application/xml, text/xml;q=0.9'
+        },
+        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+        cache: 'no-store'
+      });
+      if (!res.ok) continue;
+
+      const parsed = parseSitemap(await res.text(), {
+        itemPattern: pattern,
+        baseUrl: source.feed_url
+      });
+      items.push(...parsed.items);
+      skipped += parsed.skipped;
+    } catch {
+      // One unreadable child must not cost us the others.
+    }
+    if (items.length >= MAX_ITEMS_PER_SOURCE) break;
+  }
+
+  return { items: items.slice(0, MAX_ITEMS_PER_SOURCE), skipped };
 }
 
 async function pollSource(
@@ -437,20 +542,20 @@ async function pollSource(
     return await fail(err instanceof Error ? err.message : String(err));
   }
 
-  // Two kinds of source, one pipeline past this point.
+  // Three kinds of source, one pipeline past this point.
   //
   // RSS is the exception, not the rule: the ICO withdrew every one of
   // its feeds, the Gulf authorities never had any, and Brazil and Japan
   // publish news pages. A watcher that only speaks RSS is a watcher
   // that can only ever cover Europe — on a product selling audits
   // against thirteen frameworks.
-  const { items, skipped } =
-    source.feed_kind === 'html'
-      ? parseListing(body, {
-          itemPattern: source.item_pattern ?? '/',
-          baseUrl: source.feed_url
-        })
-      : parseFeed(body);
+  //
+  // And half of what remains is a single-page application, where the
+  // decisions are genuinely not in the document a crawler receives. Those
+  // sites still publish a sitemap, because they still need to be found:
+  // the same list, as XML, server-side, in a file whose whole purpose is
+  // to be read by machines.
+  const { items, skipped } = await readSource(source, body);
 
   if (items.length === 0) {
     // Reaching a URL that yields nothing usable is a failure, not a

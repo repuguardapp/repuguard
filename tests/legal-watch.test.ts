@@ -402,11 +402,14 @@ describe('a site that answers 200 to anything tells the prober nothing', () => {
   });
 
   it('reports the catch-all instead of the findings it would have made', () => {
-    const probe = source.slice(source.indexOf('const canary'));
-    expect(probe.slice(0, 400)).toContain('catch-all, no path here can be trusted');
+    const probe = source.slice(source.indexOf('const canary'), source.indexOf('const findings'));
+    expect(probe).toContain('catch-all, no path here can be trusted');
     // Returns rather than continuing: listing paths underneath would put
     // the wrong answer and its refutation in the same sentence.
-    expect(probe.slice(0, 400)).toMatch(/return `site answers 200/);
+    expect(probe).toMatch(/return `site answers 200/);
+    // It still reports what robots.txt advertises, which is the one finding
+    // that survives a catch-all: a sitemap the site names itself.
+    expect(probe).toContain('robots.txt:');
   });
 
   it('treats an error on the canary as the good outcome', () => {

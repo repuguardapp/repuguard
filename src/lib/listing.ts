@@ -59,7 +59,7 @@ function textOf(html: string): string {
  * yields "short", which tells a reviewer nothing, so it stays skipped and
  * stays counted.
  */
-function titleFromSlug(pathname: string): string | null {
+export function titleFromSlug(pathname: string): string | null {
   const slug = pathname.split('/').filter(Boolean).pop() ?? '';
   const words = slug
     .replace(/\.(html?|php|aspx?|pdf)$/i, '')
