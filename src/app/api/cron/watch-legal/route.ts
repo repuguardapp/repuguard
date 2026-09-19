@@ -262,6 +262,23 @@ async function probeCandidates(feedUrl: string, unverified = false): Promise<str
   // still fits inside its sixty seconds.
   const deadline = Date.now() + PROBE_BUDGET_MS;
 
+  // First, ask for something that cannot exist.
+  //
+  // SDAIA and the Garante both answered 200 to every path the prober tried
+  // — /RSS, /feed and /rss.xml each returning the same page — and the
+  // report duly listed three feeds that were one web page. A single-page
+  // application serving its shell for any URL makes every finding below
+  // meaningless, and a report that cannot tell a discovery from a catch-all
+  // is worse than no report: it is four confident wrong answers a morning.
+  //
+  // A random path is unguessable and uncacheable, so a 200 here proves the
+  // server answers anything. One extra request, only on a source that has
+  // already failed.
+  const canary = `/${crypto.randomUUID()}`;
+  if (await answersAnything(new URL(canary, base.origin).toString())) {
+    return `site answers 200 to ${canary} — catch-all, no path here can be trusted`;
+  }
+
   const findings: string[] = [];
   for (const path of paths) {
     if (Date.now() > deadline) {
@@ -300,13 +317,37 @@ async function probeCandidates(feedUrl: string, unverified = false): Promise<str
         ? describeFeed(head)
         : describeListing(head, { itemPattern: '/', baseUrl: candidate });
 
-      findings.push(`${path} → ${shape}`);
+      // The byte count distinguishes three different pages from one page
+      // served three times, which is what the Garante's report looked like
+      // before the canary above existed to explain it.
+      findings.push(`${path} → ${head.length}B ${shape}`);
     } catch {
       // A probe that times out tells us nothing and must cost nothing.
     }
   }
 
   return findings.length > 0 ? findings.join(' ; ') : null;
+}
+
+/**
+ * Does this server answer 200 to a URL that cannot exist?
+ *
+ * Kept separate from the probe loop because its failure mode is the
+ * opposite one: here an error, a timeout or any non-200 is the GOOD answer
+ * — it means the site distinguishes between paths, so what the probe finds
+ * afterwards means something. Only a clean 200 is disqualifying.
+ */
+async function answersAnything(url: string): Promise<boolean> {
+  try {
+    const res = await fetchExternal(url, {
+      headers: { 'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)' },
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+      cache: 'no-store'
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function pollSource(

@@ -378,3 +378,47 @@ describe('the Gulf sources claim no permission they do not have', () => {
     expect(inserts).toContain('on conflict (id) do nothing');
   });
 });
+
+describe('a site that answers 200 to anything tells the prober nothing', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'src/app/api/cron/watch-legal/route.ts'),
+    'utf8'
+  );
+
+  /**
+   * SDAIA and the Garante both answered 200 to every path the prober tried
+   * — /RSS, /feed and /rss.xml each returning the same page — and the
+   * report duly listed three feeds that were one web page. A single-page
+   * application serving its shell for any URL makes every finding
+   * meaningless, and a report that cannot tell a discovery from a catch-all
+   * is worse than no report: it is four confident wrong answers a morning,
+   * which is this codebase's recurring failure rather than a new one.
+   */
+
+  it('asks for something that cannot exist before believing anything else', () => {
+    expect(source).toContain('const canary = `/${crypto.randomUUID()}`');
+    // Random, so it is neither guessable nor cacheable.
+    expect(source).toContain('answersAnything');
+  });
+
+  it('reports the catch-all instead of the findings it would have made', () => {
+    const probe = source.slice(source.indexOf('const canary'));
+    expect(probe.slice(0, 400)).toContain('catch-all, no path here can be trusted');
+    // Returns rather than continuing: listing paths underneath would put
+    // the wrong answer and its refutation in the same sentence.
+    expect(probe.slice(0, 400)).toMatch(/return `site answers 200/);
+  });
+
+  it('treats an error on the canary as the good outcome', () => {
+    // Inverted from every other fetch here: a 404, a timeout or a throw
+    // all mean the server distinguishes between paths, which is what makes
+    // the probe worth running.
+    const fn = source.slice(source.indexOf('async function answersAnything'));
+    expect(fn.slice(0, 500)).toContain('return false;');
+    expect(fn.slice(0, 500)).toContain('return res.ok;');
+  });
+
+  it('carries the byte count, which separates three pages from one page thrice', () => {
+    expect(source).toContain('${head.length}B');
+  });
+});
