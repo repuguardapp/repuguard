@@ -152,7 +152,35 @@ export default async function AuditDetailPage({ params }: PageProps) {
       {paywalled && (
         <PaywallTracker auditId={params.auditId} hiddenCount={hiddenCount} />
       )}
-      <div className="mb-8 flex items-center justify-between gap-4 print:hidden">
+      {/*
+        Sticky, below the site header.
+
+        This row was static at the top of the page, so on a report with
+        seven findings every action — unlock the editor, save the PDF,
+        delete the audit — went off screen the moment anyone started
+        reading. On an iPad the only way to see it was the rubber-band
+        bounce at the top of the scroll, which snaps back the instant you
+        lift your finger: the buttons were visible only while you were
+        physically holding the page in place.
+
+        `top-16` is the site header's own height (h-16 in the locale
+        layout), and z-30 sits below its z-40 so the two never fight. The
+        opaque background and the blur are not decoration: the report text
+        scrolls underneath this bar, and a transparent one would put the
+        findings through the buttons.
+
+        `-mx-6 px-6` and not a responsive pair: this project's container
+        padding is a flat 1.5rem at every breakpoint (tailwind.config), so
+        a `-mx-4 md:-mx-6` bar would have left a four-pixel gutter of
+        scrolling text either side of it below `md`.
+
+        Wrapping, because four buttons and a back link do not fit across an
+        iPad in portrait, and a bar that overflows is worse than one that
+        scrolled away.
+
+        Kept out of print, like before — a printed report has no buttons.
+      */}
+      <div className="sticky top-16 z-30 -mx-6 mb-8 flex flex-wrap items-center justify-between gap-2 border-b bg-background/95 px-6 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 print:hidden">
         <Button asChild variant="ghost" size="sm" className="-ms-3">
           <Link href="/dashboard">
             <ArrowLeft className="me-2 h-4 w-4 rtl:-scale-x-100" />
