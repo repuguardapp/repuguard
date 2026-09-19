@@ -69,9 +69,17 @@ export function parseFrameworkPairSlug(slug: string): { a: LegalFramework; b: Le
  *   - APPI vs GDPR, LGPD vs GDPR (emerging-market vs Europe).
  *   - PIPEDA vs GDPR (Canada vs Europe).
  *
- * Total: 12 + 2 + 15 + 1 + 1 + 2 + 1 + 4 (GCC vs GDPR overlap) = 38.
- * Edit this list to expand coverage; every entry generates 7 pages
- * (one per locale) so a 1-pair addition costs 7 routes.
+ *   - The two Emirati free zones against the federal law and against
+ *     each other (3 pairs).
+ *
+ * No total is written here. The arithmetic in this comment said 38 while
+ * the function built 30, and it had said so through at least two changes
+ * to the list — a stale number in a comment is not a small thing in a file
+ * whose whole job is to decide how many pages exist. CURATED_PAIRS.length
+ * is the answer, and a test asserts it against the rules above.
+ *
+ * Every entry generates one page per locale, so a single pair costs seven
+ * routes.
  */
 const GCC_IDS: readonly FrameworkId[] = [
   'qatar_pdppl',
@@ -100,6 +108,18 @@ function buildCuratedPairs(): readonly string[] {
       out.add(frameworkPairKey(GCC_IDS[i]!, GCC_IDS[j]!));
     }
   }
+
+  // The Emirati free zones, against the federal law and against each other.
+  //
+  // Not folded into the GCC matrix above: that matrix answers "how does
+  // Qatar differ from Oman", a question about six countries. These answer a
+  // different and far more common one — "there are three data protection
+  // laws in this country, which am I under?" — which is the first thing
+  // anyone setting up in Dubai or Abu Dhabi has to establish, and the
+  // question our own audit form is designed not to guess at.
+  out.add(frameworkPairKey('difc_dp', 'uae_pdpl'));
+  out.add(frameworkPairKey('adgm_dp', 'uae_pdpl'));
+  out.add(frameworkPairKey('difc_dp', 'adgm_dp'));
 
   return [...out];
 }
@@ -135,6 +155,10 @@ export function relatedFrameworks(id: FrameworkId, n = 4): LegalFramework[] {
   const scored = FRAMEWORKS.filter((f) => f.id !== id).map((other) => {
     let score = 0;
     if (GCC_IDS.includes(self.id) && GCC_IDS.includes(other.id)) score += 5;
+    // The three Emirati regimes point at each other before anything else:
+    // a reader on the DIFC page is far more likely to need the federal PDPL
+    // or the ADGM regulations next than to need Oman.
+    if (self.jurisdiction.startsWith('AE') && other.jurisdiction.startsWith('AE')) score += 5;
     if (self.jurisdiction.startsWith('EU') && other.jurisdiction.startsWith('EU')) score += 3;
     if (other.id === 'gdpr') score += 2; // GDPR is always a useful comparison
     if (other.id === 'eu_ai_act' && self.id === 'gdpr') score += 2;

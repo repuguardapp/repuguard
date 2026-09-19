@@ -73,7 +73,9 @@ const SHORT: Record<FrameworkId, string> = {
   uae_pdpl: 'UAE PDPL',
   bahrain_pdpl: 'Bahrain PDPL',
   kuwait_dppr: 'Kuwait DPPR',
-  oman_pdpl: 'Oman PDPL'
+  oman_pdpl: 'Oman PDPL',
+  difc_dp: 'DIFC DP Law',
+  adgm_dp: 'ADGM DP Regulations'
 };
 
 const SHORT_BY_LOCALE: Partial<Record<FrameworkId, Record<string, string>>> = {
@@ -238,6 +240,27 @@ const NAME_BY_LOCALE: Record<FrameworkId, Record<string, string>> = {
     'pt-br': 'PDPL de Omã — Lei de proteção de dados pessoais (Decreto Real n.º 6 de 2022)',
     ja: 'オマーン個人データ保護法（2022年勅令第6号）',
     ar: 'قانون حماية البيانات الشخصية العُماني (مرسوم سلطاني رقم 6 لسنة 2022)'
+  },
+  // The free-zone statutes. Each name carries its zone, because "UAE data
+  // protection law" is three different instruments and a reader who cannot
+  // tell which one a page is about is the reader we are trying to help.
+  difc_dp: {
+    en: 'DIFC Data Protection Law (DIFC Law No. 5 of 2020)',
+    fr: 'loi sur la protection des données du DIFC (loi du DIFC n° 5 de 2020)',
+    es: 'Ley de protección de datos del DIFC (Ley del DIFC n.º 5 de 2020)',
+    de: 'DIFC-Datenschutzgesetz (DIFC-Gesetz Nr. 5 von 2020)',
+    'pt-br': 'Lei de proteção de dados do DIFC (Lei do DIFC n.º 5 de 2020)',
+    ja: 'DIFCデータ保護法（2020年DIFC法第5号）',
+    ar: 'قانون حماية البيانات لمركز دبي المالي العالمي (قانون المركز رقم 5 لسنة 2020)'
+  },
+  adgm_dp: {
+    en: 'ADGM Data Protection Regulations 2021',
+    fr: 'règlement sur la protection des données de l’ADGM (2021)',
+    es: 'Reglamento de protección de datos del ADGM (2021)',
+    de: 'ADGM-Datenschutzverordnung 2021',
+    'pt-br': 'Regulamento de proteção de dados do ADGM (2021)',
+    ja: 'ADGMデータ保護規則2021',
+    ar: 'لائحة حماية البيانات لسوق أبوظبي العالمي لسنة 2021'
   }
 };
 

@@ -17,13 +17,30 @@ export type FrameworkId =
   | 'uae_pdpl'
   | 'bahrain_pdpl'
   | 'kuwait_dppr'
-  | 'oman_pdpl';
+  | 'oman_pdpl'
+  | 'difc_dp'
+  | 'adgm_dp';
 
 export interface LegalFramework {
   id: FrameworkId;
   name: string;
   jurisdiction: string;
-  /** ISO-3166-1 alpha-2 codes where this framework applies. */
+  /**
+   * ISO-3166-1 alpha-2 codes where this framework applies BY DEFAULT to an
+   * organisation registered there.
+   *
+   * Empty is meaningful and is not an omission. The DIFC and ADGM are
+   * financial free zones inside the United Arab Emirates with their own
+   * data protection statutes, and those statutes bind only the entities
+   * established inside those zones. A company in mainland Dubai is subject
+   * to the federal PDPL and not to DIFC Law No. 5 of 2020.
+   *
+   * Listing 'AE' against them would therefore tick three mutually
+   * inapplicable regimes for every Emirati visitor, and the audit they
+   * received would cite two laws that do not apply to them. On a product
+   * sold to prevent exactly that class of error it is the wrong default, so
+   * a zone framework is offered and never assumed.
+   */
   countries: readonly string[];
   citationStyle: 'article' | 'section' | 'chapter';
   authority: string;
@@ -133,6 +150,32 @@ export const FRAMEWORKS: readonly LegalFramework[] = [
     countries: ['OM'],
     citationStyle: 'article',
     authority: 'Ministry of Transport, Communications and Information Technology (MTCIT)'
+  },
+  // The two Emirati free zones. Separate statutes, separate regulators and
+  // separate commissioners from the federal PDPL — not variants of it — and
+  // the two jurisdictions in the Gulf that actually publish guidance and
+  // enforcement in English on a regular basis.
+  //
+  // `countries: []` is deliberate; see the field's own note.
+  {
+    id: 'difc_dp',
+    name: 'DIFC Data Protection Law (DIFC Law No. 5 of 2020)',
+    jurisdiction: 'AE-DIFC',
+    countries: [],
+    citationStyle: 'article',
+    authority: 'Commissioner of Data Protection, DIFC'
+  },
+  {
+    id: 'adgm_dp',
+    // Regulations, not a Law, and they are divided into Sections rather
+    // than Articles — which is why citationStyle differs from its
+    // neighbour. A citation that names the wrong kind of provision is the
+    // first thing a lawyer reading our report would notice.
+    name: 'ADGM Data Protection Regulations 2021',
+    jurisdiction: 'AE-ADGM',
+    countries: [],
+    citationStyle: 'section',
+    authority: 'Office of Data Protection, ADGM'
   }
 ];
 
