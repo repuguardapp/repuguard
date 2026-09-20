@@ -102,16 +102,39 @@ function textOf(html: string): string {
     .trim();
 }
 
-async function get(url: string, accept: string): Promise<Response | null> {
+/**
+ * A fetch that says why it failed.
+ *
+ * It used to return null for every kind of failure, and the first real
+ * scan showed what that costs. uber.fr failed in 148 milliseconds — far
+ * too fast for the seven requests discovery makes — with the message "no
+ * policy link found from the homepage or the usual paths". That sentence
+ * is true and describes the wrong thing: nothing had been read at all, and
+ * the report said we had looked at a page.
+ *
+ * uber.com, scanned a minute later, completed in 1.5 seconds. So the
+ * pipeline works and something specific to that hostname does not, and the
+ * only way to know which is to carry the reason back.
+ */
+interface Fetched {
+  res: Response | null;
+  /** Why there is no response. Null when there is one. */
+  error: string | null;
+}
+
+async function get(url: string, accept: string): Promise<Fetched> {
   try {
     const res = await fetchExternal(url, {
       headers: { 'user-agent': `${USER_AGENT}/1.0 (+https://lexyflow.com)`, accept },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       cache: 'no-store'
     });
-    return res.ok ? res : null;
-  } catch {
-    return null;
+    return res.ok ? { res, error: null } : { res: null, error: `HTTP ${res.status}` };
+  } catch (err) {
+    // fetchExternal throws on an unreachable host, on a redirect chain that
+    // leaves https, and on a hop resolving to a private address. Each is a
+    // different answer and they were all being flattened into "not found".
+    return { res: null, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -123,7 +146,7 @@ async function get(url: string, accept: string): Promise<Response | null> {
  * product whose entire claim is that it respects rules other people set.
  */
 async function readRobots(origin: string): Promise<{ rules: RobotsRules; sitemaps: string[] }> {
-  const res = await get(`${origin}/robots.txt`, 'text/plain');
+  const { res } = await get(`${origin}/robots.txt`, 'text/plain');
 
   // A 404 on robots.txt means the site has no opinion, which the standard
   // reads as "everything is allowed". Only a failure to reach the site at
@@ -166,7 +189,8 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
   // The new origin gets its own robots.txt check before any of its links
   // are used. We were sent there by the site itself, so one request is
   // fair; reading it without asking would not be.
-  const home = await get(origin, 'text/html');
+  const homepage = await get(origin, 'text/html');
+  const home = homepage.res;
 
   if (home) {
     try {
@@ -215,7 +239,7 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
   //    ours, because that is what they are.
   if (found.size === 0) {
     for (const path of CONVENTIONAL_PATHS) {
-      const res = await get(`${origin}${path}`, 'text/html');
+      const { res } = await get(`${origin}${path}`, 'text/html');
       if (res) add(res.url || `${origin}${path}`, 'conventional-path');
       if (found.size > 0) break;
     }
@@ -226,6 +250,15 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
     // Nothing found is a fact about the search, not about the site. The
     // caller must not render it as "this company has no privacy policy" —
     // it may be behind a script, a login, or a path we did not try.
-    refused: found.size === 0 ? 'no policy link found from the homepage or the usual paths' : null
+    refused:
+      found.size > 0
+        ? null
+        : // Two different answers that used to read as one. "We could not
+          // read the homepage" is about our fetch; "we read it and found no
+          // link" is about the page. Reporting the second when the first
+          // happened describes a page nobody ever opened.
+          homepage.error
+          ? `we could not read the homepage: ${homepage.error}`
+          : 'the homepage was read and links to no privacy policy; the usual paths answered nothing'
   };
 }

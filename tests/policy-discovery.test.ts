@@ -133,3 +133,33 @@ describe('a domain that lives somewhere else', () => {
     expect((source.match(/await get\(origin, 'text\/html'\)/g) ?? []).length).toBe(1);
   });
 });
+
+describe('why nothing was read, told apart from what was read', () => {
+  const source = code(SRC);
+
+  /**
+   * uber.fr failed in 148 milliseconds — far too fast for the seven
+   * requests discovery makes — reporting "no policy link found from the
+   * homepage or the usual paths". True, and about the wrong thing: nothing
+   * had been read at all, and the message described a page nobody opened.
+   * uber.com, a minute later, completed in 1.5 seconds.
+   */
+
+  it('carries the reason a fetch failed instead of returning null', () => {
+    expect(source).toContain('interface Fetched');
+    expect(source).toContain('error: `HTTP ${res.status}`');
+    expect(source).toContain('err instanceof Error ? err.message : String(err)');
+  });
+
+  it('separates "we could not read it" from "we read it and found nothing"', () => {
+    expect(source).toContain('we could not read the homepage:');
+    expect(source).toContain('links to no privacy policy');
+  });
+
+  it('still never says the company has no policy', () => {
+    // Both sentences are about our fetch and about this document. Neither
+    // is a claim about the organisation.
+    const refusals = source.slice(source.indexOf('refused:'));
+    expect(refusals).not.toMatch(/has no privacy policy|does not have/i);
+  });
+});
