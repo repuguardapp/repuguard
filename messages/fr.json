@@ -606,6 +606,7 @@
     "verifyNotConfigured": "La vérification n’est pas configurée sur ce serveur.",
     "verifyWhySubdomain": "Nous lisons un sous-domaine et non l’apex : votre enregistrement TXT racine contient votre SPF et votre DMARC, et nous n’avons pas à y toucher.",
     "verifiedBadge": "Domaine vérifié",
+    "statusRunningNoScript": "Si le résultat ne s’affiche pas, rechargez la page.",
     "observation": {
       "retentionPeriodStated": "Durée de conservation indiquée",
       "dpoContactPublished": "Contact du délégué à la protection des données publié",

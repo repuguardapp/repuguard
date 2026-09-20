@@ -606,6 +606,7 @@
     "verifyNotConfigured": "A verificação não está configurada neste servidor.",
     "verifyWhySubdomain": "Lemos um subdomínio e não o ápice: o seu registo TXT raiz contém o SPF e o DMARC, e não temos de lhe tocar.",
     "verifiedBadge": "Domínio verificado",
+    "statusRunningNoScript": "Se o resultado não aparecer, recarregue a página.",
     "observation": {
       "retentionPeriodStated": "Prazo de conservação indicado",
       "dpoContactPublished": "Contato do encarregado de dados publicado",

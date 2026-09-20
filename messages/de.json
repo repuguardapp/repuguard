@@ -606,6 +606,7 @@
     "verifyNotConfigured": "Die Prüfung ist auf diesem Server nicht eingerichtet.",
     "verifyWhySubdomain": "Wir lesen eine Subdomain statt des Apex: Ihr Root-TXT-Eintrag enthält SPF und DMARC, und den müssen wir nicht anfassen.",
     "verifiedBadge": "Domain bestätigt",
+    "statusRunningNoScript": "Erscheint das Ergebnis nicht, laden Sie die Seite neu.",
     "observation": {
       "retentionPeriodStated": "Speicherdauer angegeben",
       "dpoContactPublished": "Kontakt des Datenschutzbeauftragten veröffentlicht",

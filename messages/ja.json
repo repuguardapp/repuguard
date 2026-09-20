@@ -606,6 +606,7 @@
     "verifyNotConfigured": "このサーバーでは確認機能が設定されていません。",
     "verifyWhySubdomain": "頂点ドメインではなくサブドメインを読みます。ルートの TXT レコードには SPF と DMARC が入っており、当方が触れるべきものではありません。",
     "verifiedBadge": "ドメイン確認済み",
+    "statusRunningNoScript": "結果が表示されない場合は、ページを再読み込みしてください。",
     "observation": {
       "retentionPeriodStated": "保存期間の記載",
       "dpoContactPublished": "データ保護責任者の連絡先の公開",

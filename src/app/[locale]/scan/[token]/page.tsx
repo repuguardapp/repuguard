@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AutoRefresh } from '@/components/AutoRefresh';
 import { DomainVerifyButton } from '@/components/DomainVerifyButton';
 import { verificationRecordName, verificationToken } from '@/lib/domain-verification';
 import { classifyScanFailure } from '@/lib/scan-failure';
@@ -107,13 +108,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: t('metaDescription', { domain: scan.domain }),
     // The whole policy in one line. Unverified means shareable, not
     // searchable.
-    robots: { index: verified, follow: verified },
-    // A running scan reloads itself. A meta refresh rather than a client
-    // component, so it works with scripting disabled and inside whatever
-    // in-app browser the link was opened in.
-    ...(scan.status === 'running' || scan.status === 'queued'
-      ? { other: { refresh: '6' } }
-      : {})
+    // No auto-refresh here. `other: { refresh: '6' }` used to live in this
+    // object and did nothing at all: Next renders that field as
+    // <meta name="refresh">, and a browser only honours
+    // <meta http-equiv="refresh">. The page sat on "reading…" for ever
+    // while the scan had finished in under a second. See <AutoRefresh />.
+    robots: { index: verified, follow: verified }
   };
 }
 
@@ -174,6 +174,13 @@ export default async function ScanPage({ params }: PageProps) {
           <CardContent className="grid gap-2 py-6">
             <p className="text-sm font-medium">{t('statusRunning')}</p>
             <p className="text-sm text-muted-foreground">{t('statusRunningHint')}</p>
+            <AutoRefresh seconds={4} />
+            {/* The honest fallback. The previous version claimed to work
+                with scripting off and did not work at all; this one says
+                what to do instead of pretending. */}
+            <noscript>
+              <p className="text-sm text-muted-foreground">{t('statusRunningNoScript')}</p>
+            </noscript>
           </CardContent>
         </Card>
       )}

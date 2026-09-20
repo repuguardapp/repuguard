@@ -125,3 +125,45 @@ describe('seven locales, and the boundary in every one', () => {
     }
   });
 });
+
+describe('the page has to actually refresh itself', () => {
+  const page = code(PAGE);
+
+  /**
+   * `metadata.other = { refresh: '6' }` shipped and did nothing. Next
+   * renders that field as <meta name="refresh" content="6">, and a browser
+   * only honours <meta http-equiv="refresh"> — the name form is inert.
+   *
+   * The result page therefore sat on "reading…" for ever while the scan had
+   * finished in under a second, and the only way to see an answer was to
+   * reload by hand. The commit that shipped it claimed the page "reloads
+   * itself" and "works with scripting disabled". Neither was true.
+   */
+
+  it('no longer carries the metadata field that did nothing', () => {
+    expect(page).not.toContain("other: { refresh");
+    expect(read(PAGE)).toContain('and a browser only honours');
+  });
+
+  it('refreshes from a client component while the scan is running', () => {
+    expect(page).toContain('<AutoRefresh seconds={4} />');
+    const auto = code('src/components/AutoRefresh.tsx');
+    expect(auto).toContain('router.refresh()');
+  });
+
+  it('stops refreshing rather than polling for ever', () => {
+    // The pipeline always writes a terminal status, including from its
+    // catch. A page still running after the cap is evidence of a bug, and
+    // hammering it would hide that rather than surface it.
+    const auto = code('src/components/AutoRefresh.tsx');
+    expect(auto).toContain('maxAttempts');
+    expect(auto).toContain('if (attempts >= maxAttempts) return;');
+  });
+
+  it('tells a visitor without scripting what to do, instead of pretending', () => {
+    expect(page).toContain('<noscript>');
+    for (const locale of LOCALES) {
+      expect(messages[locale]!['statusRunningNoScript'], locale).toBeTruthy();
+    }
+  });
+});

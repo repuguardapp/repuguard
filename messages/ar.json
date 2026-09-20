@@ -606,6 +606,7 @@
     "verifyNotConfigured": "التحقق غير مُهيَّأ على هذا الخادم.",
     "verifyWhySubdomain": "نقرأ نطاقًا فرعيًا لا النطاق الجذر: فسجل TXT الجذر يحتوي على SPF و DMARC، ولا شأن لنا به.",
     "verifiedBadge": "نطاق مُتحقَّق منه",
+    "statusRunningNoScript": "إذا لم تظهر النتيجة، أعد تحميل الصفحة.",
     "observation": {
       "retentionPeriodStated": "مدة الاحتفاظ محددة",
       "dpoContactPublished": "بيانات الاتصال بمسؤول حماية البيانات منشورة",
