@@ -536,7 +536,8 @@
     "seeAll": "All frameworks",
     "seeComparisons": "All comparisons",
     "seeDecisions": "Enforcement decisions",
-    "footerResources": "Resources"
+    "footerResources": "Resources",
+    "seeScan": "Scan a privacy policy"
   },
   "scan": {
     "metaTitle": "What {domain} publishes",
@@ -565,6 +566,23 @@
     "ctaBody": "These observations are factual and public. The legal qualification — detailed findings, the articles engaged, suggested rewrites — happens on your document, privately.",
     "ctaButton": "Run an audit",
     "notIndexed": "This page is not indexed by search engines.",
+    "indexMetaTitle": "What does your privacy policy publish?",
+    "indexMetaDescription": "A factual record of what a published privacy document contains: retention period, DPO contact, legal basis, rights, authority, transfers. With the source, the date and the hash.",
+    "formTitle": "What does your privacy policy publish?",
+    "formLead": "Give a domain. We read the privacy policy it publishes and record seven checkable facts, each with the passage it rests on.",
+    "inputLabel": "Domain",
+    "inputPlaceholder": "your-company.com",
+    "submit": "Record the facts",
+    "submitting": "Reading…",
+    "howHeading": "Exactly what we do",
+    "howRobots": "We read the site's robots.txt first and obey it. If the site refuses robots, we read nothing.",
+    "howPublic": "We read only the public document the site publishes itself. No login, no private area.",
+    "howPrivate": "The result lives at a link only you know and is not indexed. It becomes indexable only if you prove you control the domain.",
+    "howNoVerdict": "We record what the document says. We pass no judgement on the organisation that published it.",
+    "errorNotADomain": "That does not look like a domain name.",
+    "errorRateLimited": "You have run a lot of scans. Try again in a moment.",
+    "errorDomainRateLimited": "This domain has been read several times recently. We avoid knocking on one site too often.",
+    "errorService": "The service did not answer. Try again in a moment.",
     "observation": {
       "retentionPeriodStated": "Retention period stated",
       "dpoContactPublished": "Data protection officer contact published",

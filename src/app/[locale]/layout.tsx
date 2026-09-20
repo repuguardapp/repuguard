@@ -176,6 +176,13 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
               <Link href="/decisions" className="text-muted-foreground hover:text-foreground">
                 {tHubs('seeDecisions')}
               </Link>
+              {/* The free tool, linked from every page for the reason the
+                  rest of this row exists: 329 pages once sat on this site
+                  with no inbound link from anywhere on it, and Google
+                  treated them accordingly. */}
+              <Link href="/scan" className="text-muted-foreground hover:text-foreground">
+                {tHubs('seeScan')}
+              </Link>
             </div>
             <div className="container flex flex-col items-center justify-between gap-3 py-8 text-sm text-muted-foreground sm:flex-row">
               <span>{tFooter('copyright', { year: new Date().getFullYear() })}</span>

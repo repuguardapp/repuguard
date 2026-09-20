@@ -536,7 +536,8 @@
     "seeAll": "Tous les référentiels",
     "seeComparisons": "Tous les comparatifs",
     "seeDecisions": "Décisions de sanction",
-    "footerResources": "Ressources"
+    "footerResources": "Ressources",
+    "seeScan": "Relever une politique"
   },
   "scan": {
     "metaTitle": "Ce que publie {domain}",
@@ -565,6 +566,23 @@
     "ctaBody": "Ces constats sont factuels et publics. La qualification juridique — constats détaillés, articles engagés, propositions de réécriture — se fait sur votre document, en privé.",
     "ctaButton": "Lancer un audit",
     "notIndexed": "Cette page n’est pas indexée par les moteurs de recherche.",
+    "indexMetaTitle": "Que publie votre politique de confidentialité ?",
+    "indexMetaDescription": "Relevé factuel de ce qu’un document de confidentialité publié contient : durée de conservation, contact DPO, base légale, droits, autorité, transferts. Avec la source, la date et l’empreinte.",
+    "formTitle": "Que publie votre politique de confidentialité ?",
+    "formLead": "Indiquez un domaine. Nous lisons la politique de confidentialité qu’il publie et relevons sept faits vérifiables, chacun avec le passage qui le fonde.",
+    "inputLabel": "Domaine",
+    "inputPlaceholder": "votre-entreprise.fr",
+    "submit": "Relever les faits",
+    "submitting": "Lecture en cours…",
+    "howHeading": "Ce que nous faisons, exactement",
+    "howRobots": "Nous lisons d’abord le fichier robots.txt du site et nous le respectons. Si le site refuse les robots, nous ne lisons rien.",
+    "howPublic": "Nous ne lisons que le document public que le site publie lui-même. Aucune authentification, aucune zone privée.",
+    "howPrivate": "Le résultat est accessible par un lien que vous seul connaissez et n’est pas indexé. Il ne le devient que si vous prouvez que vous contrôlez le domaine.",
+    "howNoVerdict": "Nous relevons ce que le document dit. Nous ne portons aucune appréciation sur l’organisation qui l’a publié.",
+    "errorNotADomain": "Ceci ne ressemble pas à un nom de domaine.",
+    "errorRateLimited": "Vous avez lancé beaucoup de relevés. Réessayez dans un moment.",
+    "errorDomainRateLimited": "Ce domaine a déjà été relevé plusieurs fois récemment. Nous évitons de solliciter un site trop souvent.",
+    "errorService": "Le service n’a pas répondu. Réessayez dans un instant.",
     "observation": {
       "retentionPeriodStated": "Durée de conservation indiquée",
       "dpoContactPublished": "Contact du délégué à la protection des données publié",

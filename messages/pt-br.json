@@ -536,7 +536,8 @@
     "seeAll": "Todos os marcos",
     "seeComparisons": "Todas as comparações",
     "seeDecisions": "Decisões sancionadoras",
-    "footerResources": "Recursos"
+    "footerResources": "Recursos",
+    "seeScan": "Analisar uma política"
   },
   "scan": {
     "metaTitle": "O que {domain} publica",
@@ -565,6 +566,23 @@
     "ctaBody": "Estas constatações são factuais e públicas. A qualificação jurídica — achados detalhados, artigos envolvidos, sugestões de reescrita — é feita no seu documento, em caráter privado.",
     "ctaButton": "Iniciar uma auditoria",
     "notIndexed": "Esta página não é indexada pelos mecanismos de busca.",
+    "indexMetaTitle": "O que a sua política de privacidade publica?",
+    "indexMetaDescription": "Registo factual do que um documento de privacidade publicado contém: prazo de conservação, contacto do encarregado, base legal, direitos, autoridade, transferências. Com a fonte, a data e a impressão.",
+    "formTitle": "O que a sua política de privacidade publica?",
+    "formLead": "Indique um domínio. Lemos a política de privacidade que ele publica e registamos sete factos verificáveis, cada um com o trecho que o sustenta.",
+    "inputLabel": "Domínio",
+    "inputPlaceholder": "sua-empresa.com.br",
+    "submit": "Registar os factos",
+    "submitting": "Lendo…",
+    "howHeading": "O que fazemos, exatamente",
+    "howRobots": "Lemos primeiro o ficheiro robots.txt do site e respeitamo-lo. Se o site recusar robôs, não lemos nada.",
+    "howPublic": "Lemos apenas o documento público que o próprio site publica. Sem autenticação, sem área privada.",
+    "howPrivate": "O resultado fica num link que só você conhece e não é indexado. Só passa a sê-lo se provar que controla o domínio.",
+    "howNoVerdict": "Registamos o que o documento diz. Não emitimos qualquer juízo sobre a organização que o publicou.",
+    "errorNotADomain": "Isto não se parece com um nome de domínio.",
+    "errorRateLimited": "Você lançou muitos registos. Tente novamente daqui a pouco.",
+    "errorDomainRateLimited": "Este domínio já foi lido várias vezes recentemente. Evitamos solicitar um site com demasiada frequência.",
+    "errorService": "O serviço não respondeu. Tente novamente daqui a instantes.",
     "observation": {
       "retentionPeriodStated": "Prazo de conservação indicado",
       "dpoContactPublished": "Contato do encarregado de dados publicado",

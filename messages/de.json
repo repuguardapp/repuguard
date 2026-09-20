@@ -536,7 +536,8 @@
     "seeAll": "Alle Regelwerke",
     "seeComparisons": "Alle Vergleiche",
     "seeDecisions": "Bußgeldentscheidungen",
-    "footerResources": "Ressourcen"
+    "footerResources": "Ressourcen",
+    "seeScan": "Datenschutzerklärung prüfen"
   },
   "scan": {
     "metaTitle": "Was {domain} veröffentlicht",
@@ -565,6 +566,23 @@
     "ctaBody": "Diese Feststellungen sind sachlich und öffentlich. Die rechtliche Bewertung — ausführliche Befunde, betroffene Artikel, Formulierungsvorschläge — erfolgt an Ihrem Dokument, vertraulich.",
     "ctaButton": "Prüfung starten",
     "notIndexed": "Diese Seite wird von Suchmaschinen nicht indexiert.",
+    "indexMetaTitle": "Was veröffentlicht Ihre Datenschutzerklärung?",
+    "indexMetaDescription": "Sachliche Aufzeichnung dessen, was ein veröffentlichtes Datenschutzdokument enthält: Speicherdauer, Kontakt des Datenschutzbeauftragten, Rechtsgrundlage, Rechte, Aufsichtsbehörde, Übermittlungen. Mit Quelle, Datum und Prüfsumme.",
+    "formTitle": "Was veröffentlicht Ihre Datenschutzerklärung?",
+    "formLead": "Geben Sie eine Domain an. Wir lesen die dort veröffentlichte Datenschutzerklärung und halten sieben überprüfbare Tatsachen fest, jede mit der Textstelle, auf der sie beruht.",
+    "inputLabel": "Domain",
+    "inputPlaceholder": "ihr-unternehmen.de",
+    "submit": "Tatsachen festhalten",
+    "submitting": "Wird gelesen…",
+    "howHeading": "Was wir genau tun",
+    "howRobots": "Wir lesen zuerst die robots.txt der Website und halten uns daran. Lehnt die Website Robots ab, lesen wir nichts.",
+    "howPublic": "Wir lesen ausschließlich das öffentliche Dokument, das die Website selbst veröffentlicht. Keine Anmeldung, kein geschützter Bereich.",
+    "howPrivate": "Das Ergebnis liegt unter einem Link, den nur Sie kennen, und wird nicht indexiert. Indexierbar wird es erst, wenn Sie nachweisen, dass Sie die Domain kontrollieren.",
+    "howNoVerdict": "Wir halten fest, was das Dokument sagt. Über die Organisation, die es veröffentlicht hat, urteilen wir nicht.",
+    "errorNotADomain": "Das sieht nicht nach einem Domainnamen aus.",
+    "errorRateLimited": "Sie haben viele Abfragen gestartet. Versuchen Sie es gleich noch einmal.",
+    "errorDomainRateLimited": "Diese Domain wurde vor Kurzem bereits mehrfach gelesen. Wir klopfen bei einer Website nicht zu oft an.",
+    "errorService": "Der Dienst hat nicht geantwortet. Versuchen Sie es gleich noch einmal.",
     "observation": {
       "retentionPeriodStated": "Speicherdauer angegeben",
       "dpoContactPublished": "Kontakt des Datenschutzbeauftragten veröffentlicht",
