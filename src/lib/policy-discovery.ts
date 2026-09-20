@@ -122,7 +122,7 @@ interface Fetched {
   error: string | null;
 }
 
-async function get(url: string, accept: string): Promise<Fetched> {
+async function get(url: string, accept: string, retry = true): Promise<Fetched> {
   try {
     const res = await fetchExternal(url, {
       headers: { 'user-agent': `${USER_AGENT}/1.0 (+https://lexyflow.com)`, accept },
@@ -131,10 +131,24 @@ async function get(url: string, accept: string): Promise<Fetched> {
     });
     return res.ok ? { res, error: null } : { res: null, error: `HTTP ${res.status}` };
   } catch (err) {
+    const reason = describeFetchError(err);
+
+    // One retry on a reset connection, and one only.
+    //
+    // A reset can be a transient blip, and asking twice is ordinary. What
+    // we do NOT do is change what we look like: a site that keeps dropping
+    // us is running bot mitigation and has refused. We could very probably
+    // get past it with browser-shaped headers, and that is the one thing
+    // this product cannot do — we obey robots.txt and identify ourselves,
+    // so when a site says no we publish the refusal rather than defeat it.
+    if (retry && /ECONNRESET|ECONNABORTED|EPIPE|socket hang up/i.test(reason)) {
+      return get(url, accept, false);
+    }
+
     // fetchExternal throws on an unreachable host, on a redirect chain that
     // leaves https, and on a hop resolving to a private address. Each is a
     // different answer and they were all being flattened into "not found".
-    return { res: null, error: describeFetchError(err) };
+    return { res: null, error: reason };
   }
 }
 

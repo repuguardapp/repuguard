@@ -152,7 +152,8 @@ describe('why nothing was read, told apart from what was read', () => {
     // version pinned the exact expression and failed the moment it was
     // replaced by describeFetchError, which does the same job better.
     const thrown = source.slice(source.indexOf('} catch (err) {'));
-    expect(thrown.slice(0, 200)).toContain('error: describeFetchError(err)');
+    expect(thrown.slice(0, 400)).toContain('describeFetchError(err)');
+    expect(thrown.slice(0, 400)).toContain('error: reason');
   });
 
   it('separates "we could not read it" from "we read it and found nothing"', () => {

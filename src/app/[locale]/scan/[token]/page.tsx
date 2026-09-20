@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { classifyScanFailure } from '@/lib/scan-failure';
 import { supabaseService } from '@/lib/supabase';
 
 /**
@@ -34,6 +35,21 @@ import { supabaseService } from '@/lib/supabase';
  */
 
 export const dynamic = 'force-dynamic';
+
+/** One sentence per failure code. See lib/scan-failure.ts for the line
+ *  none of them cross: every one is about our connection attempt, never
+ *  about the company. */
+const FAILURE_KEY = {
+  refused_connection: 'failureRefusedConnection',
+  unreachable: 'failureUnreachable',
+  tls: 'failureTls',
+  robots: 'failureRobots',
+  no_link: 'failureNoLink',
+  shell_page: 'failureShellPage',
+  pdf: 'failurePdf',
+  http_error: 'failureHttpError',
+  other: 'failureOther'
+} as const;
 
 interface PageProps {
   params: { locale: string; token: string };
@@ -144,11 +160,25 @@ export default async function ScanPage({ params }: PageProps) {
             <CardTitle className="text-base">{t('statusFailedTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {/* The reason, verbatim from the pipeline. Every one of them is
-                phrased as a fact about our fetch — "we looked and did not
-                find", never "there is nothing there". */}
+            {/* The sentence first, the machine's string underneath.
+                `read ECONNRESET` is exact and means nothing to a data
+                protection officer — and it was being printed in English on
+                a French page, on the one line a visitor most needs to
+                understand. The raw code stays because it is the evidence:
+                a reader who knows what it means can check that we read it
+                correctly, exactly as an observation carries its quotation. */}
+            <p className="text-sm leading-relaxed">
+              {t(FAILURE_KEY[classifyScanFailure(scan.failure)])}
+            </p>
             {scan.failure && (
-              <p className="rounded-md border bg-muted/50 p-3 font-mono text-xs">{scan.failure}</p>
+              <div className="grid gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('failureTechnical')}
+                </span>
+                <code className="rounded-md border bg-muted/50 p-3 font-mono text-xs">
+                  {scan.failure}
+                </code>
+              </div>
             )}
             <p className="text-sm leading-relaxed text-muted-foreground">{t('statusFailedLead')}</p>
           </CardContent>
