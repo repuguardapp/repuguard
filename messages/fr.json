@@ -537,5 +537,42 @@
     "seeComparisons": "Tous les comparatifs",
     "seeDecisions": "Décisions de sanction",
     "footerResources": "Ressources"
+  },
+  "scan": {
+    "metaTitle": "Ce que publie {domain}",
+    "metaDescription": "Constats factuels relevés dans la politique de confidentialité publiée par {domain}, avec la source, la date et l’empreinte du document.",
+    "headline": "Ce que ce document publie",
+    "lead": "Constats relevés dans la politique de confidentialité publiée par {domain}. Chacun porte le passage sur lequel il repose.",
+    "statusRunning": "Lecture en cours…",
+    "statusRunningHint": "Nous lisons le document publié. Cette page se rafraîchit d’elle-même.",
+    "statusFailedTitle": "Nous n’avons pas pu lire de document",
+    "statusFailedLead": "Ceci décrit notre recherche, pas ce site. Le document peut se trouver derrière un script, derrière une authentification, ou sur un chemin que nous n’avons pas essayé.",
+    "sourceHeading": "Document lu",
+    "provenanceLinked": "Lien publié sur la page d’accueil",
+    "provenanceSitemap": "Listé dans le plan du site",
+    "provenanceGuessed": "Chemin usuel, essayé par nous",
+    "fetchedAt": "Relevé le {date}",
+    "hashLabel": "Empreinte SHA-256",
+    "hashHint": "Récupérez cette URL et calculez son empreinte : vous obtiendrez exactement le document que nous avons lu.",
+    "findingsHeading": "Constats",
+    "findingPresent": "Présent",
+    "findingNotFound": "Non trouvé dans ce document",
+    "findingUnclear": "Indéterminé",
+    "evidenceLabel": "Passage cité",
+    "boundaryHeading": "Portée de ces constats",
+    "boundaryBody": "Ces constats portent sur le texte de ce document, à cette date, et sur rien d’autre. Ils ne constituent pas une appréciation juridique de la conformité de {domain} : seule l’analyse des traitements réellement mis en œuvre le permettrait.",
+    "ctaTitle": "Un audit complet, sur votre propre document",
+    "ctaBody": "Ces constats sont factuels et publics. La qualification juridique — constats détaillés, articles engagés, propositions de réécriture — se fait sur votre document, en privé.",
+    "ctaButton": "Lancer un audit",
+    "notIndexed": "Cette page n’est pas indexée par les moteurs de recherche.",
+    "observation": {
+      "retentionPeriodStated": "Durée de conservation indiquée",
+      "dpoContactPublished": "Contact du délégué à la protection des données publié",
+      "legalBasisCited": "Base légale citée",
+      "dataSubjectRightsListed": "Droits des personnes énumérés",
+      "supervisoryAuthorityNamed": "Autorité de contrôle nommée",
+      "internationalTransfersAddressed": "Transferts internationaux traités",
+      "lastUpdatedStated": "Date de mise à jour indiquée"
+    }
   }
 }

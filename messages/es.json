@@ -537,5 +537,42 @@
     "seeComparisons": "Todas las comparativas",
     "seeDecisions": "Decisiones sancionadoras",
     "footerResources": "Recursos"
+  },
+  "scan": {
+    "metaTitle": "Lo que publica {domain}",
+    "metaDescription": "Observaciones factuales de la política de privacidad publicada por {domain}, con la fuente, la fecha y la huella del documento.",
+    "headline": "Lo que publica este documento",
+    "lead": "Observaciones de la política de privacidad publicada por {domain}. Cada una lleva el pasaje en el que se apoya.",
+    "statusRunning": "Leyendo…",
+    "statusRunningHint": "Estamos leyendo el documento publicado. Esta página se actualiza sola.",
+    "statusFailedTitle": "No hemos podido leer ningún documento",
+    "statusFailedLead": "Esto describe nuestra búsqueda, no este sitio. El documento puede estar tras un script, tras un inicio de sesión, o en una ruta que no probamos.",
+    "sourceHeading": "Documento leído",
+    "provenanceLinked": "Enlazado desde la página de inicio",
+    "provenanceSitemap": "Listado en el mapa del sitio",
+    "provenanceGuessed": "Una ruta habitual, probada por nosotros",
+    "fetchedAt": "Obtenido el {date}",
+    "hashLabel": "Huella SHA-256",
+    "hashHint": "Descargue esta URL y calcule su huella: obtendrá exactamente el documento que leímos.",
+    "findingsHeading": "Observaciones",
+    "findingPresent": "Presente",
+    "findingNotFound": "No encontrado en este documento",
+    "findingUnclear": "Indeterminado",
+    "evidenceLabel": "Pasaje citado",
+    "boundaryHeading": "Alcance de estas observaciones",
+    "boundaryBody": "Estas observaciones se refieren al texto de este documento, en esta fecha, y a nada más. No constituyen una valoración jurídica del cumplimiento de {domain}, que exigiría examinar los tratamientos realmente efectuados.",
+    "ctaTitle": "Una auditoría completa, sobre su propio documento",
+    "ctaBody": "Estas observaciones son factuales y públicas. La calificación jurídica — hallazgos detallados, artículos afectados, propuestas de reescritura — se hace sobre su documento, en privado.",
+    "ctaButton": "Iniciar una auditoría",
+    "notIndexed": "Esta página no está indexada por los motores de búsqueda.",
+    "observation": {
+      "retentionPeriodStated": "Plazo de conservación indicado",
+      "dpoContactPublished": "Contacto del delegado de protección de datos publicado",
+      "legalBasisCited": "Base jurídica citada",
+      "dataSubjectRightsListed": "Derechos de los interesados enumerados",
+      "supervisoryAuthorityNamed": "Autoridad de control nombrada",
+      "internationalTransfersAddressed": "Transferencias internacionales tratadas",
+      "lastUpdatedStated": "Fecha de última actualización indicada"
+    }
   }
 }

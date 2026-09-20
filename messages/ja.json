@@ -537,5 +537,42 @@
     "seeComparisons": "比較一覧",
     "seeDecisions": "制裁事例",
     "footerResources": "資料"
+  },
+  "scan": {
+    "metaTitle": "{domain} が公開している内容",
+    "metaDescription": "{domain} が公開するプライバシーポリシーから読み取った事実の記録。出典、取得日、文書のハッシュ値を添えています。",
+    "headline": "この文書が公開している内容",
+    "lead": "{domain} が公開するプライバシーポリシーから読み取った記録です。各項目には根拠となる箇所を添えています。",
+    "statusRunning": "読み取り中…",
+    "statusRunningHint": "公開文書を読み取っています。このページは自動で更新されます。",
+    "statusFailedTitle": "文書を読み取れませんでした",
+    "statusFailedLead": "これは当方の検索についての記述であり、このサイトについてのものではありません。文書はスクリプトの先、ログインの先、または当方が試さなかった経路にある可能性があります。",
+    "sourceHeading": "読み取った文書",
+    "provenanceLinked": "トップページからリンクされていた",
+    "provenanceSitemap": "サイトマップに記載されていた",
+    "provenanceGuessed": "当方が試した一般的な経路",
+    "fetchedAt": "{date} に取得",
+    "hashLabel": "SHA-256 ハッシュ値",
+    "hashHint": "このURLを取得してハッシュ値を計算すれば、当方が読んだ文書とまったく同じものが得られます。",
+    "findingsHeading": "記録",
+    "findingPresent": "記載あり",
+    "findingNotFound": "この文書では見つかりませんでした",
+    "findingUnclear": "判断できません",
+    "evidenceLabel": "引用箇所",
+    "boundaryHeading": "この記録の範囲",
+    "boundaryBody": "この記録は、この日付における当該文書の本文のみを対象とします。{domain} の適合性についての法的評価ではありません。評価には、実際に行われている取扱いの検討が必要です。",
+    "ctaTitle": "ご自身の文書に対する完全な監査",
+    "ctaBody": "この記録は事実であり公開されています。法的な評価 — 詳細な指摘、関係する条文、修正案 — は、ご自身の文書に対して非公開で行います。",
+    "ctaButton": "監査を実行",
+    "notIndexed": "このページは検索エンジンにインデックスされません。",
+    "observation": {
+      "retentionPeriodStated": "保存期間の記載",
+      "dpoContactPublished": "データ保護責任者の連絡先の公開",
+      "legalBasisCited": "法的根拠の記載",
+      "dataSubjectRightsListed": "データ主体の権利の列挙",
+      "supervisoryAuthorityNamed": "監督機関の明示",
+      "internationalTransfersAddressed": "国外移転への言及",
+      "lastUpdatedStated": "最終更新日の記載"
+    }
   }
 }

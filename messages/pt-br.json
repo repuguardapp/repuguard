@@ -537,5 +537,42 @@
     "seeComparisons": "Todas as comparações",
     "seeDecisions": "Decisões sancionadoras",
     "footerResources": "Recursos"
+  },
+  "scan": {
+    "metaTitle": "O que {domain} publica",
+    "metaDescription": "Constatações factuais da política de privacidade publicada por {domain}, com a fonte, a data e a impressão do documento.",
+    "headline": "O que este documento publica",
+    "lead": "Constatações da política de privacidade publicada por {domain}. Cada uma traz o trecho em que se apoia.",
+    "statusRunning": "Lendo…",
+    "statusRunningHint": "Estamos lendo o documento publicado. Esta página se atualiza sozinha.",
+    "statusFailedTitle": "Não conseguimos ler nenhum documento",
+    "statusFailedLead": "Isto descreve a nossa busca, não este site. O documento pode estar atrás de um script, atrás de um login, ou em um caminho que não tentamos.",
+    "sourceHeading": "Documento lido",
+    "provenanceLinked": "Vinculado pela página inicial",
+    "provenanceSitemap": "Listado no mapa do site",
+    "provenanceGuessed": "Um caminho habitual, tentado por nós",
+    "fetchedAt": "Obtido em {date}",
+    "hashLabel": "Impressão SHA-256",
+    "hashHint": "Baixe esta URL e calcule a impressão: você obterá exatamente o documento que lemos.",
+    "findingsHeading": "Constatações",
+    "findingPresent": "Presente",
+    "findingNotFound": "Não encontrado neste documento",
+    "findingUnclear": "Indeterminado",
+    "evidenceLabel": "Trecho citado",
+    "boundaryHeading": "Alcance destas constatações",
+    "boundaryBody": "Estas constatações referem-se ao texto deste documento, nesta data, e a nada mais. Não constituem uma avaliação jurídica da conformidade de {domain}, o que exigiria examinar os tratamentos efetivamente realizados.",
+    "ctaTitle": "Uma auditoria completa, no seu próprio documento",
+    "ctaBody": "Estas constatações são factuais e públicas. A qualificação jurídica — achados detalhados, artigos envolvidos, sugestões de reescrita — é feita no seu documento, em caráter privado.",
+    "ctaButton": "Iniciar uma auditoria",
+    "notIndexed": "Esta página não é indexada pelos mecanismos de busca.",
+    "observation": {
+      "retentionPeriodStated": "Prazo de conservação indicado",
+      "dpoContactPublished": "Contato do encarregado de dados publicado",
+      "legalBasisCited": "Base legal citada",
+      "dataSubjectRightsListed": "Direitos dos titulares enumerados",
+      "supervisoryAuthorityNamed": "Autoridade de controlo nomeada",
+      "internationalTransfersAddressed": "Transferências internacionais tratadas",
+      "lastUpdatedStated": "Data de atualização indicada"
+    }
   }
 }

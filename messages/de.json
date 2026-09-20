@@ -537,5 +537,42 @@
     "seeComparisons": "Alle Vergleiche",
     "seeDecisions": "Bußgeldentscheidungen",
     "footerResources": "Ressourcen"
+  },
+  "scan": {
+    "metaTitle": "Was {domain} veröffentlicht",
+    "metaDescription": "Sachliche Feststellungen aus der von {domain} veröffentlichten Datenschutzerklärung, mit Quelle, Datum und Prüfsumme des Dokuments.",
+    "headline": "Was dieses Dokument veröffentlicht",
+    "lead": "Feststellungen aus der von {domain} veröffentlichten Datenschutzerklärung. Jede trägt die Textstelle, auf der sie beruht.",
+    "statusRunning": "Wird gelesen…",
+    "statusRunningHint": "Wir lesen das veröffentlichte Dokument. Diese Seite aktualisiert sich selbst.",
+    "statusFailedTitle": "Wir konnten kein Dokument lesen",
+    "statusFailedLead": "Dies beschreibt unsere Suche, nicht diese Website. Das Dokument kann hinter einem Skript, hinter einer Anmeldung oder auf einem Pfad liegen, den wir nicht versucht haben.",
+    "sourceHeading": "Gelesenes Dokument",
+    "provenanceLinked": "Von der Startseite verlinkt",
+    "provenanceSitemap": "In der Sitemap aufgeführt",
+    "provenanceGuessed": "Ein üblicher Pfad, von uns versucht",
+    "fetchedAt": "Abgerufen am {date}",
+    "hashLabel": "SHA-256-Prüfsumme",
+    "hashHint": "Rufen Sie diese URL ab und bilden Sie die Prüfsumme: Sie erhalten genau das Dokument, das wir gelesen haben.",
+    "findingsHeading": "Feststellungen",
+    "findingPresent": "Vorhanden",
+    "findingNotFound": "In diesem Dokument nicht gefunden",
+    "findingUnclear": "Unklar",
+    "evidenceLabel": "Zitierte Stelle",
+    "boundaryHeading": "Reichweite dieser Feststellungen",
+    "boundaryBody": "Diese Feststellungen betreffen den Text dieses Dokuments zu diesem Datum und nichts anderes. Sie sind keine rechtliche Bewertung der Konformität von {domain}; dafür müssten die tatsächlich durchgeführten Verarbeitungen geprüft werden.",
+    "ctaTitle": "Eine vollständige Prüfung Ihres eigenen Dokuments",
+    "ctaBody": "Diese Feststellungen sind sachlich und öffentlich. Die rechtliche Bewertung — ausführliche Befunde, betroffene Artikel, Formulierungsvorschläge — erfolgt an Ihrem Dokument, vertraulich.",
+    "ctaButton": "Prüfung starten",
+    "notIndexed": "Diese Seite wird von Suchmaschinen nicht indexiert.",
+    "observation": {
+      "retentionPeriodStated": "Speicherdauer angegeben",
+      "dpoContactPublished": "Kontakt des Datenschutzbeauftragten veröffentlicht",
+      "legalBasisCited": "Rechtsgrundlage genannt",
+      "dataSubjectRightsListed": "Betroffenenrechte aufgeführt",
+      "supervisoryAuthorityNamed": "Aufsichtsbehörde benannt",
+      "internationalTransfersAddressed": "Internationale Übermittlungen behandelt",
+      "lastUpdatedStated": "Datum der letzten Aktualisierung angegeben"
+    }
   }
 }

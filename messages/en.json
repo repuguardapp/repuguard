@@ -537,5 +537,42 @@
     "seeComparisons": "All comparisons",
     "seeDecisions": "Enforcement decisions",
     "footerResources": "Resources"
+  },
+  "scan": {
+    "metaTitle": "What {domain} publishes",
+    "metaDescription": "Factual observations from the privacy policy published by {domain}, with the source, the date and the document’s hash.",
+    "headline": "What this document publishes",
+    "lead": "Observations from the privacy policy published by {domain}. Each one carries the passage it rests on.",
+    "statusRunning": "Reading…",
+    "statusRunningHint": "We are reading the published document. This page refreshes itself.",
+    "statusFailedTitle": "We could not read a document",
+    "statusFailedLead": "This describes our search, not this site. The document may be behind a script, behind a login, or on a path we did not try.",
+    "sourceHeading": "Document read",
+    "provenanceLinked": "Linked from the homepage",
+    "provenanceSitemap": "Listed in the sitemap",
+    "provenanceGuessed": "A conventional path, tried by us",
+    "fetchedAt": "Fetched on {date}",
+    "hashLabel": "SHA-256 hash",
+    "hashHint": "Fetch this URL and hash it: you will get exactly the document we read.",
+    "findingsHeading": "Observations",
+    "findingPresent": "Present",
+    "findingNotFound": "Not found in this document",
+    "findingUnclear": "Unclear",
+    "evidenceLabel": "Quoted passage",
+    "boundaryHeading": "What these observations are",
+    "boundaryBody": "These observations are about the text of this document, on this date, and nothing else. They are not a legal assessment of {domain}’s compliance, which would require examining the processing actually carried out.",
+    "ctaTitle": "A full audit, on your own document",
+    "ctaBody": "These observations are factual and public. The legal qualification — detailed findings, the articles engaged, suggested rewrites — happens on your document, privately.",
+    "ctaButton": "Run an audit",
+    "notIndexed": "This page is not indexed by search engines.",
+    "observation": {
+      "retentionPeriodStated": "Retention period stated",
+      "dpoContactPublished": "Data protection officer contact published",
+      "legalBasisCited": "Legal basis cited",
+      "dataSubjectRightsListed": "Data subject rights listed",
+      "supervisoryAuthorityNamed": "Supervisory authority named",
+      "internationalTransfersAddressed": "International transfers addressed",
+      "lastUpdatedStated": "Last updated date stated"
+    }
   }
 }
