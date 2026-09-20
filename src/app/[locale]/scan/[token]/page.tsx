@@ -1,4 +1,4 @@
-import { Check, ExternalLink, FileSearch, HelpCircle, Lock, Minus } from 'lucide-react';
+import { Check, ExternalLink, FileSearch, HelpCircle, Lock, Minus, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
@@ -6,6 +6,8 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DomainVerifyButton } from '@/components/DomainVerifyButton';
+import { verificationRecordName, verificationToken } from '@/lib/domain-verification';
 import { classifyScanFailure } from '@/lib/scan-failure';
 import { supabaseService } from '@/lib/supabase';
 
@@ -61,8 +63,23 @@ interface ScanRow {
   domain: string;
   status: string;
   failure: string | null;
-  domain_verified_at: string | null;
   created_at: string;
+}
+
+/**
+ * Has anyone proved they control this domain?
+ *
+ * Asked of the domain, not of the scan. Proving you administer example.com
+ * is a fact about example.com, and 0035's per-scan column would have had to
+ * be copied onto every future row or silently not apply to it.
+ */
+async function isDomainVerified(domain: string): Promise<boolean> {
+  const { data } = await supabaseService()
+    .from('domain_verifications')
+    .select('domain')
+    .eq('domain', domain)
+    .maybeSingle();
+  return Boolean(data);
 }
 
 async function loadScan(token: string): Promise<ScanRow | null> {
@@ -71,7 +88,7 @@ async function loadScan(token: string): Promise<ScanRow | null> {
 
   const { data } = await supabaseService()
     .from('scans')
-    .select('id, domain, status, failure, domain_verified_at, created_at')
+    .select('id, domain, status, failure, created_at')
     .eq('token', token)
     .maybeSingle();
 
@@ -83,7 +100,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!scan) return { robots: { index: false, follow: false } };
 
   const t = await getTranslations({ locale: params.locale, namespace: 'scan' });
-  const verified = Boolean(scan.domain_verified_at);
+  const verified = await isDomainVerified(scan.domain);
 
   return {
     title: t('metaTitle', { domain: scan.domain }),
@@ -124,13 +141,20 @@ export default async function ScanPage({ params }: PageProps) {
     : { data: null };
 
   const running = scan.status === 'running' || scan.status === 'queued';
+  const verified = await isDomainVerified(scan.domain);
+  const txtValue = verificationToken(scan.domain);
 
   return (
     <div className="mx-auto grid max-w-2xl gap-6 px-4 py-12 md:px-0">
       <header className="grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{scan.domain}</Badge>
-          {!scan.domain_verified_at && (
+          {verified ? (
+            <Badge variant="secondary" className="gap-1">
+              <ShieldCheck className="h-3 w-3" aria-hidden />
+              {t('verifiedBadge')}
+            </Badge>
+          ) : (
             <Badge variant="outline" className="gap-1 text-muted-foreground">
               <Lock className="h-3 w-3" aria-hidden />
               {t('notIndexed')}
@@ -295,6 +319,61 @@ export default async function ScanPage({ params }: PageProps) {
           </p>
         </CardContent>
       </Card>
+
+      {/*
+        Indexing is the one consequence here that reaches outside this page,
+        so it is the one thing gated on proof rather than on asking. Offered
+        only when there is something to index.
+      */}
+      {!verified && scan.status === 'done' && txtValue && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('verifyHeading')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t('verifyLead', { domain: scan.domain })}
+            </p>
+
+            <div className="grid gap-2">
+              <p className="text-sm">{t('verifyStep1')}</p>
+              <dl className="grid gap-2 rounded-md border bg-muted/50 p-3 text-xs">
+                <div className="grid gap-0.5">
+                  <dt className="font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t('verifyNameLabel')}
+                  </dt>
+                  <dd className="break-all font-mono">{verificationRecordName(scan.domain)}</dd>
+                </div>
+                <div className="grid gap-0.5">
+                  <dt className="font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t('verifyValueLabel')}
+                  </dt>
+                  <dd className="break-all font-mono">{txtValue}</dd>
+                </div>
+              </dl>
+              {/* Why a subdomain and not the apex: their root TXT holds SPF
+                  and DMARC, and asking somebody to edit that record for our
+                  indexing would be asking them to risk their email. */}
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {t('verifyWhySubdomain')}
+              </p>
+            </div>
+
+            <p className="text-sm text-muted-foreground">{t('verifyStep2')}</p>
+
+            <DomainVerifyButton
+              token={params.token}
+              labels={{
+                cta: t('verifyCta'),
+                checking: t('verifyChecking'),
+                done: t('verifyDone'),
+                failed: t('verifyFailed'),
+                notConfigured: t('verifyNotConfigured')
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

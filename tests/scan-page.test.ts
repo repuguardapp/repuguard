@@ -27,7 +27,10 @@ describe('indexing follows proof of control', () => {
     // Anyone can run a scan and share the link; a link is not a search
     // result. Google is invited in only once somebody has proved they
     // control the domain.
-    expect(source).toContain('const verified = Boolean(scan.domain_verified_at)');
+    // The source of that answer moved from a per-scan column to the
+    // domain_verifications table; what matters, and what this asserts, is
+    // that robots follows whatever it says.
+    expect(source).toContain('const verified = await isDomainVerified(scan.domain)');
     expect(source).toContain('robots: { index: verified, follow: verified }');
   });
 
