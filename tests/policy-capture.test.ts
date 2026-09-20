@@ -26,7 +26,11 @@ const POLICY_HTML =
 
 function mockFetch(body: string | Uint8Array, init: { status?: number; type?: string; url?: string } = {}) {
   const bytes = typeof body === 'string' ? new TextEncoder().encode(body) : body;
-  vi.doMock('@/lib/safe-fetch', () => ({
+  // importOriginal keeps describeFetchError real: the point of these tests
+  // is what the module says about a failure, and a stubbed describer would
+  // be testing the stub.
+  vi.doMock('@/lib/safe-fetch', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/safe-fetch')>()),
     fetchExternal: async () =>
       ({
         ok: (init.status ?? 200) < 400,
@@ -112,9 +116,17 @@ describe('every refusal is a fact about our fetch', () => {
   });
 
   it('turns a network failure into a sentence, not a throw', async () => {
-    vi.doMock('@/lib/safe-fetch', () => ({
+    vi.doMock('@/lib/safe-fetch', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('@/lib/safe-fetch')>()),
       fetchExternal: async () => {
-        throw new Error('getaddrinfo ENOTFOUND example.test');
+        // Shaped like the real thing: Node wraps the transport failure and
+        // puts the reason in `cause`.
+        const err = new TypeError('fetch failed');
+        (err as { cause?: unknown }).cause = Object.assign(
+          new Error('getaddrinfo ENOTFOUND example.test'),
+          { code: 'ENOTFOUND' }
+        );
+        throw err;
       }
     }));
     const { capture, refused } = await (await import('@/lib/policy-capture')).capturePolicy(
@@ -122,6 +134,10 @@ describe('every refusal is a fact about our fetch', () => {
     );
     expect(capture).toBeNull();
     expect(refused).toContain('could not fetch');
+    // And the reason, not Node's wrapper. "fetch failed" names the layer
+    // that failed and nothing else.
+    expect(refused).toContain('ENOTFOUND');
+    expect(refused).not.toContain('fetch failed');
   });
 });
 

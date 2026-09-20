@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
 import { htmlToText } from './feeds';
-import { fetchExternal } from './safe-fetch';
+import { describeFetchError, fetchExternal } from './safe-fetch';
 import { USER_AGENT } from './robots';
 
 /**
@@ -69,7 +69,7 @@ export async function capturePolicy(url: string): Promise<CaptureResult> {
       cache: 'no-store'
     });
   } catch (err) {
-    return { capture: null, refused: `could not fetch: ${message(err)}` };
+    return { capture: null, refused: `could not fetch: ${describeFetchError(err)}` };
   }
 
   if (!response.ok) return { capture: null, refused: `the page answered HTTP ${response.status}` };
@@ -122,8 +122,4 @@ export async function capturePolicy(url: string): Promise<CaptureResult> {
     },
     refused: null
   };
-}
-
-function message(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }

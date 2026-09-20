@@ -1,5 +1,5 @@
 import 'server-only';
-import { fetchExternal } from './safe-fetch';
+import { describeFetchError, fetchExternal } from './safe-fetch';
 import { isAllowed, parseRobots, USER_AGENT, type RobotsRules } from './robots';
 import { sitemapsFromRobots } from './sitemap';
 
@@ -134,7 +134,7 @@ async function get(url: string, accept: string): Promise<Fetched> {
     // fetchExternal throws on an unreachable host, on a redirect chain that
     // leaves https, and on a hop resolving to a private address. Each is a
     // different answer and they were all being flattened into "not found".
-    return { res: null, error: err instanceof Error ? err.message : String(err) };
+    return { res: null, error: describeFetchError(err) };
   }
 }
 

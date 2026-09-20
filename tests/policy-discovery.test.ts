@@ -148,7 +148,11 @@ describe('why nothing was read, told apart from what was read', () => {
   it('carries the reason a fetch failed instead of returning null', () => {
     expect(source).toContain('interface Fetched');
     expect(source).toContain('error: `HTTP ${res.status}`');
-    expect(source).toContain('err instanceof Error ? err.message : String(err)');
+    // Asserted on what the catch produces rather than on how. The first
+    // version pinned the exact expression and failed the moment it was
+    // replaced by describeFetchError, which does the same job better.
+    const thrown = source.slice(source.indexOf('} catch (err) {'));
+    expect(thrown.slice(0, 200)).toContain('error: describeFetchError(err)');
   });
 
   it('separates "we could not read it" from "we read it and found nothing"', () => {

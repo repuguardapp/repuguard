@@ -96,3 +96,33 @@ export async function fetchExternal(raw: string, init: RequestInit = {}): Promis
 
   throw new Error(`unfetchable: more than ${MAX_REDIRECTS} redirects`);
 }
+
+/**
+ * Say what actually went wrong, not that something did.
+ *
+ * Node wraps every transport failure — DNS, TCP, TLS, a refused connection
+ * — in a single `TypeError: fetch failed`, and puts the real reason in
+ * `cause`. A scan of uber.fr reported "we could not read the homepage:
+ * fetch failed", which named the layer that failed and nothing else: the
+ * same defect as the message it had just replaced, one level down.
+ *
+ * `getaddrinfo ENOTFOUND uber.fr` and `certificate has expired` are
+ * different answers, and the visitor is entitled to the one that applies.
+ * They are also facts about our connection attempt rather than claims
+ * about the site, which is what makes them publishable at all.
+ */
+export function describeFetchError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+
+  const cause = (err as { cause?: unknown }).cause;
+  if (cause instanceof Error) {
+    // Some causes carry a code and a bare message; both are useful and
+    // neither is reliably present.
+    const code = (cause as { code?: string }).code;
+    const detail = cause.message || code || '';
+    if (detail) return code && !detail.includes(code) ? `${detail} (${code})` : detail;
+  }
+
+  if (typeof cause === 'string' && cause) return cause;
+  return err.message;
+}
