@@ -6,6 +6,7 @@ import { CronRunButton } from '@/components/CronRunButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
+import { configStatus, deploymentIdentity, missingRequired } from '@/lib/config-report';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 
@@ -17,6 +18,13 @@ import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
  * secret is stored Sensitive in Vercel, so the person who set it cannot
  * read it back. A job you cannot run on demand is a job you cannot
  * debug, and four feed URLs went to production unverified because of it.
+ *
+ * The configuration card is here for the same reason, one rung lower.
+ * DOMAIN_VERIFICATION_SECRET was added in Vercel and the feature stayed
+ * dead, and from outside there was nothing to distinguish "the variable
+ * never reached this build" from "the code is wrong" — both look like a
+ * 503. Now the deployment says what it can see, and says which deployment
+ * it is, so the answer takes one look instead of a guess.
  *
  * The source table above the buttons is the point. `last_status` and
  * `last_error` are written by the poller on every run, so a feed that
@@ -113,6 +121,10 @@ export default async function OpsPage({ params }: { params: { locale: string } }
     {}
   );
 
+  const config = configStatus();
+  const missing = missingRequired(config);
+  const deployment = deploymentIdentity();
+
   return (
     <div className="mx-auto grid max-w-3xl gap-6 px-4 py-12 md:px-0">
       <header className="grid gap-2">
@@ -122,6 +134,85 @@ export default async function OpsPage({ params }: { params: { locale: string } }
           boutons servent quand il faut une réponse maintenant plutôt que dans six heures.
         </p>
       </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Configuration du déploiement</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {/* The commit is the answer to "I added the variable, why is it
+              still missing" — a variable added in Vercel reaches the next
+              build, never the one already running. */}
+          <p className="text-sm text-muted-foreground">
+            Lu dans le déploiement qui répond à cette page&nbsp;: <Badge variant="outline">{deployment.env}</Badge>{' '}
+            {deployment.commit ? <Badge variant="outline">{deployment.commit}</Badge> : null}
+            <br />
+            Une variable ajoutée dans Vercel ne s&apos;applique qu&apos;au déploiement suivant. Si elle
+            manque ici alors qu&apos;elle est bien enregistrée, c&apos;est qu&apos;il faut redéployer.
+          </p>
+
+          {missing.length === 0 ? (
+            <p className="text-sm">
+              Les {config.reduce((n, g) => n + g.entries.filter((e) => e.requirement === 'required').length, 0)}{' '}
+              variables nécessaires sont présentes.
+            </p>
+          ) : (
+            <p className="text-sm text-destructive">
+              {missing.length} variable{missing.length > 1 ? 's' : ''} nécessaire
+              {missing.length > 1 ? 's' : ''} absente{missing.length > 1 ? 's' : ''}&nbsp;:{' '}
+              {missing.join(', ')}
+            </p>
+          )}
+
+          {config.map((group) => (
+            <div key={group.title} className="grid gap-2">
+              <h2 className="text-sm font-medium">{group.title}</h2>
+              {group.entries.map((entry) => (
+                <div key={entry.name} className="grid gap-1 border-b pb-2 last:border-0 last:pb-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <code className="break-all text-xs">{entry.name}</code>
+                    <Badge
+                      variant={entry.present ? 'secondary' : 'outline'}
+                      className={
+                        !entry.present && entry.requirement === 'required'
+                          ? 'border-destructive text-destructive'
+                          : ''
+                      }
+                    >
+                      {entry.present ? 'présente' : 'absente'}
+                    </Badge>
+                    {entry.requirement === 'optional' ? (
+                      <Badge variant="outline">facultative</Badge>
+                    ) : null}
+                    {/* Eight hex of a digest, never the value. It answers one
+                        question: whether two environments hold the same
+                        secret. See the note in config-report.ts. */}
+                    {entry.fingerprint ? (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {entry.fingerprint}
+                      </span>
+                    ) : null}
+                  </div>
+                  {/* The consequence is shown for an absence only. Printing
+                      it next to a present variable would turn the card into
+                      a wall of warnings about things that work. */}
+                  {!entry.present ? (
+                    <p
+                      className={
+                        entry.requirement === 'required'
+                          ? 'text-xs text-destructive'
+                          : 'text-xs text-muted-foreground'
+                      }
+                    >
+                      {entry.consequence}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
