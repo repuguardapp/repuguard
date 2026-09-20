@@ -35,6 +35,7 @@ export type FailureCode =
   | 'robots'
   | 'no_link'
   | 'shell_page'
+  | 'not_a_policy'
   | 'pdf'
   | 'http_error'
   | 'other';
@@ -54,7 +55,8 @@ export function classifyScanFailure(raw: string | null): FailureCode {
   if (/cert|tls|ssl|self.signed|handshake/.test(text)) return 'tls';
   if (/robots\.txt/.test(text)) return 'robots';
   if (/links to no privacy policy|no policy link|no candidate/.test(text)) return 'no_link';
-  if (/built in the browser|characters of text/.test(text)) return 'shell_page';
+  if (/none of the seven observations/.test(text)) return 'not_a_policy';
+  if (/built in the browser|characters of text|yielded only/.test(text)) return 'shell_page';
   if (/\bpdf\b/.test(text)) return 'pdf';
   if (/http \d{3}|http_\d{3}/.test(text)) return 'http_error';
 

@@ -57,6 +57,37 @@ const MAX_BYTES = 4 * 1024 * 1024;
  */
 const MIN_TEXT_CHARS = 1_500;
 
+/**
+ * And a second test, because the first let airbnb.com through.
+ *
+ * 247KB of HTML produced 1,960 characters of text — 0.8% — and the scan
+ * published seven blank observations about a named company that plainly
+ * does have a detailed privacy policy. The two documents we read correctly
+ * that day, Uber's and our own, both sat at 5.4%.
+ *
+ * A large file that yields almost no prose is a page assembled in the
+ * browser: the bytes are script, not text. The absolute floor alone cannot
+ * see that, because a shell of a big site clears it comfortably.
+ */
+const BULKY_HTML_BYTES = 100_000;
+const BULKY_MIN_TEXT_CHARS = 3_000;
+
+/**
+ * Chrome is not the document.
+ *
+ * Our own scan quoted "日本語 العربية Se connecter Lancer un audit" as
+ * evidence for a finding, because the site header is inside the page we
+ * fetched. It was not a false claim — that text is on the page — but it is
+ * not the privacy policy either, and on another site a footer link reading
+ * "Politique de confidentialité" or a cookie banner listing rights could
+ * turn navigation into a finding.
+ *
+ * Removed here rather than in htmlToText, which the legal-watch extractor
+ * also depends on. A shared helper is the wrong place to change behaviour
+ * for one caller.
+ */
+const CHROME = /<(nav|header|footer|aside)\b[^>]*>[\s\S]*?<\/\1>/gi;
+
 export async function capturePolicy(url: string): Promise<CaptureResult> {
   let response: Response;
   try {
@@ -98,7 +129,15 @@ export async function capturePolicy(url: string): Promise<CaptureResult> {
   // downstream statement reproducible by a stranger.
   const contentHash = createHash('sha256').update(bytes).digest('hex');
 
-  const text = htmlToText(new TextDecoder('utf-8').decode(bytes), 400_000);
+  const html = new TextDecoder('utf-8').decode(bytes).replace(CHROME, ' ');
+  const text = htmlToText(html, 400_000);
+
+  if (buffer.byteLength > BULKY_HTML_BYTES && text.length < BULKY_MIN_TEXT_CHARS) {
+    return {
+      capture: null,
+      refused: `${Math.round(buffer.byteLength / 1024)}KB of HTML yielded only ${text.length} characters — the page is built in the browser`
+    };
+  }
 
   if (text.length < MIN_TEXT_CHARS) {
     return {

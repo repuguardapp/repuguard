@@ -122,3 +122,42 @@ describe('the pipeline always ends somewhere', () => {
     expect(source).toContain('evidence: o.evidence ?? null');
   });
 });
+
+describe('seven blanks are our failure, not their document', () => {
+  const source = code(SRC);
+
+  /**
+   * airbnb.com passed capture and produced seven not_founds, which the page
+   * published about a company that plainly does have a detailed privacy
+   * policy. A genuine policy answers at least one of the seven questions;
+   * seven blanks is far more likely to be our failure than the document's
+   * content.
+   *
+   * The same shape as the sub-processor rule that an empty extraction is
+   * never a change — and it exists here because the capture guard, on its
+   * own, let one through.
+   */
+
+  it('refuses to publish a result with no established observation', () => {
+    expect(source).toContain("!observations.some((o) => o.finding === 'present')");
+    expect(source).toContain('does not look like a privacy policy');
+  });
+
+  it('fails the scan rather than storing the blanks', () => {
+    // Storing them and hiding them on the page would leave the claim in the
+    // database for something else to read later.
+    const guard = source.slice(source.indexOf("!observations.some"));
+    expect(guard.slice(0, 400)).toContain("status: 'failed'");
+    expect(guard.indexOf('finish(')).toBeLessThan(guard.indexOf('scan_observations'));
+  });
+
+  it('says it in the visitor’s language, about our read and not their company', () => {
+    for (const locale of ['en', 'fr', 'es', 'de', 'pt-br', 'ja', 'ar']) {
+      const scan = JSON.parse(read(`messages/${locale}.json`)).scan as Record<string, string>;
+      expect(scan['failureNotAPolicy'], locale).toBeTruthy();
+    }
+    const fr = JSON.parse(read('messages/fr.json')).scan as Record<string, string>;
+    expect(fr['failureNotAPolicy']).toMatch(/Nous avons lu une page/);
+    expect(fr['failureNotAPolicy']).not.toMatch(/n'a pas de politique|non conforme/);
+  });
+});

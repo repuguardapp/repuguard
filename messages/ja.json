@@ -607,6 +607,7 @@
     "verifyWhySubdomain": "頂点ドメインではなくサブドメインを読みます。ルートの TXT レコードには SPF と DMARC が入っており、当方が触れるべきものではありません。",
     "verifiedBadge": "ドメイン確認済み",
     "statusRunningNoScript": "結果が表示されない場合は、ページを再読み込みしてください。",
+    "failureNotAPolicy": "ページは読めましたが、七つの記録のいずれも確認できませんでした。プライバシーポリシーではない可能性が高く、ブラウザ側で組み立てられているものと思われます。この組織について七つの空欄を公開するより、何も述べないほうを選びます。",
     "observation": {
       "retentionPeriodStated": "保存期間の記載",
       "dpoContactPublished": "データ保護責任者の連絡先の公開",

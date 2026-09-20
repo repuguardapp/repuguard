@@ -607,6 +607,7 @@
     "verifyWhySubdomain": "Wir lesen eine Subdomain statt des Apex: Ihr Root-TXT-Eintrag enthält SPF und DMARC, und den müssen wir nicht anfassen.",
     "verifiedBadge": "Domain bestätigt",
     "statusRunningNoScript": "Erscheint das Ergebnis nicht, laden Sie die Seite neu.",
+    "failureNotAPolicy": "Wir haben eine Seite gelesen, konnten darauf aber keine der sieben Feststellungen treffen. Vermutlich ist es nicht die Datenschutzerklärung, sondern eine im Browser aufgebaute Seite. Wir sagen lieber nichts, als sieben leere Felder über diese Organisation zu veröffentlichen.",
     "observation": {
       "retentionPeriodStated": "Speicherdauer angegeben",
       "dpoContactPublished": "Kontakt des Datenschutzbeauftragten veröffentlicht",

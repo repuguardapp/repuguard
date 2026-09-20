@@ -49,6 +49,7 @@ const FAILURE_KEY = {
   robots: 'failureRobots',
   no_link: 'failureNoLink',
   shell_page: 'failureShellPage',
+  not_a_policy: 'failureNotAPolicy',
   pdf: 'failurePdf',
   http_error: 'failureHttpError',
   other: 'failureOther'

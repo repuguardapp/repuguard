@@ -154,3 +154,54 @@ describe('a real capture', () => {
     expect(capture?.text).toContain('personal data');
   });
 });
+
+describe('what airbnb.com taught, at a named company’s expense', () => {
+  /**
+   * 247KB of HTML produced 1,960 characters of text — 0.8% — cleared the
+   * 1,500-character floor by 460, and the scan published seven blank
+   * observations about a company that plainly does have a detailed privacy
+   * policy. The two documents read correctly that day, Uber's and our own,
+   * both sat at 5.4%.
+   *
+   * A large file yielding almost no prose is a page assembled in the
+   * browser: the bytes are script, not text. The absolute floor cannot see
+   * that, because a shell of a big site clears it comfortably.
+   */
+
+  it('refuses a bulky page that yields almost no prose', async () => {
+    const shell = `<html><body>${'<script>var x=1;</script>'.repeat(9000)}<p>${'mot '.repeat(400)}</p></body></html>`;
+    mockFetch(shell);
+    const { capture, refused } = await (await load())('https://example.test/privacy');
+
+    expect(capture).toBeNull();
+    expect(refused).toContain('built in the browser');
+    expect(refused).toContain('KB of HTML');
+  });
+
+  it('still accepts a long document from a large page', async () => {
+    // Uber's notice is 1.1MB of HTML and 63,000 characters of text. The
+    // rule must not refuse a real policy for being on a heavy site.
+    const real = `<html><body>${'<script>var x=1;</script>'.repeat(4000)}<p>${'We process personal data for the purposes described below. '.repeat(120)}</p></body></html>`;
+    mockFetch(real);
+    const { capture } = await (await load())('https://example.test/privacy');
+    expect(capture).not.toBeNull();
+  });
+
+  it('drops the site chrome before reading', async () => {
+    // Our own scan quoted "日本語 العربية Se connecter Lancer un audit" as
+    // evidence, because the header sits inside the page we fetched. On
+    // another site a footer link or a cookie banner could turn navigation
+    // into a finding.
+    const withChrome =
+      '<html><body><header>Se connecter Lancer un audit</header>' +
+      `<nav>Tarifs Documentation</nav><p>${'We retain personal data for twelve months. '.repeat(60)}</p>` +
+      '<footer>Politique de confidentialité Mentions légales</footer></body></html>';
+
+    mockFetch(withChrome);
+    const { capture } = await (await load())('https://example.test/privacy');
+
+    expect(capture?.text).toContain('retain personal data');
+    expect(capture?.text).not.toContain('Se connecter');
+    expect(capture?.text).not.toContain('Mentions légales');
+  });
+});

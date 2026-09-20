@@ -187,6 +187,22 @@ async function run(scanId: string, domain: string): Promise<void> {
     }
 
     const observations = observePolicy(captured.text);
+
+    // The safety net, and it exists because the first one failed.
+    //
+    // airbnb.com passed capture and produced seven blanks, which the page
+    // then published about a named company that plainly does have a
+    // detailed privacy policy. A genuine policy answers at least one of
+    // these seven questions; seven blanks is far more likely to be our
+    // failure than the document's content, and publishing them is the
+    // error this whole design exists to prevent.
+    if (!observations.some((o) => o.finding === 'present')) {
+      return void (await finish({
+        status: 'failed',
+        failure: 'read a page, but none of the seven observations could be established — it does not look like a privacy policy'
+      }));
+    }
+
     if (observations.length > 0) {
       await db.from('scan_observations').insert(
         observations.map((o) => ({

@@ -607,6 +607,7 @@
     "verifyWhySubdomain": "Nous lisons un sous-domaine et non l’apex : votre enregistrement TXT racine contient votre SPF et votre DMARC, et nous n’avons pas à y toucher.",
     "verifiedBadge": "Domaine vérifié",
     "statusRunningNoScript": "Si le résultat ne s’affiche pas, rechargez la page.",
+    "failureNotAPolicy": "Nous avons lu une page, mais aucun des sept constats n’a pu y être établi. Ce n’est probablement pas la politique de confidentialité — elle est sans doute construite dans le navigateur. Nous préférons ne rien affirmer plutôt que de publier sept cases vides sur cette organisation.",
     "observation": {
       "retentionPeriodStated": "Durée de conservation indiquée",
       "dpoContactPublished": "Contact du délégué à la protection des données publié",

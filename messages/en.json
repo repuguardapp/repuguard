@@ -607,6 +607,7 @@
     "verifyWhySubdomain": "We read a subdomain rather than the apex: your root TXT record holds your SPF and DMARC, and we have no business touching it.",
     "verifiedBadge": "Domain verified",
     "statusRunningNoScript": "If the result does not appear, reload the page.",
+    "failureNotAPolicy": "We read a page, but none of the seven observations could be established on it. It is probably not the privacy policy — it is likely built in the browser. We would rather say nothing than publish seven blanks about this organisation.",
     "observation": {
       "retentionPeriodStated": "Retention period stated",
       "dpoContactPublished": "Data protection officer contact published",

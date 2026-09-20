@@ -607,6 +607,7 @@
     "verifyWhySubdomain": "Lemos um subdomínio e não o ápice: o seu registo TXT raiz contém o SPF e o DMARC, e não temos de lhe tocar.",
     "verifiedBadge": "Domínio verificado",
     "statusRunningNoScript": "Se o resultado não aparecer, recarregue a página.",
+    "failureNotAPolicy": "Lemos uma página, mas não conseguimos estabelecer nela nenhuma das sete constatações. Provavelmente não é a política de privacidade — deve ser construída no navegador. Preferimos não afirmar nada a publicar sete casas vazias sobre esta organização.",
     "observation": {
       "retentionPeriodStated": "Prazo de conservação indicado",
       "dpoContactPublished": "Contato do encarregado de dados publicado",
