@@ -135,6 +135,7 @@ async function readRobots(origin: string): Promise<{ rules: RobotsRules; sitemap
 }
 
 export async function discoverPolicy(domain: string): Promise<Discovery> {
+  // Reassigned when the domain redirects elsewhere; see below.
   let origin: string;
   try {
     // A bare domain is what a visitor types. https only: a scan carried over
@@ -146,12 +147,40 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
     return { candidates: [], refused: 'not a domain' };
   }
 
-  const { rules } = await readRobots(origin);
+  let rules = (await readRobots(origin)).rules;
 
   if (!isAllowed('/', rules)) {
     // Said plainly rather than returned as "nothing found". A site that asks
     // not to be crawled has given an answer, and it is not "no policy".
     return { candidates: [], refused: 'robots.txt disallows us' };
+  }
+
+  // Follow the domain to where it actually lives.
+  //
+  // uber.fr redirects to uber.com, and the first real scan failed on it in
+  // 135 milliseconds: every link on the page we landed on was rejected as
+  // cross-origin against the domain that had been typed. A country domain
+  // pointing at a group's main site is ordinary, and refusing to read it is
+  // refusing to answer the question that was asked.
+  //
+  // The new origin gets its own robots.txt check before any of its links
+  // are used. We were sent there by the site itself, so one request is
+  // fair; reading it without asking would not be.
+  const home = await get(origin, 'text/html');
+
+  if (home) {
+    try {
+      const landed = new URL(home.url || origin).origin;
+      if (landed !== origin) {
+        origin = landed;
+        rules = (await readRobots(origin)).rules;
+        if (!isAllowed('/', rules)) {
+          return { candidates: [], refused: `redirected to ${origin}, whose robots.txt disallows us` };
+        }
+      }
+    } catch {
+      // An unparseable final URL leaves us on the origin we started from.
+    }
   }
 
   const found = new Map<string, Candidate>();
@@ -171,7 +200,6 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
   };
 
   // 1. What the site itself links to. The best answer, because it is theirs.
-  const home = await get(origin, 'text/html');
   if (home) {
     const html = (await home.text()).slice(0, MAX_HTML_BYTES);
     for (const match of html.matchAll(ANCHOR)) {

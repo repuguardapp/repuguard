@@ -152,9 +152,19 @@ const RULES: Rule[] = [
   },
   {
     id: 'data_subject_rights_listed',
-    // One right mentioned in passing is not a list of rights. Three is.
-    topic:
-      /(right to (access|rectification|erasure|be forgotten|restrict|object|portability|withdraw)|droit (d['’]acc[èe]s|de rectification|à l['’]effacement|d['’]opposition|à la portabilité|à la limitation)|Recht auf (Auskunft|Berichtigung|Löschung|Widerspruch|Datenübertragbarkeit|Einschränkung)|derecho de (acceso|rectificación|supresión|oposición|portabilidad|limitación)|direito (de acesso|à retificação|ao apagamento|de oposição|à portabilidade)|(開示|訂正|利用停止|削除)を請求|الحق في (الوصول|التصحيح|المحو|الاعتراض))/gi,
+    // A loose anchor, on purpose. It only has to establish that the
+    // subject is rights; RIGHT_VERBS then counts how many are actually
+    // named nearby, and three distinct ones is what makes a list.
+    //
+    // The strict form this replaced looked for three separate "right to X"
+    // phrases and missed the way most policies are written — one anchor
+    // and a list of verbs. Our own says "the right to access, rectify,
+    // erase, restrict and port your personal data, to object to
+    // processing": six rights in one sentence, reported as unclear.
+    //
+    // Precision survives the loosening because "All rights reserved" in a
+    // footer has no right-verbs beside it.
+    topic: /(rights?|droits?|Rechte?\b|derechos?|direitos?|権利|الحقوق|الحق)/i,
     minimumHits: 3
   },
   {
@@ -174,7 +184,7 @@ const RULES: Rule[] = [
   {
     id: 'last_updated_stated',
     topic:
-      /(last updated|last revised|effective date|dernière (mise à jour|révision)|mis à jour le|en vigueur le|zuletzt (aktualisiert|geändert)|Stand:|última actualización|última atualização|最終更新|改定日|آخر تحديث)/i,
+      /(last updated|last revised|\beffective\b|\bupdated\b|dernière (mise à jour|révision)|mis à jour le|en vigueur le|zuletzt (aktualisiert|geändert)|Stand:|última actualización|última atualización|última atualização|最終更新|改定日|آخر تحديث)/i,
     confirm:
       /(\b\d{1,2}[\/.\- ]\d{1,2}[\/.\- ]\d{2,4}\b|\b\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2}\b|\b(january|february|march|april|may|june|july|august|september|october|november|december|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janeiro|fevereiro|março|maio|junho|julho|setembro|outubro|novembro|dezembro)\b[^.]{0,20}\d{4}|\d{4}\s*年)/i
   }
@@ -189,8 +199,20 @@ const RULES: Rule[] = [
  */
 const EVIDENCE_CHARS = 240;
 
+/** How much of the run-up to the match the quotation carries. */
+const LEAD_IN_CHARS = 60;
+
 function excerptAround(text: string, index: number, length: number): string {
-  const start = Math.max(0, index - Math.floor((EVIDENCE_CHARS - length) / 2));
+  // Weighted forwards, not centred.
+  //
+  // A centred window opens with a hundred characters of whatever came
+  // before — so a finding about section 7 leads with the tail of section 6,
+  // and a reader meets the wrong heading first. The claim was always inside
+  // the quotation; it simply was not the first thing you read.
+  //
+  // Sixty characters of run-up is enough to see the sentence start, and the
+  // rest goes to what follows the match, which is where the answer is.
+  const start = Math.max(0, index - LEAD_IN_CHARS);
   const end = Math.min(text.length, start + EVIDENCE_CHARS);
 
   // Trim to word boundaries so the quotation does not start mid-word, which
@@ -218,40 +240,89 @@ function excerptAround(text: string, index: number, length: number): string {
  */
 export function observePolicy(text: string): Observation[] {
   return RULES.map((rule): Observation => {
-    if (rule.minimumHits) {
-      const matches = [...text.matchAll(new RegExp(rule.topic.source, 'gi'))];
-      if (matches.length >= rule.minimumHits) {
-        const first = matches[0]!;
-        return {
-          id: rule.id,
-          finding: 'present',
-          evidence: excerptAround(text, first.index ?? 0, first[0].length)
-        };
+    if (rule.minimumHits) return countingRule(text, rule);
+
+    // EVERY occurrence of the topic, not just the first.
+    //
+    // The first real scan proved why. Our own policy states its date at the
+    // top — "Effective January 1, 2026" — and mentions the words "the
+    // effective date above" again in section 11. Testing only the first
+    // match found the mention, looked for a date beside it, found none, and
+    // reported `unclear` about a document that states its date plainly.
+    //
+    // The same trap applies to every rule: a policy that says "retention"
+    // in its introduction and gives the period in section 7 would have been
+    // reported as discussing retention without stating a period.
+    const topics = [...text.matchAll(new RegExp(rule.topic.source, 'gi'))];
+    if (topics.length === 0) return { id: rule.id, finding: 'not_found' };
+
+    for (const topic of topics) {
+      const at = topic.index ?? 0;
+
+      if (!rule.confirm) {
+        return { id: rule.id, finding: 'present', evidence: excerptAround(text, at, topic[0].length) };
       }
-      return { id: rule.id, finding: matches.length > 0 ? 'unclear' : 'not_found' };
+
+      // The confirmation has to be NEAR this occurrence, not anywhere in a
+      // twelve-thousand-word document. A retention section and an unrelated
+      // "30 days" in the cookie table are not the same sentence.
+      const window = text.slice(Math.max(0, at - 200), at + 600);
+      if (rule.confirm.test(window)) {
+        return { id: rule.id, finding: 'present', evidence: excerptAround(text, at, topic[0].length) };
+      }
     }
 
-    const topic = rule.topic.exec(text);
-    if (!topic) return { id: rule.id, finding: 'not_found' };
-
-    if (!rule.confirm) {
-      return {
-        id: rule.id,
-        finding: 'present',
-        evidence: excerptAround(text, topic.index, topic[0].length)
-      };
-    }
-
-    // The confirmation has to be NEAR the topic, not anywhere in a
-    // twelve-thousand-word document. A retention section and an unrelated
-    // "30 days" in the cookie table are not the same sentence.
-    const window = text.slice(Math.max(0, topic.index - 200), topic.index + 600);
-    if (!rule.confirm.test(window)) return { id: rule.id, finding: 'unclear' };
-
-    return {
-      id: rule.id,
-      finding: 'present',
-      evidence: excerptAround(text, topic.index, topic[0].length)
-    };
+    // The subject was raised and we could not find what answers it. True,
+    // and more useful than a wrong binary.
+    return { id: rule.id, finding: 'unclear' };
   });
 }
+
+/**
+ * Rules answered by counting distinct things rather than by a second match.
+ *
+ * Rights are the case. Our own policy writes them the way most policies do
+ * — one anchor and a list of verbs: "the right to access, rectify, erase,
+ * restrict and port your personal data, to object to processing". That is
+ * six rights in one sentence, and a rule looking for three separate
+ * "right to X" phrases found one and called it unclear.
+ *
+ * So: an anchor that establishes the subject is rights, and then how many
+ * distinct rights are named near it. The anchor is what keeps this precise
+ * — a document using the word "access" in passing has not listed a right.
+ */
+function countingRule(text: string, rule: Rule): Observation {
+  const anchors = [...text.matchAll(new RegExp(rule.topic.source, 'gi'))];
+  if (anchors.length === 0) return { id: rule.id, finding: 'not_found' };
+
+  for (const anchor of anchors) {
+    const at = anchor.index ?? 0;
+    const window = text.slice(Math.max(0, at - 100), at + 700);
+
+    const named = new Set<string>();
+    for (const [name, pattern] of Object.entries(RIGHT_VERBS)) {
+      if (pattern.test(window)) named.add(name);
+    }
+
+    if (named.size >= (rule.minimumHits ?? 3)) {
+      return { id: rule.id, finding: 'present', evidence: excerptAround(text, at, anchor[0].length) };
+    }
+  }
+
+  return { id: rule.id, finding: 'unclear' };
+}
+
+/**
+ * The rights a policy can name, one pattern each, across the seven locales.
+ *
+ * Counted as a SET: "access" appearing four times is one right, not four.
+ */
+const RIGHT_VERBS: Record<string, RegExp> = {
+  access: /(access|acc[èe]s|Auskunft|acceso|acesso|開示|الوصول)/i,
+  rectification: /(rectif|berichtig|retificação|訂正|التصحيح)/i,
+  erasure: /(eras|forgotten|effacement|supprim|Löschung|supresión|apagamento|削除|المحو)/i,
+  restriction: /(restrict|limitation|limitaci|Einschränkung|利用停止|التقييد)/i,
+  portability: /(portab|Datenübertragbarkeit|移行|النقل)/i,
+  objection: /(object|opposition|oppose|Widerspruch|oposici|oposição|異議|الاعتراض)/i,
+  withdrawal: /(withdraw|retirer (son|votre) consentement|widerruf|retirar el consentimiento|撤回|سحب)/i
+};

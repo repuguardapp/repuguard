@@ -99,3 +99,37 @@ describe('finding the document by what the site calls it', () => {
     }
   });
 });
+
+describe('a domain that lives somewhere else', () => {
+  const source = code(SRC);
+
+  /**
+   * The first real scan failed on uber.fr in 135 milliseconds. uber.fr
+   * redirects to uber.com, and every link on the page we landed on was
+   * rejected as cross-origin against the domain that had been typed. A
+   * country domain pointing at a group's main site is ordinary, and
+   * refusing to read it is refusing to answer the question asked.
+   */
+
+  it('adopts the origin the homepage actually landed on', () => {
+    expect(source).toContain('const landed = new URL(home.url || origin).origin');
+    expect(source).toContain('origin = landed');
+  });
+
+  it('re-reads robots.txt for the new origin before using any of its links', () => {
+    // We were sent there by the site itself, so one request is fair.
+    // Reading it without asking would not be.
+    const redirect = source.slice(source.indexOf('const landed ='));
+    expect(redirect.slice(0, 400)).toContain('await readRobots(origin)');
+    expect(redirect.slice(0, 400)).toContain('isAllowed');
+  });
+
+  it('says where it was sent when the new origin refuses us', () => {
+    expect(source).toContain('whose robots.txt disallows us');
+  });
+
+  it('fetches the homepage once, not twice', () => {
+    // The redirect check and the link parse read the same response.
+    expect((source.match(/await get\(origin, 'text\/html'\)/g) ?? []).length).toBe(1);
+  });
+});

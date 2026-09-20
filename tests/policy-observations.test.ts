@@ -187,3 +187,62 @@ describe('what this pass misses, written down rather than hidden', () => {
     expect(obs.every((o) => o.evidence === undefined)).toBe(true);
   });
 });
+
+describe('what the first real scan corrected', () => {
+  /**
+   * These are not invented examples. They are the two sentences our own
+   * published policy uses, and the first scan ever run got both of them
+   * wrong — in the safe direction, but wrong.
+   */
+
+  const REAL = [
+    'Effective January 1, 2026 · LexyFlow',
+    '',
+    '7. Retention',
+    'Audit reports — kept for the lifetime of your subscription, then 30 days.',
+    '',
+    '8. Your rights',
+    'You have the right to access, rectify, erase, restrict and port your personal',
+    'data, to object to processing, and to lodge a complaint with a supervisory',
+    'authority (e.g. CNIL, ANPD, PPC, ICO).',
+    '',
+    '11. Changes',
+    'We announce changes 30 days before taking effect. The effective date above is',
+    'authoritative.'
+  ].join('\n');
+
+  const of = (id: string) => observePolicy(REAL).find((o) => o.id === id)!;
+
+  it('counts six rights written as one sentence', () => {
+    // The old rule wanted three separate "right to X" phrases. Most
+    // policies, including ours, write one anchor and a list of verbs —
+    // "the right to access, rectify, erase, restrict and port … to object"
+    // — which it read as a single right and reported unclear.
+    expect(of('data_subject_rights_listed').finding).toBe('present');
+  });
+
+  it('finds a date stated at the top even though a later sentence mentions it', () => {
+    // The deeper defect, and it affected all seven rules: only the FIRST
+    // occurrence of a topic was tested. Here the first hit is "the
+    // effective date above" in section 11, with no date beside it, so a
+    // document that states its date plainly was reported as unclear.
+    expect(of('last_updated_stated').finding).toBe('present');
+    expect(of('last_updated_stated').evidence).toContain('January 1, 2026');
+  });
+
+  it('still refuses to invent a DPO that is not named', () => {
+    // The finding the first scan got right, and it stays right: our policy
+    // gives privacy@ but names no data protection officer.
+    expect(of('dpo_contact_published').finding).toBe('not_found');
+  });
+
+  it('quotes the section the claim came from, not the one before it', () => {
+    // The excerpt used to be centred on the match, so a finding about
+    // section 7 opened with the tail of section 6 and a reader met the
+    // wrong heading first. The claim was always inside the quotation; it
+    // simply was not the first thing you read.
+    const evidence = of('retention_period_stated').evidence ?? '';
+    expect(evidence).toContain('Retention');
+    expect(evidence.indexOf('Retention')).toBeLessThan(120);
+  });
+});
