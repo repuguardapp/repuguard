@@ -166,12 +166,12 @@ export async function getPublishedDecision(
  * anyway. A sitemap short of a few pages is recoverable; a sitemap
  * that throws takes the deploy with it.
  */
-export async function listPublishedSlugs(): Promise<string[]> {
+export async function listPublishedSlugs(): Promise<{ slug: string; updatedAt: string | null }[]> {
   let result;
   try {
     result = await supabaseService()
       .from('legal_developments')
-      .select('slug')
+      .select('slug, updated_at')
       .eq('status', 'published')
       .not('slug', 'is', null)
       .limit(5000);
@@ -187,9 +187,9 @@ export async function listPublishedSlugs(): Promise<string[]> {
     console.error('[legal-decisions] slugs_failed', { error: error.message });
     return [];
   }
-  return ((data ?? []) as { slug: string | null }[])
-    .map((r) => r.slug)
-    .filter((s): s is string => Boolean(s));
+  return ((data ?? []) as { slug: string | null; updated_at: string | null }[])
+    .filter((r): r is { slug: string; updated_at: string | null } => Boolean(r.slug))
+    .map((r) => ({ slug: r.slug, updatedAt: r.updated_at }));
 }
 
 /**

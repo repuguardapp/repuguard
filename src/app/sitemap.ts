@@ -19,6 +19,25 @@ import { appUrl } from '@/lib/app-url';
  *   • Programmatic SEO comparison pairs — curated list of ~38 pairs
  *     cross-multiplied by locales = ~266 URLs.
  *
+ * WHY MOST ENTRIES CARRY NO lastmod
+ *
+ * Because we do not know it, and a date we do not know is not a date we
+ * may state. Every entry used to be stamped with the current time, and
+ * the file regenerates hourly, so the sitemap told Google that all ~469
+ * pages had changed one hour ago — every hour, for ever. The pricing page
+ * has not changed since it shipped. That is a fact about our site,
+ * asserted to a machine, to influence what it does, and it is false.
+ *
+ * It is also self-defeating even read cynically: a crawler told that
+ * everything changed, which fetches and finds nothing changed, learns to
+ * disregard our lastmod entirely, and the signal is then unavailable on
+ * the day something really does change.
+ *
+ * The decision pages are the exception, because there the date is real —
+ * the row's own updated_at. Everything else omits the field, which is
+ * valid in the sitemap protocol and is the honest shape of "we do not
+ * publish what we cannot source".
+ *
  * Search Console caps a single sitemap at 50 000 URLs and 50 MB. We
  * sit comfortably under both even after the programmatic expansion,
  * so a single file is fine; if we ever cross the 50 000 line we'd
@@ -54,14 +73,12 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = appUrl();
   const locales = await discoverLocales();
-  const now = new Date();
   const langMap = (path: string): Record<string, string> =>
     Object.fromEntries(locales.map((alt) => [alt, `${base}/${alt}${path}`]));
 
   const core = CORE_ROUTES.flatMap((path) =>
     locales.map((locale) => ({
       url: `${base}/${locale}${path}`,
-      lastModified: now,
       alternates: { languages: langMap(path) }
     }))
   );
@@ -69,7 +86,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const frameworkPages = FRAMEWORKS.flatMap((f) =>
     locales.map((locale) => ({
       url: `${base}/${locale}/compliance/${f.id}`,
-      lastModified: now,
       // Comparison + framework pages don't change often once shipped,
       // so we hint Google to crawl them weekly rather than daily.
       changeFrequency: 'weekly' as const,
@@ -81,7 +97,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const comparisonPages = CURATED_PAIRS.flatMap((pair) =>
     locales.map((locale) => ({
       url: `${base}/${locale}/compare/${pair}`,
-      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
       alternates: { languages: langMap(`/compare/${pair}`) }
@@ -93,16 +108,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // enumerated in code. A failed read yields an empty list and a logged
   // error — a sitemap short of a few pages is recoverable, a sitemap
   // that throws takes the whole file down with it.
-  const slugs = await listPublishedSlugs();
-  const decisionPages = slugs.flatMap((slug) =>
+  //
+  // These are also the only pages here that carry a lastmod, because they
+  // are the only ones whose modification date we actually know: the row's
+  // own updated_at, written when the decision was edited or published.
+  const published = await listPublishedSlugs();
+  const decisionPages = published.flatMap((entry) =>
     locales.map((locale) => ({
-      url: `${base}/${locale}/decisions/${slug}`,
-      lastModified: now,
+      url: `${base}/${locale}/decisions/${entry.slug}`,
+      ...(entry.updatedAt ? { lastModified: new Date(entry.updatedAt) } : {}),
       // These are dated records of something that already happened;
       // once published they do not change.
       changeFrequency: 'monthly' as const,
       priority: 0.6,
-      alternates: { languages: langMap(`/decisions/${slug}`) }
+      alternates: { languages: langMap(`/decisions/${entry.slug}`) }
     }))
   );
 
