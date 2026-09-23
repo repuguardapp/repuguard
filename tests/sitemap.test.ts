@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
+import { describeSitemap, parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
 
 /**
  * Reading a regulator that builds its pages in the browser.
@@ -162,5 +162,93 @@ describe('asking the site where its sitemaps are', () => {
   it('does not let one malformed line lose the rest of the file', () => {
     const robots = 'Sitemap: ::::\nSitemap: https://ico.org.uk/sitemap.xml';
     expect(sitemapsFromRobots(robots, BASE)).toEqual(['https://ico.org.uk/sitemap.xml']);
+  });
+});
+
+describe('describeSitemap', () => {
+  const OMAN = 'https://www.mtcit.gov.om/sitemap.xml';
+
+  function urlset(paths: string[], lastmod?: string): string {
+    return `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths
+      .map(
+        (p) =>
+          `<url><loc>https://www.mtcit.gov.om${p}</loc>${
+            lastmod ? `<lastmod>${lastmod}</lastmod>` : ''
+          }</url>`
+      )
+      .join('')}</urlset>`;
+  }
+
+  it('does not call a sitemap a document with no feed tags', () => {
+    // What the digest actually said about Oman and Saudi Arabia for weeks:
+    // `root <urlset>; no feed tags`. A sitemap has no feed tags — it is not
+    // a feed — and the sentence reads as a broken file when the file is
+    // fine and our item_pattern is the thing that matches nothing.
+    const description = describeSitemap(urlset(['/en/media/news/item-1']), {
+      itemPattern: '/decisions/',
+      baseUrl: OMAN
+    });
+
+    expect(description).not.toContain('no feed tags');
+    expect(description).toContain('1 <url> entry');
+  });
+
+  it('names the pattern and how many URLs it matched', () => {
+    // The line that turns a guess into a repair: zero means change the
+    // pattern, not the URL.
+    const description = describeSitemap(
+      urlset(['/en/media/news/a', '/en/media/news/b', '/ar/about']),
+      { itemPattern: '/decisions/', baseUrl: OMAN }
+    );
+
+    expect(description).toContain('"/decisions/" matched 0');
+  });
+
+  it('shows which prefixes the sitemap actually holds', () => {
+    const description = describeSitemap(
+      urlset(['/en/media/news/a', '/en/media/news/b', '/en/media/news/c', '/ar/about/x']),
+      { itemPattern: '/decisions/', baseUrl: OMAN }
+    );
+
+    // Three segments, because two collapses a site that lives entirely
+    // under one prefix into a single useless bucket.
+    expect(description).toContain('/en/media/news/×3');
+  });
+
+  it('reports the newest lastmod, and stays silent when there is none', () => {
+    // A section whose newest page is four years old is not a watch worth
+    // keeping, and no item_pattern repairs that.
+    const dated = describeSitemap(urlset(['/en/media/news/a'], '2021-03-04'), {
+      itemPattern: '/en/media/news/',
+      baseUrl: OMAN
+    });
+    expect(dated).toContain('newest lastmod 2021-03-04');
+
+    const undated = describeSitemap(urlset(['/en/media/news/a']), {
+      itemPattern: '/en/media/news/',
+      baseUrl: OMAN
+    });
+    // A sitemap without lastmod is common and is not a finding.
+    expect(undated).not.toContain('newest lastmod');
+  });
+
+  it('says an index is an index rather than reporting it as empty', () => {
+    const xml = `<?xml version="1.0"?><sitemapindex><sitemap><loc>https://www.mtcit.gov.om/sitemap-news.xml</loc></sitemap><sitemap><loc>https://www.mtcit.gov.om/sitemap-pages.xml</loc></sitemap></sitemapindex>`;
+
+    const description = describeSitemap(xml, { itemPattern: '/x/', baseUrl: OMAN });
+
+    // It yields no items by design; the caller follows it. Reporting that
+    // as a fault sends somebody to repair a file that is correct.
+    expect(description).toContain('sitemap index, 2 child sitemap(s)');
+    expect(description).toContain('sitemap-news.xml');
+  });
+
+  it('counts only same-origin URLs', () => {
+    const xml = `<?xml version="1.0"?><urlset><url><loc>https://www.mtcit.gov.om/en/media/news/a</loc></url><url><loc>https://cdn.example.net/en/media/news/b</loc></url></urlset>`
+      .replace('example.net', 'elsewhere.test');
+
+    const description = describeSitemap(xml, { itemPattern: '/en/media/news/', baseUrl: OMAN });
+
+    expect(description).toContain('2 <url> entries, 1 same-origin');
   });
 });

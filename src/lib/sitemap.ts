@@ -164,6 +164,107 @@ export function parseSitemap(xml: string, options: SitemapOptions): ParsedSitema
 }
 
 /**
+ * What the sitemap actually contained, for when it yielded no items.
+ *
+ * `describeFeed` was answering this question for sitemaps, and it counts
+ * <item>, <entry> and <channel> — none of which exist in a sitemap. So Oman
+ * and Saudi Arabia were both reported as `root <urlset>; no feed tags`,
+ * which reads as a broken document and is the opposite of the truth: the
+ * file is a perfectly good sitemap of two megabytes, and it is our
+ * `item_pattern` that matches nothing in it.
+ *
+ * Those two failures need opposite repairs — one is "find another URL", the
+ * other is "change one string in a table row" — and the report could not
+ * tell them apart. It also could not say WHICH string, which is the only
+ * thing anybody actually needs, so the fix was a guess per six-hour run
+ * from a sandbox that cannot open either site.
+ *
+ * The prefix census answers it. The pattern that matches the most decision
+ * URLs is visible in the output, and the repair stops being a guess.
+ */
+export function describeSitemap(xml: string, options: SitemapOptions): string {
+  let origin: string;
+  try {
+    origin = new URL(options.baseUrl).origin;
+  } catch {
+    return 'base_url unparseable';
+  }
+
+  if (/<sitemapindex\b/i.test(xml)) {
+    const children = xml.match(SITEMAP_BLOCK) ?? [];
+    const names = children
+      .slice(0, 4)
+      .map((block) => decode(block.match(LOC)?.[1] ?? ''))
+      .filter(Boolean)
+      .join(' ');
+    // An index yields no items by design; the caller follows it. Saying so
+    // stops this reading as a fault.
+    return `sitemap index, ${children.length} child sitemap(s)${names ? `: ${names}` : ''}`;
+  }
+
+  const blocks = xml.match(URL_BLOCK) ?? [];
+  const prefixes = new Map<string, number>();
+  const deep: string[] = [];
+  let sameOrigin = 0;
+  let matched = 0;
+  let newest: string | null = null;
+
+  for (const block of blocks) {
+    const loc = decode(block.match(LOC)?.[1] ?? '');
+    let absolute: URL;
+    try {
+      absolute = new URL(loc);
+    } catch {
+      continue;
+    }
+    if (absolute.origin !== origin) continue;
+    sameOrigin += 1;
+
+    // Three segments, for the reason the listing census already learned in
+    // Brazil: a site whose whole estate lives under /anpd/pt-br/ collapses
+    // to one bucket at two, and one bucket is not an answer.
+    const segments = absolute.pathname.split('/').filter(Boolean);
+    const prefix = `/${segments.slice(0, 3).join('/')}/`;
+    prefixes.set(prefix, (prefixes.get(prefix) ?? 0) + 1);
+    if (segments.length >= 3) deep.push(absolute.pathname);
+
+    if (absolute.pathname.includes(options.itemPattern)) matched += 1;
+
+    const lastmod = isoDate(block.match(LASTMOD)?.[1]);
+    if (lastmod && (!newest || lastmod > newest)) newest = lastmod;
+  }
+
+  const top = [...prefixes.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([path, count]) => `${path}×${count}`)
+    .join(' ');
+
+  const parts = [
+    `${blocks.length} <url> entr${blocks.length === 1 ? 'y' : 'ies'}, ${sameOrigin} same-origin`,
+    top || 'no same-origin URLs'
+  ];
+
+  const samples = [...new Set(deep)]
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 2)
+    .join(' ');
+  if (samples) parts.push(`deepest: ${samples}`);
+
+  // The line that names the repair. Zero means the file is fine and the
+  // pattern is wrong; a positive count with no items means they were all
+  // the section's own index page, which is a different bug.
+  parts.push(`"${options.itemPattern}" matched ${matched}`);
+
+  // A section whose newest page is four years old is not a watch worth
+  // keeping, and no item_pattern will fix that. Absent stays absent — a
+  // sitemap without lastmod is common and is not a finding.
+  if (newest) parts.push(`newest lastmod ${newest.slice(0, 10)}`);
+
+  return parts.join('; ');
+}
+
+/**
  * The sitemaps a site advertises in its own robots.txt.
  *
  * The discovery step that removes the guessing: rather than trying

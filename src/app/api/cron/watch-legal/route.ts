@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
+import { decodeBody } from '@/lib/body-text';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { describeFeed, parseFeed, type FeedItem, type ParsedFeed } from '@/lib/feeds';
 import { describeListing, parseListing } from '@/lib/listing';
-import { parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
+import { parseSitemap, describeSitemap, sitemapsFromRobots } from '@/lib/sitemap';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -440,7 +441,11 @@ async function readSource(source: SourceRow, body: string): Promise<ParsedFeed> 
       });
       if (!res.ok) continue;
 
-      const parsed = parseSitemap(await res.text(), {
+      // Children of a .gz index are usually .gz too.
+      const childBody = decodeBody(new Uint8Array(await res.arrayBuffer()));
+      if (childBody.refused) continue;
+
+      const parsed = parseSitemap(childBody.text, {
         itemPattern: pattern,
         baseUrl: source.feed_url
       });
@@ -537,7 +542,12 @@ async function pollSource(
       const candidates = await probeCandidates(source.feed_url, !source.verified_at);
       return await fail(`http_${res.status}${candidates ? ` | candidates: ${candidates}` : ''}`);
     }
-    body = await res.text();
+    // Bytes, not res.text(). A sitemap published as .xml.gz arrives
+    // correctly and decodes to mojibake, which every parser downstream
+    // reports as an empty document. See lib/body-text.ts.
+    const decoded = decodeBody(new Uint8Array(await res.arrayBuffer()));
+    if (decoded.refused) return await fail(decoded.refused);
+    body = decoded.text;
   } catch (err) {
     return await fail(err instanceof Error ? err.message : String(err));
   }
@@ -570,13 +580,23 @@ async function pollSource(
     // matches links whose anchors carry no text, and those need opposite
     // repairs. The diagnosis has to travel in the error, because the only
     // other way to get it is to open the regulator's page by hand.
+    //
+    // Each kind gets the census that fits it. A sitemap sent through
+    // describeFeed came back "no feed tags" — it has none, it is not a feed
+    // — and two megabytes of perfectly good XML read as a broken document
+    // when the only thing wrong was our item_pattern.
     const seen =
       source.feed_kind === 'html'
         ? describeListing(body, {
             itemPattern: source.item_pattern ?? '/',
             baseUrl: source.feed_url
           })
-        : describeFeed(body);
+        : source.feed_kind === 'sitemap'
+          ? describeSitemap(body, {
+              itemPattern: source.item_pattern ?? '/',
+              baseUrl: source.feed_url
+            })
+          : describeFeed(body);
 
     // And go looking for the feed this source should have been.
     //

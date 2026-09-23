@@ -34,6 +34,25 @@ export interface DigestInput {
   corpus: Record<string, number> | null;
   /** Sources whose last poll did not succeed, with their error. */
   brokenSources: { id: string; error: string | null }[] | null;
+  /**
+   * Sources the watcher switched off, with the reason it gave.
+   *
+   * Reported because switching a source off is what makes it disappear.
+   * The watcher disables a feed after enough consecutive failures and
+   * alerts once, which is right — four alerts a day for a regulator that
+   * withdrew its RSS is how an alerting channel stops being read. But the
+   * digest then filtered on `enabled`, so from the next morning the source
+   * was simply absent, and "7 feeds failing" read as though everything
+   * else was fine. Italy's Garante went off that way on 21 September —
+   * a verified source, a G7 regulator we sell GDPR audits against — and
+   * nothing would have mentioned it again. The EDPS had been gone since
+   * the 17th. Nine regulators were unwatched and the report said seven.
+   *
+   * A source that was switched off is not a source that is fine. It needs
+   * a decision — repair it or drop the jurisdiction — and until somebody
+   * takes that decision it stays on this list.
+   */
+  disabledSources: { id: string; reason: string | null }[] | null;
   /** Sources that have never been polled at all. */
   neverPolledSources: string[] | null;
   awaitingReview: number | null;
@@ -62,6 +81,19 @@ function num(value: number | null): string {
  */
 export function composeDigest(input: DigestInput): Digest {
   const actions: string[] = [];
+
+  // First, because it is the only category nobody learns about any other
+  // way. A failing source is at least noisy; a disabled one is silent by
+  // design, and silence is what this whole report exists to break.
+  if (input.disabledSources && input.disabledSources.length > 0) {
+    actions.push(
+      `${input.disabledSources.length} source(s) switched off — they are no longer polled, and nothing else will mention them again:\n` +
+        input.disabledSources
+          .map((s) => `    ${s.id}: ${s.reason ?? 'no reason recorded'}`)
+          .join('\n') +
+        `\n    Repair the URL or drop the jurisdiction — ${input.appUrl}/en/admin/ops`
+    );
+  }
 
   if (input.brokenSources && input.brokenSources.length > 0) {
     actions.push(
@@ -106,6 +138,7 @@ export function composeDigest(input: DigestInput): Digest {
     'active subscriptions': input.activeSubscriptions,
     corpus: input.corpus,
     'feed health': input.brokenSources,
+    'switched-off sources': input.disabledSources,
     'review queue': input.awaitingReview
   })
     .filter(([, value]) => value === null)

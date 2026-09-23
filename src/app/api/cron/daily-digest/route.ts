@@ -161,36 +161,64 @@ async function readCorpus(
 }
 
 /**
- * Feed health, split into two different problems.
+ * Feed health, split into three different problems.
  *
  * A source that failed is broken. A source that has never been polled
  * has never been proven to work at all — which is the state four of
  * ours have been in since they were seeded, and the reason this digest
- * exists.
+ * exists. And a source the watcher switched off is neither: it is a
+ * jurisdiction we have quietly stopped watching.
+ *
+ * The third category exists because this function used to filter on
+ * `enabled` and therefore could not see it. Italy's Garante was
+ * auto-disabled on 21 September and vanished from the digest the next
+ * morning; the report went on saying "7 feeds failing" while the true
+ * number of regulators we were not watching was nine. An instrument that
+ * only reports the failures still switched on is an instrument for
+ * failures we have already understood.
  */
 async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise<{
   brokenSources: { id: string; error: string | null }[] | null;
   neverPolledSources: string[] | null;
+  disabledSources: { id: string; reason: string | null }[] | null;
 }> {
+  const unavailable = {
+    brokenSources: null,
+    neverPolledSources: null,
+    disabledSources: null
+  };
+
   try {
+    // Every source, not only the enabled ones. The filter is applied below,
+    // where the three buckets are separated, rather than in the query where
+    // it silently removed a whole category.
     const { data, error } = await db
       .from('legal_sources')
-      .select('id, enabled, last_status, last_error')
-      .eq('enabled', true);
-    if (error) return { brokenSources: null, neverPolledSources: null };
+      .select('id, enabled, last_status, last_error, disabled_reason');
+    if (error) return unavailable;
 
     const rows = (data ?? []) as {
       id: string;
+      enabled: boolean;
       last_status: string | null;
       last_error: string | null;
+      disabled_reason: string | null;
     }[];
+
+    // Each source appears in exactly one bucket: a disabled source is not
+    // also reported as failing, or the list doubles and stops being read.
+    const live = rows.filter((r) => r.enabled);
+
     return {
-      brokenSources: rows
+      brokenSources: live
         .filter((r) => r.last_status === 'error')
         .map((r) => ({ id: r.id, error: r.last_error })),
-      neverPolledSources: rows.filter((r) => r.last_status === null).map((r) => r.id)
+      neverPolledSources: live.filter((r) => r.last_status === null).map((r) => r.id),
+      disabledSources: rows
+        .filter((r) => !r.enabled)
+        .map((r) => ({ id: r.id, reason: r.disabled_reason }))
     };
   } catch {
-    return { brokenSources: null, neverPolledSources: null };
+    return unavailable;
   }
 }

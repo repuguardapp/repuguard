@@ -25,6 +25,7 @@ const HEALTHY: DigestInput = {
   corpus: { discovered: 12, extracted: 0, approved: 0, published: 30, rejected: 40 },
   brokenSources: [],
   neverPolledSources: [],
+  disabledSources: [],
   awaitingReview: 0,
   appUrl: 'https://lexyflow.com'
 };
@@ -124,5 +125,45 @@ describe('a genuinely quiet day stays short', () => {
     expect(digest.text).toContain('Audits completed      4');
     expect(digest.text).toContain('Active subscriptions  2');
     expect(digest.text).toContain('published 30');
+  });
+});
+
+describe('a source switched off is not a source that is fine', () => {
+  it('names the disabled sources and why', () => {
+    // The watcher disables a feed after enough consecutive failures and
+    // alerts once. The digest then filtered on `enabled`, so from the next
+    // morning the source was simply gone — Italy's Garante went off on 21
+    // September and the report kept saying "7 feeds failing" while the
+    // real number of regulators we were not watching was nine.
+    const digest = composeDigest({
+      ...HEALTHY,
+      disabledSources: [{ id: 'garante_it', reason: 'Auto-disabled after 5 consecutive failures.' }]
+    });
+
+    expect(digest.text).toContain('garante_it');
+    expect(digest.text).toContain('Auto-disabled after 5 consecutive failures.');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('puts them before the feeds that are merely failing', () => {
+    // A failing source is noisy; a disabled one is silent by design, and
+    // silence is what this report exists to break.
+    const digest = composeDigest({
+      ...HEALTHY,
+      brokenSources: [{ id: 'anpd_br', error: 'no_items' }],
+      disabledSources: [{ id: 'garante_it', reason: 'gone' }]
+    });
+
+    expect(digest.text.indexOf('garante_it')).toBeLessThan(digest.text.indexOf('anpd_br'));
+  });
+
+  it('says so when it could not read them at all', () => {
+    const digest = composeDigest({ ...HEALTHY, disabledSources: null });
+
+    // An unreadable query is never the same as an empty one: reporting no
+    // disabled sources because the query failed is the exact mistake this
+    // whole section was added to fix.
+    expect(digest.text).toContain('switched-off sources');
+    expect(digest.quiet).toBe(false);
   });
 });
