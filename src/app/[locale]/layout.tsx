@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -7,36 +6,40 @@ import { type ReactNode } from 'react';
 import { PostHogProvider } from '@/lib/analytics-client';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { Lexymark } from '@/components/Lexymark';
-import { SignOutButton } from '@/components/SignOutButton';
-import { Button } from '@/components/ui/button';
+import { HeaderAuth } from '@/components/HeaderAuth';
 import { Link } from '@/i18n/navigation';
 import { getLocaleDescriptor, NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { discoverLocales } from '@/i18n/locales.server';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { getCurrentUser } from '@/lib/supabase-server';
 
 export async function generateStaticParams() {
   return NATIVE_LOCALE_CODES.map((locale) => ({ locale }));
 }
 
 /**
- * Force per-request rendering of the locale layout.
+ * NOT dynamic, and that is the point.
  *
- * Without this, Next.js prerenders the layout at build time (because
- * `generateStaticParams` enumerates all locales as static). The
- * `getCurrentUser()` call below then evaluates with NO cookies — there
- * is no request at build time — so `isAuthenticated` is always false
- * and the header is permanently locked to the signed-out CTAs ("Sign
- * in" / "Start an audit"). Marking the layout dynamic forces it to
- * re-run on every request, picking up the user's session cookie.
+ * This layout used to force per-request rendering, so that the session
+ * helper could see the request cookies and the header could show
+ * "My dashboard" instead of "Sign in". The comment beside it said that
+ * nested pages were "still prerendered — only the layout shell becomes
+ * dynamic". That was false. `dynamic` on a layout applies to the whole
+ * segment beneath it: the build reported 524 static pages and wrote ONE
+ * html file to disk. Every page of the site was rendering on demand, with
+ * a Supabase round-trip for the session, so that two buttons in the corner
+ * could be right on the first paint.
  *
- * `force-dynamic` is the right knob here (not `revalidate = 0`)
- * because the layout depends on per-user state, not time-based
- * invalidation. Page components nested under the layout that are
- * still statically generated (e.g. /sample-report) continue to be
- * prerendered — only the layout shell becomes dynamic.
+ * The header now asks /api/auth/state from the browser instead — see
+ * components/HeaderAuth.tsx, which states the cost — and the pages that
+ * genuinely need the request (dashboard, admin, the API) opt themselves
+ * out individually, which is where that decision belongs.
+ *
+ * `generateStaticParams` above enumerates the locales; nothing else here
+ * reads the request, so this subtree prerenders. A guard test in
+ * tests/locale-layout-static.test.ts holds that — asserted against the
+ * source text, including in comments, which is why this note names no
+ * identifier.
  */
-export const dynamic = 'force-dynamic';
 
 interface LayoutProps {
   children: ReactNode;
@@ -68,15 +71,6 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   const tNav = await getTranslations('nav');
   const tFooter = await getTranslations('footer');
   const tHubs = await getTranslations('hubs');
-  const tBilling = await getTranslations('billing');
-
-  // Read the auth state on every layout render so the header reflects
-  // the user's signed-in status without a client-side flash. Server
-  // Components evaluate this synchronously off the same request
-  // cookies the rest of the app uses — no double round-trip, no
-  // hydration mismatch.
-  const user = await getCurrentUser();
-  const isAuthenticated = !!user;
 
   // Tolt affiliate tracker — fetched async, sets the tolt_referral
   // cookie when a visitor arrives via an affiliate link
@@ -87,11 +81,19 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
   // before signing up for Tolt.
   const toltId = process.env.NEXT_PUBLIC_TOLT_ID;
 
-  // The per-request nonce minted in middleware. Next stamps its own
-  // inline scripts automatically; this is for the one third-party tag
-  // we render ourselves, which would otherwise be the single thing on
-  // the page our own CSP blocks.
-  const nonce = headers().get('x-nonce') ?? undefined;
+  // No nonce on the tag below, and none read here.
+  //
+  // Reading the request headers is a dynamic API: it would opt this
+  // subtree out of static rendering just as surely as reading the session
+  // cookie did, and it would do it for a script that is often not even
+  // rendered.
+  //
+  // The tag does not need one. Our CSP lists https://cdn.tolt.io in
+  // script-src by host — it has to, because a nonce covers the tag we
+  // write and not the requests that script then makes for its own assets
+  // — and there is no 'strict-dynamic' in the policy, so the host
+  // allowlist is honoured. The nonce was redundant with the host entry
+  // that was already carrying it.
 
   return (
     <html lang={descriptor.code} dir={descriptor.direction}>
@@ -99,7 +101,6 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
         {toltId && (
           <script
             async
-            nonce={nonce}
             src="https://cdn.tolt.io/tolt.js"
             data-tolt={toltId}
           />
@@ -132,23 +133,7 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
 
               <div className="flex items-center gap-2">
                 <LanguageSelector />
-                {isAuthenticated ? (
-                  <>
-                    <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
-                      <Link href="/dashboard">{tNav('myDashboard')}</Link>
-                    </Button>
-                    <SignOutButton label={tBilling('signOut')} />
-                  </>
-                ) : (
-                  <>
-                    <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
-                      <Link href="/login">{tNav('signIn')}</Link>
-                    </Button>
-                    <Button asChild size="sm">
-                      <Link href="/audit">{tNav('startAudit')}</Link>
-                    </Button>
-                  </>
-                )}
+                <HeaderAuth />
               </div>
             </div>
           </header>

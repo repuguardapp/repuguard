@@ -391,6 +391,7 @@
     "indexTitle": "Bußgeldentscheidungen",
     "indexLead": "Bußgelder, Anordnungen und Leitlinien der Datenschutz- und KI-Aufsichtsbehörden, verständlich zusammengefasst und mit Link zur Originalentscheidung.",
     "empty": "Noch keine Entscheidungen veröffentlicht.",
+    "unavailable": "Diese Liste konnte gerade nicht geladen werden. Fehlgeschlagen ist unser Zugriff auf unsere eigenen Datensätze, es fehlt nicht an Entscheidungen — bitte versuchen Sie es in Kürze erneut.",
     "sourceLabel": "Primärquelle",
     "authority": "Behörde",
     "entity": "Organisation",

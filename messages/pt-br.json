@@ -391,6 +391,7 @@
     "indexTitle": "Decisões sancionatórias",
     "indexLead": "Multas, determinações e orientações das autoridades de proteção de dados e de IA, resumidas em linguagem clara com link para a decisão original.",
     "empty": "Nenhuma decisão publicada ainda.",
+    "unavailable": "Não foi possível carregar esta lista agora. O que falhou foi nosso acesso aos nossos próprios registros, não uma ausência de decisões — tente novamente em instantes.",
     "sourceLabel": "Fonte primária",
     "authority": "Autoridade",
     "entity": "Organização",

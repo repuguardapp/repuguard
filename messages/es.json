@@ -391,6 +391,7 @@
     "indexTitle": "Resoluciones sancionadoras",
     "indexLead": "Multas, requerimientos y directrices de las autoridades de protección de datos e IA, resumidos en lenguaje claro con enlace a la resolución original.",
     "empty": "Aún no hay resoluciones publicadas.",
+    "unavailable": "No se ha podido cargar esta lista ahora mismo. Ha fallado nuestro acceso a nuestros propios registros, no es una ausencia de resoluciones: inténtelo de nuevo en un momento.",
     "sourceLabel": "Fuente primaria",
     "authority": "Autoridad",
     "entity": "Organización",

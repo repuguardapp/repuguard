@@ -24,7 +24,14 @@ import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
  * own processing would be selling something it does not practise.
  */
 
-export const dynamic = 'force-dynamic';
+/**
+ * Nothing here reads the request, so nothing here needs to be dynamic.
+ *
+ * It carried `force-dynamic` with no reason recorded, on the page whose
+ * own comment above calls it indexable and which the footer links from
+ * every page of the site so that a crawler can reach it. The form posts
+ * to /api/scan, which is dynamic where it belongs.
+ */
 
 export async function generateMetadata({
   params

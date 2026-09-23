@@ -391,6 +391,7 @@
     "indexTitle": "Enforcement decisions",
     "indexLead": "Fines, orders and guidance from data-protection and AI regulators, summarised in plain language with a link to the original decision.",
     "empty": "No decisions published yet.",
+    "unavailable": "This list could not be loaded just now. It is our connection to our own records that failed, not an absence of decisions — please try again shortly.",
     "sourceLabel": "Primary source",
     "authority": "Authority",
     "entity": "Organisation",

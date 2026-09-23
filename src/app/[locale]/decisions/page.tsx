@@ -52,7 +52,17 @@ export default async function DecisionsIndexPage({ params }: PageProps) {
         <p className="text-pretty text-muted-foreground">{t('indexLead')}</p>
       </header>
 
-      {decisions.length === 0 ? (
+      {decisions === null ? (
+        // Not the same card as "none yet". We could not read the corpus,
+        // and telling a reader there are no enforcement decisions when we
+        // simply failed to fetch them is a false statement about the
+        // regulators, made on our own page.
+        <Card>
+          <CardContent className="pt-6 text-sm text-muted-foreground">
+            {t('unavailable')}
+          </CardContent>
+        </Card>
+      ) : decisions.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-sm text-muted-foreground">{t('empty')}</CardContent>
         </Card>

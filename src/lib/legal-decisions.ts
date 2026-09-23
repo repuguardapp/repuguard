@@ -117,22 +117,48 @@ function excerpt(summary: string): string {
 }
 
 /** Published decisions, newest first, for the index page and sitemap. */
+/**
+ * Returns the published decisions, or null when we could not read them.
+ *
+ * Null is not an empty list, and the distinction is the whole reason this
+ * signature is not `PublishedDecision[]`. Its own predecessor said it in
+ * a comment — "a silently empty index is how a broken corpus goes
+ * unnoticed" — and then returned `[]` for both cases anyway, so the page
+ * printed "no decisions yet" whether there were none or whether the
+ * database was unreachable. One of those is a fact about our corpus and
+ * the other is a fact about our connection, and only the first is ours to
+ * state.
+ *
+ * It also has to survive a database that is not there at all. This is now
+ * called during the build: `supabaseService()` throws on missing
+ * credentials rather than returning an error, which took the whole export
+ * down for seven locales. A deploy that fails because a database had a
+ * bad minute is a deploy schedule owned by the database.
+ */
 export async function listPublishedDecisions(
   locale: string,
   limit = 50
-): Promise<PublishedDecision[]> {
-  const { data, error } = await supabaseService()
-    .from('legal_developments')
-    .select(SELECT)
-    .eq('status', 'published')
-    .order('decision_date', { ascending: false, nullsFirst: false })
-    .limit(limit);
+): Promise<PublishedDecision[] | null> {
+  let result;
+  try {
+    result = await supabaseService()
+      .from('legal_developments')
+      .select(SELECT)
+      .eq('status', 'published')
+      .order('decision_date', { ascending: false, nullsFirst: false })
+      .limit(limit);
+  } catch (err) {
+    console.error('[legal-decisions] list_unavailable', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
+  }
+
+  const { data, error } = result;
 
   if (error) {
-    // An index that renders empty is better than one that 500s, but a
-    // silently empty index is how a broken corpus goes unnoticed.
     console.error('[legal-decisions] list_failed', { error: error.message });
-    return [];
+    return null;
   }
 
   return ((data ?? []) as unknown as Row[])

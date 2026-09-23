@@ -391,6 +391,7 @@
     "indexTitle": "Décisions de sanction",
     "indexLead": "Amendes, injonctions et lignes directrices des autorités de protection des données et de l'IA, résumées en langage clair avec un lien vers la décision d'origine.",
     "empty": "Aucune décision publiée pour le moment.",
+    "unavailable": "Cette liste n'a pas pu être chargée à l'instant. C'est notre accès à nos propres enregistrements qui a échoué, pas une absence de décisions — réessayez dans un moment.",
     "sourceLabel": "Source primaire",
     "authority": "Autorité",
     "entity": "Organisation",
