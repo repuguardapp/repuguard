@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { composeDigest, type DigestInput } from '@/lib/daily-digest';
 import { sendOpsDigest } from '@/lib/email';
+import { stripe } from '@/lib/stripe';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
 
@@ -64,7 +66,6 @@ async function digest() {
     auditsStuck,
     creditsConsumed,
     newOrganizations,
-    activeSubscriptions,
     awaitingReview
   ] = await Promise.all([
     count(() =>
@@ -92,17 +93,13 @@ async function digest() {
     ),
     count(() =>
       db
-        .from('subscriptions')
-        .select('organization_id', { head: true, count: 'exact' })
-        .in('status', ['active', 'trialing', 'past_due'])
-    ),
-    count(() =>
-      db
         .from('legal_developments')
         .select('id', { head: true, count: 'exact' })
         .eq('status', 'extracted')
     )
   ]);
+
+  const billing = await readBilling(db);
 
   const input: DigestInput = {
     auditsCompleted,
@@ -110,8 +107,8 @@ async function digest() {
     auditsStuck,
     creditsConsumed,
     newOrganizations,
-    activeSubscriptions,
     awaitingReview,
+    ...billing,
     corpus: await readCorpus(db),
     ...(await readSourceHealth(db)),
     appUrl: baseUrl
@@ -220,5 +217,112 @@ async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise
     };
   } catch {
     return unavailable;
+  }
+}
+
+/**
+ * How many organisations are actually paying, asked of Stripe.
+ *
+ * WHY NOT OUR OWN TABLE, WHICH IS RIGHT THERE
+ *
+ * Because it was wrong, in the direction that flatters us, for four
+ * months. The digest counted rows in `subscriptions` with an active-ish
+ * status and printed "Active subscriptions 4". The four rows were one
+ * organisation named "Test", holding four Stripe subscription ids created
+ * on 14 and 15 May — starter, starter, pro and enterprise — every one of
+ * them "active", every one with a null period end. No organisation can be
+ * on three plans at once. The subscriptions had gone from Stripe and
+ * nothing had told our table, because a mirror written by webhooks only
+ * ever hears what it is sent.
+ *
+ * That number is the one line in the report that answers whether there is
+ * a business. It has to come from the system of record.
+ *
+ * The mirror is still read, and a disagreement is reported as an action
+ * rather than quietly corrected: the application grants access from the
+ * mirror, so a gap is either a customer with the wrong entitlement or a
+ * webhook we never received, and both need a person.
+ */
+async function readBilling(db: ReturnType<typeof supabaseService>): Promise<{
+  activeSubscriptions: number | null;
+  billingMirrorDrift: { stripe: number; mirror: number } | null;
+}> {
+  const mirror = await readMirrorSubscriptions(db);
+  const fromStripe = await countStripeSubscriptions();
+
+  return {
+    activeSubscriptions: fromStripe,
+    // A disagreement we could not measure is not a disagreement we may
+    // report. Either side unreadable means no claim.
+    billingMirrorDrift:
+      fromStripe !== null && mirror !== null && fromStripe !== mirror
+        ? { stripe: fromStripe, mirror }
+        : null
+  };
+}
+
+/** Distinct organisations our own table believes are subscribed. */
+async function readMirrorSubscriptions(
+  db: ReturnType<typeof supabaseService>
+): Promise<number | null> {
+  try {
+    const { data, error } = await db
+      .from('subscriptions')
+      .select('organization_id')
+      .in('status', ['active', 'trialing', 'past_due']);
+    if (error) return null;
+    // Organisations, not rows. Counting rows is what turned one test
+    // account into four customers.
+    return new Set((data ?? []).map((r) => (r as { organization_id: string }).organization_id)).size;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Subscriptions Stripe itself calls live, counted by customer.
+ *
+ * Bounded pagination rather than auto-pagination: this runs in a cron with
+ * a fixed budget, and a number we stopped counting half way through is a
+ * wrong number. Past the ceiling it returns null — "unavailable" is a
+ * state this digest already knows how to print, and it is the honest one.
+ */
+async function countStripeSubscriptions(): Promise<number | null> {
+  const LIVE: Stripe.SubscriptionListParams.Status[] = ['active', 'trialing', 'past_due'];
+  const PAGE = 100;
+  const MAX_PAGES = 5;
+
+  try {
+    const customers = new Set<string>();
+
+    for (const status of LIVE) {
+      let startingAfter: string | undefined;
+
+      for (let page = 0; page < MAX_PAGES; page += 1) {
+        const batch: Stripe.ApiList<Stripe.Subscription> = await stripe().subscriptions.list({
+          status,
+          limit: PAGE,
+          ...(startingAfter ? { starting_after: startingAfter } : {})
+        });
+
+        for (const sub of batch.data) {
+          customers.add(typeof sub.customer === 'string' ? sub.customer : sub.customer.id);
+        }
+
+        if (!batch.has_more) break;
+        if (page === MAX_PAGES - 1) return null;
+        startingAfter = batch.data[batch.data.length - 1]?.id;
+        if (!startingAfter) break;
+      }
+    }
+
+    return customers.size;
+  } catch (err) {
+    // A missing key, a network failure, a Stripe outage. Every one of them
+    // means we do not know, and do not know is not zero.
+    console.error('[cron/daily-digest] stripe_unreadable', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
   }
 }

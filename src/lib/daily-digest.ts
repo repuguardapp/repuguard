@@ -29,7 +29,34 @@ export interface DigestInput {
   auditsStuck: number | null;
   creditsConsumed: number | null;
   newOrganizations: number | null;
+  /**
+   * Active subscriptions according to STRIPE, which is the system of
+   * record. Our `subscriptions` table is an echo of it written by a
+   * webhook, and an echo can be wrong in the direction that flatters us.
+   *
+   * It was. The line read "Active subscriptions 4" every morning, and the
+   * four rows were one organisation named "Test" holding four Stripe
+   * subscription ids from 14-15 May — starter, starter, pro and
+   * enterprise, all "active" at once, all with a null period end. No
+   * organisation can be on three plans simultaneously. Stripe had the
+   * subscriptions deleted; nothing told our table, so it went on
+   * reporting them for four months.
+   *
+   * This is the one number in the digest that answers "is there a
+   * business". Taking it from a mirror that only ever receives good news
+   * is how a founder reads four customers into zero.
+   */
   activeSubscriptions: number | null;
+  /**
+   * Set only when Stripe and our mirror disagree.
+   *
+   * Worth its own action rather than a silent correction: the app grants
+   * access from the mirror, so a gap is a customer with the wrong
+   * entitlement in one direction or a missed webhook in the other. Null
+   * when they agree, or when either could not be read — a disagreement we
+   * could not measure is not a disagreement we may report.
+   */
+  billingMirrorDrift: { stripe: number; mirror: number } | null;
   /** Legal-watch corpus, by status. */
   corpus: Record<string, number> | null;
   /** Sources whose last poll did not succeed, with their error. */
@@ -112,8 +139,15 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
-  if (input.awaitingReview !== null && input.awaitingReview > 0) {
+  if (input.billingMirrorDrift) {
+    const { stripe, mirror } = input.billingMirrorDrift;
     actions.push(
+      `Billing mirror disagrees with Stripe: our table says ${mirror} organisation(s) subscribed, Stripe says ${stripe}.\n` +
+        `    Access is granted from our table, so the gap is either a customer with the wrong entitlement or a webhook we never received.`
+    );
+  }
+
+  if (input.awaitingReview !== null && input.awaitingReview > 0) {    actions.push(
       `${input.awaitingReview} decision(s) waiting for review — nothing publishes until you approve them.\n` +
         `    ${input.appUrl}/en/admin/legal-queue`
     );

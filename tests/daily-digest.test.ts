@@ -22,6 +22,7 @@ const HEALTHY: DigestInput = {
   creditsConsumed: 3,
   newOrganizations: 1,
   activeSubscriptions: 2,
+  billingMirrorDrift: null,
   corpus: { discovered: 12, extracted: 0, approved: 0, published: 30, rejected: 40 },
   brokenSources: [],
   neverPolledSources: [],
@@ -165,5 +166,40 @@ describe('a source switched off is not a source that is fine', () => {
     // whole section was added to fix.
     expect(digest.text).toContain('switched-off sources');
     expect(digest.quiet).toBe(false);
+  });
+});
+
+describe('the number that says whether there is a business', () => {
+  it('reports a disagreement between Stripe and our own table', () => {
+    // The mirror said four. The four rows were one organisation named
+    // "Test" holding four Stripe subscription ids — starter, starter, pro
+    // and enterprise, all active at once. No organisation can be on three
+    // plans, and Stripe had deleted every one of them.
+    const digest = composeDigest({
+      ...HEALTHY,
+      activeSubscriptions: 0,
+      billingMirrorDrift: { stripe: 0, mirror: 1 }
+    });
+
+    expect(digest.text).toContain('our table says 1 organisation(s) subscribed, Stripe says 0');
+    // Access is granted from the mirror, so the gap needs a person: it is
+    // either a wrong entitlement or a webhook we never received.
+    expect(digest.text).toContain('webhook');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('says nothing when the two agree', () => {
+    const digest = composeDigest({ ...HEALTHY, billingMirrorDrift: null });
+
+    expect(digest.text).not.toContain('Billing mirror');
+  });
+
+  it('prints an unreadable subscription count as unavailable, never as zero', () => {
+    // Stripe being unreachable means we do not know how many customers we
+    // have. Printing 0 would read as "everyone left".
+    const digest = composeDigest({ ...HEALTHY, activeSubscriptions: null });
+
+    expect(digest.text).toContain('Active subscriptions  unavailable');
+    expect(digest.text).not.toContain('Active subscriptions  0');
   });
 });
