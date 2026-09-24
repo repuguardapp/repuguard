@@ -1,6 +1,6 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { verifyInbound } from '@/lib/inbound-signature';
 import { clientIpFrom, rateLimit } from '@/lib/rate-limit';
 import { classifyReply, isAutoReply, topOfReply, type Sentiment } from '@/lib/reply-classifier';
 import { supabaseService } from '@/lib/supabase';
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
   }
 
   const raw = await request.text();
-  const verdict = verify(raw, request.headers, secret);
+  const verdict = verifyInbound(raw, request.headers, secret);
   if (verdict !== 'ok') {
     console.warn('[inbound] rejected', { verdict });
     // 401 for everything. Distinguishing "bad signature" from "stale
@@ -182,33 +182,6 @@ export async function POST(request: NextRequest) {
 
   console.log('[inbound] recorded', { sentiment, trusted: match.trusted });
   return NextResponse.json({ ok: true, sentiment });
-}
-
-/**
- * HMAC over the exact bytes received, with a timestamp.
- *
- * Same shape as the Resend webhook: sign `<timestamp>.<body>`, compare in
- * constant time, and refuse anything older than five minutes so a captured
- * request is not replayable for ever.
- */
-function verify(raw: string, headers: Headers, secret: string): 'ok' | 'no_signature' | 'stale' | 'bad_signature' {
-  const signature = headers.get('x-lexyflow-signature');
-  const timestamp = headers.get('x-lexyflow-timestamp');
-  if (!signature || !timestamp) return 'no_signature';
-
-  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
-  if (!Number.isFinite(age) || age > 300) return 'stale';
-
-  const expected = createHmac('sha256', secret).update(`${timestamp}.${raw}`).digest('hex');
-  return equal(signature, expected) ? 'ok' : 'bad_signature';
-}
-
-function equal(a: string, b: string): boolean {
-  const left = Buffer.from(a);
-  const right = Buffer.from(b);
-  // timingSafeEqual throws on a length mismatch, which would itself leak
-  // the expected length through a 500.
-  return left.length === right.length && timingSafeEqual(left, right);
 }
 
 /**

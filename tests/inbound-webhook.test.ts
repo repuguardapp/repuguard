@@ -22,6 +22,7 @@ const code = (p: string) =>
 
 const ROUTE = 'src/app/api/webhooks/inbound/route.ts';
 const CLASSIFIER = 'src/lib/reply-classifier.ts';
+const SIGNATURE = 'src/lib/inbound-signature.ts';
 
 describe('quoting and auto-replies are handled before any money is spent', () => {
   it('cuts the thread off at the quote', () => {
@@ -120,10 +121,23 @@ describe('the endpoint itself', () => {
   });
 
   it('signs the exact bytes with a timestamp, and compares in constant time', () => {
-    expect(route).toContain('createHmac');
-    expect(route).toContain('timingSafeEqual');
-    expect(route).toContain('${timestamp}.${raw}');
-    expect(route).toMatch(/age > 300/);
+    // The recipe moved out of this file and into lib/inbound-signature.ts,
+    // which is where it belonged once it had a second implementation: the
+    // Cloudflare Worker signs with WebCrypto against this same contract, and
+    // two copies of one recipe in two runtimes is the arrangement that
+    // drifts. The property this test protects is unchanged and is now also
+    // exercised end to end in tests/inbound-signature.test.ts, which signs a
+    // payload the Worker's way and asserts the verifier accepts it.
+    const signature = code(SIGNATURE);
+
+    expect(signature).toContain('createHmac');
+    expect(signature).toContain('timingSafeEqual');
+    expect(signature).toContain('${timestamp}.${rawBody}');
+    // The window is a named constant now; the number is what matters.
+    expect(signature).toMatch(/MAX_SIGNATURE_AGE_SECONDS = 300/);
+
+    // And the route still verifies, rather than having quietly stopped.
+    expect(route).toContain('verifyInbound');
   });
 
   it('answers 401 for every rejection, without saying which', () => {

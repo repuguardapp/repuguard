@@ -1,0 +1,16 @@
+{
+  "name": "lexyflow-inbound-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Email Worker that signs inbound replies and posts them to /api/webhooks/inbound. Deployed separately from the Next.js app.",
+  "scripts": {
+    "deploy": "./deploy.sh",
+    "tail": "wrangler tail lexyflow-inbound"
+  },
+  "dependencies": {
+    "postal-mime": "^2.4.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
