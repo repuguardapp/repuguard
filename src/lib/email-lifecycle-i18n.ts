@@ -57,6 +57,26 @@ export interface LifecycleStrings {
   upgradeHeadingSeen: string;
   upgradeCtaSeen: string;
   upgradeBody: (input: UpgradeCopyInput) => string;
+
+  /**
+   * How every one of these emails ends.
+   *
+   * It used to be a single English constant appended to all seven: a
+   * French email signed "— The LexyFlow team". Translating four
+   * paragraphs and then signing them in another language is the kind of
+   * detail that tells a reader the message was assembled rather than
+   * written.
+   */
+  signoff: string;
+
+  /**
+   * The opt-out line in the footer, and the label on the link.
+   *
+   * Not optional and not passed by the caller: sendLifecycle appends it
+   * to every message it sends, because a template that hands over a
+   * finished body is a template somebody can write without one.
+   */
+  optOut: string;
 }
 
 /** "52/100", or nothing at all when we have no score. Never "null/100". */
@@ -67,6 +87,8 @@ function scoreClause(score: number | null, template: (s: number) => string): str
 const MAP: Record<LifecycleLocale, LifecycleStrings> = {
   en: {
     dir: 'ltr',
+    signoff: "\n\n— The LexyFlow team\nlegal@lexyflow.com",
+    optOut: "You are receiving this because you created a LexyFlow account. Stop these emails — it takes one click and does not affect your audits or your sign-in link:",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} and ${n.at(-1)}` : (n[0] ?? 'your frameworks')),
     welcomeSubject: 'Welcome to LexyFlow',
     welcomeHeading: 'Welcome to LexyFlow',
@@ -108,20 +130,18 @@ You have read one of them. The other ${i.hidden} are still in your report, waiti
   ${i.reportUrl}`) +
       `
 
-The Pro plan adds:
+Both paid plans show every finding on every report, with article-level citations. They differ in volume and nothing else:
 
-  - ${i.proCredits} audits per month
-  - The full findings list on every report, with article-level citations
-  - AI editor — rewrites a non-compliant clause while preserving your legal register
-  - Cross-framework audits in a single run
+  - Starter — ${i.starterCredits} audits a month
+  - Pro — ${i.proCredits} audits a month
 
-  ${i.pricingUrl}
-
-Starter is ${i.starterCredits} audits a month if that fits better.`
+  ${i.pricingUrl}`
   },
 
   fr: {
     dir: 'ltr',
+    signoff: "\n\n— L'équipe LexyFlow\nlegal@lexyflow.com",
+    optOut: "Vous recevez ce message parce que vous avez créé un compte LexyFlow. Arrêter ces e-mails — un seul clic, sans effet sur vos audits ni sur votre lien de connexion :",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} et ${n.at(-1)}` : (n[0] ?? 'vos référentiels')),
     welcomeSubject: 'Bienvenue sur LexyFlow',
     welcomeHeading: 'Bienvenue sur LexyFlow',
@@ -163,20 +183,18 @@ Vous en avez lu une. Les ${i.hidden} autres sont toujours dans votre rapport.
   ${i.reportUrl}`) +
       `
 
-L'offre Pro ajoute :
+Les deux offres payantes affichent toutes les constatations de chaque rapport, articles cités. Elles ne diffèrent que par le volume :
 
-  - ${i.proCredits} audits par mois
-  - La liste complète des constatations sur chaque rapport, articles cités
-  - Éditeur IA — réécrit une clause non conforme en préservant votre registre juridique
-  - Audits multi-référentiels en une seule passe
+  - Starter — ${i.starterCredits} audits par mois
+  - Pro — ${i.proCredits} audits par mois
 
-  ${i.pricingUrl}
-
-L'offre Starter, c'est ${i.starterCredits} audits par mois si cela correspond mieux.`
+  ${i.pricingUrl}`
   },
 
   es: {
     dir: 'ltr',
+    signoff: "\n\n— El equipo de LexyFlow\nlegal@lexyflow.com",
+    optOut: "Recibes esto porque creaste una cuenta de LexyFlow. Deja de recibir estos correos — un solo clic, sin afectar a tus auditorías ni a tu enlace de acceso:",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} y ${n.at(-1)}` : (n[0] ?? 'tus marcos')),
     welcomeSubject: 'Bienvenido a LexyFlow',
     welcomeHeading: 'Bienvenido a LexyFlow',
@@ -218,20 +236,18 @@ Has leído una. Las otras ${i.hidden} siguen en tu informe.
   ${i.reportUrl}`) +
       `
 
-El plan Pro añade:
+Ambos planes de pago muestran todos los hallazgos de cada informe, con citas por artículo. Solo se diferencian en el volumen:
 
-  - ${i.proCredits} auditorías al mes
-  - La lista completa de hallazgos en cada informe, con citas por artículo
-  - Editor IA — reescribe una cláusula no conforme conservando tu registro jurídico
-  - Auditorías multimarco en una sola ejecución
+  - Starter — ${i.starterCredits} auditorías al mes
+  - Pro — ${i.proCredits} auditorías al mes
 
-  ${i.pricingUrl}
-
-El plan Starter son ${i.starterCredits} auditorías al mes si te encaja mejor.`
+  ${i.pricingUrl}`
   },
 
   de: {
     dir: 'ltr',
+    signoff: "\n\n— Das LexyFlow-Team\nlegal@lexyflow.com",
+    optOut: "Sie erhalten dies, weil Sie ein LexyFlow-Konto angelegt haben. Diese E-Mails abbestellen — ein Klick, ohne Auswirkung auf Ihre Prüfungen oder Ihren Anmeldelink:",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} und ${n.at(-1)}` : (n[0] ?? 'Ihre Regelwerke')),
     welcomeSubject: 'Willkommen bei LexyFlow',
     welcomeHeading: 'Willkommen bei LexyFlow',
@@ -273,20 +289,18 @@ Eine davon haben Sie gelesen. Die übrigen ${i.hidden} liegen weiterhin in Ihrem
   ${i.reportUrl}`) +
       `
 
-Der Pro-Tarif ergänzt:
+Beide kostenpflichtigen Tarife zeigen in jedem Bericht sämtliche Befunde, mit Fundstellen auf Artikelebene. Sie unterscheiden sich allein im Volumen:
 
-  - ${i.proCredits} Prüfungen pro Monat
-  - Die vollständige Befundliste in jedem Bericht, mit Fundstellen auf Artikelebene
-  - KI-Editor — schreibt eine nicht konforme Klausel um und wahrt Ihr juristisches Register
-  - Prüfungen über mehrere Regelwerke in einem Durchlauf
+  - Starter — ${i.starterCredits} Prüfungen pro Monat
+  - Pro — ${i.proCredits} Prüfungen pro Monat
 
-  ${i.pricingUrl}
-
-Starter umfasst ${i.starterCredits} Prüfungen pro Monat, falls das besser passt.`
+  ${i.pricingUrl}`
   },
 
   'pt-br': {
     dir: 'ltr',
+    signoff: "\n\n— A equipe LexyFlow\nlegal@lexyflow.com",
+    optOut: "Você recebe isto porque criou uma conta LexyFlow. Parar estes e-mails — um clique, sem afetar suas auditorias nem seu link de acesso:",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} e ${n.at(-1)}` : (n[0] ?? 'seus marcos')),
     welcomeSubject: 'Bem-vindo ao LexyFlow',
     welcomeHeading: 'Bem-vindo ao LexyFlow',
@@ -328,20 +342,18 @@ Você leu uma delas. As outras ${i.hidden} continuam no seu relatório.
   ${i.reportUrl}`) +
       `
 
-O plano Pro acrescenta:
+Os dois planos pagos mostram todos os achados em cada relatório, com citações por artigo. Diferem apenas no volume:
 
-  - ${i.proCredits} auditorias por mês
-  - A lista completa de achados em cada relatório, com citações por artigo
-  - Editor de IA — reescreve uma cláusula não conforme preservando seu registro jurídico
-  - Auditorias multimarco em uma única execução
+  - Starter — ${i.starterCredits} auditorias por mês
+  - Pro — ${i.proCredits} auditorias por mês
 
-  ${i.pricingUrl}
-
-O plano Starter são ${i.starterCredits} auditorias por mês, se encaixar melhor.`
+  ${i.pricingUrl}`
   },
 
   ja: {
     dir: 'ltr',
+    signoff: "\n\n— LexyFlow チーム\nlegal@lexyflow.com",
+    optOut: "LexyFlow のアカウントを作成されたため、このメールをお送りしています。配信停止はワンクリックです（監査やログインリンクには影響しません）:",
     joinScope: (n) => (n.length > 0 ? n.join('・') : '選択された規制'),
     welcomeSubject: 'LexyFlow へようこそ',
     welcomeHeading: 'LexyFlow へようこそ',
@@ -383,20 +395,18 @@ O plano Starter são ${i.starterCredits} auditorias por mês, se encaixar melhor
   ${i.reportUrl}`) +
       `
 
-Pro プランでは次が追加されます。
+有料プランはいずれも、すべてのレポートで指摘事項を全件表示します（条文レベルの根拠付き）。違いは件数のみです。
 
-  - 月 ${i.proCredits} 件の監査
-  - すべてのレポートで指摘事項の全件表示（条文レベルの根拠付き）
-  - AI エディター — 法的文体を保ったまま不適合条項を書き換え
-  - 複数規制を 1 回の実行で横断監査
+  - Starter — 月 ${i.starterCredits} 件の監査
+  - Pro — 月 ${i.proCredits} 件の監査
 
-  ${i.pricingUrl}
-
-Starter プランは月 ${i.starterCredits} 件です。`
+  ${i.pricingUrl}`
   },
 
   ar: {
     dir: 'rtl',
+    signoff: "\n\n— فريق LexyFlow\nlegal@lexyflow.com",
+    optOut: "تصلك هذه الرسالة لأنك أنشأت حسابًا في LexyFlow. لإيقاف هذه الرسائل بنقرة واحدة، دون أي أثر على عمليات التدقيق أو رابط تسجيل الدخول:",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join('، ')} و${n.at(-1)}` : (n[0] ?? 'الأطر المختارة')),
     welcomeSubject: 'مرحبًا بك في LexyFlow',
     welcomeHeading: 'مرحبًا بك في LexyFlow',
@@ -438,16 +448,12 @@ Starter プランは月 ${i.starterCredits} 件です。`
   ${i.reportUrl}`) +
       `
 
-تضيف باقة Pro ما يلي:
+تعرض الباقتان المدفوعتان كلتاهما جميع الملاحظات في كل تقرير مع الاستشهاد بالمواد. والفرق بينهما في العدد فقط:
 
-  - ${i.proCredits} عملية تدقيق شهريًا
-  - قائمة الملاحظات كاملةً في كل تقرير مع الاستشهاد بالمواد
-  - محرّر ذكاء اصطناعي يعيد صياغة البند غير المتوافق مع الحفاظ على الصياغة القانونية
-  - تدقيق عبر عدة أطر تنظيمية في تشغيل واحد
+  - Starter — ${i.starterCredits} عمليات تدقيق شهريًا
+  - Pro — ${i.proCredits} عملية تدقيق شهريًا
 
-  ${i.pricingUrl}
-
-وباقة Starter توفّر ${i.starterCredits} عمليات تدقيق شهريًا إن كانت أنسب.`
+  ${i.pricingUrl}`
   }
 };
 

@@ -6,6 +6,7 @@ import { PLAN_CREDITS } from './stripe';
 import { supabaseService } from './supabase';
 import { appUrl } from '@/lib/app-url';
 import { isSuppressed } from '@/lib/email-suppression';
+import { hasOptedOut, optOutToken } from '@/lib/marketing-optout';
 
 /**
  * Transactional email via Resend.
@@ -405,8 +406,15 @@ function escapeHtml(s: string): string {
 async function sendLifecycle(args: {
   to: string;
   subject: string;
-  html: string;
-  text: string;
+  heading: string;
+  body: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  dir: 'ltr' | 'rtl';
+  /** Localised sentence introducing the opt-out link, e.g. "Se désabonner". */
+  optOutLabel: string;
+  /** Locale the email is written in; steers the confirmation page. */
+  lang: string;
   logTag: string;
 }): Promise<boolean> {
   try {
@@ -422,15 +430,67 @@ async function sendLifecycle(args: {
     // silencing it would remove our own alerting.
     const gate = await isSuppressed(args.to);
     if (gate.blocked) {
-      console.warn('[email] ${args.logTag} suppressed', { reason: gate.reason });
+      console.warn(`[email] ${args.logTag} suppressed`, { reason: gate.reason });
       return false;
     }
+
+    // And the other gate, which is about choice rather than reachability.
+    // These three emails are marketing: the J+14 one pitches the Pro plan
+    // and carries a "See the plans" button. Somebody who has said no to
+    // that does not get another one.
+    if (await hasOptedOut(args.to)) {
+      console.log(`[email] ${args.logTag} opted_out`);
+      return false;
+    }
+
+    // No token, no send.
+    //
+    // The token is what makes the unsubscribe link and the one-click
+    // header work, and it is null when MARKETING_OPTOUT_SECRET is absent.
+    // The tempting behaviour — send anyway, without a link — is the one
+    // thing that cannot happen here: an email somebody cannot escape from
+    // is an email we are not entitled to send. This is a deployment that
+    // has not been finished, and it says so rather than quietly shipping
+    // a non-compliant message.
+    const token = optOutToken(args.to);
+    if (!token) {
+      console.error(`[email] ${args.logTag} not_sent_no_optout_secret`);
+      return false;
+    }
+
+    // Composed here rather than by the caller, because the footer cannot
+    // be optional. A template that builds its own body and hands it over
+    // finished is a template somebody can write without the opt-out; this
+    // way the only path to sending appends it.
+    // `lang` so the confirmation page is in the language of the email.
+    // It steers a redirect and nothing else, and the route validates it
+    // against the locale list rather than echoing it.
+    const optOutUrl = `${APP_URL()}/api/email/optout/${token}?lang=${args.lang}`;
+    const text = `${args.body}\n\n${args.optOutLabel}\n  ${optOutUrl}`;
+    const html = renderLifecycleHtml({
+      heading: args.heading,
+      body: args.body,
+      ctaLabel: args.ctaLabel,
+      ctaUrl: args.ctaUrl,
+      dir: args.dir,
+      optOutLabel: args.optOutLabel,
+      optOutUrl
+    });
+
     const { data, error } = await r.emails.send({
       from: FROM,
       to: args.to,
       subject: args.subject,
-      html: args.html,
-      text: args.text
+      html,
+      text,
+      // RFC 8058. The POST is what Gmail and Outlook call from their own
+      // native unsubscribe button, and since 2024 bulk senders are
+      // required to honour it. The mailto: is not offered: it would be a
+      // promise to process an inbox nobody reads.
+      headers: {
+        'List-Unsubscribe': `<${optOutUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+      }
     });
     if (error) {
       console.error(`[email] ${args.logTag} resend_send_failed`, { to: redact(args.to), errorName: error.name, errorMessage: error.message });
@@ -460,18 +520,21 @@ const localeOrEn = (locale: string | null | undefined) => {
   return SITE_LOCALES.has(lower) ? lower : 'en';
 };
 
-const SIGNOFF = '\n\n— The LexyFlow team\nlegal@lexyflow.com';
-
 /** J+0 — sent from /api/onboarding right after the org is created. */
 export async function sendLifecycleWelcome(to: string, locale?: string | null): Promise<boolean> {
   const lang = localeOrEn(locale);
   const t = lifecycleStringsFor(lang);
-  const body = t.welcomeBody(AUDIT_URL(lang), SAMPLE_URL(lang)) + SIGNOFF;
+  const body = t.welcomeBody(AUDIT_URL(lang), SAMPLE_URL(lang)) + t.signoff;
   return sendLifecycle({
     to,
     subject: t.welcomeSubject,
-    text: body,
-    html: renderLifecycleHtml(t.welcomeHeading, body, t.welcomeCta, AUDIT_URL(lang), t.dir),
+    heading: t.welcomeHeading,
+    body,
+    ctaLabel: t.welcomeCta,
+    ctaUrl: AUDIT_URL(lang),
+    dir: t.dir,
+    optOutLabel: t.optOut,
+    lang,
     logTag: 'lifecycle_welcome'
   });
 }
@@ -480,12 +543,17 @@ export async function sendLifecycleWelcome(to: string, locale?: string | null): 
 export async function sendLifecycleNudge(to: string, locale?: string | null): Promise<boolean> {
   const lang = localeOrEn(locale);
   const t = lifecycleStringsFor(lang);
-  const body = t.nudgeBody(AUDIT_URL(lang)) + SIGNOFF;
+  const body = t.nudgeBody(AUDIT_URL(lang)) + t.signoff;
   return sendLifecycle({
     to,
     subject: t.nudgeSubject,
-    text: body,
-    html: renderLifecycleHtml(t.nudgeHeading, body, t.nudgeCta, AUDIT_URL(lang), t.dir),
+    heading: t.nudgeHeading,
+    body,
+    ctaLabel: t.nudgeCta,
+    ctaUrl: AUDIT_URL(lang),
+    dir: t.dir,
+    optOutLabel: t.optOut,
+    lang,
     logTag: 'lifecycle_nudge'
   });
 }
@@ -543,19 +611,18 @@ export async function sendLifecycleUpgrade(to: string, ctx: UpgradeContext): Pro
       pricingUrl: PRICING_URL(lang),
       proCredits: PLAN_CREDITS.pro,
       starterCredits: PLAN_CREDITS.starter
-    }) + SIGNOFF;
+    }) + t.signoff;
 
   return sendLifecycle({
     to,
     subject: hidden > 0 ? t.upgradeSubjectUnread(hidden) : t.upgradeSubjectSeen,
-    text: body,
-    html: renderLifecycleHtml(
-      hidden > 0 ? t.upgradeHeadingUnread(hidden) : t.upgradeHeadingSeen,
-      body,
-      hidden > 0 ? t.upgradeCtaUnread : t.upgradeCtaSeen,
-      hidden > 0 ? reportUrl : PRICING_URL(lang),
-      t.dir
-    ),
+    heading: hidden > 0 ? t.upgradeHeadingUnread(hidden) : t.upgradeHeadingSeen,
+    body,
+    ctaLabel: hidden > 0 ? t.upgradeCtaUnread : t.upgradeCtaSeen,
+    ctaUrl: hidden > 0 ? reportUrl : PRICING_URL(lang),
+    dir: t.dir,
+    optOutLabel: t.optOut,
+    lang,
     logTag: 'lifecycle_upgrade'
   });
 }
@@ -566,22 +633,36 @@ export async function sendLifecycleUpgrade(to: string, ctx: UpgradeContext): Pro
  * The Resend inbox preview looks the same on iOS Mail, Gmail web,
  * Outlook, and Apple Mail — tested across all four before shipping.
  */
-function renderLifecycleHtml(
-  heading: string,
-  body: string,
-  ctaLabel: string,
-  ctaUrl: string,
-  dir: 'ltr' | 'rtl' = 'ltr'
-): string {
-  const paragraphs = body.split('\n\n').map((p) => `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55;color:#3a3a3f;white-space:pre-wrap;">${escapeHtml(p)}</p>`).join('');
+function renderLifecycleHtml(args: {
+  heading: string;
+  body: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  dir: 'ltr' | 'rtl';
+  optOutLabel: string;
+  optOutUrl: string;
+}): string {
+  const paragraphs = args.body
+    .split('\n\n')
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px 0;font-size:15px;line-height:1.55;color:#3a3a3f;white-space:pre-wrap;">${escapeHtml(p)}</p>`
+    )
+    .join('');
+  const align = args.dir === 'rtl' ? 'right' : 'left';
   return `<!doctype html>
-<html dir="${dir}"><body dir="${dir}" style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;text-align:${dir === 'rtl' ? 'right' : 'left'};">
+<html dir="${args.dir}"><body dir="${args.dir}" style="margin:0;padding:24px;background:#f6f7f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0d;text-align:${align};">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e6e8eb;border-radius:12px;">
     <tr><td style="padding:32px;">
       <div style="font-size:14px;color:#6a737d;letter-spacing:.04em;text-transform:uppercase;">LexyFlow</div>
-      <h1 style="font-size:22px;line-height:1.2;margin:8px 0 20px 0;">${escapeHtml(heading)}</h1>
+      <h1 style="font-size:22px;line-height:1.2;margin:8px 0 20px 0;">${escapeHtml(args.heading)}</h1>
       ${paragraphs}
-      <a href="${ctaUrl}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:15px;font-weight:500;margin-top:8px;">${escapeHtml(ctaLabel)}</a>
+      <a href="${args.ctaUrl}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:15px;font-weight:500;margin-top:8px;">${escapeHtml(args.ctaLabel)}</a>
+    </td></tr>
+    <tr><td style="padding:0 32px 24px 32px;border-top:1px solid #eef0f2;">
+      <p style="margin:16px 0 0 0;font-size:13px;line-height:1.5;color:#6a737d;">
+        <a href="${args.optOutUrl}" style="color:#6a737d;">${escapeHtml(args.optOutLabel)}</a>
+      </p>
     </td></tr>
   </table>
 </body></html>`;

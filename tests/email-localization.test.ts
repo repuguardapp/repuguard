@@ -35,6 +35,10 @@ beforeEach(() => {
   vi.resetModules();
   process.env['RESEND_API_KEY'] = 'test-key';
   process.env['NEXT_PUBLIC_APP_URL'] = 'https://lexyflow.com';
+  // Without this, nothing sends at all — and that is the point, pinned by
+  // its own test below. Every case here exercises the copy, so it needs a
+  // deployment that is actually allowed to write to somebody.
+  process.env['MARKETING_OPTOUT_SECRET'] = 'test-secret-long-enough-to-be-a-secret';
 });
 
 const UPGRADE = {
@@ -119,9 +123,23 @@ describe('links follow the reader into their own language', () => {
     expect(mail.text).toContain(`https://lexyflow.com/${locale}/audit`);
 
     // And no link in the body points at any OTHER locale.
-    const linkedLocales = [...mail.text.matchAll(/lexyflow\.com\/([a-z-]+)\//g)].map((m) => m[1]);
+    //
+    // /api/ is excluded rather than counted as a locale. The unsubscribe
+    // endpoint is a route handler, not a page: it has no locale segment
+    // and takes ?lang= instead, which it validates and uses to redirect
+    // to the confirmation page in the reader's own language. The property
+    // under test — no PAGE link leaves the reader's language — is
+    // unchanged, and the redirect target is asserted separately below.
+    const linkedLocales = [...mail.text.matchAll(/lexyflow\.com\/([a-z-]+)\//g)]
+      .map((m) => m[1]!)
+      .filter((segment) => segment !== 'api');
     expect(linkedLocales.length).toBeGreaterThan(0);
     expect([...new Set(linkedLocales)]).toEqual([locale]);
+
+    // The unsubscribe link carries the same language, so the
+    // confirmation page does not land the reader in English.
+    expect(mail.text).toContain(`/api/email/optout/`);
+    expect(mail.text).toContain(`?lang=${locale}`);
   });
 
   it('sends the upgrade reader to their own report in their own language', async () => {

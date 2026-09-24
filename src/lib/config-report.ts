@@ -81,6 +81,7 @@ function readEnv(): Record<string, string | undefined> {
     CRON_SECRET: process.env.CRON_SECRET,
     DOMAIN_VERIFICATION_SECRET: process.env.DOMAIN_VERIFICATION_SECRET,
     INBOUND_WEBHOOK_SECRET: process.env.INBOUND_WEBHOOK_SECRET,
+    MARKETING_OPTOUT_SECRET: process.env.MARKETING_OPTOUT_SECRET,
     DOCUMENT_ENCRYPTION_KEY: process.env.DOCUMENT_ENCRYPTION_KEY,
     DOCUMENT_ENCRYPTION_KEYS: process.env.DOCUMENT_ENCRYPTION_KEYS,
     DOCUMENT_ENCRYPTION_ACTIVE: process.env.DOCUMENT_ENCRYPTION_ACTIVE,
@@ -206,6 +207,12 @@ export const CONFIG_GROUPS: { title: string; entries: ConfigEntry[] }[] = [
         name: 'RESEND_API_KEY',
         requirement: 'required',
         consequence: "Absente, aucun e-mail ne part et l'envoi échoue silencieusement côté appelant."
+      },
+      {
+        name: 'MARKETING_OPTOUT_SECRET',
+        requirement: 'required',
+        consequence:
+          "Absent, AUCUN e-mail de cycle de vie ne part — c'est volontaire : sans lui le lien de désabonnement et l'en-tête List-Unsubscribe ne peuvent pas être calculés, et un e-mail commercial dont on ne peut pas sortir ne doit pas être envoyé. Sa valeur ne doit jamais changer : tout lien déjà reçu cesserait de fonctionner."
       },
       {
         name: 'RESEND_FROM',
