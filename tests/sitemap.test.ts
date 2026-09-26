@@ -90,10 +90,73 @@ describe('an index rather than a list', () => {
     // thing that knows about budgets and politeness.
     const { items, indexes } = parseSitemap(INDEX, { itemPattern: '/x/', baseUrl: BASE });
     expect(items).toEqual([]);
+    // Children now carry the index's own lastmod alongside the URL, so the
+    // poller can read the newest first instead of the first four it parsed.
+    // The property here is unchanged: same-origin children handed back,
+    // the third-party one dropped, nothing fetched.
     expect(indexes).toEqual([
-      'https://ico.org.uk/sitemap-enforcement-2026.xml',
-      'https://ico.org.uk/sitemap-blogs.xml'
+      { url: 'https://ico.org.uk/sitemap-enforcement-2026.xml', lastmod: null },
+      { url: 'https://ico.org.uk/sitemap-blogs.xml', lastmod: null }
     ]);
+  });
+
+  it('puts the most recently changed child first', () => {
+    // Italy's Garante publishes 320 children, every URL of the form
+    // /sitemap.xml?p_l_id=145219&layoutUuid=… — nothing in the name says
+    // what is inside. Ranked equally, the poller fetched the same three of
+    // three hundred and twenty every six hours until the source switched
+    // itself off. The index states when each child last changed, and the
+    // section that publishes decisions is the section that changes.
+    const dated = `<?xml version="1.0"?>
+      <sitemapindex>
+        <sitemap><loc>https://ico.org.uk/sitemap.xml?p=1</loc><lastmod>2019-01-04</lastmod></sitemap>
+        <sitemap><loc>https://ico.org.uk/sitemap.xml?p=2</loc><lastmod>2026-09-24</lastmod></sitemap>
+        <sitemap><loc>https://ico.org.uk/sitemap.xml?p=3</loc><lastmod>2024-06-30</lastmod></sitemap>
+      </sitemapindex>`;
+
+    const { indexes } = parseSitemap(dated, { itemPattern: '/x/', baseUrl: BASE });
+
+    expect(indexes.map((c) => c.url)).toEqual([
+      'https://ico.org.uk/sitemap.xml?p=2',
+      'https://ico.org.uk/sitemap.xml?p=3',
+      'https://ico.org.uk/sitemap.xml?p=1'
+    ]);
+  });
+
+  it('ranks undated children last without discarding them', () => {
+    // An index that declines to date a child is not saying the child is
+    // stale. It is saying nothing, and nothing goes after something.
+    const mixed = `<?xml version="1.0"?>
+      <sitemapindex>
+        <sitemap><loc>https://ico.org.uk/a.xml</loc></sitemap>
+        <sitemap><loc>https://ico.org.uk/b.xml</loc><lastmod>2020-01-01</lastmod></sitemap>
+      </sitemapindex>`;
+
+    const { indexes } = parseSitemap(mixed, { itemPattern: '/x/', baseUrl: BASE });
+
+    expect(indexes.map((c) => c.url)).toEqual([
+      'https://ico.org.uk/b.xml',
+      'https://ico.org.uk/a.xml'
+    ]);
+  });
+
+  it('keeps the newest 40 of a very large index, not the first 40', () => {
+    // The cap used to run before any ranking, so a 320-child index threw
+    // away the answer before anybody looked at it.
+    const many = Array.from({ length: 60 }, (_, i) => {
+      const year = 1990 + i; // oldest first in document order
+      return `<sitemap><loc>https://ico.org.uk/s${i}.xml</loc><lastmod>${year}-01-01</lastmod></sitemap>`;
+    }).join('');
+
+    const { indexes } = parseSitemap(`<?xml version="1.0"?><sitemapindex>${many}</sitemapindex>`, {
+      itemPattern: '/x/',
+      baseUrl: BASE
+    });
+
+    expect(indexes).toHaveLength(40);
+    expect(indexes[0]!.url).toBe('https://ico.org.uk/s59.xml');
+    // s19 is 2009; everything older than that fell off the bottom.
+    expect(indexes.at(-1)!.url).toBe('https://ico.org.uk/s20.xml');
   });
 });
 

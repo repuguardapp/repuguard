@@ -33,12 +33,28 @@ const LOC = /<loc>\s*([\s\S]*?)\s*<\/loc>/i;
 const LASTMOD = /<lastmod>\s*([\s\S]*?)\s*<\/lastmod>/i;
 const SITEMAP_BLOCK = /<sitemap\b[\s\S]*?<\/sitemap>/gi;
 
+/**
+ * How many children of an index we keep, after sorting by lastmod.
+ *
+ * The cap is about our own memory, not about politeness — the caller
+ * decides how many to actually fetch. It sits after the sort so that a
+ * 320-child index keeps its 40 most recently changed, not its first 40.
+ */
+const MAX_INDEX_CHILDREN = 40;
+
 export interface SitemapOptions {
   /** A substring every decision URL's path contains. */
   itemPattern: string;
   /** Bounds which URLs may be taken, and resolves nothing — locs are absolute. */
   baseUrl: string;
   maxItems?: number;
+}
+
+/** One entry of a sitemap index: where it is, and when it last changed. */
+export interface SitemapChild {
+  url: string;
+  /** The index's own claim about this child. Null when it makes none. */
+  lastmod: string | null;
 }
 
 export interface ParsedSitemap extends ParsedFeed {
@@ -49,8 +65,23 @@ export interface ParsedSitemap extends ParsedFeed {
    * on — so the caller fetches a bounded number of these rather than this
    * module recursing on someone else's file and deciding for itself how
    * much of their server to read.
+   *
+   * ORDERED NEWEST FIRST, AND THAT IS THE WHOLE POINT
+   *
+   * Italy's Garante publishes 320 of them, on Liferay, named
+   * `/sitemap.xml?p_l_id=145219&layoutUuid=37b70650-…`. Nothing in that URL
+   * says what is inside it, so the caller's "prefer the one whose name
+   * matches the section" heuristic ranked all 320 equally, this module kept
+   * the first 40 it happened to parse, and the caller fetched the first 3 of
+   * those. The same three, every six hours, out of three hundred and twenty.
+   * The Garante was reported as publishing nothing and switched itself off.
+   *
+   * But the index states a lastmod per child, and the section that publishes
+   * decisions is the section that changes. Sorting by it costs no extra
+   * request and turns a lottery into a reading. Sorted BEFORE the cap below,
+   * or the cap would throw away the answer.
    */
-  indexes: string[];
+  indexes: SitemapChild[];
 }
 
 function decode(raw: string): string {
@@ -85,18 +116,26 @@ export function parseSitemap(xml: string, options: SitemapOptions): ParsedSitema
   // by the wrapper element rather than by the presence of <sitemap> blocks,
   // because a malformed file can carry both.
   if (/<sitemapindex\b/i.test(xml)) {
-    const indexes: string[] = [];
+    const indexes: SitemapChild[] = [];
     for (const block of xml.match(SITEMAP_BLOCK) ?? []) {
       const loc = decode(block.match(LOC)?.[1] ?? '');
       try {
         // Same origin: a sitemap index that points at another host is
         // either a CDN we should not be crawling or something worse.
-        if (loc && new URL(loc).origin === origin) indexes.push(loc);
+        if (loc && new URL(loc).origin === origin) {
+          indexes.push({ url: loc, lastmod: isoDate(block.match(LASTMOD)?.[1]) });
+        }
       } catch {
         // Not a URL. Not our problem to repair.
       }
     }
-    return { items: [], skipped: 0, indexes: indexes.slice(0, 40) };
+
+    // Newest first, undated last — a child the index declines to date is not
+    // evidence of staleness, but it is not a reason to look there first
+    // either. Stable for equal dates, so the site's own order survives.
+    indexes.sort((a, b) => (b.lastmod ?? '').localeCompare(a.lastmod ?? ''));
+
+    return { items: [], skipped: 0, indexes: indexes.slice(0, MAX_INDEX_CHILDREN) };
   }
 
   const items: FeedItem[] = [];
@@ -191,15 +230,23 @@ export function describeSitemap(xml: string, options: SitemapOptions): string {
   }
 
   if (/<sitemapindex\b/i.test(xml)) {
-    const children = xml.match(SITEMAP_BLOCK) ?? [];
-    const names = children
-      .slice(0, 4)
-      .map((block) => decode(block.match(LOC)?.[1] ?? ''))
-      .filter(Boolean)
+    const total = (xml.match(SITEMAP_BLOCK) ?? []).length;
+    // Through parseSitemap, so what is printed here is the ranking the
+    // caller will actually follow rather than the file's own order. Printing
+    // the first four in document order said "320 children" and then named
+    // four the poller was never going to read.
+    const ranked = parseSitemap(xml, options).indexes;
+    const shown = ranked
+      .slice(0, 3)
+      .map((child) => `${child.url}${child.lastmod ? ` (${child.lastmod.slice(0, 10)})` : ' (undated)'}`)
       .join(' ');
+
     // An index yields no items by design; the caller follows it. Saying so
-    // stops this reading as a fault.
-    return `sitemap index, ${children.length} child sitemap(s)${names ? `: ${names}` : ''}`;
+    // stops this reading as a fault — and naming the dates is what shows
+    // whether the ranking has anything to work with. All-undated means the
+    // choice is still blind and the repair is a narrower feed_url, not a
+    // better heuristic.
+    return `sitemap index, ${total} child sitemap(s), newest first${shown ? `: ${shown}` : ''}`;
   }
 
   const blocks = xml.match(URL_BLOCK) ?? [];

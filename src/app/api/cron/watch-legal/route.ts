@@ -58,6 +58,18 @@ const PROBE_TIMEOUT_MS = 4_000;
 const PROBE_BUDGET_MS = 20_000;
 
 /**
+ * Children of a sitemap index fetched in one run.
+ *
+ * Deliberately small and deliberately not raised when the index is large.
+ * The Garante's 320 children are not an invitation to fetch 320 files: a
+ * sitemap index exists so that robots do not have to crawl, and reading
+ * someone's whole estate to find their news page is the behaviour this
+ * pipeline refuses elsewhere. Three is enough once they are ranked — the
+ * bug was never the number, it was that the three were chosen blind.
+ */
+const MAX_INDEX_CHILDREN_FETCHED = 3;
+
+/**
  * Newest N entries per source per run. Regulator feeds carry 20-50
  * items and we poll four times a day, so this is never a limit in
  * steady state — it is a bound on the first run against a fat feed.
@@ -420,18 +432,29 @@ async function readSource(source: SourceRow, body: string): Promise<ParsedFeed> 
   // Prefer the children that name the section we are after; a site with
   // forty sitemaps has one or two that could hold decisions, and fetching
   // the rest would be reading their whole estate to find a news page.
+  //
+  // The name is the stronger signal when there IS one, so it still wins.
+  // But Italy's Garante publishes 320 children on Liferay, every URL of the
+  // form `/sitemap.xml?p_l_id=145219&layoutUuid=…`, and not one of them
+  // contains the word we look for. Every child scored the same, so this
+  // sort left the site's own order, and we fetched the same three of three
+  // hundred and twenty every six hours until the source switched itself
+  // off. parseSitemap now returns them newest-first by the index's own
+  // lastmod, which is the site telling us where it has been writing.
   const token = pattern.replace(/^\/|\/$/g, '').split('/').pop() ?? '';
   const ranked = [...first.indexes].sort((a, b) => {
-    const score = (u: string) => (token && u.includes(token) ? 0 : 1);
-    return score(a) - score(b);
+    const named = (c: { url: string }) => (token && c.url.includes(token) ? 0 : 1);
+    // Stable within each group, so the lastmod order from parseSitemap
+    // survives for the children whose names say nothing.
+    return named(a) - named(b);
   });
 
   const items: FeedItem[] = [];
   let skipped = first.skipped;
 
-  for (const child of ranked.slice(0, 3)) {
+  for (const child of ranked.slice(0, MAX_INDEX_CHILDREN_FETCHED)) {
     try {
-      const res = await fetchExternal(child, {
+      const res = await fetchExternal(child.url, {
         headers: {
           'user-agent': 'LexyFlowLegalWatch/1.0 (+https://lexyflow.com)',
           accept: 'application/xml, text/xml;q=0.9'
