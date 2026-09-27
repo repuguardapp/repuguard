@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
+import { waitUntil } from '@vercel/functions';
+import { headers } from 'next/headers';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { observatoryReport } from '@/lib/observatory';
+import { recordReferral } from '@/lib/referrals';
 
 /**
  * The observatory.
@@ -30,7 +33,20 @@ import { observatoryReport } from '@/lib/observatory';
  * sentences.
  */
 
-export const revalidate = 3600;
+/**
+ * Dynamic, and only this page.
+ *
+ * Reading the Referer header is reading the request, which opts this
+ * route out of static rendering. That is the trade being made knowingly:
+ * the whole point of the study is a sixty-day test of whether anyone
+ * links to it, and a page cached for an hour cannot see who arrived.
+ *
+ * It is declared here rather than inherited from a layout, which is the
+ * rule this codebase settled on after `force-dynamic` on the locale
+ * layout silently cost the entire site its static rendering: a route that
+ * needs the request says so in its own file, for itself.
+ */
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params
@@ -65,6 +81,10 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
   const t = await getTranslations('observatory');
   const tScan = await getTranslations('scan');
   const report = await observatoryReport();
+
+  // Counted after the page is composed and never awaited: a failure to
+  // count is not a failure to serve.
+  waitUntil(recordReferral(headers().get('referer'), '/observatory'));
 
   return (
     <div className="mx-auto grid max-w-3xl gap-8 px-4 py-16 md:px-0">

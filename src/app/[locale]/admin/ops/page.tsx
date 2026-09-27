@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { configStatus, deploymentIdentity, missingRequired } from '@/lib/config-report';
+import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 
@@ -121,6 +122,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
     {}
   );
 
+  const referrals = await listReferrals();
   const config = configStatus();
   const missing = missingRequired(config);
   const deployment = deploymentIdentity();
@@ -211,6 +213,49 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               ))}
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Qui nous fait un lien</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {/* La question à 60 jours, et la seule chose que cette table
+              sait dire. Elle ne voit qu'un lien CLIQUÉ : un lien que
+              personne ne suit compte pour le référencement et
+              n'apparaîtra jamais ici. La Search Console répond à l'autre
+              moitié. */}
+          <p className="text-sm text-muted-foreground">
+            Hôtes référents, comptés depuis l&apos;en-tête <code>Referer</code>. Ni adresse IP, ni
+            cookie, ni chemin d&apos;origine — un référent peut porter des données personnelles
+            dans sa requête, elles sont jetées à la porte. Un lien que personne ne clique
+            n&apos;apparaît pas ici&nbsp;: c&apos;est la Search Console qui le voit.
+          </p>
+          {referrals === null ? (
+            <p className="text-sm text-destructive">
+              Table illisible. Ce n&apos;est pas une absence de liens, c&apos;est une panne de
+              lecture.
+            </p>
+          ) : referrals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun visiteur venu d&apos;un autre site pour l&apos;instant.
+            </p>
+          ) : (
+            <ul className="grid gap-2">
+              {referrals.map((row) => (
+                <li
+                  key={`${row.host}${row.path}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-2 last:border-0 last:pb-0"
+                >
+                  <span className="font-mono text-sm">{row.host}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {row.path} · {row.hits} · depuis {row.firstSeen.slice(0, 10)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
