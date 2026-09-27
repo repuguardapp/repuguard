@@ -111,6 +111,7 @@ async function digest() {
     ...billing,
     corpus: await readCorpus(db),
     ...(await readSourceHealth(db)),
+    barrenSources: await readBarrenSources(db),
     appUrl: baseUrl
   };
 
@@ -323,6 +324,52 @@ async function countStripeSubscriptions(): Promise<number | null> {
     console.error('[cron/daily-digest] stripe_unreadable', {
       error: err instanceof Error ? err.message : String(err)
     });
+    return null;
+  }
+}
+
+/**
+ * Sources that poll cleanly and have never produced a usable item.
+ *
+ * The question the console could not answer, because it was answering a
+ * different one. `last_status = ok` means items were ingested; it says
+ * nothing about whether any survived extraction. ADGM has reported "ok,
+ * 60" every six hours while all 45 of its classified items were rejected.
+ *
+ * Read from legal_developments rather than from a counter on the source
+ * row, so it cannot drift from the corpus it describes. `discovered` is
+ * excluded from the denominator: an item still queued for extraction has
+ * not been judged, and counting it as a failure would accuse a source of
+ * barrenness for being recent.
+ */
+const BARREN_MIN_CLASSIFIED = 8;
+
+async function readBarrenSources(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ id: string; rejected: number }[] | null> {
+  try {
+    const { data, error } = await db
+      .from('legal_developments')
+      .select('source_id, status')
+      .neq('status', 'discovered')
+      .limit(20_000);
+    if (error) return null;
+
+    const tally = new Map<string, { kept: number; rejected: number }>();
+    for (const row of (data ?? []) as { source_id: string; status: string }[]) {
+      const entry = tally.get(row.source_id) ?? { kept: 0, rejected: 0 };
+      if (row.status === 'rejected') entry.rejected += 1;
+      else entry.kept += 1;
+      tally.set(row.source_id, entry);
+    }
+
+    return [...tally.entries()]
+      // A sample worth believing. Three rejections in a row is a quiet
+      // fortnight at a regulator, not a verdict on the source.
+      .filter(([, t]) => t.kept === 0 && t.rejected >= BARREN_MIN_CLASSIFIED)
+      .map(([id, t]) => ({ id, rejected: t.rejected }))
+      .sort((a, b) => b.rejected - a.rejected);
+  } catch {
     return null;
   }
 }

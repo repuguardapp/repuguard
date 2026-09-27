@@ -82,6 +82,27 @@ export interface DigestInput {
   disabledSources: { id: string; reason: string | null }[] | null;
   /** Sources that have never been polled at all. */
   neverPolledSources: string[] | null;
+  /**
+   * Sources that poll cleanly and have never produced a usable item.
+   *
+   * The category the console could not see, because it was showing them
+   * green. ADGM reports "ok, 60" every six hours; 45 of its items have
+   * been classified and every one was rejected — Abu Dhabi Finance Week,
+   * an office opening, a private-equity appointment, a funds framework.
+   * The feed_url is the free zone's general press office, and no
+   * item_pattern separates a data-protection decision from a conference
+   * announcement, because at the URL level there is nothing to separate.
+   *
+   * `ok` has always meant "items were ingested". It has never meant the
+   * items were worth ingesting, and the difference costs a model call per
+   * item and buries the real ones. This is the same lesson as the `ok`
+   * that meant "at least one element" and left the UK green for months on
+   * an accessibility skip link, one stage further down the pipeline.
+   *
+   * Only reported past a sample worth believing: three rejections in a
+   * row is a quiet fortnight, not a verdict.
+   */
+  barrenSources: { id: string; rejected: number }[] | null;
   awaitingReview: number | null;
   appUrl: string;
 }
@@ -147,6 +168,16 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
+  if (input.barrenSources && input.barrenSources.length > 0) {
+    actions.push(
+      `${input.barrenSources.length} source(s) poll cleanly and have never produced a usable item — they read as healthy and cost a model call each:\n` +
+        input.barrenSources
+          .map((s) => `    ${s.id}: ${s.rejected} classified, 0 kept`)
+          .join('\n') +
+        `\n    Narrow the URL or switch it off — ${input.appUrl}/en/admin/ops`
+    );
+  }
+
   if (input.awaitingReview !== null && input.awaitingReview > 0) {    actions.push(
       `${input.awaitingReview} decision(s) waiting for review — nothing publishes until you approve them.\n` +
         `    ${input.appUrl}/en/admin/legal-queue`
@@ -173,6 +204,7 @@ export function composeDigest(input: DigestInput): Digest {
     corpus: input.corpus,
     'feed health': input.brokenSources,
     'switched-off sources': input.disabledSources,
+    'source yield': input.barrenSources,
     'review queue': input.awaitingReview
   })
     .filter(([, value]) => value === null)

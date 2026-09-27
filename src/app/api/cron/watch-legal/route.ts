@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { alertOps } from '@/lib/alert';
+import { canonicalExternalId, canonicalItemUrl } from '@/lib/canonical-url';
 import { decodeBody } from '@/lib/body-text';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { describeFeed, parseFeed, type FeedItem, type ParsedFeed } from '@/lib/feeds';
@@ -648,15 +649,44 @@ async function pollSource(
     );
   }
 
-  const rows = items.slice(0, MAX_ITEMS_PER_SOURCE).map((item) => ({
-    source_id: source.id,
-    external_id: item.externalId,
-    primary_url: item.link,
-    published_at: item.publishedAt,
-    raw_title: item.title,
-    raw_excerpt: item.excerpt,
-    status: 'discovered'
-  }));
+  // Canonicalised here, once, for every kind of source.
+  //
+  // Japan's PPC arrived three times over — /news/privacy_awareness_week,
+  // the same with ?ref=gnavi, and the same with a trailing slash. Three
+  // distinct external_ids, three rows, three extraction calls to a model,
+  // three rejections of one page. The unique key was working; the strings
+  // were the problem. See lib/canonical-url.ts for what is stripped and
+  // the short reason the list is short.
+  //
+  // A row whose link will not parse as a URL is dropped rather than
+  // stored: a primary_url is what a published page cites as its source,
+  // and citing a string we could not parse is not a citation.
+  const rows = items
+    .slice(0, MAX_ITEMS_PER_SOURCE)
+    .map((item) => {
+      const link = canonicalItemUrl(item.link);
+      if (!link) return null;
+      return {
+        source_id: source.id,
+        external_id: canonicalExternalId(item.externalId),
+        primary_url: link,
+        published_at: item.publishedAt,
+        raw_title: item.title,
+        raw_excerpt: item.excerpt,
+        status: 'discovered'
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  // Within one run too: a listing that links the same article from a
+  // teaser and a heading now collapses to one row instead of colliding on
+  // insert.
+  const seenIds = new Set<string>();
+  const deduped = rows.filter((row) => {
+    if (seenIds.has(row.external_id)) return false;
+    seenIds.add(row.external_id);
+    return true;
+  });
 
   // ignoreDuplicates leans on the (source_id, external_id) unique key:
   // already-known items are left exactly as they are, including any
@@ -664,7 +694,7 @@ async function pollSource(
   // would silently reset an approved item back to the feed's wording.
   const { data: inserted, error: insertErr } = await db
     .from('legal_developments')
-    .upsert(rows, { onConflict: 'source_id,external_id', ignoreDuplicates: true })
+    .upsert(deduped, { onConflict: 'source_id,external_id', ignoreDuplicates: true })
     .select('id');
 
   if (insertErr) return await fail(insertErr.message);

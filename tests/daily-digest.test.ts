@@ -27,6 +27,7 @@ const HEALTHY: DigestInput = {
   brokenSources: [],
   neverPolledSources: [],
   disabledSources: [],
+  barrenSources: [],
   awaitingReview: 0,
   appUrl: 'https://lexyflow.com'
 };
@@ -201,5 +202,35 @@ describe('the number that says whether there is a business', () => {
 
     expect(digest.text).toContain('Active subscriptions  unavailable');
     expect(digest.text).not.toContain('Active subscriptions  0');
+  });
+});
+
+describe('a source can be the greenest row on the console and worth nothing', () => {
+  it('names sources that poll cleanly and never produce a usable item', () => {
+    // ADGM reports "ok, 60" every six hours. All 45 of its classified
+    // items were rejected: Abu Dhabi Finance Week, an office opening, a
+    // private-equity appointment, a funds framework. `ok` has always meant
+    // "items were ingested" and never "the items were worth ingesting" —
+    // the same lesson as the `ok` that meant "at least one element" and
+    // left the UK green for months on an accessibility skip link.
+    const digest = composeDigest({
+      ...HEALTHY,
+      barrenSources: [{ id: 'adgm_dp_office', rejected: 45 }]
+    });
+
+    expect(digest.text).toContain('adgm_dp_office: 45 classified, 0 kept');
+    expect(digest.text).toContain('cost a model call each');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('says so when the yield could not be read, rather than reporting none', () => {
+    const digest = composeDigest({ ...HEALTHY, barrenSources: null });
+
+    expect(digest.text).toContain('source yield');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('stays silent when every source has produced something', () => {
+    expect(composeDigest({ ...HEALTHY, barrenSources: [] }).text).not.toContain('0 kept');
   });
 });
