@@ -4,7 +4,7 @@ import { decodeBody } from '@/lib/body-text';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { describeFeed, parseFeed, type FeedItem, type ParsedFeed } from '@/lib/feeds';
 import { describeListing, parseListing } from '@/lib/listing';
-import { parseSitemap, describeSitemap, sitemapsFromRobots } from '@/lib/sitemap';
+import { parseSitemap, describeSitemap, indexIsBlind, sitemapsFromRobots } from '@/lib/sitemap';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -441,6 +441,16 @@ async function readSource(source: SourceRow, body: string): Promise<ParsedFeed> 
   // hundred and twenty every six hours until the source switched itself
   // off. parseSitemap now returns them newest-first by the index's own
   // lastmod, which is the site telling us where it has been writing.
+  // And stop when there is nothing to choose on.
+  //
+  // Three of three hundred and twenty-one, picked because they happened to
+  // parse first, is not a search — and it costs the Garante three requests
+  // every six hours to learn nothing. Returning empty here reaches the same
+  // no_items branch as before, where describeSitemap now says the index is
+  // unchoosable rather than letting "no items" imply the regulator
+  // published nothing.
+  if (indexIsBlind(first.indexes, pattern)) return { items: [], skipped: first.skipped };
+
   const token = pattern.replace(/^\/|\/$/g, '').split('/').pop() ?? '';
   const ranked = [...first.indexes].sort((a, b) => {
     const named = (c: { url: string }) => (token && c.url.includes(token) ? 0 : 1);

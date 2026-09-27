@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeSitemap, parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
+import { describeSitemap, indexIsBlind, parseSitemap, sitemapsFromRobots } from '@/lib/sitemap';
 
 /**
  * Reading a regulator that builds its pages in the browser.
@@ -313,5 +313,49 @@ describe('describeSitemap', () => {
     const description = describeSitemap(xml, { itemPattern: '/en/media/news/', baseUrl: OMAN });
 
     expect(description).toContain('2 <url> entries, 1 same-origin');
+  });
+});
+
+describe('an index we cannot choose among', () => {
+  const BLIND = `<?xml version="1.0"?><sitemapindex>${Array.from(
+    { length: 5 },
+    (_, i) =>
+      `<sitemap><loc>https://ico.org.uk/sitemap.xml?p_l_id=${i}&amp;layoutUuid=uuid-${i}</loc></sitemap>`
+  ).join('')}</sitemapindex>`;
+
+  it('says so when no child is dated and none is named', () => {
+    // Italy's Garante: 321 children, every URL of the form
+    // /sitemap.xml?p_l_id=<n>&layoutUuid=<uuid>, not one carrying a date.
+    // Shipping the lastmod ranking I asserted that such an index "states a
+    // lastmod for each child" — true of the protocol, false of their file,
+    // and inferred from the standard rather than read from theirs.
+    expect(indexIsBlind(parseSitemap(BLIND, { itemPattern: '/docweb/', baseUrl: BASE }).indexes, '/docweb/')).toBe(true);
+  });
+
+  it('is not blind when one child carries a date', () => {
+    const dated = BLIND.replace('</loc>', '</loc><lastmod>2026-09-01</lastmod>');
+    expect(indexIsBlind(parseSitemap(dated, { itemPattern: '/docweb/', baseUrl: BASE }).indexes, '/docweb/')).toBe(false);
+  });
+
+  it('is not blind when a name matches the section', () => {
+    const named = `<?xml version="1.0"?><sitemapindex>
+      <sitemap><loc>https://ico.org.uk/sitemap-enforcement.xml</loc></sitemap>
+    </sitemapindex>`;
+    expect(
+      indexIsBlind(parseSitemap(named, { itemPattern: '/enforcement/', baseUrl: BASE }).indexes, '/enforcement/')
+    ).toBe(false);
+  });
+
+  it('is not blind when there are no children at all', () => {
+    // An empty index is a different fault and must not be described as an
+    // unchoosable one.
+    expect(indexIsBlind([], '/docweb/')).toBe(false);
+  });
+
+  it('tells the reader the repair is a narrower URL, not a better heuristic', () => {
+    const described = describeSitemap(BLIND, { itemPattern: '/docweb/', baseUrl: BASE });
+
+    expect(described).toContain('none dated and none named');
+    expect(described).toContain('narrower feed_url');
   });
 });

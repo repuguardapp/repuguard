@@ -221,6 +221,33 @@ export function parseSitemap(xml: string, options: SitemapOptions): ParsedSitema
  * The prefix census answers it. The pattern that matches the most decision
  * URLs is visible in the output, and the repair stops being a guess.
  */
+/**
+ * Can we choose among these children at all?
+ *
+ * Two signals decide it: a name that contains the section we are after, or
+ * a lastmod telling us where the site has been writing. Italy's Garante
+ * offers neither — 321 children, every URL of the form
+ * `/sitemap.xml?p_l_id=<n>&layoutUuid=<uuid>`, and not one carrying a date.
+ *
+ * I asserted, shipping the lastmod ranking, that "the index states a
+ * lastmod for each child". That is true of the sitemap protocol and false
+ * of their file, and I inferred it from the standard rather than reading
+ * theirs — which this sandbox cannot reach. The ranking sorted 321 nulls.
+ *
+ * When both signals are absent, fetching three of three hundred and
+ * twenty-one is a lottery, and reporting "no items" afterwards says
+ * something about the regulator that we have not established. So the
+ * caller stops, and the report says we could not search rather than that
+ * there was nothing to find.
+ */
+export function indexIsBlind(children: SitemapChild[], itemPattern: string): boolean {
+  if (children.length === 0) return false;
+  const token = itemPattern.replace(/^\/|\/$/g, '').split('/').pop() ?? '';
+  const named = token.length > 0 && children.some((c) => c.url.includes(token));
+  const dated = children.some((c) => c.lastmod !== null);
+  return !named && !dated;
+}
+
 export function describeSitemap(xml: string, options: SitemapOptions): string {
   let origin: string;
   try {
@@ -246,7 +273,11 @@ export function describeSitemap(xml: string, options: SitemapOptions): string {
     // whether the ranking has anything to work with. All-undated means the
     // choice is still blind and the repair is a narrower feed_url, not a
     // better heuristic.
-    return `sitemap index, ${total} child sitemap(s), newest first${shown ? `: ${shown}` : ''}`;
+    const blind = indexIsBlind(ranked, options.itemPattern)
+      ? ' — none dated and none named for this section, so there is no honest way to pick a few of them: the repair is a narrower feed_url, not a better heuristic'
+      : '';
+
+    return `sitemap index, ${total} child sitemap(s), newest first${shown ? `: ${shown}` : ''}${blind}`;
   }
 
   const blocks = xml.match(URL_BLOCK) ?? [];
