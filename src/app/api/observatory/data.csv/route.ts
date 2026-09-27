@@ -1,6 +1,6 @@
 import { waitUntil } from '@vercel/functions';
 import { NextResponse, type NextRequest } from 'next/server';
-import { observatoryReport } from '@/lib/observatory';
+import { observatoryCsv, observatoryReport } from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
 
 export const runtime = 'nodejs';
@@ -39,30 +39,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const rows: string[][] = [
-    ['section', 'key', 'value', 'denominator'],
-    ['sample', 'source', 'tranco', ''],
-    ['sample', 'source_id', report.sourceId ?? '', ''],
-    ['sample', 'source_date', report.sourceDate ?? '', ''],
-    ['sample', 'suffix', '.fr', ''],
-    ['sample', 'size', String(report.sampleSize), ''],
-    ['progress', 'domains_looked_at', String(report.lookedAt), String(report.sampleSize)],
-    ['progress', 'documents_read', String(report.documentsRead), String(report.lookedAt)],
-    ['progress', 'last_read_at', report.lastReadAt ?? '', '']
-  ];
-
-  for (const observation of report.observations) {
-    const total = observation.present + observation.notFound + observation.unclear;
-    rows.push(['observation', `${observation.id}.present`, String(observation.present), String(total)]);
-    rows.push(['observation', `${observation.id}.not_found`, String(observation.notFound), String(total)]);
-    rows.push(['observation', `${observation.id}.unclear`, String(observation.unclear), String(total)]);
-  }
-
-  for (const refusal of report.refusals) {
-    rows.push(['refusal', refusal.code, String(refusal.count), String(report.lookedAt)]);
-  }
-
-  const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n') + '\n';
+  const csv = observatoryCsv(report);
 
   return new NextResponse(csv, {
     headers: {
@@ -74,8 +51,4 @@ export async function GET(request: NextRequest) {
       'cache-control': 'public, max-age=300'
     }
   });
-}
-
-function escapeCsv(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }

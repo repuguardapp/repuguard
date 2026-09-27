@@ -161,3 +161,119 @@ async function tallyObservations(
 
   return [...tally.values()].sort((a, b) => b.present - a.present);
 }
+
+/**
+ * The licence the dataset is published under.
+ *
+ * CC BY 4.0, chosen for one reason beyond openness: it REQUIRES
+ * attribution. The whole point of publishing this is to be cited, and a
+ * licence that obliges a reuser to name the source turns every reuse into
+ * the thing we are trying to earn. CC0 would be more generous and would
+ * give away the only return we get.
+ */
+export const OBSERVATORY_LICENCE = 'https://creativecommons.org/licenses/by/4.0/';
+
+/**
+ * schema.org/Dataset for the study.
+ *
+ * This is what Google Dataset Search indexes — a separate index from web
+ * search, built for exactly this kind of file, and one where nobody is
+ * competing on French privacy-policy statistics.
+ *
+ * IT IS EMITTED ONLY WHEN THERE IS A DATASET
+ *
+ * Markup describing a dataset of zero readings is a claim to a machine
+ * that something exists when it does not, which is the same act as the
+ * sitemap telling Google that 469 unchanged pages had just been modified.
+ * Below the first reading this returns null and the page carries no
+ * markup at all.
+ */
+export function observatoryDataset(
+  report: ObservatoryReport,
+  origin: string,
+  locale: string
+): Record<string, unknown> | null {
+  if (report.lookedAt === 0) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: 'Privacy policy disclosures across the most-visited .fr domains',
+    description:
+      `Counts of seven disclosures required by the GDPR across the most-visited .fr domains. ` +
+      `${report.documentsRead} privacy policies read of ${report.lookedAt} domains attempted, out of a sample of ${report.sampleSize}. ` +
+      `Domains that could not be read are counted and broken down by reason rather than dropped. No organisation is named or assessed.`,
+    url: `${origin}/${locale}/observatory`,
+    license: OBSERVATORY_LICENCE,
+    creator: { '@type': 'Organization', name: 'LexyFlow', url: origin },
+    isAccessibleForFree: true,
+    // The sample's provenance, machine-readable. Without it this is an
+    // assertion; with it, it is reproducible.
+    ...(report.sourceId
+      ? {
+          isBasedOn: {
+            '@type': 'Dataset',
+            name: `Tranco list ${report.sourceId}`,
+            url: `https://tranco-list.eu/list/${report.sourceId}`
+          }
+        }
+      : {}),
+    ...(report.lastReadAt ? { dateModified: report.lastReadAt.slice(0, 10) } : {}),
+    variableMeasured: report.observations.map((o) => ({
+      '@type': 'PropertyValue',
+      name: o.id,
+      value: o.present,
+      // The denominator travels with the number. A value with no
+      // denominator is the shape of a figure nobody can check.
+      maxValue: o.present + o.notFound + o.unclear
+    })),
+    distribution: [
+      {
+        '@type': 'DataDownload',
+        encodingFormat: 'text/csv',
+        contentUrl: `${origin}/api/observatory/data.csv`
+      }
+    ]
+  };
+}
+
+/**
+ * The published dataset, as one string.
+ *
+ * Shared by the download route and the Zenodo deposit on purpose: the
+ * file that receives a permanent DOI has to be the file the page offers,
+ * byte for byte. Two builders would drift, and the drift would be
+ * invisible — a citation pointing at numbers that no longer match the
+ * page they came from.
+ */
+export function observatoryCsv(report: ObservatoryReport): string {
+  const rows: string[][] = [
+    ['section', 'key', 'value', 'denominator'],
+    ['sample', 'source', 'tranco', ''],
+    ['sample', 'source_id', report.sourceId ?? '', ''],
+    ['sample', 'source_date', report.sourceDate ?? '', ''],
+    ['sample', 'suffix', '.fr', ''],
+    ['sample', 'size', String(report.sampleSize), ''],
+    ['sample', 'licence', OBSERVATORY_LICENCE, ''],
+    ['progress', 'domains_looked_at', String(report.lookedAt), String(report.sampleSize)],
+    ['progress', 'documents_read', String(report.documentsRead), String(report.lookedAt)],
+    ['progress', 'last_read_at', report.lastReadAt ?? '', '']
+  ];
+
+  for (const o of report.observations) {
+    const total = o.present + o.notFound + o.unclear;
+    rows.push(['observation', `${o.id}.present`, String(o.present), String(total)]);
+    rows.push(['observation', `${o.id}.not_found`, String(o.notFound), String(total)]);
+    rows.push(['observation', `${o.id}.unclear`, String(o.unclear), String(total)]);
+  }
+
+  for (const r of report.refusals) {
+    rows.push(['refusal', r.code, String(r.count), String(report.lookedAt)]);
+  }
+
+  return rows.map((row) => row.map(escapeCsv).join(',')).join('\n') + '\n';
+}
+
+function escapeCsv(value: string): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}

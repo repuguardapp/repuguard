@@ -82,6 +82,7 @@ function readEnv(): Record<string, string | undefined> {
     DOMAIN_VERIFICATION_SECRET: process.env.DOMAIN_VERIFICATION_SECRET,
     INBOUND_WEBHOOK_SECRET: process.env.INBOUND_WEBHOOK_SECRET,
     MARKETING_OPTOUT_SECRET: process.env.MARKETING_OPTOUT_SECRET,
+    ZENODO_TOKEN: process.env.ZENODO_TOKEN,
     DOCUMENT_ENCRYPTION_KEY: process.env.DOCUMENT_ENCRYPTION_KEY,
     DOCUMENT_ENCRYPTION_KEYS: process.env.DOCUMENT_ENCRYPTION_KEYS,
     DOCUMENT_ENCRYPTION_ACTIVE: process.env.DOCUMENT_ENCRYPTION_ACTIVE,
@@ -213,6 +214,12 @@ export const CONFIG_GROUPS: { title: string; entries: ConfigEntry[] }[] = [
         requirement: 'required',
         consequence:
           "Absent, AUCUN e-mail de cycle de vie ne part — c'est volontaire : sans lui le lien de désabonnement et l'en-tête List-Unsubscribe ne peuvent pas être calculés, et un e-mail commercial dont on ne peut pas sortir ne doit pas être envoyé. Sa valeur ne doit jamais changer : tout lien déjà reçu cesserait de fonctionner."
+      },
+      {
+        name: 'ZENODO_TOKEN',
+        requirement: 'optional',
+        consequence:
+          "Absent, le dépôt Zenodo refuse et le dit. L'étude reste publiée sur notre domaine, mais sans DOI — donc sans la moitié citable de sa diffusion, qui est justement celle qui doit produire des liens."
       },
       {
         name: 'RESEND_FROM',

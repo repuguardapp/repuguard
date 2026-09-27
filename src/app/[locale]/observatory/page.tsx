@@ -6,7 +6,9 @@ import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { observatoryReport } from '@/lib/observatory';
+import { appUrl } from '@/lib/app-url';
+import { jsonLdScript } from '@/lib/json-ld';
+import { observatoryDataset, observatoryReport } from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
 
 /**
@@ -86,8 +88,17 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
   // count is not a failure to serve.
   waitUntil(recordReferral(headers().get('referer'), '/observatory'));
 
+  // Null until there is something to describe. Markup for a dataset of
+  // zero readings is a claim to a machine that something exists when it
+  // does not.
+  const dataset = report ? observatoryDataset(report, appUrl(), params.locale) : null;
+
   return (
     <div className="mx-auto grid max-w-3xl gap-8 px-4 py-16 md:px-0">
+      {dataset ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(dataset)} />
+      ) : null}
+
       <header className="grid gap-3">
         <h1 className="text-balance text-3xl font-semibold tracking-tight md:text-4xl">
           {t('title')}

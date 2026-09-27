@@ -15,7 +15,11 @@ import { describe, expect, it } from 'vitest';
 const read = (...p: string[]) => readFileSync(join(__dirname, '..', ...p), 'utf8');
 
 const LIB = read('src', 'lib', 'observatory.ts');
-const CSV = read('src', 'app', 'api', 'observatory', 'data.csv', 'route.ts');
+// The CSV is built in the lib and served by the route: one builder, so
+// that the file which receives a permanent DOI is byte for byte the file
+// the page offers. The shape assertions therefore read the builder.
+const CSV = read('src', 'lib', 'observatory.ts');
+const CSV_ROUTE = read('src', 'app', 'api', 'observatory', 'data.csv', 'route.ts');
 const PAGE = read('src', 'app', '[locale]', 'observatory', 'page.tsx');
 const CRON = read('src', 'app', 'api', 'cron', 'policy-survey', 'route.ts');
 const SAMPLE = read('src', 'lib', 'survey-sample.ts');
@@ -58,7 +62,7 @@ describe('the denominator is published, not chosen', () => {
     // interesting numbers here anyway.
     expect(LIB).toContain('classifyScanFailure');
     expect(LIB).toContain('refusals');
-    expect(CSV).toContain("['refusal', refusal.code");
+    expect(CSV).toContain("rows.push(['refusal', r.code");
   });
 
   it('carries the count beside every percentage on the page', () => {
@@ -110,7 +114,7 @@ describe('it shows nothing before it has something', () => {
   it('answers 503 rather than an empty CSV', () => {
     // A CSV of zero rows is indistinguishable from a study that found
     // nothing, and somebody would eventually cite it.
-    expect(CSV).toContain('status: 503');
+    expect(CSV_ROUTE).toContain('status: 503');
   });
 
   it('marks the figures provisional while the crawl is running', () => {
