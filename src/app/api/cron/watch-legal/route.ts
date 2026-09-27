@@ -258,7 +258,11 @@ async function watch() {
  * we are a subscriber — the difference matters to the people whose pages
  * these are, and to whether they keep answering us at all.
  */
-async function probeCandidates(feedUrl: string, unverified = false): Promise<string | null> {
+async function probeCandidates(
+  feedUrl: string,
+  unverified = false,
+  itemPattern: string | null = null
+): Promise<string | null> {
   let base: URL;
   try {
     base = new URL(feedUrl);
@@ -266,7 +270,24 @@ async function probeCandidates(feedUrl: string, unverified = false): Promise<str
     return null;
   }
 
-  const stem = base.pathname.replace(/\/+$/, '');
+  // Which section to probe around.
+  //
+  // Normally the feed_url IS the section, so its path is the stem and we
+  // ask whether that section also publishes a feed. But a feed_url can be
+  // a file: Brazil's was repointed at https://www.gov.br/sitemap.xml.gz,
+  // and the prober dutifully went off to ask about
+  // /sitemap.xml.gz/RSS — a question about nothing, asked four times a
+  // day, in place of the one question that matters.
+  //
+  // When the feed_url is a file, the section we are actually after is the
+  // item_pattern. gov.br runs Plone, where a folder's feed lives at
+  // <folder>/RSS, so this is the difference between probing a filename
+  // and probing /anpd/pt-br/assuntos/noticias/RSS.
+  const fromUrl = base.pathname.replace(/\/+$/, '');
+  const looksLikeFile = /\.[a-z0-9]{2,4}(\.gz)?$/i.test(fromUrl);
+  const stem =
+    looksLikeFile && itemPattern ? itemPattern.replace(/\/+$/, '') : fromUrl;
+
   const paths = [`${stem}/RSS`, `${stem}/feed`, `${stem}/rss.xml`, '/rss.xml'];
   if (unverified) {
     paths.push('/en/news', '/news', '/en/media-center/news', '/en/media-centre/news');
@@ -573,7 +594,7 @@ async function pollSource(
       cache: 'no-store'
     });
     if (!res.ok) {
-      const candidates = await probeCandidates(source.feed_url, !source.verified_at);
+      const candidates = await probeCandidates(source.feed_url, !source.verified_at, source.item_pattern);
       return await fail(`http_${res.status}${candidates ? ` | candidates: ${candidates}` : ''}`);
     }
     // Bytes, not res.text(). A sitemap published as .xml.gz arrives
@@ -640,7 +661,7 @@ async function pollSource(
     // URL, and finding one meant guessing from a sandbox that cannot reach
     // a single regulator domain: one guess per six-hour run, each costing
     // a day. The production system can simply look.
-    const candidates = await probeCandidates(source.feed_url, !source.verified_at);
+    const candidates = await probeCandidates(source.feed_url, !source.verified_at, source.item_pattern);
 
     return await fail(
       `no_items (kind=${source.feed_kind}, skipped ${skipped}, ${body.length} bytes) — ${seen}${

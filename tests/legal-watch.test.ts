@@ -322,8 +322,20 @@ describe('a source that never worked is not a source that broke', () => {
   it('searches wider for a source that has never worked', () => {
     // Probing for a feed beside a 404 answers a question we are not
     // asking: for these the failure is the listing path itself.
-    expect(source).toContain('probeCandidates(source.feed_url, !source.verified_at)');
+    expect(source).toContain('probeCandidates(source.feed_url, !source.verified_at');
     expect(source).toContain("paths.push('/en/news'");
+  });
+
+  it('probes the section, not the filename, when the feed_url is a file', () => {
+    // Brazil's feed_url was repointed at
+    // https://www.gov.br/sitemap.xml.gz, and the prober derived its stem
+    // from the URL as usual — so it went off to ask about
+    // /sitemap.xml.gz/RSS, a question about nothing, four times a day, in
+    // place of the one question that matters. gov.br runs Plone, where a
+    // folder's feed lives at <folder>/RSS, so the item_pattern is the
+    // section to probe around.
+    expect(source).toContain('looksLikeFile && itemPattern');
+    expect(source).toContain('probeCandidates(source.feed_url, !source.verified_at, source.item_pattern)');
   });
 
   it('bounds the whole search, not each request', () => {
