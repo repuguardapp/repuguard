@@ -5,6 +5,7 @@ import { decodeBody } from '@/lib/body-text';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { describeFeed, parseFeed, type FeedItem, type ParsedFeed } from '@/lib/feeds';
 import { describeListing, parseListing } from '@/lib/listing';
+import { isAllowed, parseRobots, type RobotsRules } from '@/lib/robots';
 import { parseSitemap, describeSitemap, indexIsBlind, sitemapsFromRobots } from '@/lib/sitemap';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
@@ -338,6 +339,11 @@ async function probeCandidates(
 
     const candidate = new URL(path, base.origin).toString();
     if (candidate === feedUrl) continue;
+    // A probe is still a request to somebody's server. Guessing at paths
+    // a site has asked us not to touch is the same act as fetching them
+    // on purpose, and doing it while calling ourselves a compliance
+    // company is worse.
+    if (!(await robotsAllows(candidate)).allowed) continue;
 
     try {
       const res = await fetchExternal(candidate, {
@@ -485,6 +491,11 @@ async function readSource(source: SourceRow, body: string): Promise<ParsedFeed> 
   let skipped = first.skipped;
 
   for (const child of ranked.slice(0, MAX_INDEX_CHILDREN_FETCHED)) {
+    // Each child is its own path, and a site may allow the index while
+    // disallowing what it points at. The cache makes this free after the
+    // first check of the origin.
+    if (!(await robotsAllows(child.url)).allowed) continue;
+
     try {
       const res = await fetchExternal(child.url, {
         headers: {
@@ -574,6 +585,16 @@ async function pollSource(
       ...(giveUp ? { disabled: true } : {})
     };
   };
+
+  // Before anything else: are we allowed?
+  //
+  // Asked first so that a refusal costs the regulator one robots.txt
+  // fetch and nothing more — and so the answer is recorded as their
+  // decision rather than surfacing later as an unexplained 403.
+  const permission = await robotsAllows(source.feed_url);
+  if (!permission.allowed) {
+    return await fail(permission.reason ?? 'robots.txt disallows this path');
+  }
 
   let body: string;
   try {
@@ -743,4 +764,96 @@ async function pollSource(
     discovered: (inserted ?? []).length,
     skipped
   };
+}
+
+/**
+ * How this crawler identifies itself in robots.txt.
+ *
+ * Not LexyFlowScan. We are two crawlers doing two different things to two
+ * different kinds of site, and a regulator is entitled to allow one and
+ * refuse the other.
+ */
+const WATCH_AGENT = 'LexyFlowLegalWatch';
+
+/** One robots.txt per origin per run, not one per request. */
+const robotsCache = new Map<string, RobotsRules | null>();
+
+/**
+ * May we fetch this URL?
+ *
+ * THIS WAS MISSING, IN THE ONE PIPELINE THAT SELLS COMPLIANCE
+ *
+ * The scan has obeyed robots.txt since it shipped. The legal watcher read
+ * robots.txt too — but only to harvest Sitemap: lines out of it, never to
+ * ask whether it was allowed to fetch anything. It has been polling ten
+ * regulators four times a day without once reading the file that says
+ * whether it may. Nobody noticed because a refusal looks like a 403, and
+ * a 403 looks like a WAF.
+ *
+ * WHY THIS ERRS OPEN WHERE THE SCAN ERRS CLOSED
+ *
+ * A deliberate divergence, and worth stating because it contradicts the
+ * rule elsewhere in this codebase. The scan points our infrastructure at
+ * a stranger's server on an anonymous visitor's instruction: a site whose
+ * wishes we cannot read is a site we do not touch. The watcher subscribes
+ * to publications a regulator puts out precisely to be read, and
+ * silencing the CNIL because robots.txt returned a 502 for ten minutes
+ * would be a self-inflicted outage on the one thing this pipeline is for.
+ *
+ * RFC 9309 supports both readings: 4xx means allow, 5xx means a crawler
+ * MAY assume disallow, and prolonged unavailability may be treated as
+ * allowed. An explicit Disallow is the only answer treated as no — and
+ * that answer is honoured rather than worked around.
+ */
+async function robotsAllows(url: string): Promise<{ allowed: boolean; reason: string | null }> {
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    return { allowed: false, reason: 'the feed_url is not a URL' };
+  }
+
+  const origin = target.origin;
+
+  if (!robotsCache.has(origin)) {
+    robotsCache.set(origin, await readRobots(origin));
+  }
+
+  const rules = robotsCache.get(origin) ?? null;
+  // Unreadable. Allowed, for the reason above, and it is not silent.
+  if (!rules) return { allowed: true, reason: null };
+
+  if (isAllowed(target.pathname + target.search, rules)) return { allowed: true, reason: null };
+
+  return {
+    allowed: false,
+    // Named as their decision, not as our failure, and quoting the agent
+    // we were refused under so the next person can check it themselves.
+    reason: `${origin}/robots.txt disallows this path for ${WATCH_AGENT} — we do not fetch it. A different endpoint, or their permission, is what changes this.`
+  };
+}
+
+async function readRobots(origin: string): Promise<RobotsRules | null> {
+  try {
+    const res = await fetchExternal(`${origin}/robots.txt`, {
+      headers: { 'user-agent': `${WATCH_AGENT}/1.0 (+https://lexyflow.com)` },
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+      cache: 'no-store'
+    });
+
+    // RFC 9309: 4xx is "no rules", which means allowed.
+    if (res.status >= 400 && res.status < 500) return null;
+    if (!res.ok) {
+      console.warn('[cron/watch-legal] robots_unavailable', { origin, status: res.status });
+      return null;
+    }
+
+    return parseRobots((await res.text()).slice(0, 200_000), WATCH_AGENT);
+  } catch (err) {
+    console.warn('[cron/watch-legal] robots_unreadable', {
+      origin,
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
+  }
 }

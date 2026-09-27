@@ -38,8 +38,16 @@ export const USER_AGENT = 'LexyFlowScan';
  * user-agent wins, and `*` is the fallback. A site that names us
  * specifically has gone to the trouble of having an opinion about us, and
  * it overrides the general rule in both directions.
+ *
+ * The agent is a parameter because we are two crawlers, not one, and a
+ * site is entitled to hold different opinions about them. The scan reads
+ * a stranger's policy on a visitor's request and calls itself
+ * LexyFlowScan; the legal watcher subscribes to a regulator's own
+ * publications four times a day and calls itself LexyFlowLegalWatch.
+ * Checking the second against the first's rules would answer the wrong
+ * question — politely, and wrongly.
  */
-export function parseRobots(text: string): RobotsRules {
+export function parseRobots(text: string, agent: string = USER_AGENT): RobotsRules {
   const lines = text.split(/\r?\n/);
 
   const groups = new Map<string, { allow: boolean; pattern: string }[]>();
@@ -75,7 +83,7 @@ export function parseRobots(text: string): RobotsRules {
     }
   }
 
-  const ours = USER_AGENT.toLowerCase();
+  const ours = agent.toLowerCase();
   // Most specific first: our own name, then any group whose token is a
   // prefix of it, then the wildcard.
   const named = [...groups.keys()].find((agent) => agent !== '*' && ours.includes(agent));
