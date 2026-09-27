@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
+import { fairShare } from '@/lib/fair-share';
 import { htmlToText } from '@/lib/feeds';
 import { verifySpan } from '@/lib/policy-observations';
 import { supabaseService } from '@/lib/supabase';
@@ -158,6 +159,8 @@ const SYSTEM = [
 
 interface DevelopmentRow {
   id: string;
+  /** Which feed it came from — the key the extraction budget is shared on. */
+  source_id: string;
   primary_url: string;
   raw_title: string;
   raw_excerpt: string | null;
@@ -177,12 +180,16 @@ export async function POST(request: Request) {
 async function extract() {
   const db = supabaseService();
 
+  // A wider slice than we will extract, so the round-robin below has
+  // something to choose between. Still ordered newest first: within a
+  // source, a decision published this morning matters more than one from
+  // March.
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, primary_url, raw_title, raw_excerpt, published_at')
+    .select('id, source_id, primary_url, raw_title, raw_excerpt, published_at')
     .eq('status', 'discovered')
     .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(MAX_ITEMS_PER_RUN);
+    .limit(MAX_ITEMS_PER_RUN * 12);
 
   if (error) {
     console.error('[cron/extract-legal] queue_unreadable', { error: error.message });
@@ -190,7 +197,7 @@ async function extract() {
     return NextResponse.json({ error: 'queue_unreadable', detail: error.message }, { status: 500 });
   }
 
-  const queue = (data ?? []) as DevelopmentRow[];
+  const queue = fairShare((data ?? []) as DevelopmentRow[], MAX_ITEMS_PER_RUN);
   // Spend nothing on an empty queue. This runs on a schedule whether or
   // not a regulator published anything, which is most of the time.
   if (queue.length === 0) {
