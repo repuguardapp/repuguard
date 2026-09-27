@@ -30,6 +30,17 @@ import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * The three fields a reviewer has to check against the page, in the order
+ * an error in them would matter. The entity is first because it is the
+ * name that goes into an H1 in seven languages.
+ */
+const EVIDENCE_FIELDS = [
+  { key: 'entity', label: 'Entité visée' },
+  { key: 'decision_date', label: 'Date de la décision' },
+  { key: 'fine_eur', label: 'Montant' }
+] as const;
+
 export const metadata: Metadata = {
   title: 'File de validation juridique',
   // An internal queue has no business in an index, and its rows quote
@@ -50,6 +61,22 @@ interface QueueRow {
   outcome: string | null;
   summary_en: string | null;
   slug: string | null;
+  /**
+   * The regulator's own sentence behind each checkable field.
+   *
+   * Every span here was found verbatim in the fetched page before it was
+   * stored, and what is shown is the page's characters rather than the
+   * model's. Approving used to mean opening the source in another tab and
+   * hunting for three values in a document of several thousand words,
+   * often in a language the reviewer does not read; thirty-seven items is
+   * an evening. Now the three facts and their proof are on one screen.
+   *
+   * It does not replace the source link. A quotation proves the sentence
+   * exists, not that it is the right sentence, and anything that looks
+   * wrong still has to be read in context — which is why the link stays
+   * directly underneath.
+   */
+  evidence: Record<string, string> | null;
   legal_sources: { name: string; licence: string } | null;
 }
 
@@ -89,7 +116,7 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
   const { data, error } = await db
     .from('legal_developments')
     .select(
-      'id, primary_url, raw_title, published_at, authority, entity, decision_date, articles, fine_eur, outcome, summary_en, slug, legal_sources(name, licence)'
+      'id, primary_url, raw_title, published_at, authority, entity, decision_date, articles, fine_eur, outcome, summary_en, slug, evidence, legal_sources(name, licence)'
     )
     .eq('status', 'extracted')
     .order('published_at', { ascending: false, nullsFirst: false })
@@ -182,6 +209,30 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
                 {row.summary_en ?? <span className="text-destructive">manquant</span>}
               </p>
             </div>
+
+            {/* The proof, beside the fields it supports.
+                Absence is informative rather than alarming: the model
+                offered no span, or offered one that is not in the page and
+                it was discarded. Either way the reviewer opens the source,
+                which is where they were before this existed. */}
+            {row.evidence && Object.keys(row.evidence).length > 0 ? (
+              <div className="grid gap-2">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Ce que la source écrit, mot pour mot
+                </div>
+                {EVIDENCE_FIELDS.filter((f) => row.evidence?.[f.key]).map((field) => (
+                  <div key={field.key} className="grid gap-0.5 border-s-2 ps-3">
+                    <span className="text-xs text-muted-foreground">{field.label}</span>
+                    <q className="text-sm italic leading-relaxed">{row.evidence![field.key]}</q>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Aucune citation vérifiée — le modèle n&apos;en a pas fourni, ou celle qu&apos;il a
+                fournie ne se trouvait pas dans la page. Ouvre la source.
+              </p>
+            )}
 
             {row.articles && row.articles.length > 0 ? (
               <div className="flex flex-wrap gap-2">

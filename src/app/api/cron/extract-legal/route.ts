@@ -5,6 +5,7 @@ import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
 import { htmlToText } from '@/lib/feeds';
+import { verifySpan } from '@/lib/policy-observations';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
 
@@ -68,7 +69,21 @@ const Extraction = z.object({
   articles: z.array(z.string()).optional(),
   fine_eur: z.number().nonnegative().optional(),
   outcome: z.enum(['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other']).optional(),
-  summary_en: z.string().optional()
+  summary_en: z.string().optional(),
+  /**
+   * Where each checkable fact came from, in the page's own words.
+   *
+   * Proposed by the model and then VERIFIED — see verifySpan below. A
+   * quotation nobody checked is not evidence, it is a second assertion
+   * from the same source that produced the first.
+   */
+  evidence: z
+    .object({
+      entity: z.string().optional(),
+      decision_date: z.string().optional(),
+      fine_eur: z.string().optional()
+    })
+    .optional()
 });
 
 const TOOL = {
@@ -106,6 +121,16 @@ const TOOL = {
         type: 'string',
         description:
           'Two to four sentences of ORIGINAL English prose stating what was decided and against whom. Facts only. Do not copy sentences from the source. No advice, no interpretation, no prediction.'
+      },
+      evidence: {
+        type: 'object',
+        description:
+          'For each of the three fields a human has to check, the sentence from the source that states it — COPIED EXACTLY, in the source language, punctuation and accents included. This is the one place where copying from the source is required rather than forbidden: it is checked character by character against the page, and a span that cannot be found there is discarded. Do not paraphrase, do not translate, do not join two sentences with an ellipsis. Omit a field whose value you did not take from an explicit statement.',
+        properties: {
+          entity: { type: 'string', description: 'The sentence naming the organisation the decision was taken against.' },
+          decision_date: { type: 'string', description: 'The sentence or reference line stating the date of the decision.' },
+          fine_eur: { type: 'string', description: 'The sentence stating the amount.' }
+        }
       }
     },
     required: ['relevant']
@@ -289,6 +314,11 @@ async function extractOne(
       fine_eur: out.fine_eur ?? null,
       outcome: out.outcome ?? null,
       summary_en: out.summary_en.trim(),
+      // Verified against the page, and what is stored is the page's
+      // wording rather than the model's. An unverifiable span is dropped
+      // silently: its absence means the reviewer opens the source, which
+      // is where they were anyway before this existed.
+      evidence: verifiedEvidence(sourceText, out.evidence),
       slug: slugFor(item),
       updated_at: new Date().toISOString()
     })
@@ -383,4 +413,33 @@ function slugFor(item: DevelopmentRow): string {
     .replace(/-+$/g, '');
   const hash = createHash('sha256').update(item.id).digest('hex').slice(0, 6);
   return words.length > 0 ? `${words}-${hash}` : hash;
+}
+
+/**
+ * Keep only the spans that are actually in the document.
+ *
+ * verifySpan is the same function the policy scan uses, and it does the
+ * one thing that makes a quotation worth anything: it finds the proposal
+ * in the source and returns THE SOURCE's characters. What ends up in the
+ * review queue is therefore the regulator's sentence, not the model's
+ * recollection of it — and a model that invents a supporting quote
+ * produces nothing here rather than a convincing one.
+ *
+ * Returns null rather than an empty object when nothing survives, so the
+ * column distinguishes "no evidence offered" from "{}".
+ */
+function verifiedEvidence(
+  sourceText: string,
+  proposed: Partial<Record<'entity' | 'decision_date' | 'fine_eur', string | undefined>> | undefined
+): Record<string, string> | null {
+  if (!proposed) return null;
+
+  const verified: Record<string, string> = {};
+  for (const [field, span] of Object.entries(proposed)) {
+    if (!span) continue;
+    const found = verifySpan(sourceText, span);
+    if (found) verified[field] = found;
+  }
+
+  return Object.keys(verified).length > 0 ? verified : null;
 }
