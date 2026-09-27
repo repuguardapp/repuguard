@@ -538,7 +538,8 @@
     "seeComparisons": "Todas as comparações",
     "seeDecisions": "Decisões sancionadoras",
     "footerResources": "Recursos",
-    "seeScan": "Analisar uma política"
+    "seeScan": "Analisar uma política",
+    "seeObservatory": "Observatório"
   },
   "scan": {
     "metaTitle": "O que {domain} publica",
@@ -618,5 +619,29 @@
       "internationalTransfersAddressed": "Transferências internacionais tratadas",
       "lastUpdatedStated": "Data de atualização indicada"
     }
+  },
+  "observatory": {
+    "title": "O que os sites franceses realmente publicam em suas políticas de privacidade",
+    "lead": "Uma contagem permanente sobre os domínios .fr mais visitados, lidos um documento por vez por um rastreador que respeita o robots.txt e declara o que não conseguiu ler.",
+    "collecting": "Coleta em andamento: {done} de {total} domínios lidos. Os números abaixo são provisórios e vão mudar.",
+    "asOf": "Última leitura: {date}",
+    "readTitle": "O que conseguimos ler",
+    "readLead": "{read} de {lookedAt} domínios entregaram uma política de privacidade de fato legível. O restante está detalhado abaixo, porque um estudo que descarta o que não conseguiu ler publica um denominador que ele mesmo inventou.",
+    "findingsTitle": "As sete constatações",
+    "findingsLead": "Contadas sobre os {read} documentos lidos, não sobre a amostra. Cada uma é um fato sobre um documento em um dia: um campo vazio significa que nosso leitor não encontrou a menção, não que a organização esteja em desconformidade.",
+    "refusalsTitle": "Por que os demais não puderam ser lidos",
+    "methodTitle": "Método",
+    "methodSample": "População: os domínios .fr da lista Tranco {sourceId}, obtida em {sourceDate}, posições 1 a {total}. Tranco é um ranking acadêmico público com identificador permanente, então qualquer pessoa pode reconstruir esta amostra.",
+    "methodCrawl": "Cada domínio é lido no máximo uma vez a cada 90 dias, poucos por hora. Buscamos o robots.txt primeiro e o respeitamos, nos identificamos como LexyFlowScan e lemos apenas o documento que o site publica.",
+    "methodObservations": "As sete constatações são textuais: um achado só é registrado se a formulação estiver no documento, e a frase que o sustenta é verificada caractere a caractere contra a página antes de contar.",
+    "limitsTitle": "O que este estudo não diz",
+    "limitsSuffix": "A população são os registros .fr, portanto organizações francesas em .com estão ausentes. Um sufixo de registro é um fato; decidir qual .com é francês seria um julgamento que não saberíamos defender.",
+    "limitsNoVerdict": "Nenhuma organização é nomeada nem avaliada. Uma política sem prazo de retenção pode ser perfeitamente lícita, e uma constatação é uma afirmação sobre nossa leitura de um documento em um dia.",
+    "limitsRefusals": "Uma recusa não é uma falha. Um site que rejeita nosso rastreador faz exatamente aquilo para que serve a mitigação de bots, e publicamos a recusa em vez de contorná-la.",
+    "downloadTitle": "Os dados",
+    "downloadLead": "Contagens agregadas, definição da amostra e detalhamento das recusas, em CSV. Resultados por domínio não são publicados.",
+    "downloadCta": "Baixar as contagens (CSV)",
+    "empty": "A coleta ainda não produziu nenhuma leitura. Esta página mostrará números quando os tiver; nenhum antes disso.",
+    "unavailable": "Não conseguimos ler nossos próprios números agora. É uma falha do nosso banco de dados, não ausência de dados — tente novamente em instantes."
   }
 }

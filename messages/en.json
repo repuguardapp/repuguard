@@ -538,7 +538,8 @@
     "seeComparisons": "All comparisons",
     "seeDecisions": "Enforcement decisions",
     "footerResources": "Resources",
-    "seeScan": "Scan a privacy policy"
+    "seeScan": "Scan a privacy policy",
+    "seeObservatory": "Observatory"
   },
   "scan": {
     "metaTitle": "What {domain} publishes",
@@ -618,5 +619,29 @@
       "internationalTransfersAddressed": "International transfers addressed",
       "lastUpdatedStated": "Last updated date stated"
     }
+  },
+  "observatory": {
+    "title": "What French websites actually publish in their privacy policies",
+    "lead": "A standing count over the most-visited .fr domains, read one document at a time by a crawler that obeys robots.txt and states what it could not read.",
+    "collecting": "Collection in progress: {done} of {total} domains read. The figures below are provisional and will move.",
+    "asOf": "Last reading: {date}",
+    "readTitle": "What we could read",
+    "readLead": "{read} of {lookedAt} domains yielded a privacy policy we could actually read. The rest are broken down below, because a study that drops what it could not read reports a denominator it invented.",
+    "findingsTitle": "The seven observations",
+    "findingsLead": "Counted over the {read} documents we read, not over the sample. Each one is a fact about one document on one day: a blank means our reader did not find the thing, not that the organisation is non-compliant.",
+    "refusalsTitle": "Why the others could not be read",
+    "methodTitle": "Method",
+    "methodSample": "Population: the .fr domains in Tranco list {sourceId}, retrieved {sourceDate}, ranks 1 to {total}. Tranco is a public academic ranking published with a permanent identifier, so this sample can be rebuilt by anyone.",
+    "methodCrawl": "Each domain is read once every 90 days at most, a few per hour. We fetch robots.txt first and obey it, we identify ourselves as LexyFlowScan, and we read only the document the site publishes itself.",
+    "methodObservations": "The seven observations are textual: a finding is recorded only when the wording is present in the document, and the supporting sentence is verified against the page character by character before it counts.",
+    "limitsTitle": "What this does not say",
+    "limitsSuffix": "The population is .fr registrations, so French organisations on .com are absent. A registry suffix is a fact; deciding which .com is French would be a judgement we could not defend.",
+    "limitsNoVerdict": "No organisation is named and none is assessed. A privacy policy that omits a retention period may still be lawful, and an observation is a statement about our reading of one document on one day.",
+    "limitsRefusals": "A refusal is not a failing. A site that declines our crawler is doing what bot mitigation is for, and we publish the refusal rather than defeating it.",
+    "downloadTitle": "The data",
+    "downloadLead": "Aggregate counts, the sample definition and the refusal breakdown, as CSV. Per-domain results are not published.",
+    "downloadCta": "Download the counts (CSV)",
+    "empty": "The collection has not produced a reading yet. This page will show figures once it has; it will not show any before.",
+    "unavailable": "We could not read our own figures just now. That is a failure of our database, not an absence of data — please try again shortly."
   }
 }

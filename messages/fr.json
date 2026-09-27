@@ -538,7 +538,8 @@
     "seeComparisons": "Tous les comparatifs",
     "seeDecisions": "Décisions de sanction",
     "footerResources": "Ressources",
-    "seeScan": "Relever une politique"
+    "seeScan": "Relever une politique",
+    "seeObservatory": "Observatoire"
   },
   "scan": {
     "metaTitle": "Ce que publie {domain}",
@@ -618,5 +619,29 @@
       "internationalTransfersAddressed": "Transferts internationaux traités",
       "lastUpdatedStated": "Date de mise à jour indiquée"
     }
+  },
+  "observatory": {
+    "title": "Ce que les sites français publient réellement dans leurs politiques de confidentialité",
+    "lead": "Un décompte permanent sur les domaines .fr les plus visités, lus un document à la fois par un robot qui respecte robots.txt et qui dit ce qu'il n'a pas pu lire.",
+    "collecting": "Collecte en cours : {done} domaines lus sur {total}. Les chiffres ci-dessous sont provisoires et bougeront.",
+    "asOf": "Dernière lecture : {date}",
+    "readTitle": "Ce que nous avons pu lire",
+    "readLead": "{read} domaines sur {lookedAt} ont livré une politique de confidentialité réellement lisible. Le reste est détaillé plus bas, parce qu'une étude qui écarte ce qu'elle n'a pas pu lire publie un dénominateur qu'elle a inventé.",
+    "findingsTitle": "Les sept constats",
+    "findingsLead": "Comptés sur les {read} documents lus, pas sur l'échantillon. Chacun est un fait sur un document, un jour donné : une case vide signifie que notre lecteur n'a pas trouvé la mention, pas que l'organisation est non conforme.",
+    "refusalsTitle": "Pourquoi les autres n'ont pas pu être lus",
+    "methodTitle": "Méthode",
+    "methodSample": "Population : les domaines .fr de la liste Tranco {sourceId}, récupérée le {sourceDate}, rangs 1 à {total}. Tranco est un classement académique public publié avec un identifiant permanent : cet échantillon peut être reconstitué par n'importe qui.",
+    "methodCrawl": "Chaque domaine est lu au plus une fois tous les 90 jours, quelques-uns par heure. Nous récupérons robots.txt d'abord et nous le respectons, nous nous identifions comme LexyFlowScan, et nous ne lisons que le document que le site publie lui-même.",
+    "methodObservations": "Les sept constats sont textuels : un relevé n'est enregistré que si la formulation figure dans le document, et la phrase qui l'appuie est vérifiée caractère par caractère contre la page avant d'être comptée.",
+    "limitsTitle": "Ce que cette étude ne dit pas",
+    "limitsSuffix": "La population, ce sont les dépôts en .fr : les organisations françaises en .com en sont absentes. Un suffixe de registre est un fait ; décider quel .com est français serait un jugement que nous ne saurions pas défendre.",
+    "limitsNoVerdict": "Aucune organisation n'est nommée ni évaluée. Une politique qui n'indique pas de durée de conservation peut parfaitement être licite, et un constat est une affirmation sur notre lecture d'un document un jour donné.",
+    "limitsRefusals": "Un refus n'est pas un manquement. Un site qui écarte notre robot fait exactement ce à quoi sert une protection anti-robot, et nous publions le refus au lieu de le contourner.",
+    "downloadTitle": "Les données",
+    "downloadLead": "Comptages agrégés, définition de l'échantillon et détail des refus, en CSV. Les résultats par domaine ne sont pas publiés.",
+    "downloadCta": "Télécharger les comptages (CSV)",
+    "empty": "La collecte n'a pas encore produit de lecture. Cette page affichera des chiffres quand elle en aura ; elle n'en affichera aucun avant.",
+    "unavailable": "Nous n'avons pas pu lire nos propres chiffres à l'instant. C'est une panne de notre base, pas une absence de données — réessayez dans un moment."
   }
 }

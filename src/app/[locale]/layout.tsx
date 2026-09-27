@@ -168,6 +168,12 @@ export default async function LocaleLayout({ children, params: { locale } }: Lay
               <Link href="/scan" className="text-muted-foreground hover:text-foreground">
                 {tHubs('seeScan')}
               </Link>
+              {/* The study. Linked from every page for the same reason
+                  as the rest of this row, and because it is the one page
+                  here written to be cited rather than crawled. */}
+              <Link href="/observatory" className="text-muted-foreground hover:text-foreground">
+                {tHubs('seeObservatory')}
+              </Link>
             </div>
             <div className="container flex flex-col items-center justify-between gap-3 py-8 text-sm text-muted-foreground sm:flex-row">
               <span>{tFooter('copyright', { year: new Date().getFullYear() })}</span>
