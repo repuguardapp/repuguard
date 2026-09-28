@@ -213,3 +213,29 @@ describe('no marketing email goes out that cannot be stopped', () => {
     expect(url).not.toContain('%40');
   });
 });
+
+describe('the footer explains in prose and links in a label', () => {
+  it('does not turn the explanation into the hyperlink', async () => {
+    // The first version was one string ending in a colon, written for the
+    // plain-text part where a URL follows on the next line — and the HTML
+    // renderer used the whole thing as the anchor text. Every recipient
+    // got a footer in which "you are receiving this because you created an
+    // account" was itself a link, trailing a colon that pointed at nothing.
+    const mail = await send(PAYWALLED);
+    const anchor = /<a href="[^"]*optout[^"]*"[^>]*>([^<]*)<\/a>/.exec(mail.html);
+
+    expect(anchor).not.toBeNull();
+    expect(anchor![1]!.trim()).not.toContain('LexyFlow account');
+    expect(anchor![1]!.trim()).not.toMatch(/[:：]$/);
+    expect(anchor![1]!.trim().length).toBeLessThan(40);
+  });
+
+  it('still says why the message arrived, outside the link', async () => {
+    const mail = await send(PAYWALLED);
+    expect(mail.html).toContain('because you created a LexyFlow account');
+    // And the plain-text part keeps the sentence with the bare URL, since
+    // there is no anchor to label and a reader copies the address.
+    expect(mail.text).toContain('because you created a LexyFlow account');
+    expect(mail.text).toMatch(/\n\s+https:\/\/\S*optout\S*/);
+  });
+});

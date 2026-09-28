@@ -411,8 +411,10 @@ async function sendLifecycle(args: {
   ctaLabel: string;
   ctaUrl: string;
   dir: 'ltr' | 'rtl';
-  /** Localised sentence introducing the opt-out link, e.g. "Se désabonner". */
-  optOutLabel: string;
+  /** Why this arrived, in prose. Not a link. */
+  optOutNotice: string;
+  /** The link label alone, e.g. "Se désabonner en un clic". */
+  optOutAction: string;
   /** Locale the email is written in; steers the confirmation page. */
   lang: string;
   logTag: string;
@@ -466,14 +468,17 @@ async function sendLifecycle(args: {
     // It steers a redirect and nothing else, and the route validates it
     // against the locale list rather than echoing it.
     const optOutUrl = `${APP_URL()}/api/email/optout/${token}?lang=${args.lang}`;
-    const text = `${args.body}\n\n${args.optOutLabel}\n  ${optOutUrl}`;
+    // Plain text gets the sentence and the bare URL: there is no anchor
+    // to label, and a reader copies the address itself.
+    const text = `${args.body}\n\n${args.optOutNotice}\n  ${optOutUrl}`;
     const html = renderLifecycleHtml({
       heading: args.heading,
       body: args.body,
       ctaLabel: args.ctaLabel,
       ctaUrl: args.ctaUrl,
       dir: args.dir,
-      optOutLabel: args.optOutLabel,
+      optOutNotice: args.optOutNotice,
+      optOutAction: args.optOutAction,
       optOutUrl
     });
 
@@ -533,7 +538,8 @@ export async function sendLifecycleWelcome(to: string, locale?: string | null): 
     ctaLabel: t.welcomeCta,
     ctaUrl: AUDIT_URL(lang),
     dir: t.dir,
-    optOutLabel: t.optOut,
+    optOutNotice: t.optOutNotice,
+    optOutAction: t.optOutAction,
     lang,
     logTag: 'lifecycle_welcome'
   });
@@ -552,7 +558,8 @@ export async function sendLifecycleNudge(to: string, locale?: string | null): Pr
     ctaLabel: t.nudgeCta,
     ctaUrl: AUDIT_URL(lang),
     dir: t.dir,
-    optOutLabel: t.optOut,
+    optOutNotice: t.optOutNotice,
+    optOutAction: t.optOutAction,
     lang,
     logTag: 'lifecycle_nudge'
   });
@@ -621,7 +628,8 @@ export async function sendLifecycleUpgrade(to: string, ctx: UpgradeContext): Pro
     ctaLabel: hidden > 0 ? t.upgradeCtaUnread : t.upgradeCtaSeen,
     ctaUrl: hidden > 0 ? reportUrl : PRICING_URL(lang),
     dir: t.dir,
-    optOutLabel: t.optOut,
+    optOutNotice: t.optOutNotice,
+    optOutAction: t.optOutAction,
     lang,
     logTag: 'lifecycle_upgrade'
   });
@@ -639,7 +647,8 @@ function renderLifecycleHtml(args: {
   ctaLabel: string;
   ctaUrl: string;
   dir: 'ltr' | 'rtl';
-  optOutLabel: string;
+  optOutNotice: string;
+  optOutAction: string;
   optOutUrl: string;
 }): string {
   const paragraphs = args.body
@@ -661,7 +670,8 @@ function renderLifecycleHtml(args: {
     </td></tr>
     <tr><td style="padding:0 32px 24px 32px;border-top:1px solid #eef0f2;">
       <p style="margin:16px 0 0 0;font-size:13px;line-height:1.5;color:#6a737d;">
-        <a href="${args.optOutUrl}" style="color:#6a737d;">${escapeHtml(args.optOutLabel)}</a>
+        ${escapeHtml(args.optOutNotice)}
+        <a href="${args.optOutUrl}" style="color:#6a737d;">${escapeHtml(args.optOutAction)}</a>
       </p>
     </td></tr>
   </table>

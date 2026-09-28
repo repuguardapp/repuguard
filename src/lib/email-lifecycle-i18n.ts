@@ -70,13 +70,22 @@ export interface LifecycleStrings {
   signoff: string;
 
   /**
-   * The opt-out line in the footer, and the label on the link.
+   * The sentence that explains why this arrived, and the link label.
    *
-   * Not optional and not passed by the caller: sendLifecycle appends it
-   * to every message it sends, because a template that hands over a
-   * finished body is a template somebody can write without one.
+   * Two strings, because they have two jobs. The first version was one
+   * string ending in a colon, written for the plain-text part where a URL
+   * follows on the next line — and the HTML renderer then used the whole
+   * thing as the anchor text. Every recipient got a footer in which the
+   * explanation "you are receiving this because you created an account"
+   * was itself a hyperlink, trailing a colon that pointed at nothing.
+   *
+   * Neither is optional and neither is passed by the caller:
+   * sendLifecycle appends them to every message it sends, because a
+   * template that hands over a finished body is a template somebody can
+   * write without an opt-out.
    */
-  optOut: string;
+  optOutNotice: string;
+  optOutAction: string;
 }
 
 /** "52/100", or nothing at all when we have no score. Never "null/100". */
@@ -88,7 +97,8 @@ const MAP: Record<LifecycleLocale, LifecycleStrings> = {
   en: {
     dir: 'ltr',
     signoff: "\n\n— The LexyFlow team\nlegal@lexyflow.com",
-    optOut: "You are receiving this because you created a LexyFlow account. Stop these emails — it takes one click and does not affect your audits or your sign-in link:",
+    optOutNotice: "You are receiving this because you created a LexyFlow account. Stopping these emails does not affect your audits or your sign-in link.",
+    optOutAction: "Unsubscribe in one click",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} and ${n.at(-1)}` : (n[0] ?? 'your frameworks')),
     welcomeSubject: 'Welcome to LexyFlow',
     welcomeHeading: 'Welcome to LexyFlow',
@@ -141,7 +151,8 @@ Both paid plans show every finding on every report, with article-level citations
   fr: {
     dir: 'ltr',
     signoff: "\n\n— L'équipe LexyFlow\nlegal@lexyflow.com",
-    optOut: "Vous recevez ce message parce que vous avez créé un compte LexyFlow. Arrêter ces e-mails — un seul clic, sans effet sur vos audits ni sur votre lien de connexion :",
+    optOutNotice: "Vous recevez ce message parce que vous avez créé un compte LexyFlow. Arrêter ces e-mails ne change rien à vos audits ni à votre lien de connexion.",
+    optOutAction: "Se désabonner en un clic",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} et ${n.at(-1)}` : (n[0] ?? 'vos référentiels')),
     welcomeSubject: 'Bienvenue sur LexyFlow',
     welcomeHeading: 'Bienvenue sur LexyFlow',
@@ -194,7 +205,8 @@ Les deux offres payantes affichent toutes les constatations de chaque rapport, a
   es: {
     dir: 'ltr',
     signoff: "\n\n— El equipo de LexyFlow\nlegal@lexyflow.com",
-    optOut: "Recibes esto porque creaste una cuenta de LexyFlow. Deja de recibir estos correos — un solo clic, sin afectar a tus auditorías ni a tu enlace de acceso:",
+    optOutNotice: "Recibes esto porque creaste una cuenta de LexyFlow. Dejar de recibir estos correos no afecta a tus auditorías ni a tu enlace de acceso.",
+    optOutAction: "Darse de baja en un clic",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} y ${n.at(-1)}` : (n[0] ?? 'tus marcos')),
     welcomeSubject: 'Bienvenido a LexyFlow',
     welcomeHeading: 'Bienvenido a LexyFlow',
@@ -247,7 +259,8 @@ Ambos planes de pago muestran todos los hallazgos de cada informe, con citas por
   de: {
     dir: 'ltr',
     signoff: "\n\n— Das LexyFlow-Team\nlegal@lexyflow.com",
-    optOut: "Sie erhalten dies, weil Sie ein LexyFlow-Konto angelegt haben. Diese E-Mails abbestellen — ein Klick, ohne Auswirkung auf Ihre Prüfungen oder Ihren Anmeldelink:",
+    optOutNotice: "Sie erhalten dies, weil Sie ein LexyFlow-Konto angelegt haben. Diese E-Mails abzubestellen wirkt sich weder auf Ihre Prüfungen noch auf Ihren Anmeldelink aus.",
+    optOutAction: "Mit einem Klick abbestellen",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} und ${n.at(-1)}` : (n[0] ?? 'Ihre Regelwerke')),
     welcomeSubject: 'Willkommen bei LexyFlow',
     welcomeHeading: 'Willkommen bei LexyFlow',
@@ -300,7 +313,8 @@ Beide kostenpflichtigen Tarife zeigen in jedem Bericht sämtliche Befunde, mit F
   'pt-br': {
     dir: 'ltr',
     signoff: "\n\n— A equipe LexyFlow\nlegal@lexyflow.com",
-    optOut: "Você recebe isto porque criou uma conta LexyFlow. Parar estes e-mails — um clique, sem afetar suas auditorias nem seu link de acesso:",
+    optOutNotice: "Você recebe isto porque criou uma conta LexyFlow. Parar estes e-mails não afeta suas auditorias nem seu link de acesso.",
+    optOutAction: "Cancelar em um clique",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join(', ')} e ${n.at(-1)}` : (n[0] ?? 'seus marcos')),
     welcomeSubject: 'Bem-vindo ao LexyFlow',
     welcomeHeading: 'Bem-vindo ao LexyFlow',
@@ -353,7 +367,8 @@ Os dois planos pagos mostram todos os achados em cada relatório, com citações
   ja: {
     dir: 'ltr',
     signoff: "\n\n— LexyFlow チーム\nlegal@lexyflow.com",
-    optOut: "LexyFlow のアカウントを作成されたため、このメールをお送りしています。配信停止はワンクリックです（監査やログインリンクには影響しません）:",
+    optOutNotice: "LexyFlow のアカウントを作成されたため、このメールをお送りしています。配信を停止しても、監査やログインリンクには影響しません。",
+    optOutAction: "ワンクリックで配信停止",
     joinScope: (n) => (n.length > 0 ? n.join('・') : '選択された規制'),
     welcomeSubject: 'LexyFlow へようこそ',
     welcomeHeading: 'LexyFlow へようこそ',
@@ -406,7 +421,8 @@ Os dois planos pagos mostram todos os achados em cada relatório, com citações
   ar: {
     dir: 'rtl',
     signoff: "\n\n— فريق LexyFlow\nlegal@lexyflow.com",
-    optOut: "تصلك هذه الرسالة لأنك أنشأت حسابًا في LexyFlow. لإيقاف هذه الرسائل بنقرة واحدة، دون أي أثر على عمليات التدقيق أو رابط تسجيل الدخول:",
+    optOutNotice: "تصلك هذه الرسالة لأنك أنشأت حسابًا في LexyFlow. إيقاف هذه الرسائل لا يؤثر على عمليات التدقيق ولا على رابط تسجيل الدخول.",
+    optOutAction: "إلغاء الاشتراك بنقرة واحدة",
     joinScope: (n) => (n.length > 1 ? `${n.slice(0, -1).join('، ')} و${n.at(-1)}` : (n[0] ?? 'الأطر المختارة')),
     welcomeSubject: 'مرحبًا بك في LexyFlow',
     welcomeHeading: 'مرحبًا بك في LexyFlow',
