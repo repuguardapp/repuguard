@@ -103,6 +103,21 @@ export interface DigestInput {
    * row is a quiet fortnight, not a verdict.
    */
   barrenSources: { id: string; rejected: number }[] | null;
+  /**
+   * Items discovered long ago and never classified.
+   *
+   * The category the report was missing entirely. The Anthropic balance
+   * ran out on 27 September; extraction stopped; sixty-seven items piled
+   * up behind it — forty from the ICO — and for two mornings this digest
+   * printed "discovered 32" as a standing figure and led with nothing.
+   * Sentry said it seventy-two times, which is the channel that gets
+   * ignored precisely because it repeats.
+   *
+   * A corpus count is a photograph. This is the derivative: things are
+   * arriving and nothing is moving them on, which is the sentence a
+   * broken pipeline actually produces.
+   */
+  stalledItems: { count: number; oldestHours: number } | null;
   awaitingReview: number | null;
   appUrl: string;
 }
@@ -178,6 +193,13 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
+  if (input.stalledItems && input.stalledItems.count > 0) {
+    actions.push(
+      `${input.stalledItems.count} item(s) discovered and never classified, the oldest ${input.stalledItems.oldestHours}h ago — the extraction pass is not moving them.\n` +
+        `    Nothing publishes from a corpus that stops halfway. Check the model account and the last run.`
+    );
+  }
+
   if (input.awaitingReview !== null && input.awaitingReview > 0) {    actions.push(
       `${input.awaitingReview} decision(s) waiting for review — nothing publishes until you approve them.\n` +
         `    ${input.appUrl}/en/admin/legal-queue`
@@ -205,6 +227,7 @@ export function composeDigest(input: DigestInput): Digest {
     'feed health': input.brokenSources,
     'switched-off sources': input.disabledSources,
     'source yield': input.barrenSources,
+    'stalled items': input.stalledItems,
     'review queue': input.awaitingReview
   })
     .filter(([, value]) => value === null)

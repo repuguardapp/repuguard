@@ -437,3 +437,39 @@ describe('a site that answers 200 to anything tells the prober nothing', () => {
     expect(source).toContain('${head.length}B');
   });
 });
+
+describe('an outage is not seventy-two item failures', () => {
+  const extract = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'app', 'api', 'cron', 'extract-legal', 'route.ts'),
+    'utf8'
+  );
+
+  it('abandons the run when the model account is the problem', () => {
+    // The Anthropic balance ran out on 27 September and the loop kept
+    // going: eight items a run, four runs a day, seventy-two identical
+    // alerts in two days, each naming a different development id as
+    // though the developments were the problem.
+    expect(extract).toContain('accountLevelFailure');
+    expect(extract).toContain('cron.extract_legal_account_blocked');
+    expect(extract).toContain('run_abandoned');
+  });
+
+  it('recognises an exhausted balance, a rejected key and a refused model', () => {
+    expect(extract).toContain('credit balance is too low');
+    expect(extract).toContain('authentication_error');
+    expect(extract).toContain('permission_error');
+  });
+
+  it('leaves the untouched items exactly as they were', () => {
+    // Nothing to unwind: an item that was never sent to the model is
+    // still `discovered`, and the next run picks it up.
+    const abandon = extract.slice(extract.indexOf('const fatal ='));
+    expect(abandon.slice(0, 500)).not.toContain('.update(');
+  });
+
+  it('still treats a single bad item as a single bad item', () => {
+    // The per-item alert has to survive: an item that fails on its own
+    // will fail again on the next run, and that is worth saying.
+    expect(extract).toContain('cron.extract_legal_item_failed');
+  });
+});

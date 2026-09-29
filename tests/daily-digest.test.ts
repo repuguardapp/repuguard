@@ -28,6 +28,7 @@ const HEALTHY: DigestInput = {
   neverPolledSources: [],
   disabledSources: [],
   barrenSources: [],
+  stalledItems: { count: 0, oldestHours: 0 },
   awaitingReview: 0,
   appUrl: 'https://lexyflow.com'
 };
@@ -232,5 +233,38 @@ describe('a source can be the greenest row on the console and worth nothing', ()
 
   it('stays silent when every source has produced something', () => {
     expect(composeDigest({ ...HEALTHY, barrenSources: [] }).text).not.toContain('0 kept');
+  });
+});
+
+describe('a corpus count is a photograph, not a pulse', () => {
+  it('says the extraction has stopped, rather than printing a bigger number', () => {
+    // The Anthropic balance ran out on 27 September, extraction stopped,
+    // and sixty-seven items piled up behind it — forty from the ICO. For
+    // two mornings this digest printed "discovered 32" as a standing
+    // figure and led with nothing, while Sentry said it seventy-two
+    // times, which is the channel that gets ignored because it repeats.
+    const digest = composeDigest({
+      ...HEALTHY,
+      stalledItems: { count: 67, oldestHours: 52 }
+    });
+
+    expect(digest.text).toContain('67 item(s) discovered and never classified');
+    expect(digest.text).toContain('52h');
+    expect(digest.text).toContain('the extraction pass is not moving them');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('stays silent when the queue is draining normally', () => {
+    // The extractor takes eight items every six hours, so a burst from a
+    // regulator legitimately waits its turn. A warning on a working queue
+    // is how a report teaches its reader to skim.
+    const digest = composeDigest({ ...HEALTHY, stalledItems: { count: 0, oldestHours: 0 } });
+    expect(digest.text).not.toContain('never classified');
+  });
+
+  it('says so when it could not measure it', () => {
+    const digest = composeDigest({ ...HEALTHY, stalledItems: null });
+    expect(digest.text).toContain('stalled items');
+    expect(digest.quiet).toBe(false);
   });
 });

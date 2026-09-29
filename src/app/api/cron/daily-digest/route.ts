@@ -112,6 +112,7 @@ async function digest() {
     corpus: await readCorpus(db),
     ...(await readSourceHealth(db)),
     barrenSources: await readBarrenSources(db),
+    stalledItems: await readStalledItems(db),
     appUrl: baseUrl
   };
 
@@ -369,6 +370,50 @@ async function readBarrenSources(
       .filter(([, t]) => t.kept === 0 && t.rejected >= BARREN_MIN_CLASSIFIED)
       .map(([id, t]) => ({ id, rejected: t.rejected }))
       .sort((a, b) => b.rejected - a.rejected);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * How long has the extraction pass been stuck?
+ *
+ * `discovered` is a transit state: the watcher writes it and the
+ * extractor empties it within hours. An item sitting there for a day is
+ * not a backlog, it is a stopped pipeline — and the difference is
+ * invisible in a corpus count, which shows the same number whether the
+ * queue is draining or frozen.
+ *
+ * The threshold is generous on purpose. The extractor runs every six
+ * hours and takes eight items, so a genuine burst from a regulator can
+ * legitimately wait most of a day before its turn.
+ */
+const STALLED_AFTER_HOURS = 30;
+
+async function readStalledItems(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ count: number; oldestHours: number } | null> {
+  try {
+    const cutoff = new Date(Date.now() - STALLED_AFTER_HOURS * 3_600_000).toISOString();
+
+    const { data, error } = await db
+      .from('legal_developments')
+      .select('created_at')
+      .eq('status', 'discovered')
+      .lt('created_at', cutoff)
+      .order('created_at')
+      .limit(5000);
+
+    if (error) return null;
+
+    const rows = (data ?? []) as { created_at: string }[];
+    if (rows.length === 0) return { count: 0, oldestHours: 0 };
+
+    const oldest = new Date(rows[0]!.created_at).getTime();
+    return {
+      count: rows.length,
+      oldestHours: Math.round((Date.now() - oldest) / 3_600_000)
+    };
   } catch {
     return null;
   }

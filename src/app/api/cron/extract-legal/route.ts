@@ -210,11 +210,32 @@ async function extract() {
     try {
       await extractOne(db, item, stats);
     } catch (err) {
-      // One item must never cost the rest of the batch. The row stays
-      // `discovered`, so the next run retries it — and if it keeps
-      // failing it keeps being retried, which is why the failure is
-      // alerted rather than only counted.
       const detail = err instanceof Error ? err.message : String(err);
+
+      // Some failures are not about this item at all.
+      //
+      // The Anthropic balance ran out on 27 September and the loop kept
+      // going: eight items a run, four runs a day, seventy-two identical
+      // alerts in two days, each naming a different development id as
+      // though the developments were the problem. Nobody reads an alert
+      // channel that repeats one outage seventy-two times, and the
+      // failure that mattered was invisible inside them.
+      //
+      // So an account-level error stops the batch, says so once, and
+      // names what has to happen. The remaining items stay `discovered`
+      // and are picked up whenever the account works again — no state to
+      // unwind, because none was written.
+      const fatal = accountLevelFailure(detail);
+      if (fatal) {
+        console.error('[cron/extract-legal] run_abandoned', { reason: fatal });
+        alertOps('cron.extract_legal_account_blocked', { reason: fatal, remaining: queue.length - stats.extracted - stats.rejected - stats.failed });
+        return NextResponse.json({ ok: false, reason: fatal, ...stats }, { status: 200 });
+      }
+
+      // Otherwise: one item must never cost the rest of the batch. The
+      // row stays `discovered`, so the next run retries it — and if it
+      // keeps failing it keeps being retried, which is why the failure is
+      // alerted rather than only counted.
       console.error('[cron/extract-legal] item_failed', { id: item.id, error: detail });
       alertOps('cron.extract_legal_item_failed', { developmentId: item.id, error: detail });
       stats.failed += 1;
@@ -449,4 +470,32 @@ function verifiedEvidence(
   }
 
   return Object.keys(verified).length > 0 ? verified : null;
+}
+
+/**
+ * Is this failure about the account rather than about the item?
+ *
+ * A model that refuses because the balance is empty or the key is
+ * rejected will refuse the next seven items for the same reason, and the
+ * one after that. Retrying inside the same run costs nothing in money and
+ * everything in signal: the outage arrives as a stream of per-item alerts
+ * that each name a different development, which is how a channel stops
+ * being read.
+ *
+ * Matched on the message because that is what the SDK gives us — the
+ * status code alone does not distinguish "your credit balance is too low"
+ * (a 400) from a malformed request (also a 400), and those need opposite
+ * responses.
+ */
+function accountLevelFailure(message: string): string | null {
+  if (/credit balance is too low/i.test(message)) {
+    return 'the Anthropic credit balance is exhausted — no extraction can run until it is topped up';
+  }
+  if (/authentication_error|invalid x-api-key|401/i.test(message)) {
+    return 'the Anthropic API key is being rejected';
+  }
+  if (/permission_error|403/i.test(message)) {
+    return 'the Anthropic account is not permitted to use this model';
+  }
+  return null;
 }
