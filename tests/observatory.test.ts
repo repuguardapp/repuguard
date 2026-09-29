@@ -142,3 +142,40 @@ describe('the crawl is the product, not a copy of it', () => {
     expect(CRON).toMatch(/RESCAN_AFTER_DAYS = 90/);
   });
 });
+
+describe('a cron that produces nothing has to say so', () => {
+  const SURVEY = read('src', 'app', 'api', 'cron', 'policy-survey', 'route.ts');
+
+  it('logs and alerts when it cannot build a sample', () => {
+    // This ran eight times a day for two days and produced nothing,
+    // because the reason travelled in the HTTP response body and a cron's
+    // response goes nowhere. The observatory sat at zero domains while
+    // every instrument reported a healthy run.
+    expect(SURVEY).toContain("console.error('[cron/policy-survey] no_sample'");
+    expect(SURVEY).toContain("alertOps('cron.policy_survey_no_sample'");
+  });
+
+  it('records a run that reached no domain', () => {
+    // Either the sample is exhausted — the study finishing, worth knowing
+    // — or the queue is returning nothing when it should not.
+    expect(SURVEY).toContain('nothing_pending');
+  });
+});
+
+describe('the sample is taken without pulling the whole file', () => {
+  const SAMPLE_LIB = read('src', 'lib', 'survey-sample.ts');
+
+  it('streams and stops rather than buffering the ranking', () => {
+    // A million lines and roughly 25MB, to find three hundred domains:
+    // most of a minute of somebody else's bandwidth, inside one timeout.
+    expect(SAMPLE_LIB).toContain('response.body?.getReader()');
+    expect(SAMPLE_LIB).not.toContain('await response.text()');
+    expect(SAMPLE_LIB).toContain('reader.cancel()');
+  });
+
+  it('refuses a short sample instead of publishing a smaller population', () => {
+    // The study claims ranks 1 to N of a named list. Two hundred domains
+    // under a heading that says three hundred is a different study.
+    expect(SAMPLE_LIB).toContain('fewer than the ${limit} the sample is defined as');
+  });
+});

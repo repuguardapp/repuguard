@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { capturePolicy } from '@/lib/policy-capture';
 import { discoverPolicy, type Candidate } from '@/lib/policy-discovery';
@@ -89,9 +90,16 @@ async function survey() {
 
   const seeded = await seedSampleIfEmpty(db);
   if (seeded.refused) {
-    // No sample, no study. Reported rather than retried into a corner:
-    // without a named, dated ranking there is nothing to be reproducible
-    // about.
+    // No sample, no study — and SAID, not returned.
+    //
+    // This ran eight times a day for two days and produced nothing,
+    // because the reason travelled in the HTTP response body and a cron's
+    // response goes nowhere. The observatory sat at zero domains while
+    // every instrument reported a healthy run. That is the failure this
+    // whole codebase is built against, committed in the route written to
+    // embody it.
+    console.error('[cron/policy-survey] no_sample', { reason: seeded.refused });
+    alertOps('cron.policy_survey_no_sample', { reason: seeded.refused });
     return NextResponse.json({ ok: false, reason: seeded.refused }, { status: 200 });
   }
 
@@ -121,6 +129,18 @@ async function survey() {
         error: err instanceof Error ? err.message : String(err)
       });
     }
+  }
+
+  // A run that reaches no domain is not a quiet run: either the sample is
+  // exhausted — which is the study finishing, and worth knowing — or the
+  // queue query is returning nothing when it should not.
+  if (domains.length === 0) {
+    const { count } = await db
+      .from('scans')
+      .select('id', { head: true, count: 'exact' })
+      .eq('origin', 'survey')
+      .not('completed_at', 'is', null);
+    console.log('[cron/policy-survey] nothing_pending', { completed: count ?? 0 });
   }
 
   console.log('[cron/policy-survey] run complete', stats);

@@ -32,10 +32,22 @@ import { fetchExternal } from './safe-fetch';
  */
 const TRANCO_LATEST = 'https://tranco-list.eu/top-1m.csv';
 
-const FETCH_TIMEOUT_MS = 30_000;
+const FETCH_TIMEOUT_MS = 60_000;
 
-/** Enough of the ranking to find several hundred .fr domains in it. */
-const MAX_LINES = 400_000;
+/**
+ * How much of the ranking we are willing to pull.
+ *
+ * The file is a million lines and roughly 25 MB. Buffering all of it to
+ * find three hundred .fr domains was the wrong shape twice over: it is
+ * most of a minute of somebody else's bandwidth, and it put the whole
+ * download inside one timeout, so a slow minute produced no sample and —
+ * until this run started saying so — no sound either.
+ *
+ * Read as a stream instead, stopping at whichever comes first: enough
+ * domains, this many bytes, or the end of the file. The ranking is
+ * ordered, so the .fr domains we want are near the top by construction.
+ */
+const MAX_BYTES = 12 * 1024 * 1024;
 
 export interface SampleEntry {
   domain: string;
@@ -91,28 +103,44 @@ export async function fetchFrenchSample(limit: number): Promise<Sample> {
     return empty(`the ranking did not identify itself (resolved to ${response.url || TRANCO_LATEST})`);
   }
 
-  const text = await response.text();
   const entries: SampleEntry[] = [];
-  let line = 0;
 
-  for (const raw of text.split('\n')) {
-    if (line++ > MAX_LINES || entries.length >= limit) break;
+  try {
+    await readLines(response, MAX_BYTES, (raw) => {
+      // `rank,domain`
+      const comma = raw.indexOf(',');
+      if (comma === -1) return true;
 
-    // `rank,domain`
-    const comma = raw.indexOf(',');
-    if (comma === -1) continue;
+      const rank = Number(raw.slice(0, comma).trim());
+      const domain = raw.slice(comma + 1).trim().toLowerCase();
+      if (!Number.isFinite(rank) || !domain.endsWith('.fr')) return true;
+      // A bare registrable name. Anything with a path, a port or a label
+      // that is not a hostname is not something to point a crawler at.
+      if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
+        return true;
+      }
 
-    const rank = Number(raw.slice(0, comma).trim());
-    const domain = raw.slice(comma + 1).trim().toLowerCase();
-    if (!Number.isFinite(rank) || !domain.endsWith('.fr')) continue;
-    // A bare registrable name. Anything with a path, a port or a label
-    // that is not a hostname is not something to point a crawler at.
-    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) continue;
-
-    entries.push({ domain, rank });
+      entries.push({ domain, rank });
+      // Stop the download the moment we have enough.
+      return entries.length < limit;
+    });
+  } catch (err) {
+    // A partial read is still a sample, and a partial sample is not one:
+    // the study claims ranks 1 to N of a named list.
+    if (entries.length < limit) {
+      return empty(
+        `the ranking stopped after ${entries.length} of ${limit} .fr domains: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
   }
 
-  if (entries.length === 0) return empty('the ranking contained no usable .fr domains');
+  if (entries.length < limit) {
+    return empty(
+      `the ranking yielded ${entries.length} .fr domains, fewer than the ${limit} the sample is defined as`
+    );
+  }
 
   return {
     entries,
@@ -122,4 +150,51 @@ export async function fetchFrenchSample(limit: number): Promise<Sample> {
     sourceDate: new Date().toISOString().slice(0, 10),
     refused: null
   };
+}
+
+/**
+ * Walk a response line by line and stop when the caller says so.
+ *
+ * `onLine` returns false to end the read, which cancels the download
+ * rather than politely continuing to receive twenty more megabytes we
+ * have already decided not to look at.
+ */
+async function readLines(
+  response: Response,
+  maxBytes: number,
+  onLine: (line: string) => boolean
+): Promise<void> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('the ranking returned no body');
+
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let seen = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      seen += value.byteLength;
+      buffer += decoder.decode(value, { stream: true });
+
+      let newline = buffer.indexOf('\n');
+      while (newline !== -1) {
+        const line = buffer.slice(0, newline);
+        buffer = buffer.slice(newline + 1);
+        if (!onLine(line)) return;
+        newline = buffer.indexOf('\n');
+      }
+
+      if (seen > maxBytes) {
+        throw new Error(`stopped after ${Math.round(seen / 1_048_576)}MB without finding enough`);
+      }
+    }
+
+    if (buffer.length > 0) onLine(buffer);
+  } finally {
+    // Cancel rather than leave the socket draining a file we are done with.
+    await reader.cancel().catch(() => {});
+  }
 }
