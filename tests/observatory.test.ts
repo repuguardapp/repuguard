@@ -179,3 +179,32 @@ describe('the sample is taken without pulling the whole file', () => {
     expect(SAMPLE_LIB).toContain('fewer than the ${limit} the sample is defined as');
   });
 });
+
+describe('a run that failed is answerable without leaving the database', () => {
+  const SURVEY = read('src', 'app', 'api', 'cron', 'policy-survey', 'route.ts');
+  const RUNS_SQL = read('supabase', 'migrations', '0043_survey_runs.sql');
+
+  it('records every outcome, including the ones that did nothing', () => {
+    // legal_sources has carried last_status and last_error since the
+    // poller was written. The survey had nothing, so two days of
+    // producing no domains were discoverable only by reading Vercel logs.
+    const records = SURVEY.match(/await record\(/g) ?? [];
+    expect(records.length).toBeGreaterThanOrEqual(3);
+    expect(SURVEY).toContain('ok: false, reason: seeded.refused');
+  });
+
+  it('stores the sentence rather than a code', () => {
+    // The point is that somebody reads it without a lookup table.
+    expect(RUNS_SQL).toContain('reason      text');
+    expect(RUNS_SQL).not.toContain('reason_code');
+  });
+
+  it('never lets the bookkeeping fail the run', () => {
+    expect(SURVEY).toContain('run_not_recorded');
+  });
+
+  it('alerts on an unreadable queue instead of only returning 500', () => {
+    // A 500 from a cron goes to the same place its 200 does: nowhere.
+    expect(SURVEY).toContain("alertOps('cron.policy_survey_queue_unreadable'");
+  });
+});

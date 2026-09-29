@@ -277,3 +277,50 @@ export function observatoryCsv(report: ObservatoryReport): string {
 function escapeCsv(value: string): string {
   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
+
+export interface SurveyRun {
+  ranAt: string;
+  ok: boolean;
+  reason: string | null;
+  seeded: number;
+  lookedAt: number;
+  observed: number;
+  refused: number;
+}
+
+/**
+ * The last few runs, so a stalled observatory is one query away.
+ *
+ * Null means the table could not be read. Empty means the cron has never
+ * completed a run — which for two days was the true state while every
+ * other instrument showed nothing at all.
+ */
+export async function recentSurveyRuns(limit = 8): Promise<SurveyRun[] | null> {
+  try {
+    const { data, error } = await supabaseService()
+      .from('survey_runs')
+      .select('ran_at, ok, reason, seeded, looked_at, observed, refused')
+      .order('ran_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('[observatory] runs_read_failed', { error: error.message });
+      return null;
+    }
+
+    return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      ranAt: String(row.ran_at),
+      ok: Boolean(row.ok),
+      reason: (row.reason as string | null) ?? null,
+      seeded: Number(row.seeded ?? 0),
+      lookedAt: Number(row.looked_at ?? 0),
+      observed: Number(row.observed ?? 0),
+      refused: Number(row.refused ?? 0)
+    }));
+  } catch (err) {
+    console.error('[observatory] runs_read_threw', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
+  }
+}

@@ -88,6 +88,33 @@ export async function POST(request: Request) {
 async function survey() {
   const db = supabaseService();
 
+  /**
+   * Write down what happened, whatever happened.
+   *
+   * legal_sources has had last_status and last_error since the poller was
+   * written. The survey had nothing, so two days of producing no domains
+   * were only discoverable by reading Vercel's logs. One row per run, in
+   * the database, answerable with a query.
+   */
+  const record = async (row: {
+    ok: boolean;
+    reason?: string | null;
+    seeded?: number;
+    looked_at?: number;
+    observed?: number;
+    refused?: number;
+  }) => {
+    const { error } = await db.from('survey_runs').insert({
+      ok: row.ok,
+      reason: row.reason ?? null,
+      seeded: row.seeded ?? 0,
+      looked_at: row.looked_at ?? 0,
+      observed: row.observed ?? 0,
+      refused: row.refused ?? 0
+    });
+    if (error) console.error('[cron/policy-survey] run_not_recorded', { error: error.message });
+  };
+
   const seeded = await seedSampleIfEmpty(db);
   if (seeded.refused) {
     // No sample, no study — and SAID, not returned.
@@ -100,6 +127,7 @@ async function survey() {
     // embody it.
     console.error('[cron/policy-survey] no_sample', { reason: seeded.refused });
     alertOps('cron.policy_survey_no_sample', { reason: seeded.refused });
+    await record({ ok: false, reason: seeded.refused });
     return NextResponse.json({ ok: false, reason: seeded.refused }, { status: 200 });
   }
 
@@ -110,6 +138,8 @@ async function survey() {
 
   if (error) {
     console.error('[cron/policy-survey] queue_unreadable', { error: error.message });
+    alertOps('cron.policy_survey_queue_unreadable', { error: error.message });
+    await record({ ok: false, reason: `queue unreadable: ${error.message}` });
     return NextResponse.json({ error: 'queue_unreadable', detail: error.message }, { status: 500 });
   }
 
@@ -144,6 +174,13 @@ async function survey() {
   }
 
   console.log('[cron/policy-survey] run complete', stats);
+  await record({
+    ok: true,
+    seeded: seeded.added,
+    looked_at: stats.looked_at,
+    observed: stats.observed,
+    refused: stats.refused
+  });
   return NextResponse.json({ ok: true, ...stats, seeded: seeded.added });
 }
 

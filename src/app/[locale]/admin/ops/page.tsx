@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { configStatus, deploymentIdentity, missingRequired } from '@/lib/config-report';
+import { recentSurveyRuns } from '@/lib/observatory';
 import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentAdminUser, getCurrentUser } from '@/lib/supabase-server';
@@ -123,6 +124,7 @@ export default async function OpsPage({ params }: { params: { locale: string } }
   );
 
   const referrals = await listReferrals();
+  const surveyRuns = await recentSurveyRuns();
   const config = configStatus();
   const missing = missingRequired(config);
   const deployment = deploymentIdentity();
@@ -213,6 +215,43 @@ export default async function OpsPage({ params }: { params: { locale: string } }
               ))}
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Observatoire — derniers relevés</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {surveyRuns === null ? (
+            <p className="text-sm text-destructive">
+              Table illisible. Ce n&apos;est pas une absence de relevés.
+            </p>
+          ) : surveyRuns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun relevé enregistré. C&apos;était l&apos;état réel pendant deux jours, sans que
+              rien ne le dise&nbsp;: le cron tournait et rendait sa raison dans une réponse HTTP que
+              personne ne lit.
+            </p>
+          ) : (
+            <ul className="grid gap-2">
+              {surveyRuns.map((run) => (
+                <li
+                  key={run.ranAt}
+                  className="grid gap-0.5 border-b pb-2 text-sm last:border-0 last:pb-0"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-mono text-xs">{run.ranAt.slice(0, 16).replace('T', ' ')}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {run.seeded > 0 ? `${run.seeded} domaines semés · ` : ''}
+                      {run.lookedAt} examinés · {run.observed} lus · {run.refused} refusés
+                    </span>
+                  </div>
+                  {run.reason ? <p className="text-xs text-destructive">{run.reason}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
