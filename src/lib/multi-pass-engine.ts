@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { ANTHROPIC_MODEL, anthropic, OPENAI_MODEL, openai } from './ai-clients';
 import { alertOps } from './alert';
+import { recordModelUsage } from './model-usage';
 import { frameworkById, type FrameworkId } from './legal-frameworks';
 import type { AuditFinding, AuditReport, Severity } from '@/types/audit';
 
@@ -55,6 +56,15 @@ export interface AuditInput {
   frameworks: FrameworkId[];
   /** BCP-47 tag of the desired output report. */
   targetLanguage: string;
+  /**
+   * The audit row this run belongs to, so its token cost is attributable.
+   *
+   * Optional because the engine is also exercised outside a stored audit.
+   * Without it the spend is still recorded, just not attached — and the
+   * dashboard reports how many audits carry no usage rather than
+   * averaging over the ones that do.
+   */
+  auditId?: string;
 }
 
 function sha256(text: string): string {
@@ -397,6 +407,13 @@ async function runPass1(input: AuditInput, maxTokens: number): Promise<AuditPass
     tools: [buildSubmitAuditTool(input.frameworks)],
     tool_choice: { type: 'tool', name: 'submit_audit' },
     messages: [{ role: 'user', content: input.documentText }]
+  });
+
+  await recordModelUsage({
+    purpose: 'audit_pass1',
+    model: ANTHROPIC_MODEL,
+    usage: message.usage,
+    auditId: input.auditId ?? null
   });
 
   const toolUse = message.content.find((c) => c.type === 'tool_use');

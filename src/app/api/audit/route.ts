@@ -674,7 +674,8 @@ async function runAuditPipeline(input: PipelineInput): Promise<void> {
       {
         documentText: input.documentText,
         frameworks: input.frameworks,
-        targetLanguage: input.targetLanguage
+        targetLanguage: input.targetLanguage,
+        auditId: input.auditId
       },
       {
         read: async () => {

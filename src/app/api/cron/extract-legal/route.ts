@@ -5,6 +5,7 @@ import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
 import { fairShare } from '@/lib/fair-share';
+import { recordModelUsage } from '@/lib/model-usage';
 import { htmlToText } from '@/lib/feeds';
 import { verifySpan } from '@/lib/policy-observations';
 import { supabaseService } from '@/lib/supabase';
@@ -266,6 +267,16 @@ async function extractOne(
         content: `Source: ${item.primary_url}\nHeadline: ${item.raw_title}\n\n${sourceText}`
       }
     ]
+  });
+
+  // Before anything can fail: what this call actually cost. Awaited
+  // rather than fired and forgotten, because a serverless instance
+  // freezes the moment the handler returns and an unawaited write is a
+  // ledger with holes in it exactly where the interesting calls were.
+  await recordModelUsage({
+    purpose: 'extract_legal',
+    model: ANTHROPIC_EXTRACTION_MODEL,
+    usage: message.usage
   });
 
   const call = message.content.find((block) => block.type === 'tool_use');
