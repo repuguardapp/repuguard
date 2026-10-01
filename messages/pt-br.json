@@ -631,7 +631,7 @@
     "findingsLead": "Contadas sobre os {read} documentos lidos, não sobre a amostra. Cada uma é um fato sobre um documento em um dia: um campo vazio significa que nosso leitor não encontrou a menção, não que a organização esteja em desconformidade.",
     "refusalsTitle": "Por que os demais não puderam ser lidos",
     "methodTitle": "Método",
-    "methodSample": "População: os domínios .fr da lista Tranco {sourceId}, obtida em {sourceDate}, posições 1 a {total}. Tranco é um ranking acadêmico público com identificador permanente, então qualquer pessoa pode reconstruir esta amostra.",
+    "methodSample": "População: os domínios .fr de {source}, identificador {sourceId}, obtida em {sourceDate}, posições 1 a {total}. O ranking é público e datado, então qualquer pessoa pode reconstruir esta amostra.",
     "methodCrawl": "Cada domínio é lido no máximo uma vez a cada 90 dias, poucos por hora. Buscamos o robots.txt primeiro e o respeitamos, nos identificamos como LexyFlowScan e lemos apenas o documento que o site publica.",
     "methodObservations": "As sete constatações são textuais: um achado só é registrado se a formulação estiver no documento, e a frase que o sustenta é verificada caractere a caractere contra a página antes de contar.",
     "limitsTitle": "O que este estudo não diz",

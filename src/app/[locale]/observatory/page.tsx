@@ -215,9 +215,15 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
               once there is one. A methodology that says "Tranco list
               null" is worse than none: it is a reproducibility claim
               that cannot be acted on. */}
+          {/* Only once the sample exists, and naming the ranking that
+              actually answered. The source stopped being a constant the
+              day its URL returned 404 eight times running; printing
+              "Tranco" regardless would be a methodology that describes
+              the list we meant to use. */}
           {report?.sourceId && report.sourceDate ? (
             <p>
               {t('methodSample', {
+                source: report.sourceLabel ?? report.sourceId,
                 sourceId: report.sourceId,
                 sourceDate: report.sourceDate,
                 total: report.sampleSize

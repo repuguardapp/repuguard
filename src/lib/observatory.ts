@@ -36,6 +36,8 @@ export interface ObservatoryReport {
   sampleSize: number;
   /** The ranking the sample came from — the reproducibility claim. */
   sourceId: string | null;
+  /** How the ranking describes itself, basis included. */
+  sourceLabel: string | null;
   sourceDate: string | null;
   /** Domains we have finished looking at. */
   lookedAt: number;
@@ -61,7 +63,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
 
     const [{ data: sample, error: sampleError }, { data: scans, error: scanError }] =
       await Promise.all([
-        db.from('survey_domains').select('source_id, source_date').order('rank').limit(1),
+        db.from('survey_domains').select('source_id, source_label, source_date').order('rank').limit(1),
         db
           .from('scans')
           .select('id, status, failure, completed_at')
@@ -100,6 +102,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     return {
       sampleSize: sampleSize ?? 0,
       sourceId: (sample?.[0] as { source_id?: string } | undefined)?.source_id ?? null,
+      sourceLabel: (sample?.[0] as { source_label?: string } | undefined)?.source_label ?? null,
       sourceDate: (sample?.[0] as { source_date?: string } | undefined)?.source_date ?? null,
       lookedAt: rows.length,
       documentsRead: read.length,
@@ -213,8 +216,8 @@ export function observatoryDataset(
       ? {
           isBasedOn: {
             '@type': 'Dataset',
-            name: `Tranco list ${report.sourceId}`,
-            url: `https://tranco-list.eu/list/${report.sourceId}`
+            name: report.sourceLabel ?? report.sourceId,
+            identifier: report.sourceId
           }
         }
       : {}),
@@ -249,7 +252,7 @@ export function observatoryDataset(
 export function observatoryCsv(report: ObservatoryReport): string {
   const rows: string[][] = [
     ['section', 'key', 'value', 'denominator'],
-    ['sample', 'source', 'tranco', ''],
+    ['sample', 'source', report.sourceLabel ?? '', ''],
     ['sample', 'source_id', report.sourceId ?? '', ''],
     ['sample', 'source_date', report.sourceDate ?? '', ''],
     ['sample', 'suffix', '.fr', ''],

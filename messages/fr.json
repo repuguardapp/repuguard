@@ -631,7 +631,7 @@
     "findingsLead": "Comptés sur les {read} documents lus, pas sur l'échantillon. Chacun est un fait sur un document, un jour donné : une case vide signifie que notre lecteur n'a pas trouvé la mention, pas que l'organisation est non conforme.",
     "refusalsTitle": "Pourquoi les autres n'ont pas pu être lus",
     "methodTitle": "Méthode",
-    "methodSample": "Population : les domaines .fr de la liste Tranco {sourceId}, récupérée le {sourceDate}, rangs 1 à {total}. Tranco est un classement académique public publié avec un identifiant permanent : cet échantillon peut être reconstitué par n'importe qui.",
+    "methodSample": "Population : les domaines .fr de {source}, identifiant {sourceId}, récupérée le {sourceDate}, rangs 1 à {total}. Le classement est public et daté : cet échantillon peut être reconstitué par n'importe qui.",
     "methodCrawl": "Chaque domaine est lu au plus une fois tous les 90 jours, quelques-uns par heure. Nous récupérons robots.txt d'abord et nous le respectons, nous nous identifions comme LexyFlowScan, et nous ne lisons que le document que le site publie lui-même.",
     "methodObservations": "Les sept constats sont textuels : un relevé n'est enregistré que si la formulation figure dans le document, et la phrase qui l'appuie est vérifiée caractère par caractère contre la page avant d'être comptée.",
     "limitsTitle": "Ce que cette étude ne dit pas",

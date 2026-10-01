@@ -89,8 +89,38 @@ describe('the sample is reproducible or it is nothing', () => {
     expect(CSV).toContain("['sample', 'source_date'");
   });
 
-  it('refuses to build a sample from a list that will not identify itself', () => {
-    expect(SAMPLE).toContain('the ranking did not identify itself');
+  it('always carries an identifier and a date, and says which kind', () => {
+    // A DELIBERATE WEAKENING, recorded here rather than slipped in.
+    //
+    // The first version refused any list that did not redirect to a
+    // permanent /download/<id>/ URL. That rule was right and it also
+    // meant no study at all once the Tranco URL started answering 404.
+    // A ranking served from a fixed address now identifies itself by the
+    // day we fetched it — weaker, checkable only against the publisher's
+    // own archive, and visible as such: the methodology prints
+    // "majestic-2026-10-01", which nobody will mistake for a permanent
+    // list id.
+    expect(SAMPLE).toContain('fromUrl ?? `${source.id}-${today}`');
+    expect(SAMPLE).toContain("/\\/download\\/([A-Za-z0-9]+)\\//");
+  });
+
+  it('tries several rankings instead of guessing one more time', () => {
+    // The source was a constant pointing at a URL that answers 404, and
+    // the first fix I shipped — streaming instead of buffering 25MB —
+    // was a real improvement to a thing that was not the bug. A second
+    // guess from a sandbox that cannot reach any of these hosts would
+    // have been worth exactly as much as the first.
+    expect(SAMPLE).toContain('const SOURCES: RankingSource[]');
+    expect(SAMPLE).toContain('for (const source of SOURCES)');
+    expect(SAMPLE).toContain('no ranking could be used');
+  });
+
+  it('carries the ranking basis, because the rankings measure different things', () => {
+    // Tranco aggregates traffic rankings; Majestic ranks by referring
+    // subnets. A study whose population came from the second must not
+    // say "most visited".
+    expect(SAMPLE).toContain('agrégat de classements de trafic');
+    expect(SAMPLE).toContain('classement par sous-réseaux référents');
   });
 
   it('does not re-seed on every run', () => {
@@ -176,7 +206,7 @@ describe('the sample is taken without pulling the whole file', () => {
   it('refuses a short sample instead of publishing a smaller population', () => {
     // The study claims ranks 1 to N of a named list. Two hundred domains
     // under a heading that says three hundred is a different study.
-    expect(SAMPLE_LIB).toContain('fewer than the ${limit} the sample is defined as');
+    expect(SAMPLE_LIB).toContain('fewer than the ${limit} required');
   });
 });
 

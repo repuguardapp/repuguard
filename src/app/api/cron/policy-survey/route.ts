@@ -311,8 +311,9 @@ async function seedSampleIfEmpty(
     sample.entries.map((entry) => ({
       domain: entry.domain,
       rank: entry.rank,
-      source: 'tranco',
+      source: sample.sourceId.split('-')[0] ?? 'unknown',
       source_id: sample.sourceId,
+      source_label: sample.sourceLabel,
       source_date: sample.sourceDate
     }))
   );
@@ -322,6 +323,7 @@ async function seedSampleIfEmpty(
   console.log('[cron/policy-survey] sample_seeded', {
     domains: sample.entries.length,
     sourceId: sample.sourceId,
+    sourceLabel: sample.sourceLabel,
     sourceDate: sample.sourceDate
   });
   return { added: sample.entries.length, refused: null };

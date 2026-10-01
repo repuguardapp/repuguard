@@ -631,7 +631,7 @@
     "findingsLead": "Gezählt über die {read} gelesenen Dokumente, nicht über die Stichprobe. Jeder ist eine Tatsache über ein Dokument an einem Tag: ein leeres Feld heißt, unser Leser hat die Angabe nicht gefunden — nicht, dass die Organisation nicht konform ist.",
     "refusalsTitle": "Warum die übrigen nicht gelesen werden konnten",
     "methodTitle": "Methode",
-    "methodSample": "Grundgesamtheit: die .fr-Domains der Tranco-Liste {sourceId}, abgerufen am {sourceDate}, Rang 1 bis {total}. Tranco ist ein öffentliches akademisches Ranking mit permanenter Kennung — diese Stichprobe lässt sich von jedem rekonstruieren.",
+    "methodSample": "Grundgesamtheit: die .fr-Domains aus {source}, Kennung {sourceId}, abgerufen am {sourceDate}, Rang 1 bis {total}. Das Ranking ist öffentlich und datiert — diese Stichprobe lässt sich von jedem rekonstruieren.",
     "methodCrawl": "Jede Domain wird höchstens alle 90 Tage gelesen, wenige pro Stunde. Wir rufen zuerst robots.txt ab und befolgen sie, wir nennen uns LexyFlowScan, und wir lesen nur das Dokument, das die Website selbst veröffentlicht.",
     "methodObservations": "Die sieben Befunde sind textbasiert: ein Befund wird nur erfasst, wenn die Formulierung im Dokument steht, und der belegende Satz wird zeichengenau gegen die Seite geprüft, bevor er zählt.",
     "limitsTitle": "Was diese Studie nicht sagt",

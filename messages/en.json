@@ -631,7 +631,7 @@
     "findingsLead": "Counted over the {read} documents we read, not over the sample. Each one is a fact about one document on one day: a blank means our reader did not find the thing, not that the organisation is non-compliant.",
     "refusalsTitle": "Why the others could not be read",
     "methodTitle": "Method",
-    "methodSample": "Population: the .fr domains in Tranco list {sourceId}, retrieved {sourceDate}, ranks 1 to {total}. Tranco is a public academic ranking published with a permanent identifier, so this sample can be rebuilt by anyone.",
+    "methodSample": "Population: the .fr domains of {source}, identifier {sourceId}, retrieved {sourceDate}, ranks 1 to {total}. The ranking is public and dated, so this sample can be rebuilt by anyone.",
     "methodCrawl": "Each domain is read once every 90 days at most, a few per hour. We fetch robots.txt first and obey it, we identify ourselves as LexyFlowScan, and we read only the document the site publishes itself.",
     "methodObservations": "The seven observations are textual: a finding is recorded only when the wording is present in the document, and the supporting sentence is verified against the page character by character before it counts.",
     "limitsTitle": "What this does not say",
