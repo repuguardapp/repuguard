@@ -246,3 +246,66 @@ describe('what the first real scan corrected', () => {
     expect(evidence.indexOf('Retention')).toBeLessThan(120);
   });
 });
+
+describe('the first run of the observatory found a defect in two anchors', () => {
+  /**
+   * Thirteen French privacy policies were read. International transfers:
+   * zero. A date of last update: two. Those are not facts about French
+   * websites, they are facts about two regular expressions — and a 0%
+   * about other people's documents, caused by our own pattern, is
+   * precisely the number this project exists not to publish.
+   *
+   * Both anchors demanded adjacency. "Un transfert DE DONNÉES hors de
+   * l'Union européenne" is the most ordinary phrasing there is, and the
+   * two intervening words defeated it.
+   */
+
+  const TRANSFERS = [
+    "Vos données peuvent faire l'objet d'un transfert de données hors de l'Union européenne, encadré par des clauses contractuelles types.",
+    'Nous procédons à des transferts de données vers des pays tiers sur la base de clauses contractuelles types.',
+    "Vos données sont hébergées en dehors de l'Espace économique européen, couvertes par une décision d'adéquation.",
+    'Data may be transferred outside the EEA under standard contractual clauses.'
+  ];
+
+  it.each(TRANSFERS)('sees transfers written the way policies write them: %s', (text) => {
+    const found = observePolicy(text).find((o) => o.id === 'international_transfers_addressed');
+    expect(found?.finding).toBe('present');
+  });
+
+  const UPDATED = [
+    'Mise à jour : 12 mars 2026',
+    'Dernière modification : 04/02/2026',
+    'Version du 3 janvier 2026',
+    'Dernière mise à jour : 1er octobre 2026'
+  ];
+
+  it.each(UPDATED)('sees a date of last update written plainly: %s', (text) => {
+    const found = observePolicy(text).find((o) => o.id === 'last_updated_stated');
+    expect(found?.finding).toBe('present');
+  });
+
+  it('still refuses a transfer that names no safeguard, as unclear not present', () => {
+    // The anchor was widened; the confirm was not. `present` still means
+    // a safeguard was named. A policy that mentions a transfer and names
+    // nothing now reads `unclear`, which is the truthful label: we found
+    // the subject and could not establish the rest.
+    const found = observePolicy(
+      'Nous transférons vos données hors de l’Union européenne vers nos prestataires.'
+    ).find((o) => o.id === 'international_transfers_addressed');
+    expect(found?.finding).toBe('unclear');
+  });
+
+  it('does not count a transfer of ownership or a preferences link', () => {
+    // Loosening an anchor is only safe because the confirm still has to
+    // land. These have no safeguard and no date beside them.
+    const ownership = observePolicy(
+      'Le transfert de propriété intervient à la livraison du bien commandé.'
+    ).find((o) => o.id === 'international_transfers_addressed');
+    expect(ownership?.finding).not.toBe('present');
+
+    const prefs = observePolicy(
+      'Connectez-vous pour effectuer la mise à jour de vos préférences de contact.'
+    ).find((o) => o.id === 'last_updated_stated');
+    expect(prefs?.finding).not.toBe('present');
+  });
+});

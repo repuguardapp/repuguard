@@ -176,15 +176,40 @@ const RULES: Rule[] = [
   },
   {
     id: 'international_transfers_addressed',
+    // The anchor used to demand the words be adjacent — `transfert(s)
+    // (hors|internationa)` — and the first run of the observatory read
+    // thirteen French policies and found the subject in none of them.
+    // That is not what French policies do; it is what this pattern did.
+    // "Un transfert DE DONNÉES hors de l'Union européenne" is the most
+    // ordinary phrasing there is, and the two intervening words defeated
+    // it. A 0% about other people's documents, caused by our own regex,
+    // is exactly the number this project exists not to publish.
+    //
+    // Widened to let a few words sit between the noun and the
+    // destination, and to accept the destination stated without the word
+    // "transfer" at all. The confirm below is untouched, so `present`
+    // still means a safeguard was named — a policy that mentions a
+    // transfer and names no safeguard now reads `unclear`, which is the
+    // truthful label: we found the subject and could not establish the
+    // rest.
     topic:
-      /(international transfer|transfer(s|red)? (outside|to a third country|internationa)|transfert(s)? (hors|internationa)|Drittland|internationale Übermittlung|transferencia(s)? internacional|transferência(s)? internacional|国外(移転|提供)|third[- ]country|النقل الدولي)/i,
+      /(international transfer|transfer(s|red)?[^.]{0,40}?(outside|to a third countr|internationa)|transfert(s)?[^.]{0,40}?(hors|internationa|vers (un|des) pays tiers|en dehors)|(hors|en dehors) de l['’](Union|EEE|Espace économique)|pays tiers|Drittland|internationale Übermittlung|transferencia(s)? internacional|transferência(s)? internacional|国外(移転|提供)|third[- ]country|النقل الدولي)/i,
     confirm:
       /(standard contractual clauses|clauses contractuelles types|Standardvertragsklauseln|cláusulas contractuales tipo|cláusulas contratuais|\bSCCs?\b|adequacy (decision|finding)|décision d['’]adéquation|Angemessenheitsbeschluss|decisión de adecuación|binding corporate rules|\bBCRs?\b|標準契約条項|十分性認定|derogation|dérogation)/i
   },
   {
     id: 'last_updated_stated',
+    // Same defect, same run: 11 of 13 French policies reported as
+    // carrying no date. The anchor required "dernière mise à jour" or
+    // "mis à jour le" and missed the plain "Mise à jour :", "Dernière
+    // modification" and "Version du", which is how most of them are
+    // written.
+    //
+    // Loosening an anchor is safe here because the confirm demands an
+    // actual date within the window: a stray "mise à jour de vos
+    // préférences" with no date beside it stays not_found.
     topic:
-      /(last updated|last revised|\beffective\b|\bupdated\b|dernière (mise à jour|révision)|mis à jour le|en vigueur le|zuletzt (aktualisiert|geändert)|Stand:|última actualización|última atualización|última atualização|最終更新|改定日|آخر تحديث)/i,
+      /(last updated|last revised|\beffective\b|\bupdated\b|(dernière|derniere)? ?(mise à jour|révision|modification)|mis(e)? à jour le|version du|en vigueur( le)?|zuletzt (aktualisiert|geändert)|Stand:|última actualización|última atualización|última atualização|最終更新|改定日|آخر تحديث)/i,
     confirm:
       /(\b\d{1,2}[\/.\- ]\d{1,2}[\/.\- ]\d{2,4}\b|\b\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2}\b|\b(january|february|march|april|may|june|july|august|september|october|november|december|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|janeiro|fevereiro|março|maio|junho|julho|setembro|outubro|novembro|dezembro)\b[^.]{0,20}\d{4}|\d{4}\s*年)/i
   }
