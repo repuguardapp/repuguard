@@ -587,6 +587,7 @@
     "errorService": "O serviço não respondeu. Tente novamente daqui a instantes.",
     "failureRefusedConnection": "O site fechou a conexão durante a leitura. É assim que se comporta uma proteção contra robôs: provavelmente recusa clientes automatizados. Não tentamos contorná-la.",
     "failureUnreachable": "Não conseguimos alcançar este domínio. Pode não resolver, não servir HTTPS, ou não ter respondido a tempo.",
+    "failureOurResolver": "Esta falha foi nossa: o nosso próprio resolvedor de nomes não respondeu, então o pedido nunca saiu. Nada foi lido, e nada aqui afirma algo sobre este domínio. Execute a análise novamente.",
     "failureTls": "O certificado do site não pôde ser validado. Não lemos um documento cuja origem não podemos verificar.",
     "failureRobots": "O ficheiro robots.txt do site pede-nos para não o ler. Respeitamos isso.",
     "failureNoLink": "A página inicial foi lida e não remete para nenhuma política de privacidade; os caminhos habituais não deram nada.",

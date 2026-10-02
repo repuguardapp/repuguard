@@ -33,6 +33,16 @@ export type FailureCode =
   | 'unreachable'
   | 'tls'
   | 'robots'
+  /**
+   * Our resolver, not their name.
+   *
+   * `getaddrinfo EBUSY` is the container's DNS resolver refusing to
+   * answer, and three of the observatory's first twenty-four domains
+   * failed on it — one of them ec-lyon.fr, which plainly resolves.
+   * Bucketing that as `unreachable` would put our own infrastructure
+   * into a published denominator and call it a property of the site.
+   */
+  | 'our_resolver'
   | 'no_link'
   | 'shell_page'
   | 'not_a_policy'
@@ -46,6 +56,11 @@ export function classifyScanFailure(raw: string | null): FailureCode {
 
   // The connection was made and then cut. Almost always a bot gate.
   if (/econnreset|econnaborted|epipe|socket hang up/.test(text)) return 'refused_connection';
+
+  // Ours before theirs: EBUSY is the resolver in our own container, and
+  // it is tested first because the string also contains "getaddrinfo",
+  // which otherwise reads as a name that does not exist.
+  if (/ebusy/.test(text)) return 'our_resolver';
 
   // The name did not resolve, or nothing answered at all.
   if (/enotfound|eai_again|econnrefused|ehostunreach|enetunreach|timeout|timed out/.test(text)) {

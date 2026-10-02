@@ -27,7 +27,22 @@ import { sitemapsFromRobots } from './sitemap';
  * report nothing about.
  */
 
-export type Provenance = 'linked-from-homepage' | 'listed-in-sitemap' | 'conventional-path';
+export type Provenance =
+  | 'linked-from-homepage'
+  /**
+   * The site linked it, but it lives on another hostname.
+   *
+   * Its own provenance rather than folded into the one above, because a
+   * reader is entitled to see that the document we read is not served by
+   * the domain that was typed. Google's policy is at
+   * policies.google.com, not google.fr; a French subsidiary routinely
+   * points at the group's notice. That is the site's answer to "where is
+   * your privacy policy" and it is still an answer about somebody else's
+   * hostname.
+   */
+  | 'linked-offsite'
+  | 'listed-in-sitemap'
+  | 'conventional-path';
 
 export interface Candidate {
   url: string;
@@ -88,16 +103,69 @@ const CONVENTIONAL_PATHS = [
   '/privacy-policy',
   '/legal/privacy',
   '/politique-de-confidentialite',
+  '/confidentialite',
   '/datenschutz'
 ];
 
+/**
+ * Words that identify a privacy policy in a URL path.
+ *
+ * Used only against a site's own sitemap, never to invent a URL. The
+ * difference matters: a path in the sitemap is a page the site says it
+ * has, so matching it is reading their answer, while assembling the same
+ * path ourselves is a guess and is labelled as one.
+ */
+const POLICY_PATHS =
+  /(privacy|confidentialite|confidentialité|donnees-personnelles|données-personnelles|vie-privee|vie-privée|privacidad|privacidade|datenschutz|プライバシー|個人情報|الخصوصية)/i;
+
 const ANCHOR = /<a\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
+/**
+ * Named and numeric HTML entities, because the anchor text is the match.
+ *
+ * Only `&nbsp;` and `&amp;` were decoded, and the words we look for are
+ * accented in five of the seven languages we serve. A footer that writes
+ * `Politique de confidentialit&eacute;` — which is ordinary, and what a
+ * CMS emits by default — produced the literal string
+ * "confidentialit&eacute;", matched nothing, and the scan reported that
+ * the site links to no privacy policy. That sentence is about our
+ * decoder and was published as a sentence about their footer.
+ *
+ * The named list is short on purpose: these are the accents that appear
+ * in the words in POLICY_WORDS. Numeric references are handled in
+ * general, since that is a rule rather than a list.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  eacute: 'é',
+  egrave: 'è',
+  ecirc: 'ê',
+  agrave: 'à',
+  acirc: 'â',
+  ccedil: 'ç',
+  iacute: 'í',
+  oacute: 'ó',
+  uacute: 'ú',
+  auml: 'ä',
+  ouml: 'ö',
+  uuml: 'ü',
+  szlig: 'ß',
+  atilde: 'ã',
+  ccedilla: 'ç'
+};
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
+      String.fromCodePoint(Number.parseInt(hex, 16))
+    )
+    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(Number(dec)))
+    .replace(/&([a-z]+);/gi, (whole, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? whole);
+}
+
 function textOf(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
+  return decodeEntities(html.replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -141,7 +209,13 @@ async function get(url: string, accept: string, retry = true): Promise<Fetched> 
     // get past it with browser-shaped headers, and that is the one thing
     // this product cannot do — we obey robots.txt and identify ourselves,
     // so when a site says no we publish the refusal rather than defeat it.
-    if (retry && /ECONNRESET|ECONNABORTED|EPIPE|socket hang up/i.test(reason)) {
+    // EBUSY is on this list and is not the site's fault at all. Three of
+    // the observatory's first twenty-four domains failed with
+    // `getaddrinfo EBUSY` — including ec-lyon.fr, which plainly resolves.
+    // That is our resolver in a serverless container, not a name that
+    // does not exist, and counting it as a refusal would put our own
+    // infrastructure into a published denominator.
+    if (retry && /ECONNRESET|ECONNABORTED|EPIPE|socket hang up|EBUSY/i.test(reason)) {
       return get(url, accept, false);
     }
 
@@ -184,7 +258,8 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
     return { candidates: [], refused: 'not a domain' };
   }
 
-  let rules = (await readRobots(origin)).rules;
+  let robots = await readRobots(origin);
+  let rules = robots.rules;
 
   if (!isAllowed('/', rules)) {
     // Said plainly rather than returned as "nothing found". A site that asks
@@ -211,7 +286,8 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
       const landed = new URL(home.url || origin).origin;
       if (landed !== origin) {
         origin = landed;
-        rules = (await readRobots(origin)).rules;
+        robots = await readRobots(origin);
+        rules = robots.rules;
         if (!isAllowed('/', rules)) {
           return { candidates: [], refused: `redirected to ${origin}, whose robots.txt disallows us` };
         }
@@ -222,37 +298,138 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
   }
 
   const found = new Map<string, Candidate>();
+
+  /**
+   * What the search actually saw, so a refusal is diagnosable.
+   *
+   * The observatory's largest refusal bucket is "the homepage was read
+   * and links to no privacy policy", and it landed on lefigaro.fr,
+   * leparisien.fr, francetvinfo.fr, radiofrance.fr, paris.fr and rfi.fr
+   * — sites whose footers visibly carry the link. So the sentence was
+   * almost certainly about us, and it contained nothing that could say
+   * which part of us: an undecoded entity, a link to another hostname, a
+   * footer injected by a consent manager, all produce the same words.
+   *
+   * The sandbox cannot reach any of those hosts, so a second guess would
+   * be worth what the first was. This census lets the next run answer
+   * instead — the same move as the ranking candidate list and the legal
+   * watcher's probes.
+   */
+  const census = { anchors: 0, offsite: 0, blockedByRobots: 0, pathsTried: 0 };
+
+  /** Off-origin links awaiting their own site's permission. url → label. */
+  const offsiteQueue = new Map<string, string | undefined>();
+
   const add = (url: string, provenance: Provenance, label?: string) => {
     let normalised: string;
+    let offsite = false;
     try {
       const u = new URL(url, origin);
-      if (u.origin !== origin) return; // Same origin only.
+      if (u.protocol !== 'https:') return;
+      offsite = u.origin !== origin;
       u.hash = '';
       normalised = u.toString();
     } catch {
       return;
     }
     if (found.has(normalised)) return;
-    if (!isAllowed(new URL(normalised).pathname, rules)) return;
-    found.set(normalised, label ? { url: normalised, provenance, label } : { url: normalised, provenance });
+
+    // Off-origin links are the site's own answer about somebody else's
+    // server, so they are accepted — but only after that server's own
+    // robots.txt has been read, exactly as a redirect is. The rules we
+    // hold answer for this origin alone; applying them to another
+    // hostname would be asking the wrong site for permission. Queued
+    // rather than added, because asking takes a request and this
+    // function cannot wait.
+    if (offsite) {
+      census.offsite += 1;
+      offsiteQueue.set(normalised, label);
+      return;
+    }
+
+    if (!isAllowed(new URL(normalised).pathname, rules)) {
+      census.blockedByRobots += 1;
+      return;
+    }
+    found.set(normalised, {
+      url: normalised,
+      provenance,
+      ...(label ? { label } : {})
+    });
   };
 
   // 1. What the site itself links to. The best answer, because it is theirs.
   if (home) {
     const html = (await home.text()).slice(0, MAX_HTML_BYTES);
     for (const match of html.matchAll(ANCHOR)) {
-      const label = textOf(match[2] ?? '').toLowerCase();
+      census.anchors += 1;
+      const text = textOf(match[2] ?? '');
+      const label = text.toLowerCase();
       if (!label || label.length > 60) continue;
       if (POLICY_WORDS.some((word) => label.includes(word))) {
-        add(match[1]!, 'linked-from-homepage', textOf(match[2] ?? ''));
+        add(match[1]!, 'linked-from-homepage', text);
       }
     }
   }
 
-  // 2. Conventional paths, only if the site pointed at nothing. Labelled as
-  //    ours, because that is what they are.
+  // 1b. Ask the other hostnames before using their pages.
+  //
+  //     At most two, and robots.txt is read once per origin. A footer
+  //     that points at three group domains is unusual; a page that
+  //     points at thirty is a link farm and not worth the requests.
+  if (found.size === 0 && offsiteQueue.size > 0) {
+    const asked = new Map<string, RobotsRules>();
+    for (const [url, label] of [...offsiteQueue].slice(0, 2)) {
+      const target = new URL(url);
+      let theirRules = asked.get(target.origin);
+      if (!theirRules) {
+        theirRules = (await readRobots(target.origin)).rules;
+        asked.set(target.origin, theirRules);
+      }
+      if (!isAllowed(target.pathname, theirRules)) {
+        census.blockedByRobots += 1;
+        continue;
+      }
+      found.set(url, {
+        url,
+        provenance: 'linked-offsite',
+        ...(label ? { label } : {})
+      });
+    }
+  }
+
+  // 2. The site's own sitemap, which has been promised by this module's
+  //    Provenance type since it was written and never once produced.
+  //
+  //    One request to a file that exists to be read by clients like
+  //    ours, and it finds the document whatever the site decided to call
+  //    it — which is strictly better than us trying six more paths on
+  //    their server. A loc in their sitemap is a page they say they
+  //    have, so matching it is reading their answer, not guessing.
+  if (found.size === 0) {
+    for (const sitemap of robots.sitemaps.slice(0, 1)) {
+      const { res } = await get(sitemap, 'application/xml');
+      if (!res) break;
+      const xml = (await res.text()).slice(0, MAX_HTML_BYTES);
+      for (const loc of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
+        const url = loc[1]!;
+        try {
+          if (!POLICY_PATHS.test(new URL(url).pathname)) continue;
+        } catch {
+          continue;
+        }
+        add(url, 'listed-in-sitemap');
+        if (found.size > 0) break;
+      }
+    }
+  }
+
+  // 3. Conventional paths, only if the site pointed at nothing and its
+  //    sitemap listed nothing. Labelled as ours, because that is what
+  //    they are.
   if (found.size === 0) {
     for (const path of CONVENTIONAL_PATHS) {
+      census.pathsTried += 1;
       const { res } = await get(`${origin}${path}`, 'text/html');
       if (res) add(res.url || `${origin}${path}`, 'conventional-path');
       if (found.size > 0) break;
@@ -273,6 +450,11 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
           // happened describes a page nobody ever opened.
           homepage.error
           ? `we could not read the homepage: ${homepage.error}`
-          : 'the homepage was read and links to no privacy policy; the usual paths answered nothing'
+          : // Carrying what we saw. The sentence stays the same so the
+            // refusal classifier keeps grouping it; the numbers after it
+            // are what turn the next occurrence into a diagnosis.
+            'the homepage was read and links to no privacy policy; the usual paths answered nothing' +
+            ` (${census.anchors} link(s) on the page, ${census.blockedByRobots} blocked by robots.txt,` +
+            ` ${robots.sitemaps.length} sitemap(s) in robots.txt, ${census.pathsTried} path(s) tried)`
   };
 }

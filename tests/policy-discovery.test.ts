@@ -53,8 +53,24 @@ describe('what it refuses to do', () => {
     expect(source.indexOf('readRobots(origin)')).toBeLessThan(source.indexOf('const home ='));
   });
 
-  it('never follows a link off the domain', () => {
-    expect(source).toContain('u.origin !== origin');
+  it('never uses another hostname’s page without asking that hostname', () => {
+    // This guard used to read "never follows a link off the domain", and
+    // it was discussed rather than deleted. The rule it protected was
+    // "do not wander off crawling the web from a link" — not "a policy
+    // on another hostname does not exist". google.fr does not host
+    // Google's privacy policy, and refusing the link the site published
+    // reported "no policy found" about a site that published one.
+    //
+    // The narrower rule that replaced it: only a link whose own anchor
+    // text names a privacy policy, only from the homepage, at most two,
+    // and only after that origin's robots.txt has been read — the same
+    // terms on which this module already follows the site's own
+    // redirect off-origin.
+    expect(source).toContain("u.origin !== origin");
+    expect(source).toContain('offsiteQueue');
+    expect(source).toContain('readRobots(target.origin)');
+    expect(source).toContain('isAllowed(target.pathname, theirRules)');
+    expect(source).toContain('.slice(0, 2)');
   });
 
   it('refuses http', () => {

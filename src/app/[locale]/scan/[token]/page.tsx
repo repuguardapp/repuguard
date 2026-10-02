@@ -45,6 +45,11 @@ export const dynamic = 'force-dynamic';
 const FAILURE_KEY = {
   refused_connection: 'failureRefusedConnection',
   unreachable: 'failureUnreachable',
+  // The one sentence on this list that is about us and says so. A
+  // resolver failure in our own container is not a property of the
+  // domain, and bucketing it with "we could not reach this domain" told
+  // a visitor something false about their own site.
+  our_resolver: 'failureOurResolver',
   tls: 'failureTls',
   robots: 'failureRobots',
   no_link: 'failureNoLink',
