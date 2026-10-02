@@ -5,8 +5,10 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { capturePolicy } from '@/lib/policy-capture';
 import { discoverPolicy, type Candidate } from '@/lib/policy-discovery';
 import { observePolicy } from '@/lib/policy-observations';
+import { observatoryCsv, observatoryReport } from '@/lib/observatory';
 import { supabaseService } from '@/lib/supabase';
 import { fetchFrenchSample } from '@/lib/survey-sample';
+import { depositEditionOnce } from '@/lib/zenodo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -181,7 +183,79 @@ async function survey() {
     observed: stats.observed,
     refused: stats.refused
   });
-  return NextResponse.json({ ok: true, ...stats, seeded: seeded.added });
+
+  const deposited = await depositIfFinished(db);
+
+  return NextResponse.json({ ok: true, ...stats, seeded: seeded.added, ...deposited });
+}
+
+/**
+ * When the edition finishes, deposit it. Once.
+ *
+ * This was the last manual act in the distribution chain. Everything
+ * else fills itself and then somebody had to notice, on the right day,
+ * that the sample had completed, and press a button on an admin page. A
+ * step that depends on a human noticing a moment is a step that does not
+ * happen — and the sixty-day test the whole observatory exists to settle
+ * starts counting whether or not anyone pressed it.
+ *
+ * WHAT IS AUTOMATED IS THE DRAFT, NOT THE DOI
+ *
+ * A draft can be deleted. A minted DOI is permanent by design and cannot
+ * be withdrawn, only superseded, and this pipeline has produced a wrong
+ * morning often enough to make that distinction the whole design: seven
+ * blank observations about Airbnb, a sitemap of 321 undated children read
+ * as a silent regulator, a ministry newsroom ingested as a data
+ * protection feed. The last click belongs to whoever has read the
+ * numbers. That is one click per quarterly edition.
+ *
+ * NEVER BLOCKS THE RUN
+ *
+ * Wrapped whole. Zenodo being down, slow or unreachable must not cost us
+ * the twelve domains this invocation just read — the crawl is the thing
+ * with a schedule, and the deposit can wait three hours for the next run.
+ */
+async function depositIfFinished(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ deposit?: string }> {
+  try {
+    const report = await observatoryReport();
+    // Not "could not read the figures" — that is a different sentence and
+    // it belongs to the module that discovered it, which already said so.
+    if (!report) return {};
+    if (report.lookedAt < report.sampleSize) return {};
+
+    const result = await depositEditionOnce(db, report, observatoryCsv(report));
+
+    // Already deposited: the normal state for every run after the first
+    // one that completed the edition, and silent on purpose.
+    if (result.skipped && !result.refused) return {};
+
+    if (result.refused) {
+      console.error('[cron/policy-survey] deposit_refused', { reason: result.refused });
+      alertOps('cron.observatory_deposit_refused', { reason: result.refused });
+      return { deposit: `refused: ${result.refused}` };
+    }
+
+    console.log('[cron/policy-survey] zenodo_draft_created', {
+      depositionId: result.depositionId,
+      doi: result.doi
+    });
+    // Alerted because it needs a human: the draft is complete and the
+    // DOI is one deliberate click away, on a page nobody is watching.
+    alertOps('cron.observatory_deposit_ready', {
+      doi: result.doi,
+      editUrl: result.editUrl,
+      documentsRead: report.documentsRead,
+      lookedAt: report.lookedAt
+    });
+    return { deposit: `draft ${result.depositionId}` };
+  } catch (err) {
+    console.error('[cron/policy-survey] deposit_threw', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return {};
+  }
 }
 
 /**

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { isAdminEmail } from '@/lib/admin';
 import { observatoryCsv, observatoryReport } from '@/lib/observatory';
+import { supabaseService } from '@/lib/supabase';
 import { getCurrentAdminUser } from '@/lib/supabase-server';
-import { depositObservatory } from '@/lib/zenodo';
+import { depositEditionOnce } from '@/lib/zenodo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +44,23 @@ export async function POST() {
     );
   }
 
-  const result = await depositObservatory(report, observatoryCsv(report));
+  // The same lock the cron takes.
+  //
+  // The cron now deposits the edition the moment the sample completes, so
+  // this button and that cron are two writers to one Zenodo account. Two
+  // drafts of one study, each with its own reserved DOI, one of which
+  // gets published and one of which sits there looking equally real — and
+  // nothing downstream could tell them apart. The unique constraint on
+  // the edition id is what makes the second writer a no-op instead.
+  const result = await depositEditionOnce(supabaseService(), report, observatoryCsv(report));
+
+  if (result.skipped && !result.refused) {
+    return NextResponse.json({
+      ok: false,
+      reason:
+        'this edition has already been deposited — look for its draft in Zenodo rather than creating a second one'
+    });
+  }
 
   if (result.refused) {
     // 200 with the reason, not an error status. "The collection is not

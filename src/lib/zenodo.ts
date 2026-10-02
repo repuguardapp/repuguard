@@ -1,5 +1,6 @@
 import 'server-only';
 import { OBSERVATORY_LICENCE, type ObservatoryReport } from './observatory';
+import type { supabaseService } from './supabase';
 
 /**
  * Deposit the study where datasets are actually looked for.
@@ -199,4 +200,74 @@ async function zenodo(
     ...(body ? { body: JSON.stringify(body) } : {}),
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
+}
+
+/**
+ * Deposit the edition once, and never twice.
+ *
+ * The caller is a cron that runs eight times a day. Without the lock it
+ * would create a draft on every run from the moment the sample finished:
+ * Zenodo accepts each one, reserves a DOI for each one, and we would be
+ * left with a pile of drafts of the same study, any of which could be
+ * published by mistake.
+ *
+ * The lock is a unique constraint on the edition id, taken BEFORE the
+ * deposit rather than after it. That ordering is the whole mechanism. If
+ * the row is written after a successful deposit, two concurrent runs both
+ * see no row, both deposit, and both then write — and the one that loses
+ * the constraint has already created a draft nobody is tracking. Claiming
+ * the edition first means the loser of the race never calls Zenodo at all.
+ *
+ * A refusal is recorded on the claimed row rather than releasing it. That
+ * is deliberate: a Zenodo outage should not produce eight more attempts
+ * the same day. The row says what happened and a human can clear it.
+ */
+export async function depositEditionOnce(
+  db: ReturnType<typeof supabaseService>,
+  report: ObservatoryReport,
+  csv: string
+): Promise<DepositResult & { skipped: boolean }> {
+  const edition = report.sourceId;
+  if (!edition) {
+    return {
+      depositionId: null,
+      doi: null,
+      editUrl: null,
+      refused: 'the edition has no ranking id, so it cannot be identified or deposited',
+      skipped: true
+    };
+  }
+
+  // Claim first. A duplicate key here means another run already owns this
+  // edition, and the correct behaviour is to do nothing at all.
+  const { error: claimError } = await db.from('observatory_deposits').insert({
+    edition,
+    looked_at: report.lookedAt,
+    sample_size: report.sampleSize,
+    documents_read: report.documentsRead
+  });
+
+  if (claimError) {
+    return {
+      depositionId: null,
+      doi: null,
+      editUrl: null,
+      refused: null,
+      skipped: true
+    };
+  }
+
+  const result = await depositObservatory(report, csv);
+
+  await db
+    .from('observatory_deposits')
+    .update({
+      deposition_id: result.depositionId,
+      doi: result.doi,
+      edit_url: result.editUrl,
+      refused: result.refused
+    })
+    .eq('edition', edition);
+
+  return { ...result, skipped: false };
 }

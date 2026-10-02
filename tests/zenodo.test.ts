@@ -30,6 +30,11 @@ const LIB = read('src', 'lib', 'zenodo.ts');
 const LIB_CODE = LIB.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
 const ROUTE = read('src', 'app', 'api', 'admin', 'observatory-deposit', 'route.ts');
 const OBSERVATORY = read('src', 'lib', 'observatory.ts');
+const SURVEY_CRON = read('src', 'app', 'api', 'cron', 'policy-survey', 'route.ts');
+const SURVEY_CRON_CODE = SURVEY_CRON.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(
+  /(^|[^:])\/\/.*$/gm,
+  '$1'
+);
 
 describe('nothing permanent happens on its own', () => {
   it('creates a draft and never calls publish', () => {
@@ -43,9 +48,44 @@ describe('nothing permanent happens on its own', () => {
     expect(LIB).toContain('a DOI is permanent and this edition is not finished');
   });
 
-  it('is behind the admin session rather than a cron', () => {
+  it('keeps the admin route behind a session', () => {
     expect(ROUTE).toContain('getCurrentAdminUser');
     expect(ROUTE).toContain('isAdminEmail');
+  });
+
+  it('lets a cron create the draft, and still nothing publish it', () => {
+    // This guard used to read "is behind the admin session rather than a
+    // cron", and the rule it was protecting was never "a machine must not
+    // deposit". It was "a machine must not mint a permanent DOI". The
+    // difference matters because the manual version did not work: it
+    // required a human to notice, on the right day, that the sample had
+    // completed, while the sixty-day test counts regardless.
+    //
+    // So the draft is automatic — deletable, reversible, no public record
+    // — and /actions/publish is called by nothing, anywhere.
+    expect(SURVEY_CRON).toContain('depositEditionOnce');
+    expect(SURVEY_CRON).toContain('report.lookedAt < report.sampleSize');
+    expect(LIB).not.toContain('/actions/publish');
+    expect(SURVEY_CRON_CODE).not.toContain('publish');
+  });
+
+  it('cannot deposit the same edition twice', () => {
+    // The cron runs eight times a day. Without a lock it would create a
+    // draft on every run once the sample finished, each with its own
+    // reserved DOI, any of which could be published by mistake.
+    expect(LIB).toContain("from('observatory_deposits').insert");
+    // Claimed BEFORE the deposit: a row written afterwards lets two
+    // concurrent runs both see nothing, both deposit, and the loser of
+    // the constraint has already created a draft nobody tracks.
+    expect(LIB.indexOf("insert({")).toBeLessThan(LIB.indexOf('await depositObservatory(report, csv)'));
+    // And the button takes the same lock, or the two writers race.
+    expect(ROUTE).toContain('depositEditionOnce');
+  });
+
+  it('never lets a Zenodo outage cost the crawl its run', () => {
+    // The crawl is the thing with a schedule. The deposit can wait three
+    // hours for the next run; the twelve domains cannot be re-read.
+    expect(SURVEY_CRON).toContain('deposit_threw');
   });
 
   it('reports a refusal as a sentence, not as an error status', () => {
