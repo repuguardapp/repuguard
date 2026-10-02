@@ -127,18 +127,30 @@ function metadataFor(report: ObservatoryReport): Record<string, unknown> {
   const quarter = `${new Date().getUTCFullYear()}-Q${Math.floor(new Date().getUTCMonth() / 3) + 1}`;
 
   return {
-    title: `Privacy policy disclosures across the most-visited .fr domains (${quarter})`,
+    // NOT "most-visited".
+    //
+    // The sample came from the Majestic Million, which ranks by referring
+    // subnets — a measure of who links to a site, not of who visits it.
+    // The page was corrected the day that ranking answered; this record
+    // was not, and it is the one that gets a permanent DOI. A citable
+    // artefact asserting a population it does not have is the worst place
+    // in this system for that sentence to survive.
+    title: `Privacy policy disclosures across .fr domains (${quarter})`,
     upload_type: 'dataset',
     description: [
-      `<p>Counts of seven disclosures required by the GDPR across the most-visited <code>.fr</code> domains.</p>`,
+      `<p>Counts of seven disclosures required by the GDPR across <code>.fr</code> domains.</p>`,
       `<p>${report.documentsRead} privacy policies were read, from ${report.lookedAt} domains attempted, out of a sample of ${report.sampleSize}.</p>`,
+      // The ranking is named, never characterised. Which list answered is
+      // decided at seeding time — it was Tranco until that URL started
+      // returning 404 — and a description that tells a reader what the
+      // ranking measures is a description that can be wrong about it.
       report.sourceId
-        ? `<p><strong>Population:</strong> the <code>.fr</code> domains of Tranco list ${report.sourceId}, retrieved ${report.sourceDate}, ranks 1 to ${report.sampleSize}. The list is public and dated, so the sample can be rebuilt.</p>`
+        ? `<p><strong>Population:</strong> the <code>.fr</code> domains at ranks 1 to ${report.sampleSize} of the published ranking <code>${escapeHtml(report.sourceId)}</code>, retrieved ${escapeHtml(report.sourceDate ?? 'unknown date')}. Rankings differ in what they measure, so this one is identified by name and date rather than described; it is public and dated, so the sample can be rebuilt.</p>`
         : '',
       `<p><strong>Method:</strong> each domain was read once, by a crawler that fetches robots.txt first and obeys it, identifies itself, and reads only the document the site publishes. A disclosure is recorded only when the wording is present in the document; the supporting sentence is verified against the page character by character before it counts.</p>`,
       `<p><strong>Refusals are part of the result.</strong> Domains that could not be read — a 403, a dropped connection, a robots.txt disallow, a PDF, a page assembled in the browser — are counted and broken down by reason rather than dropped from the denominator.</p>`,
       `<p><strong>No organisation is named or assessed.</strong> These are aggregates. A policy that omits a retention period may still be lawful, and a finding is a statement about one reading of one document on one day.</p>`,
-      `<p><strong>Limitation:</strong> the population is <code>.fr</code> registrations, so French organisations on other suffixes are absent.</p>`
+      `<p><strong>Limitation:</strong> the population is <code>.fr</code> registrations, so French organisations on other suffixes are absent, and the ranking the sample is drawn from is not a measure of traffic unless its own publisher says so.</p>`
     ]
       .filter(Boolean)
       .join(''),
@@ -155,6 +167,21 @@ function metadataFor(report: ObservatoryReport): Record<string, unknown> {
     ],
     notes: `Licence: ${OBSERVATORY_LICENCE}`
   };
+}
+
+/**
+ * A source id goes into HTML we did not write by hand.
+ *
+ * It comes from a URL we fetched from a third party. It has never
+ * contained anything but letters and digits, and that is not a reason to
+ * interpolate it raw into a description field on a permanent record.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 async function zenodo(

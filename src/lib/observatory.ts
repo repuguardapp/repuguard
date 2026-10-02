@@ -174,6 +174,22 @@ async function tallyObservations(
  * the thing we are trying to earn. CC0 would be more generous and would
  * give away the only return we get.
  */
+/**
+ * Domains that must have been attempted before the dataset exists at all.
+ *
+ * A third of the sample. Not a statistical threshold — there is no sound
+ * one for a census that is simply incomplete — but the point past which
+ * a reader who takes the file is looking at a study rather than at a
+ * crawl that started this morning.
+ *
+ * Shared by the page and the download route on purpose. The page has
+ * always hidden its figures below the first reading while the file was
+ * served to anyone who knew the path, and a CSV is detached from its
+ * context by design — that is why it earns a citation, and why it cannot
+ * carry the "collecting" banner that makes a partial page honest.
+ */
+export const MIN_DOMAINS_FOR_DOWNLOAD = 100;
+
 export const OBSERVATORY_LICENCE = 'https://creativecommons.org/licenses/by/4.0/';
 
 /**
@@ -201,11 +217,17 @@ export function observatoryDataset(
   return {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: 'Privacy policy disclosures across the most-visited .fr domains',
+    // Not "most-visited". The sample came from the Majestic Million,
+    // which ranks by referring subnets — who links to a site, not who
+    // visits it. The visible page was corrected the day that ranking
+    // answered; this markup, which is what Google Dataset Search reads,
+    // still carried the claim the page had stopped making.
+    name: 'Privacy policy disclosures across .fr domains',
     description:
-      `Counts of seven disclosures required by the GDPR across the most-visited .fr domains. ` +
-      `${report.documentsRead} privacy policies read of ${report.lookedAt} domains attempted, out of a sample of ${report.sampleSize}. ` +
-      `Domains that could not be read are counted and broken down by reason rather than dropped. No organisation is named or assessed.`,
+      `Counts of seven disclosures required by the GDPR across .fr domains. ` +
+      `${report.documentsRead} privacy policies read of ${report.lookedAt} domains attempted, out of a sample of ${report.sampleSize}` +
+      (report.sourceId ? ` drawn from the published ranking ${report.sourceId}` : '') +
+      `. Domains that could not be read are counted and broken down by reason rather than dropped. No organisation is named or assessed.`,
     url: `${origin}/${locale}/observatory`,
     license: OBSERVATORY_LICENCE,
     creator: { '@type': 'Organization', name: 'LexyFlow', url: origin },

@@ -238,3 +238,89 @@ describe('a run that failed is answerable without leaving the database', () => {
     expect(SURVEY).toContain("alertOps('cron.policy_survey_queue_unreadable'");
   });
 });
+
+/**
+ * The file is the thing that gets cited, so it is the thing that must
+ * not exist before there is a study.
+ *
+ * The page has always guarded this: below the first reading it says
+ * "nothing yet" and hides the download card. The CSV route did not — it
+ * answered to anyone who knew the path. Twice this week the crawl was
+ * reset to a handful of domains, and either time the route would have
+ * served a perfectly well-formed file reading "4 documents read of 12
+ * attempted", under a CC BY licence that invites reuse.
+ *
+ * A file is worse than a page here. A page is read beside its collecting
+ * banner; a CSV is detached by design — that is why it earns a citation
+ * — and a detached artefact carries no banner.
+ */
+describe('no dataset before there is a study', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  const ROUTE = read('src/app/api/observatory/data.csv/route.ts');
+  const PAGE = read('src/app/[locale]/observatory/page.tsx');
+  const LIB = read('src/lib/observatory.ts');
+
+  it('refuses the download below the threshold', () => {
+    expect(ROUTE).toContain('MIN_DOMAINS_FOR_DOWNLOAD');
+    expect(ROUTE).toContain('report.lookedAt < MIN_DOMAINS_FOR_DOWNLOAD');
+    expect(ROUTE).toContain('status: 503');
+  });
+
+  it('says how far along it is instead of answering a bare error', () => {
+    // A 503 with no number sends the reader to us to ask. The count is
+    // the answer to the question they would have asked.
+    expect(ROUTE).toContain('report.lookedAt} of ${report.sampleSize} domains');
+  });
+
+  it('uses one threshold, not a page rule and a route rule', () => {
+    // Two numbers would drift, and the drift is a page offering a link
+    // that answers 503 — or worse, hiding a file that is already being
+    // served.
+    expect(LIB).toContain('export const MIN_DOMAINS_FOR_DOWNLOAD');
+    expect(PAGE).toContain('report.lookedAt >= MIN_DOMAINS_FOR_DOWNLOAD');
+  });
+
+  it('never characterises the ranking in the markup Google reads', () => {
+    // schema.org/Dataset is what Google Dataset Search indexes. It
+    // claimed "the most-visited .fr domains" while the sample came from
+    // the Majestic Million, which ranks by referring subnets. The page
+    // was corrected the day that ranking answered; this was not.
+    const code = LIB.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
+    expect(code).not.toContain('most-visited');
+    expect(code).toContain('the published ranking ${report.sourceId}');
+  });
+});
+
+/**
+ * A name under which other people register is not a site.
+ *
+ * The first seeded sample put `gouv.fr` at rank 181, `asso.fr` at 905 and
+ * `blogspot.fr` at 1654, because a link graph counts a registry suffix as
+ * a domain. `asso.fr` serves no website at all — it cannot have a privacy
+ * policy, and its refusal says nothing about anybody.
+ *
+ * One percent of three hundred, and one percent of a published refusal
+ * rate that would have been our sampling error presented as a finding
+ * about French sites.
+ */
+describe('the sample contains only things that can publish a policy', () => {
+  const SAMPLE = readFileSync(join(__dirname, '..', 'src/lib/survey-sample.ts'), 'utf8');
+
+  it('excludes registry suffixes at seeding, not afterwards', () => {
+    expect(SAMPLE).toContain('isRegistrySuffix(domain)');
+    expect(SAMPLE).toContain("'gouv.fr'");
+    expect(SAMPLE).toContain("'asso.fr'");
+    expect(SAMPLE).toContain("'blogspot.fr'");
+    // At seeding: an exclusion applied later, after the refusals are
+    // known, is a denominator adjusted to taste.
+    expect(SAMPLE.indexOf('isRegistrySuffix(domain)')).toBeLessThan(SAMPLE.indexOf('entries.push'));
+  });
+
+  it('does not depend on the Public Suffix List to define the population', () => {
+    // 15,000 lines that change weekly. A sample whose membership depends
+    // on which day it was built cannot be reproduced by a reader, which
+    // is the one property the methodology claims.
+    expect(SAMPLE).not.toContain('psl');
+    expect(SAMPLE).toContain('REGISTRY_SUFFIXES');
+  });
+});

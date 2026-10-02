@@ -1,10 +1,15 @@
 import { waitUntil } from '@vercel/functions';
 import { NextResponse, type NextRequest } from 'next/server';
-import { observatoryCsv, observatoryReport } from '@/lib/observatory';
+import {
+  MIN_DOMAINS_FOR_DOWNLOAD,
+  observatoryCsv,
+  observatoryReport
+} from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 
 /**
  * The counts, as a file somebody can put in a spreadsheet.
@@ -37,6 +42,34 @@ export async function GET(request: NextRequest) {
       status: 503,
       headers: { 'content-type': 'text/plain; charset=utf-8' }
     });
+  }
+
+  /**
+   * And the same refusal before there is a study to download.
+   *
+   * The page has always guarded this — below the first reading it shows
+   * "nothing yet" and hides the download card. The file did not: it was
+   * served to anyone who knew the path, and twice this week the crawl was
+   * reset to a handful of domains, which would have produced a perfectly
+   * well-formed CSV reading "4 documents read of 12 attempted" under a
+   * CC BY licence that invites reuse.
+   *
+   * A file is worse than a page here. A page is read in its context,
+   * where the collecting banner sits; a CSV is detached by design, which
+   * is the whole reason it earns a citation, and a detached artefact
+   * carries no banner. So the threshold is the one the page uses for its
+   * own headline, and below it this answers 503 with the reason rather
+   * than a document somebody can quote.
+   */
+  if (report.lookedAt < MIN_DOMAINS_FOR_DOWNLOAD) {
+    return new NextResponse(
+      `the study has looked at ${report.lookedAt} of ${report.sampleSize} domains — ` +
+        `too few to publish as a dataset, so there is no file yet\n`,
+      {
+        status: 503,
+        headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' }
+      }
+    );
   }
 
   const csv = observatoryCsv(report);

@@ -8,7 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { appUrl } from '@/lib/app-url';
 import { jsonLdScript } from '@/lib/json-ld';
-import { observatoryDataset, observatoryReport } from '@/lib/observatory';
+import {
+  MIN_DOMAINS_FOR_DOWNLOAD,
+  observatoryDataset,
+  observatoryReport
+} from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
 
 /**
@@ -246,7 +250,10 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
         </CardContent>
       </Card>
 
-      {report && report.lookedAt > 0 ? (
+      {/* The same threshold the file itself enforces. Offering a
+          download that answers 503 is a worse page than one that
+          does not offer it yet. */}
+      {report && report.lookedAt >= MIN_DOMAINS_FOR_DOWNLOAD ? (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('downloadTitle')}</CardTitle>

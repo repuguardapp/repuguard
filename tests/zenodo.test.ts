@@ -17,6 +17,17 @@ import { describe, expect, it } from 'vitest';
 const read = (...p: string[]) => readFileSync(join(__dirname, '..', ...p), 'utf8');
 
 const LIB = read('src', 'lib', 'zenodo.ts');
+
+/**
+ * The same file with its comments removed.
+ *
+ * Used by the guards that assert what the RECORD says, as opposed to
+ * what the code says about itself. A comment explaining why the word
+ * "Tranco" must not appear in a deposit would otherwise fail the guard
+ * that forbids it — and the fix for that is not to stop writing the
+ * comment.
+ */
+const LIB_CODE = LIB.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
 const ROUTE = read('src', 'app', 'api', 'admin', 'observatory-deposit', 'route.ts');
 const OBSERVATORY = read('src', 'lib', 'observatory.ts');
 
@@ -57,8 +68,25 @@ describe('the deposited file is the published file', () => {
 describe('the record stands on its own once detached from us', () => {
   it('carries the sample provenance in its own description', () => {
     // A Zenodo record is read by people who never see our page.
-    expect(LIB).toContain('Tranco list ${report.sourceId}');
+    expect(LIB).toContain('escapeHtml(report.sourceId)');
     expect(LIB).toContain('the sample can be rebuilt');
+  });
+
+  it('names the ranking and never says what it measures', () => {
+    // This guard used to read `toContain('Tranco list ${report.sourceId}')`
+    // and it encoded the defect. Tranco answered 404 eight times and the
+    // sample came from the Majestic Million, which ranks by referring
+    // subnets — who links to a site, not who visits it. The visible page
+    // was corrected that day; this record was not, and it is the one that
+    // receives a permanent DOI.
+    //
+    // The rule that replaced it: the ranking is identified, never
+    // characterised. A description that tells a reader what the list
+    // measures is a description that can be wrong about it, and a wrong
+    // one in a minted record cannot be withdrawn, only superseded.
+    expect(LIB_CODE).not.toContain('Tranco');
+    expect(LIB_CODE).not.toContain('most-visited');
+    expect(LIB_CODE).toContain('Rankings differ in what they measure');
   });
 
   it('states the refusals and the absence of any verdict', () => {

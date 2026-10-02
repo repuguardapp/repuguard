@@ -63,6 +63,58 @@ const SOURCES: RankingSource[] = [
   }
 ];
 
+/**
+ * Names under which other people register, which publish nothing.
+ *
+ * These rankings count a registry suffix as a domain, because from a
+ * link graph's point of view it is one. The first seeded sample put
+ * `gouv.fr`, `asso.fr` and `blogspot.fr` at ranks 181, 905 and 1654 —
+ * and `asso.fr` serves no website at all, so it cannot have a privacy
+ * policy and its refusal says nothing about anybody.
+ *
+ * Three of three hundred is one percent, and one percent of a published
+ * refusal rate that is OUR sampling error dressed as a finding about
+ * French sites. Excluded at seeding, where the exclusion is a stated
+ * property of the population, rather than quietly dropped later, where
+ * it would be a denominator we adjusted after seeing the results.
+ *
+ * Deliberately a short list and not the Public Suffix List: the PSL is a
+ * 15,000-line file that changes weekly, and depending on it to decide
+ * what is in a published sample would make the sample unreproducible by
+ * anyone who ran it on a different day. These are named, so the
+ * methodology can name them.
+ */
+const REGISTRY_SUFFIXES = new Set([
+  'gouv.fr',
+  'asso.fr',
+  'nom.fr',
+  'com.fr',
+  'prd.fr',
+  'tm.fr',
+  'aeroport.fr',
+  'avocat.fr',
+  'avoues.fr',
+  'cci.fr',
+  'chambagri.fr',
+  'chirurgiens-dentistes.fr',
+  'experts-comptables.fr',
+  'geometre-expert.fr',
+  'greta.fr',
+  'huissier-justice.fr',
+  'medecin.fr',
+  'notaires.fr',
+  'pharmacien.fr',
+  'port.fr',
+  'veterinaire.fr',
+  // Not a registry, but the same problem: a platform's bare apex, under
+  // which third parties publish and which publishes nothing itself.
+  'blogspot.fr'
+]);
+
+function isRegistrySuffix(domain: string): boolean {
+  return REGISTRY_SUFFIXES.has(domain);
+}
+
 const FETCH_TIMEOUT_MS = 60_000;
 
 /**
@@ -159,6 +211,7 @@ async function trySource(source: RankingSource, limit: number): Promise<Sample> 
       const rank = Number(cells[0]!.trim());
       const domain = cells[source.domainColumn]!.trim().toLowerCase();
       if (!Number.isFinite(rank) || !domain.endsWith('.fr')) return true;
+      if (isRegistrySuffix(domain)) return true;
       // A bare registrable name. Anything with a path, a port or a label
       // that is not a hostname is not something to point a crawler at.
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
