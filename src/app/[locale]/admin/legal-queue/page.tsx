@@ -38,7 +38,7 @@ export const dynamic = 'force-dynamic';
 const EVIDENCE_FIELDS = [
   { key: 'entity', label: 'Entité visée' },
   { key: 'decision_date', label: 'Date de la décision' },
-  { key: 'fine_eur', label: 'Montant' }
+  { key: 'fine_amount', label: 'Montant' }
 ] as const;
 
 export const metadata: Metadata = {
@@ -57,7 +57,8 @@ interface QueueRow {
   entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
-  fine_eur: number | null;
+  fine_amount: number | null;
+  fine_currency: string | null;
   outcome: string | null;
   summary_en: string | null;
   slug: string | null;
@@ -116,7 +117,7 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
   const { data, error } = await db
     .from('legal_developments')
     .select(
-      'id, primary_url, raw_title, published_at, authority, entity, decision_date, articles, fine_eur, outcome, summary_en, slug, evidence, legal_sources(name, licence)'
+      'id, primary_url, raw_title, published_at, authority, entity, decision_date, articles, fine_amount, fine_currency, outcome, summary_en, slug, evidence, legal_sources(name, licence)'
     )
     .eq('status', 'extracted')
     .order('published_at', { ascending: false, nullsFirst: false })
@@ -179,9 +180,13 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
               {row.authority ? <Badge variant="secondary">{row.authority}</Badge> : null}
               {row.decision_date ? <Badge variant="outline">{row.decision_date}</Badge> : null}
               {row.outcome ? <Badge variant="outline">{row.outcome}</Badge> : null}
-              {row.fine_eur !== null ? (
+              {row.fine_amount !== null && row.fine_currency ? (
                 <Badge variant="outline">
-                  {new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(row.fine_eur)}
+                  {new Intl.NumberFormat('en', {
+                    style: 'currency',
+                    currency: row.fine_currency,
+                    maximumFractionDigits: 0
+                  }).format(row.fine_amount)}
                 </Badge>
               ) : null}
             </div>

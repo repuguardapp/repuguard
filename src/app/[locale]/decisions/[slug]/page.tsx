@@ -66,14 +66,17 @@ export default async function DecisionPage({ params }: PageProps) {
   if (decision.outcome) {
     facts.push({ label: t('outcome'), value: outcomeLabel(decision.outcome, params.locale) });
   }
-  if (decision.fineEur !== null) {
+  // The currency comes from the document, not from the page. "963 900 €"
+  // under the name of a company fined £963,900 is a false statement about
+  // a third party, and it was one query away from being published.
+  if (decision.fineAmount !== null && decision.fineCurrency) {
     facts.push({
       label: t('fine'),
       value: new Intl.NumberFormat(params.locale, {
         style: 'currency',
-        currency: 'EUR',
+        currency: decision.fineCurrency,
         maximumFractionDigits: 0
-      }).format(decision.fineEur)
+      }).format(decision.fineAmount)
     });
   }
 

@@ -56,7 +56,8 @@ interface ApprovedRow {
   entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
-  fine_eur: number | null;
+  fine_amount: number | null;
+  fine_currency: string | null;
   outcome: string | null;
   summary_en: string | null;
 }
@@ -76,7 +77,7 @@ async function localize() {
 
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, slug, authority, entity, decision_date, articles, fine_eur, outcome, summary_en')
+    .select('id, slug, authority, entity, decision_date, articles, fine_amount, fine_currency, outcome, summary_en')
     .eq('status', 'approved')
     .order('reviewed_at', { ascending: true, nullsFirst: false })
     .limit(MAX_ITEMS_PER_RUN);
@@ -237,14 +238,19 @@ function buildTitle(item: ApprovedRow, locale: string): string {
   if (item.entity) parts.push(item.entity);
   parts.push(item.authority ?? 'Regulator');
 
-  if (item.fine_eur !== null && item.fine_eur > 0) {
+  if (item.fine_amount !== null && item.fine_amount > 0 && item.fine_currency) {
     // `-u-nu-latn` forces Latin digits: Arabic would otherwise render
     // ٥٠٠٬٠٠٠, which nobody searching for this fine will ever type.
+    //
+    // And the currency is the document's, not ours. This string goes in
+    // the <title> of seven pages: a headline reading "€963,900 fine"
+    // about a company fined in pounds is the kind of error that gets
+    // indexed and quoted back at us.
     const amount = new Intl.NumberFormat(`${locale}-u-nu-latn`, {
       style: 'currency',
-      currency: 'EUR',
+      currency: item.fine_currency,
       maximumFractionDigits: 0
-    }).format(item.fine_eur);
+    }).format(item.fine_amount);
     parts.push(`${amount} ${outcomeLabel('fine', locale)}`);
   } else if (item.outcome) {
     parts.push(outcomeLabel(item.outcome, locale));

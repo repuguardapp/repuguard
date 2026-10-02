@@ -36,7 +36,17 @@ export interface PublishedDecision {
   entity: string | null;
   decisionDate: string | null;
   articles: string[];
-  fineEur: number | null;
+  /**
+   * The fine, in the currency the source used.
+   *
+   * Both fields or neither. A bare number used to live here under the
+   * name `fineEur`, and nine ICO penalties denominated in pounds were
+   * sitting in it awaiting approval — one of them a conversion the model
+   * performed itself, at a rate it never stated.
+   */
+  fineAmount: number | null;
+  /** ISO 4217, as the source states it. Never our conversion. */
+  fineCurrency: string | null;
   outcome: string | null;
   /** Frameworks this decision bears on, resolved from its source. */
   frameworks: LegalFramework[];
@@ -50,14 +60,15 @@ interface Row {
   entity: string | null;
   decision_date: string | null;
   articles: string[] | null;
-  fine_eur: number | null;
+  fine_amount: number | null;
+  fine_currency: string | null;
   outcome: string | null;
   legal_sources: { name: string; licence: string; framework_ids: string[] | null } | null;
   legal_development_locales: { locale: string; title: string; summary: string }[] | null;
 }
 
 const SELECT =
-  'id, slug, primary_url, authority, entity, decision_date, articles, fine_eur, outcome, ' +
+  'id, slug, primary_url, authority, entity, decision_date, articles, fine_amount, fine_currency, outcome, ' +
   'legal_sources(name, licence, framework_ids), ' +
   'legal_development_locales(locale, title, summary)';
 
@@ -89,7 +100,10 @@ function shape(row: Row, locale: string): PublishedDecision | null {
     entity: row.entity,
     decisionDate: row.decision_date,
     articles: row.articles ?? [],
-    fineEur: row.fine_eur,
+    // Read as a pair: the constraint guarantees it in the database, and
+    // this guarantees it for anything that bypassed the constraint.
+    fineAmount: row.fine_currency ? row.fine_amount : null,
+    fineCurrency: row.fine_amount !== null ? row.fine_currency : null,
     outcome: row.outcome,
     frameworks: ids
       .map((id) => FRAMEWORKS.find((f) => f.id === id))

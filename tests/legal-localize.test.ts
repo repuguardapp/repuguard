@@ -104,7 +104,8 @@ const ITEM = {
   entity: 'Société X',
   decision_date: '2026-09-09',
   articles: ['GDPR Art. 13', 'GDPR Art. 32'],
-  fine_eur: 300000,
+  fine_amount: 300000,
+  fine_currency: 'EUR',
   outcome: 'fine',
   summary_en: 'The French data protection authority fined company X 300,000 euros.'
 };
@@ -179,7 +180,7 @@ describe('the headline is ours, not the regulator\'s', () => {
   it('keeps the authority-led shape when nothing was sanctioned', async () => {
     // Guidance and opinions have no respondent. A header invented for
     // them would be worse than a missing one.
-    queue = [{ ...ITEM, entity: null, fine_eur: null, outcome: 'guidance' }];
+    queue = [{ ...ITEM, entity: null, fine_amount: null, fine_currency: null, outcome: 'guidance' }];
     await run();
     expect(journal.localeRows.find((r) => r['locale'] === 'en')!['title']).toBe(
       'CNIL — guidance — GDPR Art. 13, 32 — 2026-09-09'
@@ -216,7 +217,7 @@ describe('the headline is ours, not the regulator\'s', () => {
   });
 
   it('falls back to the outcome when there was no fine', async () => {
-    queue = [{ ...ITEM, fine_eur: null, outcome: 'court_ruling' }];
+    queue = [{ ...ITEM, fine_amount: null, fine_currency: null, outcome: 'court_ruling' }];
     await run();
     expect(journal.localeRows.find((r) => r['locale'] === 'en')!['title']).toContain(
       'court ruling'
@@ -257,7 +258,7 @@ describe('the headline is ours, not the regulator\'s', () => {
   });
 
   it('translates the outcome word when there is no fine', async () => {
-    queue = [{ ...ITEM, fine_eur: null, outcome: 'guidance' }];
+    queue = [{ ...ITEM, fine_amount: null, fine_currency: null, outcome: 'guidance' }];
     await run();
     const title = (locale: string) =>
       String(journal.localeRows.find((r) => r['locale'] === locale)!['title']);

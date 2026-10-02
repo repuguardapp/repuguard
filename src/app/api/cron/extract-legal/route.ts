@@ -113,7 +113,8 @@ const Extraction = z.object({
   entity: absent(z.string()),
   decision_date: absent(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
   articles: absent(z.array(z.string())),
-  fine_eur: absent(z.number().nonnegative()),
+  fine_amount: absent(z.number().nonnegative()),
+  fine_currency: absent(z.string().regex(/^[A-Za-z]{3}$/)),
   outcome: absent(
     z.enum(['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'])
   ),
@@ -129,7 +130,7 @@ const Extraction = z.object({
     z.object({
       entity: absent(z.string()),
       decision_date: absent(z.string()),
-      fine_eur: absent(z.string())
+      fine_amount: absent(z.string())
     })
   )
 });
@@ -143,7 +144,7 @@ const TOOL = {
       relevant: {
         type: 'boolean',
         description:
-          'True only for an enforcement decision, court ruling, or formal regulatory guidance on data protection or AI. False for press releases, recruitment, events, newsletters, and consultations.'
+          'True only for an enforcement decision, court ruling, or formal regulatory guidance on data protection or AI — something that has been DECIDED. False for press releases, recruitment, events, newsletters and consultations, and false for the announcement that an investigation or inquiry has been opened: an opened inquiry has found nothing, and "X Internet Unlimited Company — order" built from one is an accusation against a named company that no authority has made.'
       },
       reject_reason: { type: 'string', description: 'Why it is not relevant. Required when relevant is false.' },
       authority: { type: 'string', description: 'Issuing body, in English. e.g. "CNIL", "EDPB", "ICO".' },
@@ -163,7 +164,16 @@ const TOOL = {
         description:
           'Provisions the source NAMES IN SO MANY WORDS, with the instrument in ENGLISH and the number exactly as given. A French source writing "RGPD Art. 12" becomes "GDPR Art. 12"; the same for LGPD, APPI and the Gulf regimes. Keep sub-paragraphs when the source uses them: "Art. 9(2)", not "Art. 9". NEVER infer an article from the subject matter — guidelines on anonymisation are ABOUT the definition of personal data, but if the page does not write "Article 4" then Article 4 is not cited and does not belong here. An empty list is the correct answer for a page that discusses concepts without citing provisions. e.g. ["GDPR Art. 13", "GDPR Art. 32"].'
       },
-      fine_eur: { type: 'number', description: 'Fine in euros. Omit entirely if no fine, or if the currency is not euros.' },
+      fine_amount: {
+        type: 'number',
+        description:
+          'The amount of the fine EXACTLY as the source states it, in the source\'s own currency. Digits only, no symbol, no separators: an ICO penalty written "£963,900" is 963900. NEVER convert between currencies — not to euros, not to anything. If the source says £66,000, the answer is 66000 with fine_currency GBP, and 73920 is a number that exists in no document. Omit both fields entirely if no fine was imposed, or if you cannot tell which currency the amount is in.'
+      },
+      fine_currency: {
+        type: 'string',
+        description:
+          'ISO 4217 code of the currency the SOURCE uses: GBP for the ICO, EUR for the CNIL and the EDPB, JPY for the PPC, BRL for the ANPD. Required whenever fine_amount is given, and omitted whenever it is not. Read it from the symbol or the word in the document; do not infer it from which country the authority is in — a reprimand published by an EU body may still quote a sum in another currency.'
+      },
       outcome: { type: 'string', enum: ['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'] },
       summary_en: {
         type: 'string',
@@ -177,7 +187,10 @@ const TOOL = {
         properties: {
           entity: { type: 'string', description: 'The sentence naming the organisation the decision was taken against.' },
           decision_date: { type: 'string', description: 'The sentence or reference line stating the date of the decision.' },
-          fine_eur: { type: 'string', description: 'The sentence stating the amount.' }
+          fine_amount: {
+            type: 'string',
+            description: 'The sentence stating the amount, with its currency symbol or word intact.'
+          }
         }
       }
     },
@@ -200,6 +213,14 @@ const SYSTEM = [
   'date the announcement was written.',
   'Name statutes by their English abbreviation even when the source is in',
   'another language, so the corpus reads consistently across all of it.',
+  'You NEVER convert a currency. An amount is reported in the currency the',
+  'document uses, with its ISO code, and a sum you cannot attribute to a',
+  'currency is omitted. Converting £66,000 into 73,920 produced a figure',
+  'that appears in no document anywhere, attached to the name of a police',
+  'force — the exact failure every other rule here exists to prevent.',
+  'An investigation or inquiry that has been OPENED is not a decision and',
+  'not relevant: nothing has been found, and a page saying otherwise about',
+  'a named organisation is an accusation we invented.',
   'The summary must be your own sentences, not the source\'s, and must contain',
   'only what the source establishes.'
 ].join(' ');
@@ -434,7 +455,15 @@ async function extractOne(
       entity: out.entity?.trim() || null,
       decision_date: out.decision_date ?? null,
       articles: out.articles ?? null,
-      fine_eur: out.fine_eur ?? null,
+      // Both or neither — the database enforces it too. An amount whose
+      // currency we did not read is not a smaller fact than no amount,
+      // it is a different one, and it is the one that put nine pound
+      // figures in a column named for euros.
+      fine_amount: out.fine_amount !== undefined && out.fine_currency ? out.fine_amount : null,
+      fine_currency:
+        out.fine_amount !== undefined && out.fine_currency
+          ? out.fine_currency.toUpperCase()
+          : null,
       outcome: out.outcome ?? null,
       summary_en: out.summary_en.trim(),
       // Verified against the page, and what is stored is the page's
@@ -470,18 +499,25 @@ async function findTwin(
 
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, fine_eur')
+    .select('id, fine_amount, fine_currency')
     .eq('authority', facts.authority)
     .eq('decision_date', facts.decision_date)
     .in('status', ['extracted', 'approved', 'published'])
     .neq('id', selfId);
   if (error) return null;
 
-  const rows = (data as { id: string; fine_eur: number | null }[] | null) ?? [];
+  const rows =
+    (data as { id: string; fine_amount: number | null; fine_currency: string | null }[] | null) ??
+    [];
   const match = rows.find((r) => {
-    const mine = facts.fine_eur ?? null;
-    const theirs = r.fine_eur === null ? null : Number(r.fine_eur);
-    return mine === theirs;
+    // The currency is part of the amount. Two decisions by the same body
+    // on the same day, one for 300000 GBP and one for 300000 EUR, are two
+    // decisions, and matching on the digits alone would reject the second
+    // as a duplicate of the first.
+    const mine = facts.fine_amount ?? null;
+    const mineCurrency = mine === null ? null : (facts.fine_currency?.toUpperCase() ?? null);
+    const theirs = r.fine_amount === null ? null : Number(r.fine_amount);
+    return mine === theirs && mineCurrency === (r.fine_currency ?? null);
   });
   return match?.id ?? null;
 }
@@ -553,7 +589,9 @@ function slugFor(item: DevelopmentRow): string {
  */
 function verifiedEvidence(
   sourceText: string,
-  proposed: Partial<Record<'entity' | 'decision_date' | 'fine_eur', string | undefined>> | undefined
+  proposed:
+    | Partial<Record<'entity' | 'decision_date' | 'fine_amount', string | undefined>>
+    | undefined
 ): Record<string, string> | null {
   if (!proposed) return null;
 

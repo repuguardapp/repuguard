@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -27,7 +29,7 @@ let journal: Journal;
 let queue: Record<string, unknown>[];
 let toolInput: Record<string, unknown> | (() => Record<string, unknown>);
 /** What the cross-source twin lookup finds. Empty means no duplicate. */
-let twinRows: { id: string; fine_eur: number | null }[];
+let twinRows: { id: string; fine_amount: number | null; fine_currency: string | null }[];
 
 function chain(result: unknown): Record<string, unknown> {
   const self: Record<string, unknown> = {
@@ -102,7 +104,8 @@ const GOOD_EXTRACTION = {
   authority: 'CNIL',
   decision_date: '2026-09-09',
   articles: ['GDPR Art. 13', 'GDPR Art. 32'],
-  fine_eur: 300000,
+  fine_amount: 300000,
+  fine_currency: 'EUR',
   outcome: 'fine',
   summary_en:
     'The French data protection authority fined company X 300,000 euros for failing to inform data subjects and for inadequate security measures.'
@@ -157,7 +160,8 @@ describe('extraction records facts, not opinions', () => {
     expect(patch['authority']).toBe('CNIL');
     expect(patch['decision_date']).toBe('2026-09-09');
     expect(patch['articles']).toEqual(['GDPR Art. 13', 'GDPR Art. 32']);
-    expect(patch['fine_eur']).toBe(300000);
+    expect(patch['fine_amount']).toBe(300000);
+    expect(patch['fine_currency']).toBe('EUR');
     expect(patch['outcome']).toBe('fine');
     expect(String(patch['summary_en'])).toContain('300,000 euros');
   });
@@ -219,7 +223,7 @@ describe('extraction filters the feed instead of trusting it', () => {
  * The bug that paid for this section.
  *
  * The tool schema says "omit the field entirely" when there is no fine.
- * The model sent `evidence: { fine_eur: null }`, the parse rejected it,
+ * The model sent `evidence: { fine_amount: null }`, the parse rejected it,
  * the item stayed `discovered`, and the next run picked it up again: two
  * developments charged four times a day from 27 September onward, each
  * run emitting one more alert naming one more development id. A single
@@ -232,7 +236,7 @@ describe('an explicit null means absent, not malformed', () => {
       evidence: {
         entity: 'la société X',
         decision_date: 'Décision rendue le 9 septembre 2026.',
-        fine_eur: null
+        fine_amount: null
       }
     };
 
@@ -250,7 +254,8 @@ describe('an explicit null means absent, not malformed', () => {
       entity: null,
       decision_date: null,
       articles: null,
-      fine_eur: null,
+      fine_amount: null,
+      fine_currency: null,
       outcome: null,
       evidence: null,
       summary_en: GOOD_EXTRACTION.summary_en
@@ -262,7 +267,8 @@ describe('an explicit null means absent, not malformed', () => {
     const patch = journal.updates[0]!.patch;
     expect(patch['decision_date']).toBeNull();
     expect(patch['articles']).toBeNull();
-    expect(patch['fine_eur']).toBeNull();
+    expect(patch['fine_amount']).toBeNull();
+    expect(patch['fine_currency']).toBeNull();
     expect(patch['evidence']).toBeNull();
   });
 
@@ -381,7 +387,9 @@ describe('one decision, one page — whatever reported it', () => {
    */
   it('rejects the second report of a decision, naming the first', async () => {
     const twinId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-    twinRows = [{ id: twinId, fine_eur: GOOD_EXTRACTION.fine_eur }];
+    twinRows = [
+      { id: twinId, fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR' }
+    ];
 
     const body = await run();
 
@@ -395,7 +403,7 @@ describe('one decision, one page — whatever reported it', () => {
 
   it('is not fooled by a different fine on the same day', async () => {
     // Same authority, same date, different amount: two real decisions.
-    twinRows = [{ id: 'other', fine_eur: 999 }];
+    twinRows = [{ id: 'other', fine_amount: 999, fine_currency: 'EUR' }];
     const body = await run();
     expect(body['extracted']).toBe(1);
   });
@@ -404,7 +412,9 @@ describe('one decision, one page — whatever reported it', () => {
     // With no date there is nothing to match on, and guessing would
     // silently drop a real decision — far worse than publishing one
     // twice.
-    twinRows = [{ id: 'other', fine_eur: GOOD_EXTRACTION.fine_eur }];
+    twinRows = [
+      { id: 'other', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR' }
+    ];
     toolInput = { ...GOOD_EXTRACTION, decision_date: undefined };
     const body = await run();
     expect(body['extracted']).toBe(1);
@@ -433,5 +443,88 @@ describe('a publication date is not a decision date', () => {
     // defect was systematic rather than a one-off slip.
     expect(source).toContain('not of its announcement');
     expect(source).toContain('A publication date is not a decision date');
+  });
+});
+
+/**
+ * The amount carries its currency, or it is not a fact.
+ *
+ * The field was `fine_eur` and the tool schema said "omit entirely if
+ * the currency is not euros". Of the nine ICO fines that reached the
+ * review queue, the model ignored that on nine. Our own summaries are
+ * the evidence: "£963,900" stored as 963900 in a column named for
+ * euros, "£300,000" as 300000 — and, once, "£66,000" stored as
+ * 73,920.00, a conversion the model performed at a rate it never
+ * stated, producing a figure that appears in no document anywhere,
+ * attached to the name of a police force.
+ *
+ * Nothing in this codebase converts a currency. A sum we cannot
+ * attribute to one is no sum at all.
+ */
+describe('a fine without its currency is not published', () => {
+  it('stores the amount and the currency the source used', async () => {
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: 963900, fine_currency: 'gbp' };
+    await run();
+
+    const patch = journal.updates[0]!.patch;
+    expect(patch['fine_amount']).toBe(963900);
+    // Upper-cased on the way in: ISO 4217 is three capitals, and
+    // Intl.NumberFormat is the thing that has to accept it.
+    expect(patch['fine_currency']).toBe('GBP');
+  });
+
+  it('drops an amount whose currency the model did not give', async () => {
+    // Not a smaller fact than no amount — a different one. This is the
+    // exact shape that put nine pound figures behind a euro sign.
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: 963900, fine_currency: undefined };
+    const body = await run();
+
+    expect(body['extracted']).toBe(1);
+    const patch = journal.updates[0]!.patch;
+    expect(patch['fine_amount']).toBeNull();
+    expect(patch['fine_currency']).toBeNull();
+  });
+
+  it('drops a currency with no amount behind it', async () => {
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: undefined, fine_currency: 'GBP' };
+    await run();
+
+    const patch = journal.updates[0]!.patch;
+    expect(patch['fine_amount']).toBeNull();
+    expect(patch['fine_currency']).toBeNull();
+  });
+
+  it('refuses a currency that is not three letters', async () => {
+    // "£" and "pounds sterling" are not ISO 4217. Accepting either is
+    // how a symbol ends up compared against a code, which is how the
+    // wrong sign gets rendered.
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: 963900, fine_currency: '£' };
+    const body = await run();
+
+    expect(body['extracted']).toBe(0);
+    expect(body['failed']).toBe(1);
+  });
+
+  it('does not call two amounts equal because their digits match', async () => {
+    // 300000 GBP and 300000 EUR are two different decisions. Matching on
+    // the number alone would reject the second as a duplicate of the
+    // first and lose it silently.
+    twinRows = [{ id: 'other', fine_amount: 300000, fine_currency: 'GBP' }];
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: 300000, fine_currency: 'EUR' };
+    const body = await run();
+
+    expect(body['extracted']).toBe(1);
+    expect(body['rejected']).toBe(0);
+  });
+
+  it('tells the model never to convert, in the schema and the system prompt', async () => {
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+      'utf8'
+    );
+    expect(source).toContain('NEVER convert between currencies');
+    expect(source).toContain('You NEVER convert a currency');
+    // And the one number that proves why.
+    expect(source).toContain('73,920');
   });
 });
