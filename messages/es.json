@@ -588,6 +588,7 @@
     "failureRefusedConnection": "El sitio cerró la conexión durante la lectura. Así se comporta una protección antirrobots: probablemente rechaza clientes automatizados. No intentamos eludirla.",
     "failureUnreachable": "No hemos podido alcanzar este dominio. Puede que no resuelva, que no sirva HTTPS, o que no respondiera a tiempo.",
     "failureOurResolver": "Este fallo es nuestro: nuestro propio resolutor de nombres no respondió, así que la petición nunca salió. No se leyó nada, y nada de esto afirma algo sobre este dominio. Vuelva a lanzar el análisis.",
+    "failureOurStorage": "Este fallo es nuestro: obtuvimos la página y la leímos, y después nuestro propio almacenamiento no la registró. Nada de esto afirma algo sobre este dominio. Vuelva a lanzar el análisis.",
     "failureTls": "No se pudo validar el certificado del sitio. No leemos un documento cuyo origen no podemos verificar.",
     "failureRobots": "El archivo robots.txt del sitio nos pide que no lo leamos. Lo respetamos.",
     "failureNoLink": "Se leyó la página de inicio y no enlaza a ninguna política de privacidad; las rutas habituales no dieron nada.",

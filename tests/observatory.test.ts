@@ -41,8 +41,16 @@ describe('it never publishes a verdict about a named organisation', () => {
   it('emits only aggregate sections in the published dataset', () => {
     // Whatever rows are added later, they belong to one of these four.
     // A fifth section is how a per-domain table arrives by accident.
-    const sections = [...CSV.matchAll(/rows\.push\(\['([a-z_]+)'/g)].map((m) => m[1]!);
-    const inline = [...CSV.matchAll(/\['([a-z_]+)', '/g)].map((m) => m[1]!);
+    // Scoped to the builder. Read over the whole module, the inline
+    // pattern also matches any other array of snake_case strings — it
+    // started failing on `new Set(['our_storage', 'our_resolver'])`,
+    // which is a list of failure codes and not a CSV section. Widening
+    // the expected set to make that pass would have retired the guard;
+    // pointing it at the function it is about keeps it.
+    const builder = CSV.slice(CSV.indexOf('export function observatoryCsv'));
+    const body = builder.slice(0, builder.indexOf('\nfunction escapeCsv'));
+    const sections = [...body.matchAll(/rows\.push\(\['([a-z_]+)'/g)].map((m) => m[1]!);
+    const inline = [...body.matchAll(/\['([a-z_]+)', '/g)].map((m) => m[1]!);
     const found = new Set([...sections, ...inline]);
     // 'section' is the header row's first column name, not a section.
     found.delete('section');
@@ -322,5 +330,46 @@ describe('the sample contains only things that can publish a policy', () => {
     // is the one property the methodology claims.
     expect(SAMPLE).not.toContain('psl');
     expect(SAMPLE).toContain('REGISTRY_SUFFIXES');
+  });
+});
+
+/**
+ * A failure of ours is not a refusal by them.
+ *
+ * One scan in the first fifty-eight read "could not record the document":
+ * we fetched the page, we read it, and then our own Postgres rejected the
+ * insert. It was sitting in the refusal breakdown next to the 403s,
+ * indistinguishable from a site that had turned us away — a database
+ * error on its way into a published statistic about French websites.
+ *
+ * Three ran on `getaddrinfo EBUSY`, which is the container's resolver and
+ * not a name that fails to exist: one of them was ec-lyon.fr.
+ */
+describe('our own failures leave the study, and say that they did', () => {
+  it('drops them from the denominator and from the refusals', () => {
+    expect(LIB).toContain('OUR_OWN_FAILURES');
+    expect(LIB).toContain("new Set<FailureCode>(['our_storage', 'our_resolver'])");
+    expect(LIB).toContain('!OUR_OWN_FAILURES.has(classifyScanFailure(r.failure))');
+  });
+
+  it('states how many left rather than letting the sample shrink quietly', () => {
+    // A sample that gets smaller without saying so is a denominator
+    // adjusted after seeing the results.
+    expect(LIB).toContain('excluded: excluded.length');
+    expect(LIB).toContain("'excluded_our_own_failure'");
+  });
+
+  it('keeps lookedAt, documentsRead and the refusals adding up', () => {
+    // The three numbers on the page have to reconcile, or a reader who
+    // checks our arithmetic finds a gap we never explained.
+    expect(LIB).toContain('lookedAt: rows.length');
+    expect(LIB).toContain("const read = rows.filter((r) => r.status === 'done')");
+    expect(LIB).toContain("for (const row of rows.filter((r) => r.status !== 'done'))");
+  });
+
+  it('is named as ours where it is written, not only where it is read', () => {
+    expect(CRON).toContain("'our own storage failed: could not record the document'");
+    // And alerted, because unlike a 403 it is a bug.
+    expect(CRON).toContain('cron.policy_survey_snapshot_failed');
   });
 });

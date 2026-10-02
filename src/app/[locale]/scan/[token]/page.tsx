@@ -50,6 +50,10 @@ const FAILURE_KEY = {
   // domain, and bucketing it with "we could not reach this domain" told
   // a visitor something false about their own site.
   our_resolver: 'failureOurResolver',
+  // Also ours: the page was fetched and read, and our own database
+  // refused the write. The observatory drops this code from the study
+  // entirely; here the visitor is simply told the truth about it.
+  our_storage: 'failureOurStorage',
   tls: 'failureTls',
   robots: 'failureRobots',
   no_link: 'failureNoLink',

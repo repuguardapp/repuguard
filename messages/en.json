@@ -588,6 +588,7 @@
     "failureRefusedConnection": "The site closed the connection while we were reading. That is how bot mitigation behaves: it probably refuses automated clients. We do not try to get around it.",
     "failureUnreachable": "We could not reach this domain. It may not resolve, may not serve HTTPS, or answered nothing in time.",
     "failureOurResolver": "This failure was ours: our own name resolver would not answer, so the request never left our side. Nothing was read, and nothing here is a statement about this domain. Run the scan again.",
+    "failureOurStorage": "This failure was ours: we fetched the page and read it, and then our own storage would not record it. Nothing here is a statement about this domain. Run the scan again.",
     "failureTls": "The site's certificate could not be validated. We do not read a document whose origin we cannot verify.",
     "failureRobots": "The site's robots.txt asks us not to read it. We obey that.",
     "failureNoLink": "The homepage was read and links to no privacy policy, and the usual paths answered nothing.",

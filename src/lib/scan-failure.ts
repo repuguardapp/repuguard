@@ -43,6 +43,16 @@ export type FailureCode =
    * into a published denominator and call it a property of the site.
    */
   | 'our_resolver'
+  /**
+   * Our database, not their server.
+   *
+   * We fetched the page and read it, and then the snapshot insert
+   * failed. It is in this list because a scan row still has to carry a
+   * reason — but it is the one code the observatory drops from the study
+   * rather than counting, because it says nothing whatever about the
+   * domain.
+   */
+  | 'our_storage'
   | 'no_link'
   | 'shell_page'
   | 'not_a_policy'
@@ -61,6 +71,7 @@ export function classifyScanFailure(raw: string | null): FailureCode {
   // it is tested first because the string also contains "getaddrinfo",
   // which otherwise reads as a name that does not exist.
   if (/ebusy/.test(text)) return 'our_resolver';
+  if (/our own storage failed/.test(text)) return 'our_storage';
 
   // The name did not resolve, or nothing answered at all.
   if (/enotfound|eai_again|econnrefused|ehostunreach|enetunreach|timeout|timed out/.test(text)) {

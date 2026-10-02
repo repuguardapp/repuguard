@@ -327,7 +327,23 @@ async function surveyOne(
     .single();
 
   if (snapshotError || !snapshot) {
-    await finish({ status: 'failed', failure: 'could not record the document' });
+    // Ours, and said so in the string the study reads.
+    //
+    // We fetched the page, we read it, and then OUR database refused the
+    // write. Counting that as a refusal would put a Postgres error into a
+    // published denominator and present it as a property of the site.
+    // The observatory excludes this code from the study entirely — see
+    // OUR_OWN_FAILURES in lib/observatory.ts — so the wording here is
+    // load-bearing and not decoration.
+    console.error('[cron/policy-survey] snapshot_not_recorded', {
+      domain,
+      error: snapshotError?.message
+    });
+    alertOps('cron.policy_survey_snapshot_failed', {
+      domain,
+      error: snapshotError?.message ?? 'no row returned'
+    });
+    await finish({ status: 'failed', failure: 'our own storage failed: could not record the document' });
     return 'failed';
   }
 

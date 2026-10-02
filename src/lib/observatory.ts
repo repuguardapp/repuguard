@@ -24,6 +24,20 @@ import { supabaseService } from './supabase';
  * and the page says so beside every percentage.
  */
 
+/**
+ * Failure codes that are about us and therefore about nothing.
+ *
+ * `our_storage` is a failed insert into our own database after the
+ * document was fetched and read. `our_resolver` is `getaddrinfo EBUSY`
+ * inside a serverless container — it took ec-lyon.fr, which plainly
+ * resolves, so it is our DNS and not their name.
+ *
+ * Neither tells a reader anything about a French website, and both would
+ * otherwise sit in a published refusal breakdown looking exactly like a
+ * site that turned us away.
+ */
+const OUR_OWN_FAILURES = new Set<FailureCode>(['our_storage', 'our_resolver']);
+
 export interface ObservationTally {
   id: string;
   present: number;
@@ -43,6 +57,13 @@ export interface ObservatoryReport {
   lookedAt: number;
   /** Of those, how many yielded a document we could read. */
   documentsRead: number;
+  /**
+   * Scans dropped because the failure was ours, not the site's.
+   *
+   * Not part of lookedAt and not part of the refusals. Published so the
+   * sample is seen to shrink rather than quietly shrinking.
+   */
+  excluded: number;
   /** Why the rest did not, by code. */
   refusals: { code: FailureCode; count: number }[];
   observations: ObservationTally[];
@@ -84,12 +105,30 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
       .select('domain', { head: true, count: 'exact' });
     if (countError) return null;
 
-    const rows = (scans ?? []) as {
+    const all = (scans ?? []) as {
       id: string;
       status: string;
       failure: string | null;
       completed_at: string | null;
     }[];
+
+    /**
+     * Scans that failed inside our own infrastructure, dropped from the
+     * study entirely rather than counted as refusals.
+     *
+     * A refusal is a fact about their server or about our reading of
+     * their document. "Our Postgres rejected the insert" is neither — we
+     * fetched the page and read it, and then we lost it. Counted as a
+     * refusal it becomes a published statistic about French websites with
+     * a database error inside it; counted as a reading it inflates the
+     * denominator with a document nobody can check.
+     *
+     * So it leaves both, and the number that left is stated. A sample
+     * that silently shrinks is a denominator we adjusted after seeing the
+     * results, which is the thing this whole module exists not to do.
+     */
+    const excluded = all.filter((r) => OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
+    const rows = all.filter((r) => !OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
 
     const read = rows.filter((r) => r.status === 'done');
 
@@ -106,6 +145,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
       sourceDate: (sample?.[0] as { source_date?: string } | undefined)?.source_date ?? null,
       lookedAt: rows.length,
       documentsRead: read.length,
+      excluded: excluded.length,
       refusals: [...refusalCounts.entries()]
         .map(([code, count]) => ({ code, count }))
         .sort((a, b) => b.count - a.count),
@@ -282,6 +322,10 @@ export function observatoryCsv(report: ObservatoryReport): string {
     ['sample', 'licence', OBSERVATORY_LICENCE, ''],
     ['progress', 'domains_looked_at', String(report.lookedAt), String(report.sampleSize)],
     ['progress', 'documents_read', String(report.documentsRead), String(report.lookedAt)],
+    // Stated in the file, because the file is what gets cited and a
+    // sample that shrank without saying so is a denominator nobody can
+    // check.
+    ['progress', 'excluded_our_own_failure', String(report.excluded), ''],
     ['progress', 'last_read_at', report.lastReadAt ?? '', '']
   ];
 

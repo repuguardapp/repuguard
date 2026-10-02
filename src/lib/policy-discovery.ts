@@ -59,7 +59,38 @@ export interface Discovery {
 
 /** Bounded: this runs for a stranger who typed a domain into a box. */
 const FETCH_TIMEOUT_MS = 8_000;
-const MAX_HTML_BYTES = 800_000;
+
+/**
+ * How much of a document we are willing to hold in memory.
+ *
+ * It was 800,000 characters, and the cap was not bounding memory so much
+ * as choosing which part of the page to read — the first part. The
+ * privacy link is in the footer, which is the last part.
+ *
+ * The observatory's refusal census is what showed it. Eleven domains came
+ * back as "the homepage was read and links to no privacy policy", and
+ * every one of them had been read successfully and parsed: 665 anchors on
+ * 20minutes.fr, 580 on leparisien.fr, 413 on ici.fr, 357 on lefigaro.fr.
+ * Hundreds of article links, none of the six footer links, on sites whose
+ * footers carry "Politique de confidentialité" in plain sight. A French
+ * media homepage runs to one and a half to three megabytes of HTML, so
+ * 800,000 characters stopped somewhere in the middle of the article grid.
+ *
+ * Four million now, which clears every page we have measured, and a
+ * document past even that is read at both ends rather than only at the
+ * front — see readTail below.
+ */
+const MAX_HTML_CHARS = 4_000_000;
+
+/**
+ * And the end of a document too large to hold whole.
+ *
+ * Footers are the last thing in a page by construction. Reading the head
+ * and skipping the tail is the one slice guaranteed to miss them, which
+ * is precisely the bug above; taking the last stretch as well costs no
+ * request, because the bytes are already in hand.
+ */
+const TAIL_CHARS = 200_000;
 
 /**
  * Anchor text that means "privacy policy" in the seven languages we serve,
@@ -315,7 +346,16 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
    * instead — the same move as the ranking candidate list and the legal
    * watcher's probes.
    */
-  const census = { anchors: 0, offsite: 0, blockedByRobots: 0, pathsTried: 0 };
+  const census = {
+    anchors: 0,
+    offsite: 0,
+    blockedByRobots: 0,
+    pathsTried: 0,
+    /** Characters of HTML the homepage actually returned. */
+    htmlChars: 0,
+    /** True when the document was longer than we were willing to hold. */
+    truncated: false
+  };
 
   /** Off-origin links awaiting their own site's permission. url → label. */
   const offsiteQueue = new Map<string, string | undefined>();
@@ -360,14 +400,29 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
 
   // 1. What the site itself links to. The best answer, because it is theirs.
   if (home) {
-    const html = (await home.text()).slice(0, MAX_HTML_BYTES);
-    for (const match of html.matchAll(ANCHOR)) {
-      census.anchors += 1;
-      const text = textOf(match[2] ?? '');
-      const label = text.toLowerCase();
-      if (!label || label.length > 60) continue;
-      if (POLICY_WORDS.some((word) => label.includes(word))) {
-        add(match[1]!, 'linked-from-homepage', text);
+    const full = await home.text();
+    census.htmlChars = full.length;
+    census.truncated = full.length > MAX_HTML_CHARS;
+
+    // Head and tail, not head alone. A footer is the last thing in a
+    // page, so a slice taken from the front is the one slice certain to
+    // miss it — which is exactly what happened to eleven French media
+    // homepages. The two stretches are scanned separately rather than
+    // joined, so a link cut in half by the boundary cannot be parsed
+    // into an anchor that was never in the document.
+    const parts = census.truncated
+      ? [full.slice(0, MAX_HTML_CHARS), full.slice(-TAIL_CHARS)]
+      : [full];
+
+    for (const part of parts) {
+      for (const match of part.matchAll(ANCHOR)) {
+        census.anchors += 1;
+        const text = textOf(match[2] ?? '');
+        const label = text.toLowerCase();
+        if (!label || label.length > 60) continue;
+        if (POLICY_WORDS.some((word) => label.includes(word))) {
+          add(match[1]!, 'linked-from-homepage', text);
+        }
       }
     }
   }
@@ -410,7 +465,7 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
     for (const sitemap of robots.sitemaps.slice(0, 1)) {
       const { res } = await get(sitemap, 'application/xml');
       if (!res) break;
-      const xml = (await res.text()).slice(0, MAX_HTML_BYTES);
+      const xml = (await res.text()).slice(0, MAX_HTML_CHARS);
       for (const loc of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
         const url = loc[1]!;
         try {
@@ -455,6 +510,11 @@ export async function discoverPolicy(domain: string): Promise<Discovery> {
             // are what turn the next occurrence into a diagnosis.
             'the homepage was read and links to no privacy policy; the usual paths answered nothing' +
             ` (${census.anchors} link(s) on the page, ${census.blockedByRobots} blocked by robots.txt,` +
-            ` ${robots.sitemaps.length} sitemap(s) in robots.txt, ${census.pathsTried} path(s) tried)`
+            ` ${robots.sitemaps.length} sitemap(s) in robots.txt, ${census.pathsTried} path(s) tried,` +
+            // The two numbers that tell a truncated footer apart from a
+            // footer written by a consent manager after the page loads.
+            // Without them both look identical: a page we read, full of
+            // links, with no policy among them.
+            ` ${census.htmlChars} chars of HTML${census.truncated ? ', truncated' : ''})`
   };
 }

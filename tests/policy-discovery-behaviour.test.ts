@@ -202,3 +202,55 @@ describe('a refusal says what the search saw', () => {
     expect(found.refused).not.toContain('links to no privacy policy');
   });
 });
+
+/**
+ * The footer is the last thing in the page, and we were reading the first
+ * 800,000 characters.
+ *
+ * Eleven domains came back as "the homepage was read and links to no
+ * privacy policy" — and the census this file's companion added showed
+ * every one of them had been fetched and parsed: 665 anchors on
+ * 20minutes.fr, 580 on leparisien.fr, 413 on ici.fr, 357 on lefigaro.fr.
+ * Hundreds of article links and none of the six footer links, on sites
+ * whose footers carry "Politique de confidentialité" in plain sight.
+ *
+ * A French media homepage is one and a half to three megabytes of HTML.
+ * The cap was not bounding memory, it was choosing which half of the page
+ * to read, and it chose the half without the answer in it.
+ */
+describe('a policy link at the end of a very long page', () => {
+  /** Enough filler to push the footer past any sane cap. */
+  const filler = '<a href="/article">Article</a>'.repeat(200_000);
+
+  it('finds the footer link in a document of several megabytes', async () => {
+    site['/'] = `<html><body>${filler}<footer><a href="/confidentialite">Politique de confidentialité</a></footer></body></html>`;
+
+    const found = await discover('example.fr');
+
+    expect(found.refused).toBeNull();
+    expect(found.candidates[0]!.url).toBe('https://example.fr/confidentialite');
+  });
+
+  it('reads the end of a document too large to hold whole', async () => {
+    // Past the cap the page is read at both ends rather than only at the
+    // front. Head-only is the one slice guaranteed to miss a footer.
+    site['/'] = `<html><body>${filler.repeat(25)}<footer><a href="/vie-privee">Données personnelles</a></footer></body></html>`;
+
+    const found = await discover('example.fr');
+
+    expect(found.refused).toBeNull();
+    expect(found.candidates[0]!.url).toBe('https://example.fr/vie-privee');
+  });
+
+  it('says how much HTML it read, so the next refusal is diagnosable', async () => {
+    // The number that tells a truncated footer apart from one a consent
+    // manager writes after the page loads. Without it the two are
+    // identical: a page we read, full of links, with no policy in it.
+    site['/'] = '<html><body><a href="/contact">Nous contacter</a></body></html>';
+
+    const found = await discover('example.fr');
+
+    expect(found.refused).toContain('chars of HTML');
+    expect(found.refused).not.toContain('truncated');
+  });
+});
