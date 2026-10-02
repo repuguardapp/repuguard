@@ -118,6 +118,21 @@ export interface DigestInput {
    * broken pipeline actually produces.
    */
   stalledItems: { count: number; oldestHours: number } | null;
+  /**
+   * Items the extractor gave up on, with the reason it gave up.
+   *
+   * A parked item is the one failure that nothing else reports. The
+   * corpus count does not show it — it leaves `discovered` and never
+   * reaches `extracted`, so both numbers simply get smaller. The stalled
+   * count does not show it either, because it is no longer waiting.
+   *
+   * It is in the report because it is usually ours. The two items that
+   * created this category failed on `evidence.fine_eur: null`, a bug in
+   * our own schema, and the reason is printed here so the next one is a
+   * sentence in an email rather than an afternoon in Vercel's log
+   * viewer.
+   */
+  parkedItems: { count: number; reasons: { error: string; count: number }[] } | null;
   awaitingReview: number | null;
   appUrl: string;
 }
@@ -132,6 +147,29 @@ export interface Digest {
 /** An unavailable number is never printed as zero. */
 function num(value: number | null): string {
   return value === null ? 'unavailable' : String(value);
+}
+
+/**
+ * The attempt cap, as the email says it.
+ *
+ * Duplicated from the extraction route rather than imported: that module
+ * is a route with `server-only` and a database client behind it, and this
+ * one is a pure string builder the tests render without a database. A
+ * number in a sentence is not worth that coupling — and if the two ever
+ * disagree, the sentence is wrong by one, not wrong about what happened.
+ */
+const MAX_EXTRACT_ATTEMPTS_LABEL = 3;
+
+/**
+ * One line of an error, because a Zod message is twelve.
+ *
+ * The digest is read on a phone. A stack of JSON across fifteen lines is
+ * not more information, it is the same information in a form that gets
+ * skipped — and this report's whole purpose is being read.
+ */
+function firstLine(error: string): string {
+  const line = error.split('\n')[0]!.trim();
+  return line.length > 160 ? `${line.slice(0, 157)}…` : line;
 }
 
 /**
@@ -200,6 +238,16 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
+  if (input.parkedItems && input.parkedItems.count > 0) {
+    actions.push(
+      `${input.parkedItems.count} item(s) abandoned by the extractor after ${MAX_EXTRACT_ATTEMPTS_LABEL} attempts — they are out of the queue and nothing retries them:\n` +
+        input.parkedItems.reasons
+          .map((r) => `    ${r.count}× ${firstLine(r.error)}`)
+          .join('\n') +
+        `\n    Read the reason before blaming the source: the first two of these were our own schema.`
+    );
+  }
+
   if (input.awaitingReview !== null && input.awaitingReview > 0) {    actions.push(
       `${input.awaitingReview} decision(s) waiting for review — nothing publishes until you approve them.\n` +
         `    ${input.appUrl}/en/admin/legal-queue`
@@ -228,6 +276,7 @@ export function composeDigest(input: DigestInput): Digest {
     'switched-off sources': input.disabledSources,
     'source yield': input.barrenSources,
     'stalled items': input.stalledItems,
+    'abandoned items': input.parkedItems,
     'review queue': input.awaitingReview
   })
     .filter(([, value]) => value === null)
@@ -260,7 +309,7 @@ export function composeDigest(input: DigestInput): Digest {
   if (input.corpus) {
     lines.push(
       `  Legal corpus          ` +
-        ['discovered', 'extracted', 'approved', 'published', 'rejected']
+        ['discovered', 'extracted', 'approved', 'published', 'rejected', 'extract_failed']
           .map((status) => `${status} ${input.corpus?.[status] ?? 0}`)
           .join(' · ')
     );

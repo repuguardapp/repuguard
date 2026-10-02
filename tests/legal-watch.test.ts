@@ -468,8 +468,27 @@ describe('an outage is not seventy-two item failures', () => {
   });
 
   it('still treats a single bad item as a single bad item', () => {
-    // The per-item alert has to survive: an item that fails on its own
+    // The per-item report has to survive: an item that fails on its own
     // will fail again on the next run, and that is worth saying.
-    expect(extract).toContain('cron.extract_legal_item_failed');
+    expect(extract).toContain('item_failed');
+  });
+
+  it('bounds the retry instead of alerting about it for ever', () => {
+    // The alert existed and did not help. It fired on every run for five
+    // days, naming a different development each time, while two items
+    // failed on one line of our own schema. What was missing was not
+    // another warning but a ceiling: the attempt is counted, the third
+    // one parks the row with its reason, and the alert fires once — at
+    // the point a human has something to do.
+    expect(extract).toContain('MAX_EXTRACT_ATTEMPTS');
+    expect(extract).toContain('extract_attempts');
+    expect(extract).toContain("status: 'extract_failed'");
+    expect(extract).toContain('cron.extract_legal_item_parked');
+
+    // And the cap is not applied to a failure that is about the account:
+    // parking eight real decisions because a card expired is the
+    // expensive mistake in the other direction.
+    const abandon = extract.slice(extract.indexOf('const fatal ='));
+    expect(abandon.slice(0, 500)).not.toContain('extract_attempts');
   });
 });

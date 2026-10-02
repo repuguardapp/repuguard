@@ -58,20 +58,66 @@ export const maxDuration = 300;
  */
 const MAX_ITEMS_PER_RUN = 8;
 
+/**
+ * How many times one item may fail before we stop paying to retry it.
+ *
+ * Three, then the row is parked as `extract_failed` with the last error
+ * stored on it. Before this existed, a failure that was about our code
+ * rather than about the page was retried for ever: the two items that
+ * tripped the `evidence.fine_eur: null` parse were charged on every run
+ * from 27 September, and the only visible trace was one alert per item
+ * per run — a shape that hides a single bug inside what looks like
+ * unrelated noise.
+ *
+ * Three rather than one because a 503 from a regulator's server, or a
+ * model that returns no tool call once, is worth asking again. Only
+ * item-level failures count: an exhausted balance or a rejected API key
+ * abandons the run without touching the counter, because parking real
+ * decisions over a billing lapse would be the expensive mistake in the
+ * other direction.
+ */
+const MAX_EXTRACT_ATTEMPTS = 3;
+
 /** Regulator pages are articles; anything larger is navigation furniture. */
 const MAX_SOURCE_CHARS = 12_000;
 const FETCH_TIMEOUT_MS = 15_000;
 
+/**
+ * An omitted field and an explicit null mean the same thing: absent.
+ *
+ * They did not, and it cost us. The tool schema says "omit the field
+ * entirely" when there is no fine, and the model instead sent
+ * `evidence: { fine_eur: null }` — which a plain `.optional()` rejects.
+ * The parse threw, the item stayed `discovered`, and the next run picked
+ * it up again: two developments charged four times a day from 27
+ * September onward, each run producing one more alert naming one more
+ * development id, so a single schema bug read as a stream of unrelated
+ * item failures.
+ *
+ * A null where a key was expected to be missing is not a lie about the
+ * world — it is the same claim in a different shape, and refusing it
+ * teaches us nothing about the document. Every optional field accepts
+ * both and normalises to undefined, so the distinction stops existing
+ * before it can cost anything again.
+ */
+function absent<T extends z.ZodTypeAny>(schema: T) {
+  return schema
+    .nullish()
+    .transform((value) => (value === null ? undefined : value) as z.infer<T> | undefined);
+}
+
 const Extraction = z.object({
   relevant: z.boolean(),
-  reject_reason: z.string().optional(),
-  authority: z.string().optional(),
-  entity: z.string().optional(),
-  decision_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  articles: z.array(z.string()).optional(),
-  fine_eur: z.number().nonnegative().optional(),
-  outcome: z.enum(['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other']).optional(),
-  summary_en: z.string().optional(),
+  reject_reason: absent(z.string()),
+  authority: absent(z.string()),
+  entity: absent(z.string()),
+  decision_date: absent(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)),
+  articles: absent(z.array(z.string())),
+  fine_eur: absent(z.number().nonnegative()),
+  outcome: absent(
+    z.enum(['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'])
+  ),
+  summary_en: absent(z.string()),
   /**
    * Where each checkable fact came from, in the page's own words.
    *
@@ -79,13 +125,13 @@ const Extraction = z.object({
    * quotation nobody checked is not evidence, it is a second assertion
    * from the same source that produced the first.
    */
-  evidence: z
-    .object({
-      entity: z.string().optional(),
-      decision_date: z.string().optional(),
-      fine_eur: z.string().optional()
+  evidence: absent(
+    z.object({
+      entity: absent(z.string()),
+      decision_date: absent(z.string()),
+      fine_eur: absent(z.string())
     })
-    .optional()
+  )
 });
 
 const TOOL = {
@@ -166,6 +212,8 @@ interface DevelopmentRow {
   raw_title: string;
   raw_excerpt: string | null;
   published_at: string | null;
+  /** Failed attempts so far. At MAX_EXTRACT_ATTEMPTS the row is parked. */
+  extract_attempts: number | null;
 }
 
 export async function GET(request: Request) {
@@ -187,8 +235,13 @@ async function extract() {
   // March.
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, source_id, primary_url, raw_title, raw_excerpt, published_at')
+    .select('id, source_id, primary_url, raw_title, raw_excerpt, published_at, extract_attempts')
     .eq('status', 'discovered')
+    // An item that has used its attempts is not in the queue any more. It
+    // is also not in `discovered` any more, so this is a belt-and-braces
+    // filter — one that matters on the run that follows a deploy, when
+    // rows written by the previous version have attempts but no status.
+    .lt('extract_attempts', MAX_EXTRACT_ATTEMPTS)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(MAX_ITEMS_PER_RUN * 12);
 
@@ -233,12 +286,43 @@ async function extract() {
         return NextResponse.json({ ok: false, reason: fatal, ...stats }, { status: 200 });
       }
 
-      // Otherwise: one item must never cost the rest of the batch. The
-      // row stays `discovered`, so the next run retries it — and if it
-      // keeps failing it keeps being retried, which is why the failure is
-      // alerted rather than only counted.
-      console.error('[cron/extract-legal] item_failed', { id: item.id, error: detail });
-      alertOps('cron.extract_legal_item_failed', { developmentId: item.id, error: detail });
+      // Otherwise: one item must never cost the rest of the batch, and it
+      // must not be retried for ever either. The attempt is counted, and
+      // on the third one the row leaves the queue carrying its own reason.
+      const attempts = (item.extract_attempts ?? 0) + 1;
+      const parked = attempts >= MAX_EXTRACT_ATTEMPTS;
+
+      await db
+        .from('legal_developments')
+        .update({
+          extract_attempts: attempts,
+          ...(parked
+            ? { status: 'extract_failed', extract_error: detail }
+            : { extract_error: detail }),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', item.id);
+
+      console.error('[cron/extract-legal] item_failed', {
+        id: item.id,
+        attempts,
+        parked,
+        error: detail
+      });
+
+      // Alerted once, on the attempt that gives up. The first two are in
+      // the log and in the row; it is the giving up that somebody has to
+      // act on, and alerting all three is how a channel earns the habit
+      // of being ignored.
+      if (parked) {
+        alertOps('cron.extract_legal_item_parked', {
+          developmentId: item.id,
+          url: item.primary_url,
+          attempts,
+          error: detail
+        });
+      }
+
       stats.failed += 1;
     }
   }

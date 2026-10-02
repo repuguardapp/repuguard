@@ -29,6 +29,7 @@ const HEALTHY: DigestInput = {
   disabledSources: [],
   barrenSources: [],
   stalledItems: { count: 0, oldestHours: 0 },
+  parkedItems: { count: 0, reasons: [] },
   awaitingReview: 0,
   appUrl: 'https://lexyflow.com'
 };
@@ -265,6 +266,59 @@ describe('a corpus count is a photograph, not a pulse', () => {
   it('says so when it could not measure it', () => {
     const digest = composeDigest({ ...HEALTHY, stalledItems: null });
     expect(digest.text).toContain('stalled items');
+    expect(digest.quiet).toBe(false);
+  });
+});
+
+/**
+ * The failure nothing else in this report can see.
+ *
+ * A parked item leaves `discovered` and never reaches `extracted`, so
+ * the corpus count just gets smaller in two places. It is no longer
+ * waiting, so the stalled count does not see it either. Before this
+ * section, an item the extractor had given up on was invisible in every
+ * instrument except Vercel's log viewer — which is where the
+ * `evidence.fine_eur: null` bug lived for five days.
+ */
+describe('an item the extractor gave up on is named, with its reason', () => {
+  it('leads with the count and groups identical failures', () => {
+    const digest = composeDigest({
+      ...HEALTHY,
+      parkedItems: {
+        count: 5,
+        reasons: [
+          { error: 'extraction schema mismatch: [\n  {\n    "code": "invalid_type"', count: 4 },
+          { error: 'model returned no tool call (stop_reason=max_tokens)', count: 1 }
+        ]
+      }
+    });
+
+    expect(digest.text).toContain('5 item(s) abandoned by the extractor');
+    // Grouped, because "4×" is recognisably one bug in our code while
+    // four separate lines read as four awkward regulator pages.
+    expect(digest.text).toContain('4× extraction schema mismatch');
+    expect(digest.text).toContain('1× model returned no tool call');
+    expect(digest.quiet).toBe(false);
+  });
+
+  it('prints one line of a twelve-line Zod error, not twelve', () => {
+    const digest = composeDigest({
+      ...HEALTHY,
+      parkedItems: { count: 1, reasons: [{ error: 'first line\nsecond line\nthird line', count: 1 }] }
+    });
+
+    expect(digest.text).toContain('1× first line');
+    expect(digest.text).not.toContain('second line');
+  });
+
+  it('stays silent when nothing has been abandoned', () => {
+    const digest = composeDigest({ ...HEALTHY, parkedItems: { count: 0, reasons: [] } });
+    expect(digest.text).not.toContain('abandoned by the extractor');
+  });
+
+  it('says so when it could not measure it', () => {
+    const digest = composeDigest({ ...HEALTHY, parkedItems: null });
+    expect(digest.text).toContain('abandoned items');
     expect(digest.quiet).toBe(false);
   });
 });

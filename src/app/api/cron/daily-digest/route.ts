@@ -113,6 +113,7 @@ async function digest() {
     ...(await readSourceHealth(db)),
     barrenSources: await readBarrenSources(db),
     stalledItems: await readStalledItems(db),
+    parkedItems: await readParkedItems(db),
     appUrl: baseUrl
   };
 
@@ -389,6 +390,48 @@ async function readBarrenSources(
  * legitimately wait most of a day before its turn.
  */
 const STALLED_AFTER_HOURS = 30;
+
+/**
+ * Items the extractor has given up on, grouped by what it said.
+ *
+ * Grouped rather than listed because the interesting fact is almost
+ * never which development failed — it is that five of them failed the
+ * same way, which is the shape of a bug in our extractor rather than
+ * five awkward regulator pages. The two items that created this state
+ * both failed on `evidence.fine_eur: null`; printed as two separate
+ * incidents they looked like the source's fault, and printed as "2× …"
+ * they are obviously one line of our own code.
+ */
+async function readParkedItems(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ count: number; reasons: { error: string; count: number }[] } | null> {
+  try {
+    const { data, error } = await db
+      .from('legal_developments')
+      .select('extract_error')
+      .eq('status', 'extract_failed')
+      .limit(500);
+
+    if (error) return null;
+
+    const rows = (data ?? []) as { extract_error: string | null }[];
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = row.extract_error ?? 'no reason was recorded';
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    return {
+      count: rows.length,
+      reasons: [...counts.entries()]
+        .map(([err, count]) => ({ error: err, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+    };
+  } catch {
+    return null;
+  }
+}
 
 async function readStalledItems(
   db: ReturnType<typeof supabaseService>

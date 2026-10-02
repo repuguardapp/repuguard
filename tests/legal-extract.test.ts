@@ -34,6 +34,8 @@ function chain(result: unknown): Record<string, unknown> {
     select: () => chain(result),
     eq: () => chain(result),
     in: () => chain(result),
+    // The queue excludes items that have used up their attempts.
+    lt: () => chain(result),
     // findTwin's query is the only one that ends on .neq(), so this is
     // where the duplicate lookup gets its own answer.
     neq: () => chain({ data: twinRows, error: null }),
@@ -204,7 +206,127 @@ describe('extraction filters the feed instead of trusting it', () => {
     const body = await run();
 
     expect(body['failed']).toBe(1);
-    // Left as `discovered`, so the next run retries it.
+    // Left as `discovered`, so the next run retries it — but the attempt
+    // is counted, because a retry nobody counts is a standing order to
+    // spend.
+    const patch = journal.updates[0]!.patch;
+    expect(patch['status']).toBeUndefined();
+    expect(patch['extract_attempts']).toBe(1);
+  });
+});
+
+/**
+ * The bug that paid for this section.
+ *
+ * The tool schema says "omit the field entirely" when there is no fine.
+ * The model sent `evidence: { fine_eur: null }`, the parse rejected it,
+ * the item stayed `discovered`, and the next run picked it up again: two
+ * developments charged four times a day from 27 September onward, each
+ * run emitting one more alert naming one more development id. A single
+ * schema bug, dressed as a stream of unrelated item failures.
+ */
+describe('an explicit null means absent, not malformed', () => {
+  it('extracts an item whose evidence carries nulls for the fields it has none for', async () => {
+    toolInput = {
+      ...GOOD_EXTRACTION,
+      evidence: {
+        entity: 'la société X',
+        decision_date: 'Décision rendue le 9 septembre 2026.',
+        fine_eur: null
+      }
+    };
+
+    const body = await run();
+
+    expect(body['failed']).toBe(0);
+    expect(body['extracted']).toBe(1);
+    expect(journal.updates[0]!.patch['status']).toBe('extracted');
+  });
+
+  it('accepts nulls across every optional field rather than abandoning the item', async () => {
+    toolInput = {
+      relevant: true,
+      authority: 'CNIL',
+      entity: null,
+      decision_date: null,
+      articles: null,
+      fine_eur: null,
+      outcome: null,
+      evidence: null,
+      summary_en: GOOD_EXTRACTION.summary_en
+    };
+
+    const body = await run();
+
+    expect(body['extracted']).toBe(1);
+    const patch = journal.updates[0]!.patch;
+    expect(patch['decision_date']).toBeNull();
+    expect(patch['articles']).toBeNull();
+    expect(patch['fine_eur']).toBeNull();
+    expect(patch['evidence']).toBeNull();
+  });
+
+  it('still refuses a null where the answer itself is required', async () => {
+    // `relevant` is the one field the model must decide. A null there is
+    // not an absent fact, it is a missing answer, and guessing either way
+    // would publish or discard on our own authority.
+    toolInput = { relevant: null, summary_en: GOOD_EXTRACTION.summary_en };
+    const body = await run();
+
+    expect(body['extracted']).toBe(0);
+    expect(body['failed']).toBe(1);
+  });
+});
+
+describe('an item that cannot be extracted stops costing money', () => {
+  it('parks the item on the third failure, carrying the reason', async () => {
+    queue = [{ ...ITEM, extract_attempts: 2 }];
+    toolInput = { relevant: true, authority: 'CNIL', summary_en: 'Too short.' };
+
+    const body = await run();
+
+    expect(body['failed']).toBe(1);
+    const patch = journal.updates[0]!.patch;
+    expect(patch['status']).toBe('extract_failed');
+    expect(patch['extract_attempts']).toBe(3);
+    expect(String(patch['extract_error'])).toContain('usable summary');
+  });
+
+  it('never parks an item over an account-level failure', async () => {
+    // A billing lapse is not the item's fault. Parking eight real
+    // decisions because a card expired is the expensive mistake in the
+    // other direction, so the run abandons and the counter is untouched.
+    queue = [{ ...ITEM, extract_attempts: 2 }];
+    vi.resetModules();
+    vi.doMock('@/lib/alert', () => ({ alertOps: () => undefined }));
+    vi.doMock('@/lib/ai-clients', () => ({
+      ANTHROPIC_EXTRACTION_MODEL: 'claude-haiku-test',
+      anthropic: () => ({
+        messages: {
+          create: async () => {
+            throw new Error('Your credit balance is too low to access the Anthropic API');
+          }
+        }
+      })
+    }));
+    vi.doMock('@/lib/supabase', () => ({
+      supabaseService: () => ({
+        from: () => ({
+          ...chain({ data: queue, error: null }),
+          update: (patch: Record<string, unknown>) => ({
+            eq: async (_col: string, id: string) => {
+              journal.updates.push({ id, patch });
+              return { error: null };
+            }
+          })
+        })
+      })
+    }));
+
+    const body = await run();
+
+    expect(body['ok']).toBe(false);
+    expect(String(body['reason'])).toContain('credit balance');
     expect(journal.updates).toHaveLength(0);
   });
 });

@@ -303,11 +303,13 @@ export default async function OpsPage({ params }: { params: { locale: string } }
           <CardTitle className="text-base">Corpus</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {['discovered', 'extracted', 'approved', 'published', 'rejected'].map((status) => (
-            <Badge key={status} variant={status === 'extracted' ? 'secondary' : 'outline'}>
-              {status}: {byStatus[status] ?? 0}
-            </Badge>
-          ))}
+          {['discovered', 'extracted', 'approved', 'published', 'rejected', 'extract_failed'].map(
+            (status) => (
+              <Badge key={status} variant={status === 'extracted' ? 'secondary' : 'outline'}>
+                {status}: {byStatus[status] ?? 0}
+              </Badge>
+            )
+          )}
         </CardContent>
       </Card>
 
