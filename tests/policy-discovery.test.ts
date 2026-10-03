@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -182,5 +182,56 @@ describe('why nothing was read, told apart from what was read', () => {
     // is a claim about the organisation.
     const refusals = source.slice(source.indexOf('refused:'));
     expect(refusals).not.toMatch(/has no privacy policy|does not have/i);
+  });
+});
+
+/**
+ * The type and the constraint have to agree, and nothing was checking.
+ *
+ * `linked-offsite` was added to the Provenance union and never added to
+ * the CHECK on scan_snapshots.provenance. The feature therefore worked
+ * to the last step and then discarded its answer: the link found, that
+ * origin's robots.txt read and obeyed, the document fetched and parsed,
+ * and the insert rejected. lefigaro.fr and rfi.fr both did that on one
+ * run.
+ *
+ * And the commit before it had just taught the observatory to exclude a
+ * failed insert from the study — correctly, because a Postgres error
+ * says nothing about a website. So the two defects composed: a bug I
+ * shipped quietly removed real readings from a published sample, and the
+ * instrument built to stop absences passing for results was what hid it.
+ *
+ * This guard reads both lists. Adding a provenance in TypeScript now
+ * fails the suite until a migration adds it to the database too.
+ */
+describe('every provenance the code can write, the database accepts', () => {
+  // Comment-stripped, and that is not cosmetic. Read raw, the union's
+  // own doc comment contains "policies.google.com, not google.fr;" —
+  // and the semicolon inside it ended the slice after the first member,
+  // so this guard passed while the constraint was missing the value it
+  // exists to catch. It was verified by deleting 'linked-offsite' from
+  // the migration and watching it fail.
+  const source = code(SRC);
+  const migrations = readdirSync(join(__dirname, '..', 'supabase', 'migrations'))
+    .filter((f) => f.endsWith('.sql'))
+    .map((f) => readFileSync(join(__dirname, '..', 'supabase', 'migrations', f), 'utf8'))
+    .join('\n');
+
+  it('declares the same four values on both sides', () => {
+    const union = source.slice(source.indexOf('export type Provenance'));
+    const declared = [...union.slice(0, union.indexOf(';')).matchAll(/'([a-z-]+)'/g)].map(
+      (m) => m[1]!
+    );
+
+    expect(declared.length).toBeGreaterThan(0);
+
+    // The newest definition of the constraint wins: earlier migrations
+    // legitimately carry older, shorter lists.
+    const checks = [...migrations.matchAll(/scan_snapshots_provenance_check[\s\S]*?\)\s*\)\s*;/g)];
+    const newest = checks.at(-1)?.[0] ?? '';
+
+    for (const value of declared) {
+      expect(newest).toContain(`'${value}'`);
+    }
   });
 });
