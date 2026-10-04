@@ -21,7 +21,6 @@
     { "path": "/api/cron/lifecycle-emails", "schedule": "0 9 * * *" },
     { "path": "/api/cron/reap-audits",      "schedule": "*/5 * * * *" },
     { "path": "/api/cron/watch-legal",      "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/extract-legal",    "schedule": "30 */6 * * *" },
     { "path": "/api/cron/localize-legal",   "schedule": "45 */6 * * *" },
     { "path": "/api/cron/daily-digest",     "schedule": "0 6 * * *" },
     { "path": "/api/cron/policy-survey",    "schedule": "20 */3 * * *" }

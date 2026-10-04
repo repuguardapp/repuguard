@@ -78,8 +78,33 @@ const MAX_ITEMS_PER_RUN = 8;
  */
 const MAX_EXTRACT_ATTEMPTS = 3;
 
-/** Regulator pages are articles; anything larger is navigation furniture. */
-const MAX_SOURCE_CHARS = 12_000;
+/**
+ * How much of a regulator's page the model is shown.
+ *
+ * It was 12,000 characters, taken from the front, and that is the same
+ * mistake the policy crawler made with its 800,000: a cap applied to the
+ * head is not a bound on size, it is a decision about which part of the
+ * document to read.
+ *
+ * The ICO's enforcement pages carry the contravention first and the
+ * money later — "ICO hits company selling call blockers with £190k fine
+ * for nuisance calls" sits below the body text. The model answered "the
+ * page does not state a fine amount or currency", which was a true
+ * statement about the 12,000 characters it was given and a false one
+ * about the page.
+ *
+ * Forty thousand now, and past that the page is read at both ends. A
+ * regulator's decision is never 40,000 characters of substance, so the
+ * tail is navigation on a short page and the amount on a long one —
+ * and the tail is cheap: it is already in memory, and the model is
+ * billed for about four thousand extra tokens on the rare page that
+ * needs it.
+ */
+const MAX_SOURCE_CHARS = 40_000;
+
+/** The end of a page too long to send whole. Where the ICO puts money. */
+const SOURCE_TAIL_CHARS = 6_000;
+
 const FETCH_TIMEOUT_MS = 15_000;
 
 /**
@@ -489,6 +514,26 @@ async function extractOne(
  * A decision with no date and no amount has nothing to match on, so it
  * is never treated as a duplicate — guessing there would silently drop
  * a real decision, which is far worse than publishing one twice.
+ *
+ * THE COMMENT ABOVE WAS TRUE AND THE CODE DID NOT DO IT
+ *
+ * The amounts were compared with `mine === theirs`, and two nulls are
+ * equal in JavaScript. So an absence became a matching key, which is the
+ * one thing this comment says must never happen.
+ *
+ * The ICO published two documents about Elderly Aids Limited on the same
+ * day: an enforcement notice, which orders the company to stop, and a
+ * monetary penalty notice of £190,000. Same authority, same date,
+ * neither carrying an amount we had managed to read — so on 20 September
+ * the penalty notice was rejected as "duplicate of" the enforcement
+ * notice, and the fine left the corpus while the order stayed. Nobody
+ * saw it, because a rejection with a reason reads like the system
+ * working.
+ *
+ * Two guards now. An absent amount never matches anything, and two rows
+ * with different outcomes are never the same decision — an order and a
+ * fine are two decisions however identical their metadata, which is
+ * precisely how a regulator works.
  */
 async function findTwin(
   db: ReturnType<typeof supabaseService>,
@@ -497,9 +542,14 @@ async function findTwin(
 ): Promise<string | null> {
   if (!facts.authority || !facts.decision_date) return null;
 
+  // Nothing to match on. Two decisions by one authority on one day with
+  // no amount between them are two decisions until something says
+  // otherwise, and silence is not that something.
+  if (facts.fine_amount === undefined || !facts.fine_currency) return null;
+
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, fine_amount, fine_currency')
+    .select('id, fine_amount, fine_currency, outcome')
     .eq('authority', facts.authority)
     .eq('decision_date', facts.decision_date)
     .in('status', ['extracted', 'approved', 'published'])
@@ -507,17 +557,34 @@ async function findTwin(
   if (error) return null;
 
   const rows =
-    (data as { id: string; fine_amount: number | null; fine_currency: string | null }[] | null) ??
-    [];
+    (data as
+      | {
+          id: string;
+          fine_amount: number | null;
+          fine_currency: string | null;
+          outcome: string | null;
+        }[]
+      | null) ?? [];
+
+  const mineCurrency = facts.fine_currency!.toUpperCase();
+
   const match = rows.find((r) => {
+    // A row with no amount is not a candidate. It is the other half of
+    // the guard above: the comparison must never be satisfied by two
+    // absences agreeing with each other.
+    if (r.fine_amount === null || !r.fine_currency) return false;
+
+    // An order and a fine are two decisions, however identical the rest
+    // of their metadata — which is exactly how a regulator publishes:
+    // one notice telling a company to stop, one notice telling it what
+    // to pay, same day, same authority.
+    if ((r.outcome ?? null) !== (facts.outcome ?? null)) return false;
+
     // The currency is part of the amount. Two decisions by the same body
     // on the same day, one for 300000 GBP and one for 300000 EUR, are two
     // decisions, and matching on the digits alone would reject the second
     // as a duplicate of the first.
-    const mine = facts.fine_amount ?? null;
-    const mineCurrency = mine === null ? null : (facts.fine_currency?.toUpperCase() ?? null);
-    const theirs = r.fine_amount === null ? null : Number(r.fine_amount);
-    return mine === theirs && mineCurrency === (r.fine_currency ?? null);
+    return Number(r.fine_amount) === facts.fine_amount && r.fine_currency === mineCurrency;
   });
   return match?.id ?? null;
 }
@@ -541,7 +608,16 @@ async function readSource(item: DevelopmentRow): Promise<string> {
     if (!res.ok) return fallback;
     const type = res.headers.get('content-type') ?? '';
     if (!type.includes('html')) return fallback;
-    const text = htmlToText(await res.text(), MAX_SOURCE_CHARS);
+
+    // Extracted whole, then trimmed at both ends rather than only at the
+    // front. htmlToText is given a generous ceiling so the decision of
+    // what to keep is made here, in one place, where it can be read.
+    const whole = htmlToText(await res.text(), 400_000);
+    const text =
+      whole.length <= MAX_SOURCE_CHARS
+        ? whole
+        : `${whole.slice(0, MAX_SOURCE_CHARS)}\n\n[...]\n\n${whole.slice(-SOURCE_TAIL_CHARS)}`;
+
     // A page that reduces to almost nothing is a JS shell or a consent
     // wall; the feed excerpt is better than its navigation menu.
     return text.length > fallback.length ? text : fallback;

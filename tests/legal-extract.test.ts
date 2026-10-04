@@ -29,7 +29,12 @@ let journal: Journal;
 let queue: Record<string, unknown>[];
 let toolInput: Record<string, unknown> | (() => Record<string, unknown>);
 /** What the cross-source twin lookup finds. Empty means no duplicate. */
-let twinRows: { id: string; fine_amount: number | null; fine_currency: string | null }[];
+let twinRows: {
+  id: string;
+  fine_amount: number | null;
+  fine_currency: string | null;
+  outcome?: string | null;
+}[];
 
 function chain(result: unknown): Record<string, unknown> {
   const self: Record<string, unknown> = {
@@ -111,6 +116,37 @@ const GOOD_EXTRACTION = {
     'The French data protection authority fined company X 300,000 euros for failing to inform data subjects and for inadequate security measures.'
 };
 
+/**
+ * A fetch stub that survives fetchExternal, which the old one did not.
+ *
+ * fetchExternal follows redirects by hand: it reads `res.status` and, for
+ * anything outside 2xx, `res.headers.get('location')`. The previous stub
+ * returned no status and a headers.get that answered the content-type to
+ * every question — so `undefined < 300` was false, the content-type was
+ * taken for a Location, `new URL('text/html; charset=utf-8')` threw, and
+ * readSource silently fell back to the feed excerpt.
+ *
+ * Every test in this file was therefore exercising the fallback path and
+ * none of them was reading a page. They passed, because they asserted on
+ * extraction rather than on content — which is how a stub that answers
+ * the wrong question survives in a suite for weeks.
+ */
+function stubPage(html: string) {
+  vi.stubGlobal('fetch', async (url: string) => {
+    journal.fetched.push(String(url));
+    return {
+      ok: true,
+      status: 200,
+      url: String(url),
+      headers: {
+        get: (name: string) =>
+          name.toLowerCase() === 'content-type' ? 'text/html; charset=utf-8' : null
+      },
+      text: async () => html
+    };
+  });
+}
+
 beforeEach(() => {
   vi.resetModules();
   journal = { updates: [], modelCalls: 0, fetched: [] };
@@ -122,14 +158,7 @@ beforeEach(() => {
   delete process.env['CRON_SECRET'];
   // The source page is fetched for the articles it cites; failing to
   // reach it must degrade, never block.
-  vi.stubGlobal('fetch', async (url: string) => {
-    journal.fetched.push(String(url));
-    return {
-      ok: true,
-      headers: { get: () => 'text/html; charset=utf-8' },
-      text: async () => '<html><body><p>Décision rendue le 9 septembre 2026.</p></body></html>'
-    };
-  });
+  stubPage('<html><body><p>Décision rendue le 9 septembre 2026.</p></body></html>');
   install();
 });
 
@@ -388,7 +417,7 @@ describe('one decision, one page — whatever reported it', () => {
   it('rejects the second report of a decision, naming the first', async () => {
     const twinId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
     twinRows = [
-      { id: twinId, fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR' }
+      { id: twinId, fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
     ];
 
     const body = await run();
@@ -403,7 +432,7 @@ describe('one decision, one page — whatever reported it', () => {
 
   it('is not fooled by a different fine on the same day', async () => {
     // Same authority, same date, different amount: two real decisions.
-    twinRows = [{ id: 'other', fine_amount: 999, fine_currency: 'EUR' }];
+    twinRows = [{ id: 'other', fine_amount: 999, fine_currency: 'EUR', outcome: 'fine' }];
     const body = await run();
     expect(body['extracted']).toBe(1);
   });
@@ -413,7 +442,7 @@ describe('one decision, one page — whatever reported it', () => {
     // silently drop a real decision — far worse than publishing one
     // twice.
     twinRows = [
-      { id: 'other', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR' }
+      { id: 'other', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
     ];
     toolInput = { ...GOOD_EXTRACTION, decision_date: undefined };
     const body = await run();
@@ -509,7 +538,7 @@ describe('a fine without its currency is not published', () => {
     // 300000 GBP and 300000 EUR are two different decisions. Matching on
     // the number alone would reject the second as a duplicate of the
     // first and lose it silently.
-    twinRows = [{ id: 'other', fine_amount: 300000, fine_currency: 'GBP' }];
+    twinRows = [{ id: 'other', fine_amount: 300000, fine_currency: 'GBP', outcome: 'fine' }];
     toolInput = { ...GOOD_EXTRACTION, fine_amount: 300000, fine_currency: 'EUR' };
     const body = await run();
 
@@ -526,5 +555,128 @@ describe('a fine without its currency is not published', () => {
     expect(source).toContain('You NEVER convert a currency');
     // And the one number that proves why.
     expect(source).toContain('73,920');
+  });
+});
+
+/**
+ * The fine the deduplication threw away.
+ *
+ * The ICO published two documents about Elderly Aids Limited on the same
+ * day: an enforcement notice ordering the company to stop, and a
+ * monetary penalty notice of £190,000. Same authority, same date, and
+ * neither carrying an amount we had managed to read.
+ *
+ * The amounts were compared with `mine === theirs`, and two nulls are
+ * equal in JavaScript. So on 20 September the penalty notice was
+ * rejected as "duplicate of" the enforcement notice: the fine left the
+ * corpus, the order stayed, and nobody looked — because a rejection
+ * carrying a reason reads exactly like the system working.
+ *
+ * The doc comment on findTwin already said "a decision with no date and
+ * no amount has nothing to match on, so it is never treated as a
+ * duplicate". It was true, and the code did not do it.
+ */
+describe('an absence is never a matching key', () => {
+  it('never calls two amount-less decisions duplicates of each other', async () => {
+    twinRows = [{ id: 'the-enforcement-notice', fine_amount: null, fine_currency: null, outcome: 'order' }];
+    toolInput = {
+      ...GOOD_EXTRACTION,
+      outcome: 'order',
+      fine_amount: undefined,
+      fine_currency: undefined
+    };
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(0);
+    expect(body['extracted']).toBe(1);
+  });
+
+  it('does not match a fine against a row that has no amount', async () => {
+    // The exact shape of the Elderly Aids loss, from the other side: the
+    // penalty notice arrives with its £190,000 and the order is already
+    // in the corpus with nothing.
+    twinRows = [{ id: 'the-enforcement-notice', fine_amount: null, fine_currency: null, outcome: 'fine' }];
+    toolInput = { ...GOOD_EXTRACTION, fine_amount: 190000, fine_currency: 'GBP' };
+
+    const body = await run();
+
+    expect(body['extracted']).toBe(1);
+    expect(journal.updates[0]!.patch['fine_amount']).toBe(190000);
+    expect(journal.updates[0]!.patch['fine_currency']).toBe('GBP');
+  });
+
+  it('never calls an order and a fine the same decision', async () => {
+    // However identical the rest of the metadata. One notice tells a
+    // company to stop and one tells it what to pay; a regulator
+    // routinely publishes both on one day.
+    twinRows = [{ id: 'the-order', fine_amount: 190000, fine_currency: 'GBP', outcome: 'order' }];
+    toolInput = { ...GOOD_EXTRACTION, outcome: 'fine', fine_amount: 190000, fine_currency: 'GBP' };
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(0);
+    expect(body['extracted']).toBe(1);
+  });
+});
+
+/**
+ * The model was shown 12,000 characters of a page and told us what was
+ * not in them.
+ *
+ * "The page does not state a fine amount or currency" — a true statement
+ * about the slice it was given and a false one about the ICO page, which
+ * carries "ICO hits company selling call blockers with £190k fine for
+ * nuisance calls" below the body text.
+ *
+ * The same mistake as the crawler's 800,000-character cap, in a
+ * different file: a bound applied to the head is not a bound on size, it
+ * is a choice of which part of the document to read.
+ */
+describe('the regulator’s page is read at both ends', () => {
+  it('sends the end of a long page, where the money is', async () => {
+    const body = 'Le contrevenant a été identifié par la commission. '.repeat(3_000);
+    stubPage(
+      `<html><body><p>${body}</p><p>ICO hits company selling call blockers with 190k fine</p></body></html>`
+    );
+
+    let seen = '';
+    vi.resetModules();
+    vi.doMock('@/lib/alert', () => ({ alertOps: () => undefined }));
+    vi.doMock('@/lib/ai-clients', () => ({
+      ANTHROPIC_EXTRACTION_MODEL: 'claude-haiku-test',
+      anthropic: () => ({
+        messages: {
+          create: async (req: { messages: { content: string }[] }) => {
+            seen = req.messages[0]!.content;
+            return {
+              stop_reason: 'tool_use',
+              content: [{ type: 'tool_use', name: 'submit_development', input: GOOD_EXTRACTION }]
+            };
+          }
+        }
+      })
+    }));
+    vi.doMock('@/lib/supabase', () => ({
+      supabaseService: () => ({
+        from: () => ({
+          ...chain({ data: queue, error: null }),
+          update: (patch: Record<string, unknown>) => ({
+            eq: async (_col: string, id: string) => {
+              journal.updates.push({ id, patch });
+              return { error: null };
+            }
+          })
+        })
+      })
+    }));
+
+    await run();
+
+    // The head is there, the tail is there, and the elision is marked
+    // rather than silently joining two unrelated sentences.
+    expect(seen).toContain('Le contrevenant a été identifié');
+    expect(seen).toContain('190k fine');
+    expect(seen).toContain('[...]');
   });
 });
