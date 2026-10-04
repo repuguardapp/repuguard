@@ -79,6 +79,15 @@ const MAX_ITEMS_PER_RUN = 8;
 const MAX_EXTRACT_ATTEMPTS = 3;
 
 /**
+ * Outcomes that read as something done TO the organisation named.
+ *
+ * A page carrying one of these under a company's name is read as a
+ * sanction however the body text is worded, so these are the labels a
+ * closure must never be given.
+ */
+const PUNITIVE = new Set(['fine', 'reprimand', 'ban', 'order']);
+
+/**
  * How much of a regulator's page the model is shown.
  *
  * It was 12,000 characters, taken from the front, and that is the same
@@ -141,8 +150,26 @@ const Extraction = z.object({
   fine_amount: absent(z.number().nonnegative()),
   fine_currency: absent(z.string().regex(/^[A-Za-z]{3}$/)),
   outcome: absent(
-    z.enum(['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'])
+    z.enum(['fine', 'reprimand', 'ban', 'order', 'closed', 'guidance', 'court_ruling', 'other'])
   ),
+  /**
+   * Does this document IMPOSE something, or does it end something?
+   *
+   * Asked as a fact rather than inferred from the label, because the
+   * label is where it went wrong. The CNIL's "clôture de l'injonction
+   * prononcée à l'encontre de SOLOCAL" came back as `order`, and the
+   * page that would have produced reads "SOLOCAL MARKETING SERVICES —
+   * CNIL — injonction": the regulator said the company had COMPLIED and
+   * we would have published it as a sanction, under its name, in seven
+   * languages. That is not a missing field, it is the opposite of what
+   * the source says, about a third party.
+   *
+   * A model picking one value out of eight has to get the whole mapping
+   * right. A model answering "does this impose something?" has to get
+   * one fact right, and the consequence is derived in code — the same
+   * reasoning as building the slug ourselves instead of asking for one.
+   */
+  imposes_a_measure: absent(z.boolean()),
   summary_en: absent(z.string()),
   /**
    * Where each checkable fact came from, in the page's own words.
@@ -199,7 +226,17 @@ const TOOL = {
         description:
           'ISO 4217 code of the currency the SOURCE uses: GBP for the ICO, EUR for the CNIL and the EDPB, JPY for the PPC, BRL for the ANPD. Required whenever fine_amount is given, and omitted whenever it is not. Read it from the symbol or the word in the document; do not infer it from which country the authority is in — a reprimand published by an EU body may still quote a sum in another currency.'
       },
-      outcome: { type: 'string', enum: ['fine', 'reprimand', 'ban', 'order', 'guidance', 'court_ruling', 'other'] },
+      outcome: {
+        type: 'string',
+        enum: ['fine', 'reprimand', 'ban', 'order', 'closed', 'guidance', 'court_ruling', 'other'],
+        description:
+          'What the document does. Use "closed" when it ENDS an earlier measure — a closure, a lifting, a withdrawal, an annulment, or a finding that an organisation has complied. A closure is not the measure it closes: "clôture de l\'injonction prononcée à l\'encontre de X" is closed, never order.'
+      },
+      imposes_a_measure: {
+        type: 'boolean',
+        description:
+          'True when this document imposes something on the named organisation: a fine to pay, an order to obey, a ban, a reprimand on its record. FALSE when it ends or lifts an earlier measure, records that the organisation has complied, withdraws a complaint, or closes a procedure — those are good news for the organisation and must never be published as a sanction against it. Required whenever an entity is named.'
+      },
       summary_en: {
         type: 'string',
         description:
@@ -246,6 +283,13 @@ const SYSTEM = [
   'An investigation or inquiry that has been OPENED is not a decision and',
   'not relevant: nothing has been found, and a page saying otherwise about',
   'a named organisation is an accusation we invented.',
+  'The same care applies in the other direction. A document that CLOSES,',
+  'lifts, withdraws or annuls an earlier measure, or that records that an',
+  'organisation has complied, is good news for that organisation. Its',
+  'outcome is "closed" and imposes_a_measure is false. Reporting the',
+  'closure of an injunction as an injunction says the opposite of what',
+  'the regulator decided, about a named company, and is the one error',
+  'here that would be worth suing over.',
   'The summary must be your own sentences, not the source\'s, and must contain',
   'only what the source establishes.'
 ].join(' ');
@@ -458,7 +502,27 @@ async function extractOne(
   // exist once extraction has run, and because the loser must be
   // recorded as a duplicate rather than rejected by a failed insert
   // nobody can read afterwards.
-  const twin = await findTwin(db, item.id, out);
+  /**
+   * The label is derived, not trusted.
+   *
+   * `imposes_a_measure: false` beats whatever the enum says. A document
+   * that ends a measure cannot be published as that measure, and the
+   * failure mode is not a blank field — it is a page reading "SOLOCAL
+   * MARKETING SERVICES — CNIL — injonction" about a company the CNIL had
+   * just recorded as compliant.
+   *
+   * Only in that direction. `true` does not promote anything: if the
+   * model says a document imposes something and calls it guidance, the
+   * disagreement is left alone for a human, because inventing a sanction
+   * is the error this whole file exists to prevent.
+   */
+  const outcome =
+    out.imposes_a_measure === false && PUNITIVE.has(out.outcome ?? '') ? 'closed' : out.outcome;
+
+  // Derived BEFORE the twin lookup, which compares outcomes: a closure
+  // and the order it closes must not be matched against each other on a
+  // label one of them was about to lose.
+  const twin = await findTwin(db, item.id, { ...out, outcome });
   if (twin) {
     await db
       .from('legal_developments')
@@ -471,6 +535,7 @@ async function extractOne(
     stats.rejected += 1;
     return;
   }
+
 
   await db
     .from('legal_developments')
@@ -489,7 +554,7 @@ async function extractOne(
         out.fine_amount !== undefined && out.fine_currency
           ? out.fine_currency.toUpperCase()
           : null,
-      outcome: out.outcome ?? null,
+      outcome: outcome ?? null,
       summary_en: out.summary_en.trim(),
       // Verified against the page, and what is stored is the page's
       // wording rather than the model's. An unverifiable span is dropped

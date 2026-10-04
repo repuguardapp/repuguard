@@ -29,6 +29,11 @@ const OUTCOME: Record<string, Record<string, string>> = {
   reprimand:    { en: 'reprimand',    fr: 'blâme',               es: 'apercibimiento',  de: 'Verwarnung',      'pt-br': 'advertência',      ja: '戒告',         ar: 'توبيخ' },
   ban:          { en: 'ban',          fr: 'interdiction',        es: 'prohibición',     de: 'Verbot',          'pt-br': 'proibição',        ja: '禁止',         ar: 'حظر' },
   order:        { en: 'order',        fr: 'injonction',          es: 'requerimiento',   de: 'Anordnung',       'pt-br': 'determinação',     ja: '命令',         ar: 'أمر' },
+  // Not a sanction, and the word has to say so on its own. This badge
+  // sits beside a company's name: "clôture" reads as the end of a
+  // measure, "injonction" reads as the measure — and the CNIL's closure
+  // of the Solocal injunction came back labelled with the second.
+  closed:       { en: 'measure closed', fr: 'clôture',        es: 'archivo',         de: 'Verfahren eingestellt', 'pt-br': 'arquivamento',  ja: '手続終了',     ar: 'إغلاق الإجراء' },
   guidance:     { en: 'guidance',     fr: 'lignes directrices',  es: 'directrices',     de: 'Leitlinien',      'pt-br': 'diretrizes',       ja: 'ガイドライン', ar: 'إرشادات' },
   court_ruling: { en: 'court ruling', fr: 'décision de justice', es: 'sentencia',       de: 'Gerichtsurteil',  'pt-br': 'decisão judicial', ja: '判決',         ar: 'حكم قضائي' },
   other:        { en: 'decision',     fr: 'décision',            es: 'resolución',      de: 'Entscheidung',    'pt-br': 'decisão',          ja: '決定',         ar: 'قرار' }

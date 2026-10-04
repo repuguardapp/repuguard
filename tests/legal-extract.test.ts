@@ -680,3 +680,81 @@ describe('the regulator’s page is read at both ends', () => {
     expect(seen).toContain('[...]');
   });
 });
+
+/**
+ * The closure of an injunction is not an injunction.
+ *
+ * The CNIL published "Clôture de l'injonction prononcée à l'encontre de
+ * la société SOLOCAL MARKETING SERVICES" — the regulator recording that
+ * the company had complied. It came back as `order`, and the page that
+ * would have produced reads:
+ *
+ *   SOLOCAL MARKETING SERVICES — CNIL — injonction — 17 septembre 2026
+ *
+ * The opposite of what the authority decided, under a real company's
+ * name, in seven languages. Not a missing field: an accusation, and the
+ * one error in this file that would be worth suing over.
+ *
+ * The fix is not a better enum description. The model is asked a fact —
+ * does this document impose something? — and the label is derived from
+ * the answer in code, the same reasoning as building the slug ourselves
+ * rather than asking for one.
+ */
+describe('a document that ends a measure is never published as the measure', () => {
+  it('overrides a punitive label when nothing was imposed', async () => {
+    toolInput = {
+      ...GOOD_EXTRACTION,
+      entity: 'SOLOCAL MARKETING SERVICES',
+      outcome: 'order',
+      imposes_a_measure: false,
+      fine_amount: undefined,
+      fine_currency: undefined,
+      summary_en:
+        'The CNIL closed the injunction issued against SOLOCAL MARKETING SERVICES after the company brought its practices into line.'
+    };
+
+    await run();
+
+    expect(journal.updates[0]!.patch['outcome']).toBe('closed');
+    expect(journal.updates[0]!.patch['entity']).toBe('SOLOCAL MARKETING SERVICES');
+  });
+
+  it('overrides every punitive label, not just order', async () => {
+    for (const label of ['fine', 'reprimand', 'ban', 'order']) {
+      journal.updates.length = 0;
+      vi.resetModules();
+      install();
+      toolInput = { ...GOOD_EXTRACTION, outcome: label, imposes_a_measure: false };
+      await run();
+      expect(journal.updates[0]!.patch['outcome']).toBe('closed');
+    }
+  });
+
+  it('leaves the label alone when a measure was imposed', async () => {
+    toolInput = { ...GOOD_EXTRACTION, outcome: 'fine', imposes_a_measure: true };
+    await run();
+    expect(journal.updates[0]!.patch['outcome']).toBe('fine');
+  });
+
+  it('never promotes guidance into a sanction', async () => {
+    // Only the demoting direction. If the model says a document imposes
+    // something and calls it guidance, the disagreement is left for a
+    // human — inventing a sanction is the error this file exists against.
+    toolInput = { ...GOOD_EXTRACTION, outcome: 'guidance', imposes_a_measure: true };
+    await run();
+    expect(journal.updates[0]!.patch['outcome']).toBe('guidance');
+  });
+
+  it('does not treat a closure as a duplicate of the order it closes', async () => {
+    // Same authority, same date, same amount: the twin check compares
+    // outcomes, and it must compare the one we are about to store rather
+    // than the one the model offered.
+    twinRows = [{ id: 'the-order', fine_amount: 300000, fine_currency: 'EUR', outcome: 'order' }];
+    toolInput = { ...GOOD_EXTRACTION, outcome: 'order', imposes_a_measure: false };
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(0);
+    expect(journal.updates[0]!.patch['outcome']).toBe('closed');
+  });
+});
