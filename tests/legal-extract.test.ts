@@ -31,6 +31,7 @@ let toolInput: Record<string, unknown> | (() => Record<string, unknown>);
 /** What the cross-source twin lookup finds. Empty means no duplicate. */
 let twinRows: {
   id: string;
+  entity?: string | null;
   fine_amount: number | null;
   fine_currency: string | null;
   outcome?: string | null;
@@ -107,6 +108,7 @@ const ITEM = {
 const GOOD_EXTRACTION = {
   relevant: true,
   authority: 'CNIL',
+  entity: 'X',
   decision_date: '2026-09-09',
   articles: ['GDPR Art. 13', 'GDPR Art. 32'],
   fine_amount: 300000,
@@ -417,7 +419,7 @@ describe('one decision, one page — whatever reported it', () => {
   it('rejects the second report of a decision, naming the first', async () => {
     const twinId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
     twinRows = [
-      { id: twinId, fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
+      { id: twinId, entity: 'X', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
     ];
 
     const body = await run();
@@ -432,7 +434,7 @@ describe('one decision, one page — whatever reported it', () => {
 
   it('is not fooled by a different fine on the same day', async () => {
     // Same authority, same date, different amount: two real decisions.
-    twinRows = [{ id: 'other', fine_amount: 999, fine_currency: 'EUR', outcome: 'fine' }];
+    twinRows = [{ id: 'other', entity: 'X', fine_amount: 999, fine_currency: 'EUR', outcome: 'fine' }];
     const body = await run();
     expect(body['extracted']).toBe(1);
   });
@@ -442,7 +444,7 @@ describe('one decision, one page — whatever reported it', () => {
     // silently drop a real decision — far worse than publishing one
     // twice.
     twinRows = [
-      { id: 'other', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
+      { id: 'other', entity: 'X', fine_amount: GOOD_EXTRACTION.fine_amount, fine_currency: 'EUR', outcome: 'fine' }
     ];
     toolInput = { ...GOOD_EXTRACTION, decision_date: undefined };
     const body = await run();
@@ -538,7 +540,7 @@ describe('a fine without its currency is not published', () => {
     // 300000 GBP and 300000 EUR are two different decisions. Matching on
     // the number alone would reject the second as a duplicate of the
     // first and lose it silently.
-    twinRows = [{ id: 'other', fine_amount: 300000, fine_currency: 'GBP', outcome: 'fine' }];
+    twinRows = [{ id: 'other', entity: 'X', fine_amount: 300000, fine_currency: 'GBP', outcome: 'fine' }];
     toolInput = { ...GOOD_EXTRACTION, fine_amount: 300000, fine_currency: 'EUR' };
     const body = await run();
 
@@ -577,11 +579,13 @@ describe('a fine without its currency is not published', () => {
  * duplicate". It was true, and the code did not do it.
  */
 describe('an absence is never a matching key', () => {
-  it('never calls two amount-less decisions duplicates of each other', async () => {
-    twinRows = [{ id: 'the-enforcement-notice', fine_amount: null, fine_currency: null, outcome: 'order' }];
+  it('separates two amount-less decisions when the outcomes differ', async () => {
+    // The Elderly Aids shape: an enforcement notice and a monetary
+    // penalty notice, same company, same day, neither amount read.
+    twinRows = [{ id: 'the-enforcement-notice', entity: 'X', fine_amount: null, fine_currency: null, outcome: 'order' }];
     toolInput = {
       ...GOOD_EXTRACTION,
-      outcome: 'order',
+      outcome: 'fine',
       fine_amount: undefined,
       fine_currency: undefined
     };
@@ -592,11 +596,31 @@ describe('an absence is never a matching key', () => {
     expect(body['extracted']).toBe(1);
   });
 
-  it('does not match a fine against a row that has no amount', async () => {
-    // The exact shape of the Elderly Aids loss, from the other side: the
-    // penalty notice arrives with its £190,000 and the order is already
-    // in the corpus with nothing.
-    twinRows = [{ id: 'the-enforcement-notice', fine_amount: null, fine_currency: null, outcome: 'fine' }];
+  it('still merges the same amount-less decision reported twice', async () => {
+    // And this is what the previous repair broke. Requiring an amount
+    // switched deduplication off for every reprimand and order, and the
+    // ICO's two identical Metropolitan Police reprimands both reached
+    // the review queue on the very batch built to test the fix.
+    twinRows = [{ id: 'the-first-report', entity: 'X', fine_amount: null, fine_currency: null, outcome: 'reprimand' }];
+    toolInput = {
+      ...GOOD_EXTRACTION,
+      outcome: 'reprimand',
+      fine_amount: undefined,
+      fine_currency: undefined
+    };
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(1);
+    expect(String(journal.updates[0]!.patch['rejected_reason'])).toContain('the-first-report');
+  });
+
+  it('keeps the reading that has the number in it', async () => {
+    // One row speaks and one does not, so one of the two readings is
+    // better — and merging would keep whichever arrived first. That is
+    // precisely how the £190,000 against Elderly Aids left the corpus.
+    // Both go to review and a human keeps the richer one.
+    twinRows = [{ id: 'the-silent-one', entity: 'X', fine_amount: null, fine_currency: null, outcome: 'fine' }];
     toolInput = { ...GOOD_EXTRACTION, fine_amount: 190000, fine_currency: 'GBP' };
 
     const body = await run();
@@ -610,7 +634,7 @@ describe('an absence is never a matching key', () => {
     // However identical the rest of the metadata. One notice tells a
     // company to stop and one tells it what to pay; a regulator
     // routinely publishes both on one day.
-    twinRows = [{ id: 'the-order', fine_amount: 190000, fine_currency: 'GBP', outcome: 'order' }];
+    twinRows = [{ id: 'the-order', entity: 'X', fine_amount: 190000, fine_currency: 'GBP', outcome: 'order' }];
     toolInput = { ...GOOD_EXTRACTION, outcome: 'fine', fine_amount: 190000, fine_currency: 'GBP' };
 
     const body = await run();
@@ -749,7 +773,7 @@ describe('a document that ends a measure is never published as the measure', () 
     // Same authority, same date, same amount: the twin check compares
     // outcomes, and it must compare the one we are about to store rather
     // than the one the model offered.
-    twinRows = [{ id: 'the-order', fine_amount: 300000, fine_currency: 'EUR', outcome: 'order' }];
+    twinRows = [{ id: 'the-order', entity: 'X', fine_amount: 300000, fine_currency: 'EUR', outcome: 'order' }];
     toolInput = { ...GOOD_EXTRACTION, outcome: 'order', imposes_a_measure: false };
 
     const body = await run();

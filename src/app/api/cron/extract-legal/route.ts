@@ -607,14 +607,15 @@ async function findTwin(
 ): Promise<string | null> {
   if (!facts.authority || !facts.decision_date) return null;
 
-  // Nothing to match on. Two decisions by one authority on one day with
-  // no amount between them are two decisions until something says
-  // otherwise, and silence is not that something.
-  if (facts.fine_amount === undefined || !facts.fine_currency) return null;
+  // A decision with no respondent is never deduplicated. Two sets of
+  // guidance from one body on one day are two documents, and `entity`
+  // being null on both is an absence agreeing with an absence — the
+  // mistake this function was repaired for in the first place.
+  if (!facts.entity?.trim()) return null;
 
   const { data, error } = await db
     .from('legal_developments')
-    .select('id, fine_amount, fine_currency, outcome')
+    .select('id, entity, fine_amount, fine_currency, outcome')
     .eq('authority', facts.authority)
     .eq('decision_date', facts.decision_date)
     .in('status', ['extracted', 'approved', 'published'])
@@ -625,31 +626,54 @@ async function findTwin(
     (data as
       | {
           id: string;
+          entity: string | null;
           fine_amount: number | null;
           fine_currency: string | null;
           outcome: string | null;
         }[]
       | null) ?? [];
 
-  const mineCurrency = facts.fine_currency!.toUpperCase();
+  const mine = facts.entity.trim().toLowerCase();
+  const mineCurrency = facts.fine_currency?.toUpperCase() ?? null;
 
   const match = rows.find((r) => {
-    // A row with no amount is not a candidate. It is the other half of
-    // the guard above: the comparison must never be satisfied by two
-    // absences agreeing with each other.
-    if (r.fine_amount === null || !r.fine_currency) return false;
+    // Same company, or nothing to say. The respondent is what a reader
+    // searches for and what the headline carries, so two rows that name
+    // different ones are never the same decision.
+    if ((r.entity ?? '').trim().toLowerCase() !== mine) return false;
 
     // An order and a fine are two decisions, however identical the rest
     // of their metadata — which is exactly how a regulator publishes:
     // one notice telling a company to stop, one notice telling it what
-    // to pay, same day, same authority.
+    // to pay, same day, same authority. This is the guard that keeps the
+    // Elderly Aids penalty notice out of the jaws of its own enforcement
+    // notice.
     if ((r.outcome ?? null) !== (facts.outcome ?? null)) return false;
+
+    // Amounts decide only when both rows have one. An absence is never
+    // evidence of sameness — but it is no longer evidence of difference
+    // either, which is what the previous repair got wrong: requiring an
+    // amount switched deduplication off entirely for reprimands and
+    // orders, and the ICO's two identical Metropolitan Police
+    // reprimands both reached the review queue.
+    const theirs = r.fine_amount === null ? null : Number(r.fine_amount);
+    const ours = facts.fine_amount ?? null;
+
+    // Both silent: the same decision read twice. Both speak: compare.
+    if (theirs === null && ours === null) return true;
+
+    // One speaks and one does not, so one of these two readings is
+    // better than the other — and merging would keep whichever arrived
+    // first. That is exactly how the £190,000 against Elderly Aids left
+    // the corpus. They both go to review and a human keeps the one with
+    // the number in it.
+    if (theirs === null || ours === null) return false;
 
     // The currency is part of the amount. Two decisions by the same body
     // on the same day, one for 300000 GBP and one for 300000 EUR, are two
     // decisions, and matching on the digits alone would reject the second
     // as a duplicate of the first.
-    return Number(r.fine_amount) === facts.fine_amount && r.fine_currency === mineCurrency;
+    return theirs === ours && r.fine_currency === mineCurrency;
   });
   return match?.id ?? null;
 }
