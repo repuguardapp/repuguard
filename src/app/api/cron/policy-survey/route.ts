@@ -5,6 +5,7 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { capturePolicy } from '@/lib/policy-capture';
 import { discoverPolicy, type Candidate } from '@/lib/policy-discovery';
 import { observePolicy } from '@/lib/policy-observations';
+import { sendOpsDigest } from '@/lib/email';
 import { observatoryCsv, observatoryReport } from '@/lib/observatory';
 import { supabaseService } from '@/lib/supabase';
 import { fetchFrenchSample } from '@/lib/survey-sample';
@@ -234,6 +235,20 @@ async function depositIfFinished(
     if (result.refused) {
       console.error('[cron/policy-survey] deposit_refused', { reason: result.refused });
       alertOps('cron.observatory_deposit_refused', { reason: result.refused });
+      await emailOperator(
+        'LexyFlow — le dépôt Zenodo a été refusé',
+        [
+          `L'édition ${report.sourceId ?? 'en cours'} est complète et le dépôt a échoué.`,
+          '',
+          result.refused,
+          '',
+          `${report.documentsRead} politiques lues sur ${report.lookedAt} domaines tentés.`,
+          '',
+          "Rien ne réessaiera tout seul : la ligne observatory_deposits garde l'édition",
+          'réservée pour que trois heures de panne ne produisent pas huit tentatives.',
+          'Dis-le-moi une fois la cause corrigée et je libère la réservation.'
+        ].join('\n')
+      );
       return { deposit: `refused: ${result.refused}` };
     }
 
@@ -249,12 +264,64 @@ async function depositIfFinished(
       documentsRead: report.documentsRead,
       lookedAt: report.lookedAt
     });
+
+    await emailOperator(
+      'LexyFlow — le brouillon Zenodo attend ta publication',
+      [
+        `L'étude est complète : ${report.documentsRead} politiques lues sur ${report.lookedAt} domaines tentés,`,
+        `échantillon de ${report.sampleSize}.`,
+        '',
+        result.doi ? `DOI réservé : ${result.doi}` : 'Aucun DOI réservé par Zenodo.',
+        result.editUrl ? `Relire et publier : ${result.editUrl}` : '',
+        '',
+        "Un brouillon s'efface, un DOI jamais. Relis les sept chiffres avant de publier ;",
+        'si quelque chose cloche, supprime le brouillon et dis-le-moi.'
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+
     return { deposit: `draft ${result.depositionId}` };
   } catch (err) {
     console.error('[cron/policy-survey] deposit_threw', {
       error: err instanceof Error ? err.message : String(err)
     });
     return {};
+  }
+}
+
+/**
+ * The two deposit outcomes, by e-mail, because Sentry is not read.
+ *
+ * alertOps goes to Sentry and nowhere else. That is right for the
+ * failures an operator should never have to watch for — but the deposit
+ * is the one event in this pipeline that REQUIRES a person: the DOI is
+ * a deliberate click and the sixty-day backlink test is counting. It
+ * fired at 15:20, Zenodo answered 403, and the only trace was a Sentry
+ * message nobody opens. Mounir's first news of it was asking why he had
+ * heard nothing.
+ *
+ * At most one of these per edition, because the deposit is locked to
+ * one attempt per edition by construction. A channel that carries one
+ * message per quarter is a channel that gets read.
+ */
+async function emailOperator(subject: string, text: string): Promise<void> {
+  const to = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (to.length === 0) {
+    console.error('[cron/policy-survey] no_operator_recipients', { subject });
+    return;
+  }
+
+  const sent = await sendOpsDigest(to, subject, text);
+  if (!sent) {
+    // Said rather than swallowed: a notification that failed to send is
+    // the same as no notification, and this one has a deadline on it.
+    console.error('[cron/policy-survey] operator_email_failed', { subject });
+    alertOps('cron.observatory_operator_email_failed', { subject });
   }
 }
 

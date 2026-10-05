@@ -160,3 +160,43 @@ describe('the absence of a token is named, not silent', () => {
     expect(LIB).toContain('the citable half of the distribution does not exist');
   });
 });
+
+/**
+ * The one event in this pipeline that requires a person.
+ *
+ * alertOps writes to Sentry and nowhere else — right for failures an
+ * operator should never have to watch for, wrong for this one. The
+ * deposit fired at 15:20 on 5 October, Zenodo answered HTTP 403, and the
+ * only trace was a Sentry message nobody opens. Mounir's first news of
+ * it was asking why he had heard nothing.
+ *
+ * At most one e-mail per edition, because the deposit is locked to one
+ * attempt per edition by construction. A channel carrying one message a
+ * quarter is a channel that gets read.
+ */
+describe('the deposit tells a human, through a channel a human reads', () => {
+  it('e-mails the operator on both outcomes, not only Sentry', () => {
+    expect(SURVEY_CRON).toContain('emailOperator');
+    expect(SURVEY_CRON).toContain('le brouillon Zenodo attend ta publication');
+    expect(SURVEY_CRON).toContain('le dépôt Zenodo a été refusé');
+  });
+
+  it('keeps the Sentry alert as well, rather than swapping one blind spot for another', () => {
+    expect(SURVEY_CRON).toContain("alertOps('cron.observatory_deposit_ready'");
+    expect(SURVEY_CRON).toContain("alertOps('cron.observatory_deposit_refused'");
+  });
+
+  it('says so when the notification itself could not be sent', () => {
+    // A notification that failed to send is the same as no
+    // notification, and this one has a deadline on it.
+    expect(SURVEY_CRON).toContain('operator_email_failed');
+    expect(SURVEY_CRON).toContain('no_operator_recipients');
+  });
+
+  it('tells the operator that nothing will retry on its own', () => {
+    // The claim row holds the edition after a refusal on purpose, so a
+    // three-hour outage cannot produce eight attempts. That is only
+    // safe if the person knows it is waiting on them.
+    expect(SURVEY_CRON).toContain('Rien ne réessaiera tout seul');
+  });
+});
