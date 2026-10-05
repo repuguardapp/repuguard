@@ -291,26 +291,26 @@ describe('Stripe webhook · invoice.paid credit top-up', () => {
     });
   });
 
-  it('treats STRIPE_PRICE_BUSINESS as an alias for Enterprise (1000 credits)', async () => {
-    // The Stripe Product is sold under the marketing name 'Business'
-    // but maps to our canonical 'enterprise' plan internally. Same
-    // 1000-credit grant.
-    process.env.STRIPE_PRICE_BUSINESS = 'price_business_alias';
-    mockConstructEvent.mockReturnValue(invoicePaidEvent({ subscriptionId: 'sub_biz' }));
+  it('grants nothing for a price it does not recognise', async () => {
+    // This test used to assert that STRIPE_PRICE_BUSINESS was "a
+    // marketing alias for Enterprise". The alias was removed with the
+    // variable: the product sells starter, pro and enterprise, the
+    // pricing page offers those three, the checkout enum accepts those
+    // three, and no request for a "business" plan could ever be made.
+    // The slot was a required-looking env var with no offer behind it.
+    //
+    // What has to stay true is the rule underneath: an unrecognised
+    // price credits nothing. Guessing a plan from a price we cannot
+    // identify would hand out audit credits on the strength of an
+    // invoice we did not understand.
+    mockConstructEvent.mockReturnValue(invoicePaidEvent({ subscriptionId: 'sub_unknown' }));
     mockSubscriptionsRetrieve.mockResolvedValue(
-      fakeSubscription({ priceId: 'price_business_alias' })
+      fakeSubscription({ priceId: 'price_nobody_configured' })
     );
 
     const res = await callHandler({ 'stripe-signature': 't=1,v1=ok' }, '{}');
     expect(res.status).toBe(200);
-
-    expect(mockRpc).toHaveBeenCalledTimes(1);
-    expect(mockRpc).toHaveBeenCalledWith('add_audit_credits', {
-      p_org_id: '00000000-0000-0000-0000-000000000001',
-      p_amount: 1000
-    });
-
-    delete process.env.STRIPE_PRICE_BUSINESS;
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it('skips the credit top-up when the invoice has no subscription field', async () => {

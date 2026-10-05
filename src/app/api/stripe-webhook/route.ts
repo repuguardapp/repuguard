@@ -25,15 +25,22 @@ function planForPriceId(priceId: string | undefined): PlanId | null {
   if (!priceId) return null;
   if (PRICE_TO_PLAN[priceId]) return PRICE_TO_PLAN[priceId]!;
 
-  // STRIPE_PRICE_BUSINESS is a marketing alias for the Enterprise tier
-  // — the UI may name the top plan "Business" while the code keeps the
-  // canonical PlanId 'enterprise'. Map both env vars to the same plan
-  // so a Stripe Price labelled either way credits the right amount.
+  // One entry per plan the product actually sells.
+  //
+  // There used to be a fourth, STRIPE_PRICE_BUSINESS, described as "a
+  // marketing alias for the Enterprise tier — the UI may name the top
+  // plan Business". The UI never did. The pricing page offers starter,
+  // pro and enterprise; the checkout route's enum accepts those three
+  // and rejects everything else; tier.ts recognises those three. No
+  // request for a "business" plan could ever be made, so the variable
+  // was a required-looking slot behind which there was no offer — and
+  // it showed as a red "cannot be bought" on the configuration page,
+  // which is how an operator learns to read past the warning that
+  // matters.
   const map: Array<[string | undefined, PlanId]> = [
     [process.env.STRIPE_PRICE_STARTER,    'starter'],
     [process.env.STRIPE_PRICE_PRO,        'pro'],
-    [process.env.STRIPE_PRICE_ENTERPRISE, 'enterprise'],
-    [process.env.STRIPE_PRICE_BUSINESS,   'enterprise']
+    [process.env.STRIPE_PRICE_ENTERPRISE, 'enterprise']
   ];
   for (const [env, plan] of map) {
     if (env && env === priceId) {

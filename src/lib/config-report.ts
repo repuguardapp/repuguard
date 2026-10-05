@@ -94,7 +94,6 @@ function readEnv(): Record<string, string | undefined> {
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     STRIPE_PRICE_STARTER: process.env.STRIPE_PRICE_STARTER,
-    STRIPE_PRICE_BUSINESS: process.env.STRIPE_PRICE_BUSINESS,
     STRIPE_PRICE_PRO: process.env.STRIPE_PRICE_PRO,
     STRIPE_PRICE_ENTERPRISE: process.env.STRIPE_PRICE_ENTERPRISE,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
@@ -239,11 +238,6 @@ export const CONFIG_GROUPS: { title: string; entries: ConfigEntry[] }[] = [
       },
       {
         name: 'STRIPE_PRICE_STARTER',
-        requirement: 'required',
-        consequence: "Absent, l'offre correspondante ne peut pas être achetée."
-      },
-      {
-        name: 'STRIPE_PRICE_BUSINESS',
         requirement: 'required',
         consequence: "Absent, l'offre correspondante ne peut pas être achetée."
       },
