@@ -1,3 +1,4 @@
+import type { CiStatus } from './ci-status';
 /**
  * The daily state of the business, composed from facts.
  *
@@ -133,6 +134,17 @@ export interface DigestInput {
    * viewer.
    */
   parkedItems: { count: number; reasons: { error: string; count: number }[] } | null;
+  /**
+   * The last CI run on main.
+   *
+   * Added after the pipeline sat red from 28 April to 5 October —
+   * ninety-seven failures — while this report said nothing every
+   * morning. A digest whose purpose is "what needs you today" that omits
+   * the instrument telling you whether the code works is not a complete
+   * report with a gap, it is an incomplete report that reads as a
+   * complete one.
+   */
+  ci: CiStatus | null;
   awaitingReview: number | null;
   appUrl: string;
 }
@@ -238,6 +250,19 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
+  // First among the actions when it is red. Everything else in this
+  // report describes what the deployed code did; this one says whether
+  // the next deploy should happen at all.
+  if (input.ci && input.ci.status === 'completed' && input.ci.conclusion !== 'success') {
+    const streak =
+      input.ci.failingStreak > 1 ? ` — ${input.ci.failingStreak} run(s) de suite` : '';
+    actions.push(
+      `CI ${input.ci.conclusion} sur main${streak}.\n` +
+        `    ${input.ci.sha} · ${input.ci.title}\n` +
+        `    ${input.ci.url}`
+    );
+  }
+
   if (input.parkedItems && input.parkedItems.count > 0) {
     actions.push(
       `${input.parkedItems.count} item(s) abandoned by the extractor after ${MAX_EXTRACT_ATTEMPTS_LABEL} attempts — they are out of the queue and nothing retries them:\n` +
@@ -277,6 +302,7 @@ export function composeDigest(input: DigestInput): Digest {
     'source yield': input.barrenSources,
     'stalled items': input.stalledItems,
     'abandoned items': input.parkedItems,
+    CI: input.ci,
     'review queue': input.awaitingReview
   })
     .filter(([, value]) => value === null)
@@ -305,6 +331,17 @@ export function composeDigest(input: DigestInput): Digest {
     '',
     `  Active subscriptions  ${num(input.activeSubscriptions)}`
   );
+
+  // In STANDING even when green, because "it is passing" is a fact worth
+  // seeing daily — the five-month outage was invisible precisely because
+  // silence meant nothing either way.
+  if (input.ci) {
+    const verdict =
+      input.ci.status === 'completed' ? (input.ci.conclusion ?? 'inconnu') : input.ci.status;
+    lines.push(`  CI (main)             ${verdict} · ${input.ci.sha}`);
+  } else {
+    lines.push('  CI (main)             unavailable');
+  }
 
   if (input.corpus) {
     lines.push(

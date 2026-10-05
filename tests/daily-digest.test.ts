@@ -30,6 +30,15 @@ const HEALTHY: DigestInput = {
   barrenSources: [],
   stalledItems: { count: 0, oldestHours: 0 },
   parkedItems: { count: 0, reasons: [] },
+  ci: {
+    conclusion: 'success',
+    status: 'completed',
+    sha: '5f7de9b',
+    title: 'fix(ci): the artifact carried 691 MB of build cache',
+    startedAt: '2026-10-05T20:30:00Z',
+    url: 'https://github.com/repuguardapp/repuguard/actions/runs/1',
+    failingStreak: 0
+  },
   awaitingReview: 0,
   appUrl: 'https://lexyflow.com'
 };
@@ -319,6 +328,63 @@ describe('an item the extractor gave up on is named, with its reason', () => {
   it('says so when it could not measure it', () => {
     const digest = composeDigest({ ...HEALTHY, parkedItems: null });
     expect(digest.text).toContain('abandoned items');
+    expect(digest.quiet).toBe(false);
+  });
+});
+
+/**
+ * The instrument that was missing while it was the one that was broken.
+ *
+ * CI failed on every run from 28 April to 5 October — ninety-seven in a
+ * row — and this report said nothing about it every single morning. It
+ * covered audits, credits, feed health, the review queue and the corpus,
+ * and omitted the one thing whose job is to say whether the code works.
+ * GitHub e-mailed each failure, which is how a channel earns the right
+ * to be ignored.
+ */
+describe('the report says whether the code builds', () => {
+  const GREEN = HEALTHY.ci!;
+
+  it('leads with a red pipeline, above everything else that needs doing', () => {
+    const digest = composeDigest({
+      ...HEALTHY,
+      ci: { ...GREEN, conclusion: 'failure', failingStreak: 97 },
+      awaitingReview: 12
+    });
+
+    expect(digest.text).toContain('CI failure sur main');
+    // The streak is the difference between a bad afternoon and a
+    // pipeline nobody is watching.
+    expect(digest.text).toContain('97 run(s) de suite');
+    expect(digest.quiet).toBe(false);
+    // Before the review queue: everything else describes what the
+    // deployed code did; this says whether to deploy at all.
+    expect(digest.text.indexOf('CI failure')).toBeLessThan(
+      digest.text.indexOf('decision(s) waiting for review')
+    );
+  });
+
+  it('shows the verdict daily even when it is green', () => {
+    // Silence meant nothing either way for five months. A line that says
+    // "success" every morning is what makes its absence legible.
+    const digest = composeDigest(HEALTHY);
+    expect(digest.text).toContain('CI (main)             success · 5f7de9b');
+  });
+
+  it('does not treat a run still in progress as either outcome', () => {
+    const digest = composeDigest({
+      ...HEALTHY,
+      ci: { ...GREEN, status: 'in_progress', conclusion: null }
+    });
+
+    expect(digest.text).toContain('CI (main)             in_progress');
+    expect(digest.text).not.toContain('CI null sur main');
+  });
+
+  it('says so when it could not be read, rather than printing a green', () => {
+    const digest = composeDigest({ ...HEALTHY, ci: null });
+    expect(digest.text).toContain('CI (main)             unavailable');
+    expect(digest.text).toContain('CI');
     expect(digest.quiet).toBe(false);
   });
 });

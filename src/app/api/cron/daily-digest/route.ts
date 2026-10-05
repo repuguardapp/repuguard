@@ -5,6 +5,7 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { composeDigest, type DigestInput } from '@/lib/daily-digest';
 import { sendOpsDigest } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
+import { latestCiRun } from '@/lib/ci-status';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
 
@@ -114,6 +115,7 @@ async function digest() {
     barrenSources: await readBarrenSources(db),
     stalledItems: await readStalledItems(db),
     parkedItems: await readParkedItems(db),
+    ci: await latestCiRun(),
     appUrl: baseUrl
   };
 
