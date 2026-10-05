@@ -14,7 +14,10 @@ jobs:
   build:
     name: typecheck · test · build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Install, typecheck, 981 unit tests, a full Next build and an
+    # artifact upload. Ten minutes was already tight and the job was
+    # killed at it once the artifact started carrying a real build.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -55,9 +58,15 @@ jobs:
           # directory". The artifact measured 714 KB; a production build
           # is tens of megabytes, which is how this was confirmed rather
           # than guessed.
+          #
+          # And then it carried too much: `.next/cache` is 691 MB of the
+          # 798 MB tree and `next start` never reads it. Including it
+          # turned a fast upload into the thing that pushed this job past
+          # its own timeout.
           include-hidden-files: true
           path: |
             .next
+            !.next/cache
             public
             messages
             package.json
