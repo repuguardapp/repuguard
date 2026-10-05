@@ -45,6 +45,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: next-build
+          # Without this the whole job is theatre.
+          #
+          # upload-artifact@v4 excludes hidden paths by default, and
+          # `.next` is one. The upload succeeded, the download
+          # succeeded, and the directory simply was not there — so
+          # Playwright started `next start` against nothing and failed
+          # with "Could not find a production build in the '.next'
+          # directory". The artifact measured 714 KB; a production build
+          # is tens of megabytes, which is how this was confirmed rather
+          # than guessed.
+          include-hidden-files: true
           path: |
             .next
             public
