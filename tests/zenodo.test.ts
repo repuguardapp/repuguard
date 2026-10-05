@@ -200,3 +200,29 @@ describe('the deposit tells a human, through a channel a human reads', () => {
     expect(SURVEY_CRON).toContain('Rien ne réessaiera tout seul');
   });
 });
+
+/**
+ * A status code buys one guess, and ours was wrong.
+ *
+ * The first deposit answered HTTP 403 and that number was the entire
+ * record. The obvious reading — the token is missing `deposit:write` —
+ * was wrong: Mounir's screenshot showed both scopes ticked. Zenodo
+ * returns a JSON body on every error, with a message and often a
+ * per-field errors array, and we were throwing it away.
+ */
+describe('a refusal carries what the other side said', () => {
+  it('reads the response body instead of printing only the status', () => {
+    expect(LIB).toContain('async function describe(res: Response)');
+    expect(LIB).toContain('Zenodo refused the deposit: ${await describe(created)}');
+    expect(LIB).toContain('refused the file: ${await describe(upload)}');
+  });
+
+  it('bounds it, because an error body is not a log file', () => {
+    expect(LIB).toContain('.slice(0, 600)');
+  });
+
+  it('survives a body it cannot read', () => {
+    // A failure to read the failure must not replace the failure.
+    expect(LIB).toContain('the response body could not be read');
+  });
+});

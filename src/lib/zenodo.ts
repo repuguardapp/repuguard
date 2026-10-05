@@ -87,7 +87,7 @@ export async function depositObservatory(
     const created = await zenodo(token, 'POST', '/deposit/depositions', {
       metadata: metadataFor(report)
     });
-    if (!created.ok) return refuse(`Zenodo refused the deposit: HTTP ${created.status}`);
+    if (!created.ok) return refuse(`Zenodo refused the deposit: ${await describe(created)}`);
 
     const deposition = (await created.json()) as {
       id: number;
@@ -106,7 +106,7 @@ export async function depositObservatory(
       signal: AbortSignal.timeout(TIMEOUT_MS)
     });
     if (!upload.ok) {
-      return refuse(`Zenodo accepted the deposit but refused the file: HTTP ${upload.status}`);
+      return refuse(`Zenodo accepted the deposit but refused the file: ${await describe(upload)}`);
     }
 
     return {
@@ -187,6 +187,32 @@ function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/**
+ * What Zenodo actually said, not just which number it said it with.
+ *
+ * The first deposit answered HTTP 403 and that was the whole record. The
+ * obvious reading — the token is missing `deposit:write` — turned out to
+ * be wrong: both scopes were set. So a status code bought one guess,
+ * the guess was wrong, and the next guess would have been worth no more
+ * than the first.
+ *
+ * Zenodo returns a JSON body on every error with a `message` and often a
+ * per-field `errors` array, and we were discarding it. It is the
+ * difference between "403" and "please verify your email address before
+ * depositing". Capped, because an error body is not a log file, and
+ * wrapped, because a failure to read the failure must not replace it.
+ */
+async function describe(res: Response): Promise<string> {
+  let detail = '';
+  try {
+    const body = (await res.text()).slice(0, 600).trim();
+    if (body) detail = ` — ${body}`;
+  } catch {
+    detail = ' — (the response body could not be read)';
+  }
+  return `HTTP ${res.status}${detail}`;
 }
 
 async function zenodo(
