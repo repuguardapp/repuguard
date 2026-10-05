@@ -1,10 +1,20 @@
 import { expect, test } from '@playwright/test';
 
+/**
+ * These four pages are the legal surface. The test is that each one
+ * renders its own h1 — not that it renders a particular sentence.
+ *
+ * `/integrations & sub-processors/i` was hardcoded here and the copy
+ * became "Integrations and sub-processors", so the suite failed for five
+ * months on a page that was working. The regexes below match the part of
+ * each title that identifies the document, and deliberately not the
+ * connectives and parentheses an editor is free to change.
+ */
 const LEGAL_PAGES = [
-  { path: 'privacy',      heading: /privacy policy/i,                en: true },
-  { path: 'terms',        heading: /terms of service/i,              en: true },
-  { path: 'dpa',          heading: /data processing agreement/i,     en: true },
-  { path: 'integrations', heading: /integrations & sub-processors/i, en: true }
+  { path: 'privacy', heading: /privacy policy/i },
+  { path: 'terms', heading: /terms of service/i },
+  { path: 'dpa', heading: /data processing agreement/i },
+  { path: 'integrations', heading: /integrations (and|&) sub-processors/i }
 ];
 
 test.describe('Legal & integrations pages', () => {

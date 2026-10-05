@@ -74,7 +74,12 @@ export default async function IntegrationsPage({ params: { locale } }: PageProps
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-lg">{processor.name}</CardTitle>
+                  {/* A real heading: these are seven named third
+                      parties on a legal page, and navigating them by
+                      heading is how a screen-reader user reads it. */}
+                  <CardTitle as="h3" className="text-lg">
+                    {processor.name}
+                  </CardTitle>
                   <CardDescription>
                     {sp(`${processor.id}.role`)} ·{' '}
                     <span className="font-mono text-xs">{processor.legalName}</span>

@@ -26,7 +26,23 @@ export default defineConfig({
     video: 'retain-on-failure'
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } }
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // An escape hatch for a machine that already has a browser.
+        //
+        // CI runs `playwright install` and leaves this unset, so nothing
+        // changes there. A sandbox with Chromium pre-installed at a
+        // version Playwright did not fetch sets it and runs the suite
+        // instead of being told to download a browser it cannot
+        // download. Five months of drift were invisible partly because
+        // nobody could run this locally.
+        ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
+          ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+          : {})
+      }
+    }
   ],
   webServer: {
     command: `npm run start -- -p ${PORT}`,

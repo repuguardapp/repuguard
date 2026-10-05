@@ -1,84 +1,47 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * Audit form happy path. Drives the upload -> tracking -> completed
- * states with /api/audit/async and /api/audit/[id] mocked at the
- * network level. No AI provider, no Supabase. We assert the UI
- * transitions and the final CTA.
+ * The audit surface, as an anonymous visitor actually meets it.
+ *
+ * THIS FILE USED TO TEST SOMETHING THAT NO LONGER EXISTS
+ *
+ * It drove upload → tracking → completed against /en/audit with
+ * /api/audit/async mocked, and it was written when that page was open to
+ * anyone. The page now answers 307 to /en/login?next=/en/audit, so
+ * `input[type="file"]` was never going to appear and the two tests spent
+ * thirty seconds each waiting for it. They failed on every run for five
+ * months and told nobody anything, because the suite as a whole could
+ * not start at all.
+ *
+ * WHAT IS COVERED NOW, AND WHAT IS NOT
+ *
+ * The guard is covered: the route is private, and it carries the
+ * visitor's destination so signing in returns them to it. That is a real
+ * property and it is the one an anonymous visitor can observe.
+ *
+ * The upload flow is NOT covered end to end any more, and pretending
+ * otherwise with a test that cannot reach it is worse than the gap. It
+ * needs an authenticated session, which means a seeded Supabase the CI
+ * job deliberately does not have — the whole suite runs without secrets.
+ * The form's own logic is held by unit tests (audit-size-limits,
+ * audit-framework-scope, audit-ownership, audit-replay-guard); what is
+ * missing is the browser-level assembly of those parts.
  */
 test.describe('Audit form', () => {
-  test('upload → tracking → completed happy path', async ({ page }) => {
-    // Mock the async upload acceptance.
-    await page.route('**/api/audit/async', (route) => {
-      route.fulfill({
-        status: 202,
-        contentType: 'application/json',
-        body: JSON.stringify({ auditId: '11111111-1111-1111-1111-111111111111', status: 'pending' })
-      });
-    });
-
-    // Mock the polling endpoint: pending → running → completed.
-    let pollCount = 0;
-    await page.route(/\/api\/audit\/[^/]+$/, (route) => {
-      pollCount += 1;
-      const status = pollCount >= 3 ? 'completed' : 'running';
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: '11111111-1111-1111-1111-111111111111',
-          status,
-          riskScore: status === 'completed' ? 68 : null,
-          findingsCount: status === 'completed' ? 3 : 0,
-          language: 'en'
-        })
-      });
-    });
-
+  test('/en/audit is private and keeps the destination', async ({ page }) => {
     await page.goto('/en/audit');
 
-    // Fill the form.
-    await page.locator('input[type="file"]').setInputFiles({
-      name: 'sample.txt',
-      mimeType: 'text/plain',
-      buffer: Buffer.from(
-        'Privacy policy\n\nWe collect personal data for marketing purposes ' +
-        'and retain it as long as necessary under GDPR Article 6.'
-      )
-    });
-    await page.locator('select[name="frameworks"]').selectOption(['gdpr']);
-    await page.locator('input[name="targetLanguage"]').fill('en');
-
-    await page.getByRole('button', { name: /run audit/i }).click();
-
-    // Tracking phase visible.
-    await expect(page.getByText(/auditing|queued/i).first()).toBeVisible();
-
-    // Eventually transitions to completed.
-    await expect(page.getByText(/audit complete/i)).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText(/68\/100/)).toBeVisible();
-    await expect(page.getByRole('link', { name: /open the report/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/en\/login/);
+    // The `next` parameter is the difference between a login that
+    // returns you to what you asked for and one that drops you on a
+    // dashboard having forgotten why you came.
+    expect(new URL(page.url()).searchParams.get('next')).toBe('/en/audit');
   });
 
-  test('shows error panel when upload returns 429', async ({ page }) => {
-    await page.route('**/api/audit/async', (route) => {
-      route.fulfill({
-        status: 429,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'rate_limited' })
-      });
-    });
-
+  test('the login page it lands on is usable', async ({ page }) => {
+    // A guard that redirects to a broken page is a guard that locks the
+    // product rather than protecting it.
     await page.goto('/en/audit');
-    await page.locator('input[type="file"]').setInputFiles({
-      name: 'sample.txt',
-      mimeType: 'text/plain',
-      buffer: Buffer.from('Filler content '.repeat(50))
-    });
-    await page.locator('select[name="frameworks"]').selectOption(['gdpr']);
-    await page.getByRole('button', { name: /run audit/i }).click();
-
-    await expect(page.getByText(/audit failed/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /try again/i })).toBeVisible();
+    await expect(page.locator('input[type="email"]')).toBeVisible();
   });
 });

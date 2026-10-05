@@ -11,7 +11,11 @@ test.describe('Landing & navigation', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /global compliance, automated/i })
     ).toBeVisible();
-    await expect(page.getByText('GDPR', { exact: false })).toBeVisible();
+    // `.first()`: GDPR now appears in the subtitle and again in the
+    // framework badges. The assertion is that the landing page names the
+    // regulation at all, and strict mode turned two matches into a
+    // failure rather than a stronger check.
+    await expect(page.getByText('GDPR', { exact: false }).first()).toBeVisible();
   });
 
   test('French landing renders the localised accroche', async ({ page }) => {
