@@ -44,7 +44,14 @@ describe('nothing permanent happens on its own', () => {
 
   it('refuses to deposit a partial edition', () => {
     // A citable DOI on numbers the page itself calls provisional.
-    expect(LIB).toContain('report.lookedAt < report.sampleSize');
+    //
+    // The test used to read `lookedAt < sampleSize`, and that comparison
+    // was the bug: `lookedAt` drops the scans that failed on our side,
+    // so one `getaddrinfo EBUSY` left the study permanently short of its
+    // own sample and this guard would have refused a finished edition
+    // for ever. The crawl completed at 297 of 297 with `lookedAt` at
+    // 280, and nothing deposited.
+    expect(LIB).toContain('report.pending > 0');
     expect(LIB).toContain('a DOI is permanent and this edition is not finished');
   });
 
@@ -64,7 +71,7 @@ describe('nothing permanent happens on its own', () => {
     // So the draft is automatic — deletable, reversible, no public record
     // — and /actions/publish is called by nothing, anywhere.
     expect(SURVEY_CRON).toContain('depositEditionOnce');
-    expect(SURVEY_CRON).toContain('report.lookedAt < report.sampleSize');
+    expect(SURVEY_CRON).toContain('report.pending > 0');
     expect(LIB).not.toContain('/actions/publish');
     expect(SURVEY_CRON_CODE).not.toContain('publish');
   });

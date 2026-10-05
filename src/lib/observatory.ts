@@ -64,6 +64,22 @@ export interface ObservatoryReport {
    * sample is seen to shrink rather than quietly shrinking.
    */
   excluded: number;
+  /**
+   * Domains the crawl has not reached yet. Zero means the edition is done.
+   *
+   * NOT `sampleSize - lookedAt`. That was the test, and it can never
+   * reach zero: `lookedAt` drops the scans that failed on our side, so
+   * the moment one domain hit `getaddrinfo EBUSY` the study became
+   * permanently seventeen short of its own sample. The page would have
+   * said "collecting" for ever and the Zenodo deposit — which refuses a
+   * partial edition, correctly — would never have fired on a crawl that
+   * finished.
+   *
+   * A domain we attempted and lost to our own resolver is not pending
+   * work; it is a reading we do not have. The two are different numbers
+   * and this is the one that says whether the crawl is still running.
+   */
+  pending: number;
   /** Why the rest did not, by code. */
   refusals: { code: FailureCode; count: number }[];
   observations: ObservationTally[];
@@ -87,7 +103,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
         db.from('survey_domains').select('source_id, source_label, source_date').order('rank').limit(1),
         db
           .from('scans')
-          .select('id, status, failure, completed_at')
+          .select('id, domain, status, failure, completed_at')
           .eq('origin', 'survey')
           .not('completed_at', 'is', null)
           .limit(5000)
@@ -107,6 +123,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
 
     const all = (scans ?? []) as {
       id: string;
+      domain: string;
       status: string;
       failure: string | null;
       completed_at: string | null;
@@ -130,6 +147,12 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     const excluded = all.filter((r) => OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
     const rows = all.filter((r) => !OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
 
+    // Every domain the crawl has finished with, whichever way it went.
+    // Counted over ALL scans including the excluded ones: a domain lost
+    // to our own resolver has been attempted, so it is not still in the
+    // queue — it is simply a reading we do not have.
+    const attempted = new Set(all.map((r) => r.domain));
+
     const read = rows.filter((r) => r.status === 'done');
 
     const refusalCounts = new Map<FailureCode, number>();
@@ -146,6 +169,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
       lookedAt: rows.length,
       documentsRead: read.length,
       excluded: excluded.length,
+      pending: Math.max(0, (sampleSize ?? 0) - attempted.size),
       refusals: [...refusalCounts.entries()]
         .map(([code, count]) => ({ code, count }))
         .sort((a, b) => b.count - a.count),
@@ -326,6 +350,7 @@ export function observatoryCsv(report: ObservatoryReport): string {
     // sample that shrank without saying so is a denominator nobody can
     // check.
     ['progress', 'excluded_our_own_failure', String(report.excluded), ''],
+    ['progress', 'domains_pending', String(report.pending), String(report.sampleSize)],
     ['progress', 'last_read_at', report.lastReadAt ?? '', '']
   ];
 

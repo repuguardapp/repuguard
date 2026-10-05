@@ -73,9 +73,13 @@ export async function depositObservatory(
   // A deposit is a permanent public record. Making one of a third of a
   // study would put a citable DOI on numbers we have already said are
   // provisional.
-  if (report.lookedAt < report.sampleSize) {
+  // Pending, not `lookedAt < sampleSize`. The latter subtracts the scans
+  // that failed on our side, so one `getaddrinfo EBUSY` left the study
+  // permanently short of its own sample and this guard would have
+  // refused a finished edition for ever.
+  if (report.pending > 0) {
     return refuse(
-      `the collection is at ${report.lookedAt} of ${report.sampleSize} domains — a DOI is permanent and this edition is not finished`
+      `${report.pending} of ${report.sampleSize} domains have not been read yet — a DOI is permanent and this edition is not finished`
     );
   }
 

@@ -125,7 +125,7 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
           {/* Provisional while the crawl is still running, and said in
               the same breath as the first number rather than in a
               footnote underneath it. */}
-          {report.lookedAt < report.sampleSize ? (
+          {report.pending > 0 ? (
             <Card className="border-dashed">
               <CardContent className="pt-6 text-sm">
                 {t('collecting', { done: report.lookedAt, total: report.sampleSize })}

@@ -156,7 +156,7 @@ describe('it shows nothing before it has something', () => {
   });
 
   it('marks the figures provisional while the crawl is running', () => {
-    expect(PAGE).toContain('report.lookedAt < report.sampleSize');
+    expect(PAGE).toContain('report.pending > 0');
     expect(PAGE).toContain("t('collecting'");
   });
 });
@@ -371,5 +371,43 @@ describe('our own failures leave the study, and say that they did', () => {
     expect(CRON).toContain("'our own storage failed: could not record the document'");
     // And alerted, because unlike a 403 it is a bug.
     expect(CRON).toContain('cron.policy_survey_snapshot_failed');
+  });
+});
+
+/**
+ * "Still collecting" and "we have no reading for it" are different facts.
+ *
+ * The crawl finished: 297 of 297 domains attempted, 106 policies read.
+ * The page still said it was collecting and the Zenodo deposit had not
+ * fired, because every completeness test compared `lookedAt` against
+ * `sampleSize` — and `lookedAt` subtracts the scans that failed on our
+ * own side. Seventeen `getaddrinfo EBUSY` and one failed insert left the
+ * study permanently seventeen short of its own sample, so the comparison
+ * could never be satisfied. A finished edition that can never be
+ * deposited, announcing itself as provisional for ever.
+ *
+ * A domain we attempted and lost to our own resolver is not pending
+ * work. It is a reading we do not have. Those are two numbers and only
+ * one of them says whether the crawl is still running.
+ */
+describe('the crawl knows when it has finished', () => {
+  const read = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  const LIB2 = read('src/lib/observatory.ts');
+
+  it('counts pending over every attempt, including the ones we lost', () => {
+    expect(LIB2).toContain('const attempted = new Set(all.map((r) => r.domain))');
+    expect(LIB2).toContain('pending: Math.max(0, (sampleSize ?? 0) - attempted.size)');
+  });
+
+  it('never derives pending by subtracting the published denominator', () => {
+    // `sampleSize - lookedAt` is the formula that broke it. It must not
+    // come back anywhere, under any name.
+    const code = LIB2.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
+    expect(code).not.toContain('sampleSize - report.lookedAt');
+    expect(code).not.toContain('sampleSize ?? 0) - rows.length');
+  });
+
+  it('publishes the pending count in the file, like every other denominator', () => {
+    expect(LIB2).toContain("'domains_pending'");
   });
 });

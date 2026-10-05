@@ -223,7 +223,7 @@ async function depositIfFinished(
     // Not "could not read the figures" — that is a different sentence and
     // it belongs to the module that discovered it, which already said so.
     if (!report) return {};
-    if (report.lookedAt < report.sampleSize) return {};
+    if (report.pending > 0) return {};
 
     const result = await depositEditionOnce(db, report, observatoryCsv(report));
 
