@@ -782,3 +782,52 @@ describe('a document that ends a measure is never published as the measure', () 
     expect(journal.updates[0]!.patch['outcome']).toBe('closed');
   });
 });
+
+/**
+ * A number we could not read is not a reason to drop the decision.
+ *
+ * The ICO's monetary penalty notice against Elderly Aids Limited came
+ * back rejected twice, with the model's own words: "The page does not
+ * state a fine amount or currency... making it impossible to record this
+ * as an enforcement decision." That rule is one the model invented. We
+ * asked it to omit an amount it could not attribute to a currency, and
+ * it concluded that a penalty notice without a readable figure was not a
+ * penalty notice.
+ *
+ * It is the same shape as the dedup bug and the truncation bug, one
+ * layer up: an absence treated as evidence. Here the absence of a number
+ * deleted the decision that carried it.
+ */
+describe('relevance never depends on how much we managed to read', () => {
+  it('tells the model so, in the schema and in the system prompt', () => {
+    const source = readFileSync(
+      join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+      'utf8'
+    );
+    expect(source).toContain('Relevance NEVER depends on how much of the document you could read');
+    expect(source).toContain('Never discard a decision because a field was unreadable');
+  });
+
+  it('keeps a penalty with no readable amount in the review queue', async () => {
+    toolInput = {
+      ...GOOD_EXTRACTION,
+      entity: 'Elderly Aids Limited',
+      outcome: 'fine',
+      imposes_a_measure: true,
+      fine_amount: undefined,
+      fine_currency: undefined,
+      summary_en:
+        'The ICO imposed a monetary penalty on Elderly Aids Limited for contraventions of Regulations 21 and 24 of PECR after 758,053 unsolicited direct marketing calls.'
+    };
+
+    const body = await run();
+
+    expect(body['rejected']).toBe(0);
+    expect(body['extracted']).toBe(1);
+    const patch = journal.updates[0]!.patch;
+    expect(patch['outcome']).toBe('fine');
+    // The amount stays empty rather than being guessed — that part was
+    // always right, and it is what the reviewer opens the source for.
+    expect(patch['fine_amount']).toBeNull();
+  });
+});

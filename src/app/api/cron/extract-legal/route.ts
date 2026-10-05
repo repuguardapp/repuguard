@@ -196,7 +196,7 @@ const TOOL = {
       relevant: {
         type: 'boolean',
         description:
-          'True only for an enforcement decision, court ruling, or formal regulatory guidance on data protection or AI — something that has been DECIDED. False for press releases, recruitment, events, newsletters and consultations, and false for the announcement that an investigation or inquiry has been opened: an opened inquiry has found nothing, and "X Internet Unlimited Company — order" built from one is an accusation against a named company that no authority has made.'
+          'True only for an enforcement decision, court ruling, or formal regulatory guidance on data protection or AI — something that has been DECIDED. False for press releases, recruitment, events, newsletters and consultations, and false for the announcement that an investigation or inquiry has been opened: an opened inquiry has found nothing, and "X Internet Unlimited Company — order" built from one is an accusation against a named company that no authority has made. Relevance NEVER depends on how much of the document you could read. A monetary penalty notice whose figure you cannot find is still a monetary penalty notice: say it is relevant, record everything you did read, and omit the amount. "I could not find the number" is a fact about your reading, never a reason to discard the decision.'
       },
       reject_reason: { type: 'string', description: 'Why it is not relevant. Required when relevant is false.' },
       authority: { type: 'string', description: 'Issuing body, in English. e.g. "CNIL", "EDPB", "ICO".' },
@@ -280,6 +280,10 @@ const SYSTEM = [
   'currency is omitted. Converting £66,000 into 73,920 produced a figure',
   'that appears in no document anywhere, attached to the name of a police',
   'force — the exact failure every other rule here exists to prevent.',
+  'Never discard a decision because a field was unreadable. Relevance is',
+  'about what the document IS, not about how completely you could read it:',
+  'a penalty notice with no figure you could find is still a penalty',
+  'notice, and dropping it loses the decision to save a number.',
   'An investigation or inquiry that has been OPENED is not a decision and',
   'not relevant: nothing has been found, and a page saying otherwise about',
   'a named organisation is an accusation we invented.',

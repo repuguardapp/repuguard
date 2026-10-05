@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
-import { ExtractBatchButton } from '@/components/ExtractBatchButton';
 import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { CronRunButton } from '@/components/CronRunButton';
 import { Badge } from '@/components/ui/badge';
@@ -303,17 +302,14 @@ export default async function OpsPage({ params }: { params: { locale: string } }
         <CardHeader>
           <CardTitle className="text-base">Corpus</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="flex flex-wrap gap-2">
-            {['discovered', 'extracted', 'approved', 'published', 'rejected', 'extract_failed'].map(
-              (status) => (
-                <Badge key={status} variant={status === 'extracted' ? 'secondary' : 'outline'}>
-                  {status}: {byStatus[status] ?? 0}
-                </Badge>
-              )
-            )}
-          </div>
-          <ExtractBatchButton />
+        <CardContent className="flex flex-wrap gap-2">
+          {['discovered', 'extracted', 'approved', 'published', 'rejected', 'extract_failed'].map(
+            (status) => (
+              <Badge key={status} variant={status === 'extracted' ? 'secondary' : 'outline'}>
+                {status}: {byStatus[status] ?? 0}
+              </Badge>
+            )
+          )}
         </CardContent>
       </Card>
 
