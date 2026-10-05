@@ -50,3 +50,41 @@ describe('the figures in the draft are the figures on the page', () => {
     expect(DRAFT).toContain('en cours de collecte');
   });
 });
+
+/**
+ * The one artefact written to be forwarded to a journalist.
+ *
+ * It said "les 300 sites .fr les plus visités" and "la liste Tranco",
+ * both hardcoded, after the same claim had already been corrected on the
+ * public page, in the Zenodo record and in the schema.org markup. The
+ * sample came from the Majestic Million — which ranks by referring
+ * subnets, not visits — and holds 297 domains after three registry
+ * suffixes were excluded.
+ *
+ * A reporter who checks the provenance and finds it wrong does not write
+ * the story, and is right not to.
+ */
+describe('the draft never characterises the ranking', () => {
+  const SRC = readFileSync(join(__dirname, '..', 'src/components/OutreachDraft.tsx'), 'utf8');
+  const code = SRC.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+  it('names no ranking and claims no traffic', () => {
+    expect(code).not.toContain('Tranco');
+    expect(code).not.toContain('les plus visités');
+  });
+
+  it('prints the label the seeding recorded, whichever list answered', () => {
+    expect(code).toContain('figures.sourceLabel');
+  });
+
+  it('takes the sample size from the report rather than a literal', () => {
+    expect(code).not.toContain('300 ');
+    expect(code).toContain('figures.sampleSize');
+  });
+
+  it('says attempted and read, not just read', () => {
+    // 297 attempted, 106 read. A sentence that mentions only the second
+    // invites the reader to assume the first.
+    expect(code).toContain('figures.documentsRead');
+  });
+});

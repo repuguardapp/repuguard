@@ -36,6 +36,8 @@ export interface DraftFigures {
   sampleSize: number;
   refused: number;
   sourceId: string | null;
+  /** How the ranking describes itself. Never our paraphrase of it. */
+  sourceLabel: string | null;
   sourceDate: string | null;
   observatoryUrl: string;
   csvUrl: string;
@@ -47,11 +49,23 @@ export function OutreachDraft({ figures }: { figures: DraftFigures }) {
   const [hook, setHook] = useState('');
   const [copied, setCopied] = useState(false);
 
+  /**
+   * Not "les plus visités", and not 300.
+   *
+   * The sample came from the Majestic Million, which ranks by referring
+   * subnets — who links to a site, not who visits it — and it holds 297
+   * domains after three registry suffixes were excluded. Both numbers
+   * were hardcoded here, in the one artefact written to be forwarded to
+   * a journalist, after the same claim had already been corrected on the
+   * page, in the Zenodo record and in the schema.org markup. A reporter
+   * who checks the provenance and finds it wrong does not write the
+   * story, and is right not to.
+   */
   const subject = useMemo(
     () =>
       figures.headlinePercent === null
-        ? `Ce que publient les politiques de confidentialité des 300 sites .fr les plus visités`
-        : `${figures.headlinePercent} % des 300 sites .fr les plus visités ${figures.headlineLabel}`,
+        ? `Ce que publient les politiques de confidentialité des grands sites .fr`
+        : `${figures.headlinePercent} % des politiques de confidentialité lues sur ${figures.sampleSize} sites .fr ${figures.headlineLabel}`,
     [figures]
   );
 
@@ -68,7 +82,7 @@ export function OutreachDraft({ figures }: { figures: DraftFigures }) {
       '',
       personal,
       '',
-      `Nous avons lu la politique de confidentialité des ${figures.sampleSize} domaines .fr les plus visités et compté sept mentions prévues par le RGPD. ${figure}.`,
+      `Nous avons tenté de lire la politique de confidentialité de ${figures.sampleSize} domaines .fr et compté sept mentions prévues par le RGPD dans les ${figures.documentsRead} que nous avons pu lire. ${figure}.`,
       '',
       `${figures.refused} domaines sur ${figures.lookedAt} n'ont pas pu être lus du tout, et le détail des refus est publié avec le reste.`,
       '',
@@ -76,7 +90,7 @@ export function OutreachDraft({ figures }: { figures: DraftFigures }) {
       `CSV : ${figures.csvUrl}`,
       '',
       figures.sourceId
-        ? `L'échantillon vient de la liste Tranco ${figures.sourceId} du ${figures.sourceDate}, donc n'importe qui peut le refaire. Aucune entreprise n'est nommée : ce sont des agrégats, pas un palmarès.`
+        ? `L'échantillon vient de ${figures.sourceLabel ?? 'un classement public'}, édition ${figures.sourceId} du ${figures.sourceDate}, donc n'importe qui peut le refaire. Aucune entreprise n'est nommée : ce sont des agrégats, pas un palmarès.`
         : `Aucune entreprise n'est nommée : ce sont des agrégats, pas un palmarès.`,
       '',
       `Si ça vous sert, prenez-le. Si la méthode vous paraît discutable, dites-le-moi, je corrigerai la page.`

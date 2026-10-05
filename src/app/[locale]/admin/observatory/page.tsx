@@ -30,10 +30,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false }
 };
 
-/** The observation we lead with, and the sentence that goes after it. */
+/**
+ * The observation we lead with, and the sentence that goes after it.
+ *
+ * International transfers rather than retention periods. Both are
+ * Article 13 obligations and both are counted the same way, but one of
+ * them came back at 13% over 106 documents and the other at 68%. The
+ * first is a finding; the second is a statistic. We lead with the one a
+ * reader has a reason to repeat, and the page carries all seven so
+ * nobody has to take our choice of headline on trust.
+ */
 const HEADLINE = {
-  id: 'retention_period_stated',
-  label: 'indiquent une durée de conservation'
+  id: 'international_transfers_addressed',
+  label: 'traitent les transferts hors Union européenne'
 };
 
 export default async function ObservatoryOutreachPage({
@@ -125,6 +134,7 @@ export default async function ObservatoryOutreachPage({
                   sampleSize: report.sampleSize,
                   refused: report.lookedAt - report.documentsRead,
                   sourceId: report.sourceId,
+                  sourceLabel: report.sourceLabel,
                   sourceDate: report.sourceDate,
                   observatoryUrl: `${origin}/fr/observatory`,
                   csvUrl: `${origin}/api/observatory/data.csv`
