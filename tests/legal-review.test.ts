@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -184,5 +186,62 @@ describe('the allowlist matches the way whoami says it does', () => {
     );
     expect(source).toContain('neither case nor spacing is the problem');
     expect(source).not.toContain('not forgiving');
+  });
+});
+
+/**
+ * The reason followed the fiche that was no longer there.
+ *
+ * Rejecting a card made the open box, the confirm button and the typed
+ * text appear on the next card to take its place. Mounir worked around
+ * it by reloading the page between every rejection.
+ *
+ * The list was already keyed on row.id, so the obvious diagnosis was
+ * wrong. What was missing is that `router.refresh()` reconciles a
+ * server-rendered list against a live client tree, and a client
+ * component instance that gets recycled rather than unmounted keeps its
+ * state — which is React working as designed, not a bug to be found.
+ *
+ * This is not cosmetic. A reason written about one organisation,
+ * carried onto a decision about another, records a rejection against
+ * the wrong company with somebody else's justification attached. The
+ * rejection reason is also the only feedback channel we have on
+ * extraction quality, so a polluted one is worse than an empty one.
+ *
+ * Three guards, because the reconciliation is not something this test
+ * can observe: an explicit key, a reset on success, and a reset
+ * whenever the component is handed a different developmentId. The third
+ * makes the symptom impossible whatever the first two do.
+ */
+describe('a rejection reason never survives its fiche', () => {
+  const BUTTONS = readFileSync(
+    join(__dirname, '..', 'src/components/LegalReviewButtons.tsx'),
+    'utf8'
+  );
+  const QUEUE = readFileSync(
+    join(__dirname, '..', 'src/app/[locale]/admin/legal-queue/page.tsx'),
+    'utf8'
+  );
+
+  it('keys the client component on the row, not only its card', () => {
+    expect(QUEUE).toContain('<LegalReviewButtons key={row.id} developmentId={row.id} />');
+  });
+
+  it('clears the box when the decision succeeds, rather than trusting the unmount', () => {
+    const decide = BUTTONS.slice(BUTTONS.indexOf('async function decide'));
+    const body = decide.slice(0, decide.indexOf('} catch {'));
+    expect(body).toContain("setAsking(false)");
+    expect(body).toContain("setReason('')");
+  });
+
+  it('resets itself when handed a different fiche', () => {
+    // The guard that makes a recycled instance harmless.
+    expect(BUTTONS).toContain('if (shownFor !== developmentId)');
+    expect(BUTTONS).toContain('setShownFor(developmentId)');
+  });
+
+  it('resets during render, not in an effect', () => {
+    // An effect would paint one frame carrying the previous reason.
+    expect(BUTTONS).not.toContain('useEffect');
   });
 });

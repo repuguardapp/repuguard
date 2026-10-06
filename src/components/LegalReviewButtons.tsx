@@ -46,6 +46,34 @@ export function LegalReviewButtons({ developmentId }: { developmentId: string })
   const [asking, setAsking] = useState(false);
   const [reason, setReason] = useState('');
 
+  /**
+   * Forget everything the moment this component is handed a different
+   * fiche.
+   *
+   * Rejecting one card made the open box, the confirm button and the
+   * typed reason appear on the next card to take its place, carrying the
+   * text. The list is keyed, and the component still has to survive
+   * being reused: `router.refresh()` reconciles a server-rendered list
+   * against a live client tree, and an instance that is recycled rather
+   * than unmounted keeps its state by design.
+   *
+   * Carrying a reason written about one organisation onto a decision
+   * about another is not a cosmetic glitch. One mis-click and a
+   * rejection is recorded against the wrong company with somebody
+   * else's justification attached to it.
+   *
+   * Adjusted during render rather than in an effect: React documents
+   * this as the way to reset state on a prop change, and it runs before
+   * paint, so the stale text is never visible for a frame.
+   */
+  const [shownFor, setShownFor] = useState(developmentId);
+  if (shownFor !== developmentId) {
+    setShownFor(developmentId);
+    setAsking(false);
+    setReason('');
+    setError(null);
+  }
+
   async function decide(action: 'approve' | 'reject') {
     if (action === 'reject' && reason.trim().length < MIN_REASON_CHARS) {
       setError(`Dis pourquoi — au moins ${MIN_REASON_CHARS} caractères.`);
@@ -75,6 +103,11 @@ export function LegalReviewButtons({ developmentId }: { developmentId: string })
         setError(body.error ?? 'Échec');
         return;
       }
+      // Cleared before the refresh, not left to the unmount. The
+      // component may well survive the list changing under it, and a
+      // box that stays open is a box the next decision inherits.
+      setAsking(false);
+      setReason('');
       router.refresh();
     } catch {
       setError('Erreur réseau — rien n’a été modifié.');

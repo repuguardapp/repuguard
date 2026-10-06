@@ -272,7 +272,12 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
               ) : null}
             </div>
 
-            <LegalReviewButtons developmentId={row.id} />
+            {/* Keyed on the row, not only on the Card above it.
+                Without it, React may reconcile this client component by
+                position when the server list shrinks — and the typed
+                rejection reason followed the position to the next
+                fiche. */}
+            <LegalReviewButtons key={row.id} developmentId={row.id} />
           </CardContent>
         </Card>
       ))}
