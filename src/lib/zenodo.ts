@@ -145,12 +145,18 @@ export async function depositObservatory(
 /**
  * What the record says about itself.
  *
+ * Exported so the exact object the automated deposit would send can be
+ * read before it is sent — and, while Zenodo's edge blocks our serverless
+ * range, pasted into their form by hand. A manual deposit that differs
+ * from the automated one would make the next edition look like a
+ * different study.
+ *
  * Written to be found by somebody searching for the subject, and to be
  * checkable by somebody who doubts it: the sample's provenance is in the
  * description, not only in our own page, because a Zenodo record has to
  * stand on its own once it is detached from us.
  */
-function metadataFor(report: ObservatoryReport): Record<string, unknown> {
+export function metadataFor(report: ObservatoryReport): Record<string, unknown> {
   const quarter = `${new Date().getUTCFullYear()}-Q${Math.floor(new Date().getUTCMonth() / 3) + 1}`;
 
   return {
