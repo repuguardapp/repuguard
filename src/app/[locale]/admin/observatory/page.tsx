@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { DepositButton } from '@/components/DepositButton';
 import { OutreachDraft } from '@/components/OutreachDraft';
+import { findPressCandidates } from '@/lib/press-candidates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isAdminEmail } from '@/lib/admin';
 import { appUrl } from '@/lib/app-url';
@@ -60,6 +61,7 @@ export default async function ObservatoryOutreachPage({
   const report = await observatoryReport();
   const origin = appUrl();
 
+  const press = await findPressCandidates();
   const headline = report?.observations.find((o) => o.id === HEADLINE.id);
   const headlineTotal = headline ? headline.present + headline.notFound + headline.unclear : 0;
 
@@ -114,6 +116,83 @@ export default async function ObservatoryOutreachPage({
                 se remplace. Un clic par édition trimestrielle — pas un par contact.
               </p>
               <DepositButton />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Qui écrit sur le sujet en ce moment</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 text-sm">
+              <p className="text-muted-foreground">
+                Lu dans les flux RSS publics des publications qui couvrent ce terrain, filtré sur
+                les sujets de nos sept mentions, trié par pertinence. Rien n&apos;est enregistré :
+                ces articles sont calculés à l&apos;affichage de cette page et disparaissent avec
+                elle.
+              </p>
+
+              {press.candidates.length === 0 ? (
+                <p className="text-muted-foreground">
+                  Aucun article sur le sujet dans les six derniers mois. Regarde l&apos;état des
+                  flux ci-dessous avant d&apos;en conclure quoi que ce soit — un flux mort et un
+                  silence réel se ressemblent.
+                </p>
+              ) : (
+                <ul className="grid gap-3">
+                  {press.candidates.slice(0, 12).map((c) => (
+                    <li key={c.url} className="grid gap-1 border-s-2 ps-3">
+                      <a
+                        href={c.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="font-medium underline underline-offset-4"
+                      >
+                        {c.title}
+                      </a>
+                      <span className="text-xs text-muted-foreground">
+                        {c.feedLabel}
+                        {c.publishedAt ? ` · ${c.publishedAt.slice(0, 10)}` : ''} ·{' '}
+                        {c.topics.join(', ')}
+                      </span>
+                      {/* Pre-written so the operator copies rather than
+                          composes. It quotes the piece and says nothing
+                          about it — a machine telling a journalist what
+                          their own article argued is the tell that
+                          nobody read it. */}
+                      <code className="rounded bg-muted/50 px-2 py-1 text-xs">
+                        {c.suggestedLine}
+                      </code>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Every feed, including the ones that answered nothing. A
+                  list that has gone stale has to say so: the ranking
+                  this study is built on returned 404 eight times before
+                  anybody looked. */}
+              <div className="grid gap-1 border-t pt-3">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                  État des flux
+                </span>
+                {press.feeds.map((f) => (
+                  <span key={f.id} className="text-xs text-muted-foreground">
+                    {f.label} —{' '}
+                    {f.refused ? (
+                      <span className="text-destructive">{f.refused}</span>
+                    ) : (
+                      `${f.kept} article(s) retenu(s)`
+                    )}
+                  </span>
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                L&apos;adresse reste à toi. La collecter ici ferait de nous le responsable de
+                traitement de données obtenues ailleurs que de la personne — article 14, et une
+                obligation d&apos;information envers chacune sous un mois. C&apos;est le fichier que
+                nous avons supprimé, reconstruit une ligne à la fois.
+              </p>
             </CardContent>
           </Card>
 
