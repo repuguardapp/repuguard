@@ -33,6 +33,24 @@ import type { supabaseService } from './supabase';
  */
 
 const ZENODO_API = 'https://zenodo.org/api';
+
+/**
+ * Who is calling, and where to complain about it.
+ *
+ * Every other fetch in this codebase says this — LexyFlowScan,
+ * LexyFlowLegalWatch, LexyFlowObservatory — and the Zenodo client was
+ * the one that did not, sending whatever Node's fetch defaults to. That
+ * is not how we ask anyone else for anything.
+ *
+ * It is NOT a workaround for the 403. Zenodo's edge answered "access to
+ * this resource has been restricted due to unusual traffic from your
+ * network", which is about the address the request came from — a shared
+ * Vercel serverless range — and not about who we said we were. Changing
+ * our shape to get past a block is the one thing this codebase does not
+ * do; identifying ourselves properly is what it does everywhere else,
+ * and this line only brings the deposit in line with the crawlers.
+ */
+const USER_AGENT = 'LexyFlowObservatory/1.0 (+https://lexyflow.com)';
 const TIMEOUT_MS = 60_000;
 
 export interface DepositResult {
@@ -101,7 +119,11 @@ export async function depositObservatory(
     // The bucket API takes the file as the request body, named by URL.
     const upload = await fetch(`${bucket}/lexyflow-observatory-fr.csv`, {
       method: 'PUT',
-      headers: { authorization: `Bearer ${token}`, 'content-type': 'text/csv' },
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'text/csv',
+        'user-agent': USER_AGENT
+      },
       body: csv,
       signal: AbortSignal.timeout(TIMEOUT_MS)
     });
@@ -225,7 +247,8 @@ async function zenodo(
     method,
     headers: {
       authorization: `Bearer ${token}`,
-      'content-type': 'application/json'
+      'content-type': 'application/json',
+      'user-agent': USER_AGENT
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
     signal: AbortSignal.timeout(TIMEOUT_MS)
