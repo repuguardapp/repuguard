@@ -411,3 +411,54 @@ describe('the crawl knows when it has finished', () => {
     expect(LIB2).toContain("'domains_pending'");
   });
 });
+
+/**
+ * The file Mounir downloaded, one click from a permanent DOI.
+ *
+ *   sample,source,,            ← blank
+ *   sample,source_id,,         ← blank
+ *   sample,source_date,,       ← blank
+ *   sample,size,0              ← zero
+ *   progress,domains_looked_at,280,0
+ *   observation,supervisory_authority_named.present,87,106
+ *
+ * Every figure that came from `scans` was right to the unit. Every
+ * figure that came from `survey_domains` was absent — through one
+ * client, on one database, with identical grants and identical RLS.
+ *
+ * A dataset with no population and no provenance, under a CC BY licence
+ * that invites reuse, is the exact opposite of the reproducibility its
+ * own method section claims. It must not be served, and it must not be
+ * deposited.
+ *
+ * The guard is not "sampleSize is 0" — that is the honest state of a
+ * study nobody has seeded yet. It is that scans exist AND the sample
+ * does not, which cannot both be true.
+ */
+describe('a study with no population is not a study', () => {
+  const read2 = (p: string) => readFileSync(join(__dirname, '..', p), 'utf8');
+  const LIB3 = read2('src/lib/observatory.ts');
+
+  it('refuses when the crawl is live and the sample is empty', () => {
+    expect(LIB3).toContain(
+      "const incoherent = all.length > 0 && ((sampleSize ?? 0) === 0 || !sourceRow?.source_id)"
+    );
+    expect(LIB3).toContain('return null;');
+  });
+
+  it('does not refuse a study that simply has not started', () => {
+    // Before seeding there are no scans and no sample, and "nothing yet"
+    // is a true answer the page already knows how to render.
+    expect(LIB3).toContain('all.length > 0 &&');
+  });
+
+  it('says what it saw, so the next render explains itself', () => {
+    expect(LIB3).toContain('sample_missing_under_live_crawl');
+    expect(LIB3).toContain('sampleRowsReturned');
+    expect(LIB3).toContain("alertOps('observatory.sample_unreadable'");
+  });
+
+  it('names the count failure instead of returning null in silence', () => {
+    expect(LIB3).toContain('sample_count_failed');
+  });
+});

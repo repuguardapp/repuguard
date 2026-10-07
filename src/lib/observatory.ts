@@ -1,4 +1,5 @@
 import 'server-only';
+import { alertOps } from './alert';
 import { classifyScanFailure, type FailureCode } from './scan-failure';
 import { supabaseService } from './supabase';
 
@@ -119,7 +120,10 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     const { count: sampleSize, error: countError } = await db
       .from('survey_domains')
       .select('domain', { head: true, count: 'exact' });
-    if (countError) return null;
+    if (countError) {
+      console.error('[observatory] sample_count_failed', { error: countError.message });
+      return null;
+    }
 
     const all = (scans ?? []) as {
       id: string;
@@ -144,6 +148,10 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
      * that silently shrinks is a denominator we adjusted after seeing the
      * results, which is the thing this whole module exists not to do.
      */
+    const sourceRow = (sample ?? [])[0] as
+      | { source_id?: string; source_label?: string; source_date?: string }
+      | undefined;
+
     const excluded = all.filter((r) => OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
     const rows = all.filter((r) => !OUR_OWN_FAILURES.has(classifyScanFailure(r.failure)));
 
@@ -161,11 +169,47 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
       refusalCounts.set(code, (refusalCounts.get(code) ?? 0) + 1);
     }
 
+    /**
+     * A population of zero under a crawl of hundreds is not a study.
+     *
+     * The published CSV came out with `sample,size,0`, no `source_id`
+     * and no `source_date`, while 280 domains had been read and the
+     * seven observation counts were correct to the unit. Every figure
+     * that came from `scans` was right and every figure that came from
+     * `survey_domains` was absent, through one client, on one database,
+     * with identical grants.
+     *
+     * I do not yet know why that read came back empty. What is certain
+     * is what the file said: a dataset with no population and no
+     * provenance, under a CC BY licence, one click from a permanent DOI
+     * — the exact opposite of the reproducibility the method claims.
+     *
+     * So the incoherence is named rather than served. Not "sampleSize
+     * is 0", which is the honest state of a study that has not been
+     * seeded yet: scans exist AND the sample does not, which cannot
+     * both be true. That is a failure to read our own figures, and this
+     * module already has a word for it — null.
+     */
+    const incoherent = all.length > 0 && ((sampleSize ?? 0) === 0 || !sourceRow?.source_id);
+    if (incoherent) {
+      console.error('[observatory] sample_missing_under_live_crawl', {
+        sampleSize: sampleSize ?? 0,
+        sourceId: sourceRow?.source_id ?? null,
+        scans: all.length,
+        sampleRowsReturned: (sample ?? []).length
+      });
+      alertOps('observatory.sample_unreadable', {
+        sampleSize: sampleSize ?? 0,
+        scans: all.length
+      });
+      return null;
+    }
+
     return {
       sampleSize: sampleSize ?? 0,
-      sourceId: (sample?.[0] as { source_id?: string } | undefined)?.source_id ?? null,
-      sourceLabel: (sample?.[0] as { source_label?: string } | undefined)?.source_label ?? null,
-      sourceDate: (sample?.[0] as { source_date?: string } | undefined)?.source_date ?? null,
+      sourceId: sourceRow?.source_id ?? null,
+      sourceLabel: sourceRow?.source_label ?? null,
+      sourceDate: sourceRow?.source_date ?? null,
       lookedAt: rows.length,
       documentsRead: read.length,
       excluded: excluded.length,
