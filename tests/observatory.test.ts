@@ -462,3 +462,42 @@ describe('a study with no population is not a study', () => {
     expect(LIB3).toContain('sample_count_failed');
   });
 });
+
+/**
+ * The read that depended on whether anyone had made it before.
+ *
+ * Four probes, one request, one client, microseconds apart:
+ *
+ *   select('*').limit(1)                 → 1 row
+ *   select('domain').limit(5)            → 5 rows
+ *   count: 'planned'                     → 300
+ *   select('source_id,…').order('rank')  → 0 rows, HTTP 200
+ *   count: 'exact'                       → 0
+ *
+ * The table reads perfectly. What failed is exactly the two query shapes
+ * the application issues on every render; what succeeded is three shapes
+ * nothing had ever issued before.
+ *
+ * supabase-js calls fetch, and the App Router patches fetch with a Data
+ * Cache keyed on URL and options. A GET issued during a build — when
+ * survey_domains was still empty — is a cached empty answer every later
+ * request inherits, while a URL nobody had requested is a miss that
+ * reads the database.
+ *
+ * This was never an observatory bug. It is every server-side read in the
+ * product. The study is simply the one surface that prints its own
+ * denominator, which is why it is where the staleness became visible.
+ */
+describe('a database read is never answered from a cache', () => {
+  const SUPA = readFileSync(join(__dirname, '..', 'src/lib/supabase.ts'), 'utf8');
+
+  it('gives the client a fetch that opts out of the Data Cache', () => {
+    expect(SUPA).toContain("cache: 'no-store'");
+    expect(SUPA).toContain('global: { fetch: uncachedFetch }');
+  });
+
+  it('applies it to the client every server read goes through', () => {
+    const factory = SUPA.slice(SUPA.indexOf('export function supabaseService'));
+    expect(factory).toContain('global: { fetch: uncachedFetch }');
+  });
+});
