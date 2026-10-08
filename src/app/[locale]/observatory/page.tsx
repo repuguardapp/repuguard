@@ -246,9 +246,56 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
         <CardContent className="grid gap-3 text-sm text-muted-foreground">
           <p>{t('limitsNoVerdict')}</p>
           <p>{t('limitsSuffix')}</p>
+          {/* The caveat that used to be smuggled into the source label,
+              where it was a French sentence printed on seven pages. It
+              is a sentence here, translated like every other sentence,
+              and true of any ranking we might draw from. */}
+          <p>{t('limitsRanking')}</p>
           <p>{t('limitsRefusals')}</p>
         </CardContent>
       </Card>
+
+      {/* Only once the record exists and resolves.
+          `report.deposit` is null for a draft with a reserved DOI, which
+          is the state this edition sat in for two days while Zenodo's
+          edge refused our address range — and a reserved DOI printed
+          here would have been an instruction to cite nothing. */}
+      {report?.deposit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('citeTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm">
+            <p className="text-muted-foreground">{t('citeLead')}</p>
+            <dl className="grid gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <dt className="text-muted-foreground">{t('citeVersion')}</dt>
+                <dd>
+                  <a
+                    href={`https://doi.org/${report.deposit.doi}`}
+                    className="font-mono text-xs underline underline-offset-4"
+                  >
+                    {report.deposit.doi}
+                  </a>
+                </dd>
+              </div>
+              {report.deposit.conceptDoi ? (
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <dt className="text-muted-foreground">{t('citeConcept')}</dt>
+                  <dd>
+                    <a
+                      href={`https://doi.org/${report.deposit.conceptDoi}`}
+                      className="font-mono text-xs underline underline-offset-4"
+                    >
+                      {report.deposit.conceptDoi}
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* The same threshold the file itself enforces. Offering a
           download that answers 503 is a worse page than one that

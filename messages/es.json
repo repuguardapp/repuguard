@@ -624,7 +624,7 @@
   },
   "observatory": {
     "title": "Qué publican realmente los sitios franceses en sus políticas de privacidad",
-    "lead": "Un recuento permanente sobre los dominios .fr más visitados, leídos documento a documento por un rastreador que respeta robots.txt y que declara lo que no ha podido leer.",
+    "lead": "Un recuento permanente sobre una muestra de dominios .fr extraída de un ranking público, leídos documento a documento por un rastreador que respeta robots.txt y que declara lo que no ha podido leer.",
     "collecting": "Recogida en curso: {done} dominios leídos de {total}. Las cifras siguientes son provisionales y cambiarán.",
     "asOf": "Última lectura: {date}",
     "readTitle": "Lo que hemos podido leer",
@@ -640,9 +640,14 @@
     "limitsSuffix": "La población son los registros .fr, así que las organizaciones francesas en .com no aparecen. Un sufijo de registro es un hecho; decidir qué .com es francés sería un juicio que no podríamos defender.",
     "limitsNoVerdict": "No se nombra ni se evalúa a ninguna organización. Una política sin plazo de conservación puede ser perfectamente lícita, y una observación es una afirmación sobre nuestra lectura de un documento en un día.",
     "limitsRefusals": "Una negativa no es un incumplimiento. Un sitio que rechaza nuestro rastreador hace exactamente aquello para lo que sirve la mitigación de bots, y publicamos la negativa en lugar de sortearla.",
+    "limitsRanking": "La muestra procede de un ranking público de dominios. Un ranking no es una medida de tráfico salvo que lo diga su propio editor, y los rankings no cuentan lo mismo: por eso este se nombra y se fecha en lugar de describirse, y cualquiera puede reconstruir la muestra a partir de él.",
     "downloadTitle": "Los datos",
     "downloadLead": "Recuentos agregados, definición de la muestra y desglose de negativas, en CSV. Los resultados por dominio no se publican.",
     "downloadCta": "Descargar los recuentos (CSV)",
+    "citeTitle": "Citar este estudio",
+    "citeLead": "Cada edición terminada se deposita en Zenodo, gestionado por el CERN, que le asigna un DOI permanente. Esta página cambia a medida que avanza el rastreo; el registro depositado no: conserva el archivo, el método y las cifras tal como estaban el día de su publicación.",
+    "citeVersion": "Esta edición",
+    "citeConcept": "Todas las ediciones",
     "empty": "La recogida aún no ha producido ninguna lectura. Esta página mostrará cifras cuando las tenga; no mostrará ninguna antes.",
     "unavailable": "No hemos podido leer nuestras propias cifras ahora mismo. Es un fallo de nuestra base de datos, no una ausencia de datos: inténtelo de nuevo en un momento."
   }

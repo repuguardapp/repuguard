@@ -24,6 +24,9 @@ const PAGE = read('src', 'app', '[locale]', 'observatory', 'page.tsx');
 const CRON = read('src', 'app', 'api', 'cron', 'policy-survey', 'route.ts');
 const SAMPLE = read('src', 'lib', 'survey-sample.ts');
 
+/** Seven, and the study's claims have to survive all of them. */
+const LOCALES = ['en', 'fr', 'es', 'de', 'pt-br', 'ja', 'ar'];
+
 describe('it never publishes a verdict about a named organisation', () => {
   it('reads the sample as a count, never as a list of names', () => {
     // An aggregate is a fact about a population. "example.fr,
@@ -123,12 +126,52 @@ describe('the sample is reproducible or it is nothing', () => {
     expect(SAMPLE).toContain('no ranking could be used');
   });
 
-  it('carries the ranking basis, because the rankings measure different things', () => {
+  it('names the ranking in the label and characterises it nowhere near one', () => {
+    // THIS TEST USED TO ASSERT THE OPPOSITE, AND WAS RIGHT TO.
+    //
     // Tranco aggregates traffic rankings; Majestic ranks by referring
-    // subnets. A study whose population came from the second must not
-    // say "most visited".
-    expect(SAMPLE).toContain('agrégat de classements de trafic');
-    expect(SAMPLE).toContain('classement par sous-réseaux référents');
+    // subnets, and a study drawn from the second must not say "most
+    // visited". That rule was enforced by writing the basis into the
+    // label — `le Majestic Million (classement par sous-réseaux
+    // référents)` — and this test held the French sentence in place.
+    //
+    // The label is stored with the sample and then printed verbatim in
+    // all seven locales, in the English CSV that carries the DOI, and in
+    // the English schema.org markup Google reads. So the guard put a
+    // French sentence into the published description of the population
+    // on six pages that are not in French, and the test was pinning it
+    // there.
+    //
+    // The rule has not been relaxed; it moved to where it can be
+    // translated, and the assertion below is the stricter half of it.
+    const labels = [...SAMPLE.matchAll(/^\s*label: '([^']*)',$/gm)].map((m) => m[1]);
+    expect(labels.length).toBeGreaterThan(0);
+    for (const label of labels) {
+      // A name, not a sentence about what the list counts.
+      expect(label).not.toMatch(/\(|classement|agrégat|ranks|measure|visit/i);
+    }
+    expect(labels).toContain('Majestic Million');
+    expect(labels).toContain('Tranco');
+  });
+
+  it('never calls the population the most-visited domains, in any language', () => {
+    // The lead doubles as the page's meta description, and in all seven
+    // locales it said "the most-visited .fr domains" for a quarter while
+    // the sample came from a ranking of referring subnets. The page's
+    // own methodology had been corrected; the sentence Google reads had
+    // not, and nothing was watching it.
+    for (const locale of LOCALES) {
+      const observatory = JSON.parse(read('messages', `${locale}.json`)).observatory;
+      // The caveat that replaced the label's French parenthetical. It
+      // has to exist in every locale or the claim is simply absent
+      // rather than qualified.
+      expect(observatory.limitsRanking).toBeTruthy();
+      for (const value of Object.values(observatory) as string[]) {
+        expect(value).not.toMatch(
+          /most.visited|plus visit|más visitad|mais visitad|meistbesucht|訪問数の多い|الأكثر زيارة/i
+        );
+      }
+    }
   });
 
   it('does not re-seed on every run', () => {
@@ -499,5 +542,53 @@ describe('a database read is never answered from a cache', () => {
   it('applies it to the client every server read goes through', () => {
     const factory = SUPA.slice(SUPA.indexOf('export function supabaseService'));
     expect(factory).toContain('global: { fetch: uncachedFetch }');
+  });
+});
+
+/**
+ * The citation is the return on the whole study.
+ *
+ * The sixty-day test is whether anyone links to this. A DOI is the one
+ * link that is permanent by design and indexed by DataCite, OpenAIRE and
+ * Google Dataset Search — which all already hold the record and have no
+ * way to know this page is the same study unless the page says so.
+ */
+describe('it offers a citation only when there is one to offer', () => {
+  it('shows a DOI only once the record was actually published', () => {
+    // `doi` has always been filled from Zenodo's prereserve_doi, which
+    // exists on a draft nobody published and resolves to nothing. For
+    // two days this edition sat in exactly that state while Zenodo's
+    // edge refused our address range, and a page printing that DOI
+    // would have been telling a reader to cite a record that is not
+    // there.
+    expect(LIB).toContain(".not('published_at', 'is', null)");
+    expect(LIB).toContain('if (!row?.doi || !row.published_at) return null;');
+    expect(PAGE).toContain('report?.deposit ?');
+  });
+
+  it('credits the DOI to the edition it belongs to', () => {
+    // Keyed on the edition, so the day a new sample is seeded the page
+    // stops advertising the previous quarter's record beside figures it
+    // was not computed from.
+    expect(LIB).toContain(".eq('edition', edition)");
+    expect(LIB).toContain('publishedDeposit(db, sourceRow?.source_id ?? null)');
+  });
+
+  it('keeps the study readable when the deposit row is not', () => {
+    // A citation is an ornament on this page; the figures are not. The
+    // whole study must still render when this one table cannot be read.
+    expect(LIB).toContain('deposit_read_failed');
+  });
+
+  it('joins the page to the record for the machines that index both', () => {
+    expect(LIB).toContain('`https://doi.org/${report.deposit.doi}`');
+    expect(LIB).toContain('sameAs:');
+  });
+
+  it('claims no DOI in the markup when there is none', () => {
+    // Markup asserting an identifier that does not resolve is the same
+    // act as a sitemap telling Google that 469 unchanged pages had just
+    // been modified.
+    expect(LIB).toContain('...(report.deposit\n      ? {');
   });
 });

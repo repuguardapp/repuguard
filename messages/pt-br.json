@@ -624,7 +624,7 @@
   },
   "observatory": {
     "title": "O que os sites franceses realmente publicam em suas políticas de privacidade",
-    "lead": "Uma contagem permanente sobre os domínios .fr mais visitados, lidos um documento por vez por um rastreador que respeita o robots.txt e declara o que não conseguiu ler.",
+    "lead": "Uma contagem permanente sobre uma amostra de domínios .fr extraída de um ranking público, lidos um documento por vez por um rastreador que respeita o robots.txt e declara o que não conseguiu ler.",
     "collecting": "Coleta em andamento: {done} de {total} domínios lidos. Os números abaixo são provisórios e vão mudar.",
     "asOf": "Última leitura: {date}",
     "readTitle": "O que conseguimos ler",
@@ -640,9 +640,14 @@
     "limitsSuffix": "A população são os registros .fr, portanto organizações francesas em .com estão ausentes. Um sufixo de registro é um fato; decidir qual .com é francês seria um julgamento que não saberíamos defender.",
     "limitsNoVerdict": "Nenhuma organização é nomeada nem avaliada. Uma política sem prazo de retenção pode ser perfeitamente lícita, e uma constatação é uma afirmação sobre nossa leitura de um documento em um dia.",
     "limitsRefusals": "Uma recusa não é uma falha. Um site que rejeita nosso rastreador faz exatamente aquilo para que serve a mitigação de bots, e publicamos a recusa em vez de contorná-la.",
+    "limitsRanking": "A amostra vem de um ranking público de domínios. Um ranking não é uma medida de tráfego a menos que o próprio publicador diga isso, e rankings não contam a mesma coisa — por isso este é nomeado e datado em vez de descrito, e qualquer pessoa pode reconstruir a amostra a partir dele.",
     "downloadTitle": "Os dados",
     "downloadLead": "Contagens agregadas, definição da amostra e detalhamento das recusas, em CSV. Resultados por domínio não são publicados.",
     "downloadCta": "Baixar as contagens (CSV)",
+    "citeTitle": "Citar este estudo",
+    "citeLead": "Cada edição concluída é depositada no Zenodo, operado pelo CERN, que lhe atribui um DOI permanente. Esta página muda conforme a coleta avança; o registro depositado não — ele guarda o arquivo, o método e os números exatamente como estavam no dia da publicação.",
+    "citeVersion": "Esta edição",
+    "citeConcept": "Todas as edições",
     "empty": "A coleta ainda não produziu nenhuma leitura. Esta página mostrará números quando os tiver; nenhum antes disso.",
     "unavailable": "Não conseguimos ler nossos próprios números agora. É uma falha do nosso banco de dados, não ausência de dados — tente novamente em instantes."
   }

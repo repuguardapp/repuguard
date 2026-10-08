@@ -72,7 +72,8 @@ export interface DepositResult {
  */
 export async function depositObservatory(
   report: ObservatoryReport,
-  csv: string
+  csv: string,
+  prior?: PriorEdition | null
 ): Promise<DepositResult> {
   const token = process.env.ZENODO_TOKEN;
   const refuse = (refused: string): DepositResult => ({
@@ -101,9 +102,34 @@ export async function depositObservatory(
     );
   }
 
+  /**
+   * A second edition is not a second dataset, and this client cannot
+   * say so.
+   *
+   * `POST /deposit/depositions` creates a NEW record with a NEW concept
+   * DOI. Run it for 2027-Q1 and we get a dataset that Zenodo, DataCite
+   * and OpenAIRE all believe is unrelated to 2026-Q4 — four unlinked
+   * records a year, each starting its citation count from zero, which is
+   * the opposite of the one thing a DOI series is for. The correct call
+   * is `/actions/newversion` on the existing deposition, and a minted DOI
+   * cannot be withdrawn if I get it wrong on a path I have never once
+   * been able to reach: Zenodo's edge has answered 403 to this address
+   * range since the first attempt.
+   *
+   * So the robot stops here and says what the one manual step is. The
+   * metadata it would have sent is still exported below, and "New
+   * version" on the existing record does the right thing in the browser
+   * in a way this code cannot yet verify it does over the API.
+   */
+  if (prior) {
+    return refuse(
+      `edition ${prior.edition} is already published as ${prior.doi}, and this client can only create a new record rather than a new version of that one — which would mint a DOI unconnected to the series. Use "New version" on https://doi.org/${prior.conceptDoi ?? prior.doi} and paste the metadata from the admin page.`
+    );
+  }
+
   try {
     const created = await zenodo(token, 'POST', '/deposit/depositions', {
-      metadata: metadataFor(report)
+      metadata: metadataFor(report, prior)
     });
     if (!created.ok) return refuse(`Zenodo refused the deposit: ${await describe(created)}`);
 
@@ -156,7 +182,10 @@ export async function depositObservatory(
  * description, not only in our own page, because a Zenodo record has to
  * stand on its own once it is detached from us.
  */
-export function metadataFor(report: ObservatoryReport): Record<string, unknown> {
+export function metadataFor(
+  report: ObservatoryReport,
+  prior?: PriorEdition | null
+): Record<string, unknown> {
   const quarter = `${new Date().getUTCFullYear()}-Q${Math.floor(new Date().getUTCMonth() / 3) + 1}`;
 
   return {
@@ -196,7 +225,27 @@ export function metadataFor(report: ObservatoryReport): Record<string, unknown> 
         identifier: 'https://lexyflow.com/en/observatory',
         relation: 'isSupplementTo',
         scheme: 'url'
-      }
+      },
+      /**
+       * The chain back to the previous quarter, stated in the record.
+       *
+       * Zenodo adds its own version links when a deposit is made with
+       * "New version", and this is redundant there. It is not redundant
+       * when the record is created from scratch — which is what happens
+       * every time somebody pastes this metadata into a blank form, and
+       * is therefore the case to write for. A quarterly series whose
+       * second edition does not name its first is four unrelated files
+       * that happen to share a title.
+       */
+      ...(prior
+        ? [
+            {
+              identifier: prior.doi,
+              relation: 'isNewVersionOf',
+              scheme: 'doi'
+            }
+          ]
+        : [])
     ],
     notes: `Licence: ${OBSERVATORY_LICENCE}`
   };
@@ -281,6 +330,43 @@ async function zenodo(
  * is deliberate: a Zenodo outage should not produce eight more attempts
  * the same day. The row says what happened and a human can clear it.
  */
+/**
+ * A previous edition that actually resolves.
+ *
+ * `published_at` and not `doi`: the `doi` column is filled from Zenodo's
+ * `prereserve_doi`, which exists on a draft nobody published. Chaining a
+ * new edition to a reserved DOI would point the series at a record that
+ * is not there.
+ */
+export interface PriorEdition {
+  edition: string;
+  doi: string;
+  conceptDoi: string | null;
+}
+
+export async function latestPublishedEdition(
+  db: ReturnType<typeof supabaseService>,
+  exceptEdition: string
+): Promise<PriorEdition | null> {
+  const { data, error } = await db
+    .from('observatory_deposits')
+    .select('edition, doi, concept_doi, published_at')
+    .not('published_at', 'is', null)
+    .not('doi', 'is', null)
+    .neq('edition', exceptEdition)
+    .order('published_at', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error('[zenodo] prior_edition_read_failed', { error: error.message });
+    return null;
+  }
+
+  const row = ((data ?? []) as { edition?: string; doi?: string; concept_doi?: string }[])[0];
+  if (!row?.edition || !row.doi) return null;
+  return { edition: row.edition, doi: row.doi, conceptDoi: row.concept_doi ?? null };
+}
+
 export async function depositEditionOnce(
   db: ReturnType<typeof supabaseService>,
   report: ObservatoryReport,
@@ -316,7 +402,10 @@ export async function depositEditionOnce(
     };
   }
 
-  const result = await depositObservatory(report, csv);
+  // Read AFTER the claim, so the losing run of a race never gets here
+  // and never asks. One read per edition, not one per cron firing.
+  const prior = await latestPublishedEdition(db, edition);
+  const result = await depositObservatory(report, csv, prior);
 
   await db
     .from('observatory_deposits')
@@ -324,7 +413,11 @@ export async function depositEditionOnce(
       deposition_id: result.depositionId,
       doi: result.doi,
       edit_url: result.editUrl,
-      refused: result.refused
+      refused: result.refused,
+      // Only the robot reaches this line. A row that says 'api' and
+      // carries no DOI is a robot that tried and failed, which is a
+      // different fact from a row nobody has touched.
+      deposited_by: 'api'
     })
     .eq('edition', edition);
 

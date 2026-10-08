@@ -24,18 +24,34 @@ import { fetchExternal } from './safe-fetch';
  * legal watcher's probe: the machine finds out, and the methodology then
  * states what it actually used rather than what we assumed it would.
  *
- * THE BASIS TRAVELS WITH THE SOURCE
+ * THE RANKING IS NAMED, NEVER CHARACTERISED
  *
- * These rankings do not measure the same thing. Tranco aggregates traffic
- * rankings; Majestic ranks by referring subnets. A study whose population
- * came from the second must not say "most visited", so the label carries
- * the basis and the page prints the label it was given.
+ * These rankings do not measure the same thing — Tranco aggregates
+ * traffic rankings, Majestic ranks by referring subnets — and a study
+ * drawn from the second must not say "most visited". That was handled by
+ * writing the basis into the label, in French, in a sentence: "le
+ * Majestic Million (classement par sous-réseaux référents)".
+ *
+ * That was wrong in a way nobody saw for a quarter. The label is stored
+ * with the sample and then printed verbatim in all seven locales, in the
+ * English CSV that carries the DOI, and in the English schema.org markup
+ * Google reads — so a French sentence was the published description of
+ * the population on six pages that are not in French.
+ *
+ * So the label is now the list's own name and nothing else: a proper
+ * noun, which needs no translation and cannot be wrong about what the
+ * list measures. The caveat it used to carry is a sentence on the page,
+ * translated like every other sentence, and true of any ranking: a
+ * ranking is not a measure of traffic unless its own publisher says so.
  */
 
 export interface RankingSource {
   id: string;
   url: string;
-  /** Printed in the methodology, in French, basis included. */
+  /**
+   * The list's own name, as its publisher writes it. Printed as-is in
+   * every locale, so it must be a name and never a description.
+   */
   label: string;
   /** Column index of the domain in each CSV row. */
   domainColumn: number;
@@ -45,19 +61,19 @@ const SOURCES: RankingSource[] = [
   {
     id: 'tranco',
     url: 'https://tranco-list.eu/top-1m.csv',
-    label: 'la liste Tranco (agrégat de classements de trafic)',
+    label: 'Tranco',
     domainColumn: 1
   },
   {
     id: 'tranco-download',
     url: 'https://tranco-list.eu/download/latest/1000000',
-    label: 'la liste Tranco (agrégat de classements de trafic)',
+    label: 'Tranco',
     domainColumn: 1
   },
   {
     id: 'majestic',
     url: 'https://downloads.majestic.com/majestic_million.csv',
-    label: 'le Majestic Million (classement par sous-réseaux référents)',
+    label: 'Majestic Million',
     // GlobalRank,TldRank,Domain,...
     domainColumn: 2
   }

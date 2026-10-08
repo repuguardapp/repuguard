@@ -46,6 +46,25 @@ export interface ObservationTally {
   unclear: number;
 }
 
+/**
+ * The permanent record of a finished edition, once one exists.
+ *
+ * Null until Zenodo has actually minted the DOI. That is the whole
+ * reason this is read from the database rather than written into the
+ * page as a constant: `doi` is filled from Zenodo's `prereserve_doi`,
+ * which exists on a draft nobody has published and resolves to nothing,
+ * so a page that printed it would be telling a reader to cite a record
+ * that is not there. The published date is the gate.
+ */
+export interface ObservatoryDeposit {
+  /** This edition, permanent and frozen at the figures it was deposited with. */
+  doi: string;
+  /** The series, which always resolves to the newest edition. */
+  conceptDoi: string | null;
+  /** The date Zenodo states, not a date we chose. */
+  publishedAt: string;
+}
+
 export interface ObservatoryReport {
   /** Domains in the population. */
   sampleSize: number;
@@ -86,6 +105,15 @@ export interface ObservatoryReport {
   observations: ObservationTally[];
   /** Most recent completed reading, for the "as of" line. */
   lastReadAt: string | null;
+  /**
+   * The citable record of THIS edition, or null.
+   *
+   * Keyed on `sourceId`, so when the next sample is seeded the page
+   * stops advertising the previous quarter's DOI by itself. A citation
+   * block that outlives the figures it points at is the same defect as a
+   * percentage without its denominator.
+   */
+  deposit: ObservatoryDeposit | null;
 }
 
 /** Null means we could not read our own figures — never an empty study. */
@@ -281,6 +309,7 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
 
     return {
       sampleSize: sampleSize ?? 0,
+      deposit: await publishedDeposit(db, sourceRow?.source_id ?? null),
       sourceId: sourceRow?.source_id ?? null,
       sourceLabel: sourceRow?.source_label ?? null,
       sourceDate: sourceRow?.source_date ?? null,
@@ -305,6 +334,45 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     });
     return null;
   }
+}
+
+/**
+ * The minted DOI for an edition, and nothing less than minted.
+ *
+ * Three conditions, all of them load-bearing. The row must be for THIS
+ * edition, or the page credits the current figures to last quarter's
+ * record. It must have a `published_at`, or we are printing a reserved
+ * DOI that resolves to nothing. And a failure to read this table returns
+ * null rather than throwing, because a citation is an ornament on this
+ * page and the figures are not: the study must still render when the
+ * deposit row is unreadable.
+ */
+async function publishedDeposit(
+  db: ReturnType<typeof supabaseService>,
+  edition: string | null
+): Promise<ObservatoryDeposit | null> {
+  if (!edition) return null;
+
+  const { data, error } = await db
+    .from('observatory_deposits')
+    .select('doi, concept_doi, published_at')
+    .eq('edition', edition)
+    .not('published_at', 'is', null)
+    .limit(1);
+
+  if (error) {
+    console.error('[observatory] deposit_read_failed', { error: error.message });
+    return null;
+  }
+
+  const row = ((data ?? []) as { doi?: string; concept_doi?: string; published_at?: string }[])[0];
+  if (!row?.doi || !row.published_at) return null;
+
+  return {
+    doi: row.doi,
+    conceptDoi: row.concept_doi ?? null,
+    publishedAt: row.published_at
+  };
 }
 
 async function tallyObservations(
@@ -414,6 +482,26 @@ export function observatoryDataset(
     license: OBSERVATORY_LICENCE,
     creator: { '@type': 'Organization', name: 'LexyFlow', url: origin },
     isAccessibleForFree: true,
+    // The permanent record, machine-readable.
+    //
+    // This is the field that joins our page to the Zenodo deposit in
+    // Google Dataset Search, DataCite and OpenAIRE — three indexes that
+    // already hold the record and currently have no way to know this
+    // page is the same study. Both DOIs: the version resolves to the
+    // frozen figures somebody would cite, the concept to whichever
+    // edition is current.
+    ...(report.deposit
+      ? {
+          identifier: [
+            `https://doi.org/${report.deposit.doi}`,
+            ...(report.deposit.conceptDoi
+              ? [`https://doi.org/${report.deposit.conceptDoi}`]
+              : [])
+          ],
+          sameAs: `https://doi.org/${report.deposit.conceptDoi ?? report.deposit.doi}`,
+          datePublished: report.deposit.publishedAt
+        }
+      : {}),
     // The sample's provenance, machine-readable. Without it this is an
     // assertion; with it, it is reproducible.
     ...(report.sourceId

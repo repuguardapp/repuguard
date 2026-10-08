@@ -624,7 +624,7 @@
   },
   "observatory": {
     "title": "Was französische Websites in ihren Datenschutzerklärungen tatsächlich veröffentlichen",
-    "lead": "Eine laufende Auszählung über die meistbesuchten .fr-Domains, Dokument für Dokument gelesen von einem Crawler, der robots.txt befolgt und benennt, was er nicht lesen konnte.",
+    "lead": "Eine laufende Auszählung über eine Stichprobe von .fr-Domains aus einem öffentlichen Ranking, Dokument für Dokument gelesen von einem Crawler, der robots.txt befolgt und benennt, was er nicht lesen konnte.",
     "collecting": "Erhebung läuft: {done} von {total} Domains gelesen. Die Zahlen unten sind vorläufig und werden sich ändern.",
     "asOf": "Letzte Lesung: {date}",
     "readTitle": "Was wir lesen konnten",
@@ -640,9 +640,14 @@
     "limitsSuffix": "Die Grundgesamtheit sind .fr-Registrierungen; französische Organisationen unter .com fehlen daher. Ein Registry-Suffix ist eine Tatsache — zu entscheiden, welche .com französisch ist, wäre ein Urteil, das wir nicht verteidigen könnten.",
     "limitsNoVerdict": "Keine Organisation wird genannt oder bewertet. Eine Erklärung ohne Speicherdauer kann durchaus rechtmäßig sein, und ein Befund ist eine Aussage über unsere Lesung eines Dokuments an einem Tag.",
     "limitsRefusals": "Eine Ablehnung ist kein Mangel. Eine Website, die unseren Crawler abweist, tut genau das, wofür Bot-Abwehr da ist, und wir veröffentlichen die Ablehnung, statt sie zu umgehen.",
+    "limitsRanking": "Die Stichprobe stammt aus einem veröffentlichten Domain-Ranking. Ein Ranking ist keine Messung von Zugriffen, sofern sein Herausgeber das nicht selbst sagt, und Rankings zählen Unterschiedliches — deshalb wird dieses genannt und datiert statt beschrieben, und jeder kann die Stichprobe daraus rekonstruieren.",
     "downloadTitle": "Die Daten",
     "downloadLead": "Aggregierte Zählungen, Stichprobendefinition und Aufschlüsselung der Ablehnungen, als CSV. Ergebnisse je Domain werden nicht veröffentlicht.",
     "downloadCta": "Zählungen herunterladen (CSV)",
+    "citeTitle": "Diese Studie zitieren",
+    "citeLead": "Jede abgeschlossene Ausgabe wird bei Zenodo hinterlegt, betrieben vom CERN, das ihr eine dauerhafte DOI zuweist. Diese Seite verändert sich mit dem laufenden Crawl, der hinterlegte Datensatz nicht — er enthält die Datei, die Methode und die Zahlen genau so, wie sie am Tag der Veröffentlichung waren.",
+    "citeVersion": "Diese Ausgabe",
+    "citeConcept": "Alle Ausgaben",
     "empty": "Die Erhebung hat noch keine Lesung erbracht. Diese Seite zeigt Zahlen, sobald sie welche hat — vorher keine.",
     "unavailable": "Wir konnten unsere eigenen Zahlen gerade nicht lesen. Das ist ein Fehler unserer Datenbank, kein Fehlen von Daten — bitte versuchen Sie es in Kürze erneut."
   }

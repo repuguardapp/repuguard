@@ -624,7 +624,7 @@
   },
   "observatory": {
     "title": "What French websites actually publish in their privacy policies",
-    "lead": "A standing count over the most-visited .fr domains, read one document at a time by a crawler that obeys robots.txt and states what it could not read.",
+    "lead": "A standing count over a sample of .fr domains drawn from a published ranking, read one document at a time by a crawler that obeys robots.txt and states what it could not read.",
     "collecting": "Collection in progress: {done} of {total} domains read. The figures below are provisional and will move.",
     "asOf": "Last reading: {date}",
     "readTitle": "What we could read",
@@ -640,9 +640,14 @@
     "limitsSuffix": "The population is .fr registrations, so French organisations on .com are absent. A registry suffix is a fact; deciding which .com is French would be a judgement we could not defend.",
     "limitsNoVerdict": "No organisation is named and none is assessed. A privacy policy that omits a retention period may still be lawful, and an observation is a statement about our reading of one document on one day.",
     "limitsRefusals": "A refusal is not a failing. A site that declines our crawler is doing what bot mitigation is for, and we publish the refusal rather than defeating it.",
+    "limitsRanking": "The sample is drawn from a published ranking of domains. A ranking is not a measure of traffic unless its own publisher says so, and rankings differ in what they count — so this one is named and dated rather than described, and the sample can be rebuilt from it by anyone.",
     "downloadTitle": "The data",
     "downloadLead": "Aggregate counts, the sample definition and the refusal breakdown, as CSV. Per-domain results are not published.",
     "downloadCta": "Download the counts (CSV)",
+    "citeTitle": "Cite this study",
+    "citeLead": "Each finished edition is deposited with Zenodo, run by CERN, which mints a permanent DOI. This page moves as the crawl runs; the deposited record does not — it holds the file, the method and the figures exactly as they stood on the day it was published.",
+    "citeVersion": "This edition",
+    "citeConcept": "All editions",
     "empty": "The collection has not produced a reading yet. This page will show figures once it has; it will not show any before.",
     "unavailable": "We could not read our own figures just now. That is a failure of our database, not an absence of data — please try again shortly."
   }

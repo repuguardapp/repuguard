@@ -84,7 +84,7 @@ describe('nothing permanent happens on its own', () => {
     // Claimed BEFORE the deposit: a row written afterwards lets two
     // concurrent runs both see nothing, both deposit, and the loser of
     // the constraint has already created a draft nobody tracks.
-    expect(LIB.indexOf("insert({")).toBeLessThan(LIB.indexOf('await depositObservatory(report, csv)'));
+    expect(LIB.indexOf('insert({')).toBeLessThan(LIB.indexOf('await depositObservatory('));
     // And the button takes the same lock, or the two writers race.
     expect(ROUTE).toContain('depositEditionOnce');
   });
@@ -224,5 +224,55 @@ describe('a refusal carries what the other side said', () => {
   it('survives a body it cannot read', () => {
     // A failure to read the failure must not replace the failure.
     expect(LIB).toContain('the response body could not be read');
+  });
+});
+
+/**
+ * A quarterly series is one record with four versions, not four records.
+ *
+ * 2026-Q4 is published: version DOI 10.5281/zenodo.23238145 under the
+ * concept DOI 10.5281/zenodo.23238144. The concept DOI is the asset —
+ * it always resolves to the newest edition, and every citation of any
+ * edition accumulates on it. An edition deposited as a fresh record
+ * instead starts from zero and is invisible to the one before it.
+ */
+describe('the next edition belongs to the same record', () => {
+  it('refuses to mint a DOI it cannot attach to the series', () => {
+    // `POST /deposit/depositions` creates a NEW concept DOI. Zenodo's
+    // own call for this is /actions/newversion on the existing
+    // deposition — and the edge has answered 403 to our address range
+    // since the first attempt, so that path has never once been reached
+    // from here. An untested call that mints a permanent identifier is
+    // the one kind of guess this file does not make.
+    expect(LIB).toContain('if (prior) {');
+    expect(LIB).toContain('is already published as');
+    expect(LIB).toContain('New version');
+    // Not silence: the refusal is a row, and it names the manual step.
+    expect(LIB).toContain("from('observatory_deposits')");
+  });
+
+  it('chains the previous edition in the metadata that gets pasted by hand', () => {
+    // The automated path is blocked, so every deposit so far has been a
+    // human pasting this object into a blank form — which produces a
+    // record that names no predecessor unless the object does.
+    expect(LIB).toContain("relation: 'isNewVersionOf'");
+    expect(LIB).toContain("scheme: 'doi'");
+  });
+
+  it('chains to a minted DOI and never to a reserved one', () => {
+    // `doi` is filled from Zenodo's prereserve_doi, which exists on a
+    // draft nobody published and resolves to nothing. A series whose
+    // second edition points at a reserved DOI points at nothing.
+    expect(LIB).toContain("export async function latestPublishedEdition");
+    expect(LIB).toContain(".not('published_at', 'is', null)");
+    expect(LIB).toContain(".not('doi', 'is', null)");
+    // And never itself: an edition is not its own predecessor.
+    expect(LIB).toContain(".neq('edition', exceptEdition)");
+  });
+
+  it('asks for the predecessor only after the lock is taken', () => {
+    // One read per edition, not one per cron firing, and the losing run
+    // of a race never gets as far as asking.
+    expect(LIB.indexOf('insert({')).toBeLessThan(LIB.indexOf('await latestPublishedEdition('));
   });
 });

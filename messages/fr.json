@@ -624,7 +624,7 @@
   },
   "observatory": {
     "title": "Ce que les sites français publient réellement dans leurs politiques de confidentialité",
-    "lead": "Un décompte permanent sur les domaines .fr les plus visités, lus un document à la fois par un robot qui respecte robots.txt et qui dit ce qu'il n'a pas pu lire.",
+    "lead": "Un décompte permanent sur un échantillon de domaines .fr tiré d'un classement public, lus un document à la fois par un robot qui respecte robots.txt et qui dit ce qu'il n'a pas pu lire.",
     "collecting": "Collecte en cours : {done} domaines lus sur {total}. Les chiffres ci-dessous sont provisoires et bougeront.",
     "asOf": "Dernière lecture : {date}",
     "readTitle": "Ce que nous avons pu lire",
@@ -640,9 +640,14 @@
     "limitsSuffix": "La population, ce sont les dépôts en .fr : les organisations françaises en .com en sont absentes. Un suffixe de registre est un fait ; décider quel .com est français serait un jugement que nous ne saurions pas défendre.",
     "limitsNoVerdict": "Aucune organisation n'est nommée ni évaluée. Une politique qui n'indique pas de durée de conservation peut parfaitement être licite, et un constat est une affirmation sur notre lecture d'un document un jour donné.",
     "limitsRefusals": "Un refus n'est pas un manquement. Un site qui écarte notre robot fait exactement ce à quoi sert une protection anti-robot, et nous publions le refus au lieu de le contourner.",
+    "limitsRanking": "L'échantillon est tiré d'un classement public de domaines. Un classement n'est pas une mesure d'audience, sauf si son éditeur le dit lui-même, et les classements ne comptent pas la même chose — celui-ci est donc nommé et daté plutôt que décrit, et n'importe qui peut reconstituer l'échantillon à partir de lui.",
     "downloadTitle": "Les données",
     "downloadLead": "Comptages agrégés, définition de l'échantillon et détail des refus, en CSV. Les résultats par domaine ne sont pas publiés.",
     "downloadCta": "Télécharger les comptages (CSV)",
+    "citeTitle": "Citer cette étude",
+    "citeLead": "Chaque édition terminée est déposée sur Zenodo, opéré par le CERN, qui lui attribue un DOI permanent. Cette page bouge au fil de la collecte ; l'enregistrement déposé, non — il conserve le fichier, la méthode et les chiffres tels qu'ils étaient le jour de sa publication.",
+    "citeVersion": "Cette édition",
+    "citeConcept": "Toutes les éditions",
     "empty": "La collecte n'a pas encore produit de lecture. Cette page affichera des chiffres quand elle en aura ; elle n'en affichera aucun avant.",
     "unavailable": "Nous n'avons pas pu lire nos propres chiffres à l'instant. C'est une panne de notre base, pas une absence de données — réessayez dans un moment."
   }
