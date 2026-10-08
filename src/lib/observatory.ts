@@ -535,11 +535,28 @@ export function observatoryDataset(
 /**
  * The published dataset, as one string.
  *
- * Shared by the download route and the Zenodo deposit on purpose: the
- * file that receives a permanent DOI has to be the file the page offers,
- * byte for byte. Two builders would drift, and the drift would be
- * invisible — a citation pointing at numbers that no longer match the
- * page they came from.
+ * Shared by the download route and the Zenodo deposit on purpose. Two
+ * builders would drift, and the drift would be invisible — a citation
+ * pointing at numbers that no longer match the page they came from.
+ *
+ * ONE ROW OF 2026-Q4 DIFFERS FROM THE FILE THAT CARRIES ITS DOI
+ *
+ * This comment used to promise "byte for byte", and for that edition it
+ * is no longer true, so it does not say so. `sample,source` reads
+ * `Majestic Million` here and `le Majestic Million (classement par
+ * sous-réseaux référents)` in the deposited file: the label was a French
+ * sentence being printed in six locales that are not French, and leaving
+ * it live for a quarter to protect a byte count was the wrong trade on
+ * the one page written to be read by strangers.
+ *
+ * Nothing else moved. `source_id` is `majestic-2026-10-01` in both, the
+ * sample is identified by that id and its date rather than by its
+ * label — which is the whole reason the method names the ranking instead
+ * of describing it — and every figure in both files is identical.
+ *
+ * What the single builder still guarantees, and what matters: the
+ * figures the page shows, the figures the file serves and the figures
+ * that were deposited are computed once, in here.
  */
 export function observatoryCsv(report: ObservatoryReport): string {
   const rows: string[][] = [
