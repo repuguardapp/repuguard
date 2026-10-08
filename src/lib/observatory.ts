@@ -99,16 +99,36 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     // the database.
     const db = supabaseService();
 
-    const [{ data: sample, error: sampleError }, { data: scans, error: scanError }] =
-      await Promise.all([
-        db.from('survey_domains').select('source_id, source_label, source_date').order('rank').limit(1),
-        db
-          .from('scans')
-          .select('id, domain, status, failure, completed_at')
-          .eq('origin', 'survey')
-          .not('completed_at', 'is', null)
-          .limit(5000)
-      ]);
+    /**
+     * Read the sample on its own, not beside the scans.
+     *
+     * These two ran in one Promise.all and the result was reproducible
+     * and absurd: `scans` returned all 297 rows while `survey_domains`
+     * returned an empty set, no error, same client, same database —
+     * across three Vercel regions and eleven hours. Taking the role
+     * PostgREST takes and reading the table directly returns all 297, so
+     * neither Postgres, nor RLS, nor the grants, nor the role explain it.
+     *
+     * What is left is the one thing the two reads shared and the direct
+     * read did not: a single client issuing them concurrently. That is a
+     * suspicion, not a diagnosis, and it is cheap to remove — the page
+     * costs one extra round trip and stops depending on an interleaving
+     * nobody can see. If the sample still comes back empty, the status
+     * and the body are logged below and the next render says so.
+     */
+    const sampleResult = await db
+      .from('survey_domains')
+      .select('source_id, source_label, source_date')
+      .order('rank')
+      .limit(1);
+    const { data: sample, error: sampleError } = sampleResult;
+
+    const { data: scans, error: scanError } = await db
+      .from('scans')
+      .select('id, domain, status, failure, completed_at')
+      .eq('origin', 'survey')
+      .not('completed_at', 'is', null)
+      .limit(5000);
 
     if (sampleError || scanError) {
       console.error('[observatory] read_failed', {
@@ -196,7 +216,14 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
         sampleSize: sampleSize ?? 0,
         sourceId: sourceRow?.source_id ?? null,
         scans: all.length,
-        sampleRowsReturned: (sample ?? []).length
+        // `[]` and `null` are different answers and the first version of
+        // this line could not tell them apart — it logged the length of
+        // `sample ?? []` for both. The status is what distinguishes a
+        // PostgREST empty set from a response that never carried rows.
+        sampleDataIsNull: sample === null,
+        sampleRowsReturned: Array.isArray(sample) ? sample.length : -1,
+        sampleStatus: sampleResult.status,
+        sampleStatusText: sampleResult.statusText
       });
       alertOps('observatory.sample_unreadable', {
         sampleSize: sampleSize ?? 0,

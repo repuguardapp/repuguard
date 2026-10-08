@@ -666,6 +666,35 @@ describe('the regulator’s page is read at both ends', () => {
 
     let seen = '';
     vi.resetModules();
+
+    // fetchExternal is mocked here, and only here, because the real one
+    // resolves the hostname before fetching — an SSRF guard that is
+    // right in production and a hidden dependency on DNS in a test. This
+    // passed in CI and failed on any machine that cannot resolve
+    // www.cnil.fr, which is how a suite stops being runnable locally and
+    // then stops being run at all.
+    //
+    // What this test is about is the slicing, so the fetch is the part
+    // to remove. The other tests in this file assert on outcomes rather
+    // than on page content and are unaffected.
+    vi.doMock('@/lib/safe-fetch', () => ({
+      describeFetchError: (err: unknown) => (err instanceof Error ? err.message : String(err)),
+      fetchExternal: async (url: string) => {
+        journal.fetched.push(String(url));
+        return {
+          ok: true,
+          status: 200,
+          url: String(url),
+          headers: {
+            get: (name: string) =>
+              name.toLowerCase() === 'content-type' ? 'text/html; charset=utf-8' : null
+          },
+          text: async () =>
+            `<html><body><p>${body}</p><p>ICO hits company selling call blockers with 190k fine</p></body></html>`
+        } as unknown as Response;
+      }
+    }));
+
     vi.doMock('@/lib/alert', () => ({ alertOps: () => undefined }));
     vi.doMock('@/lib/ai-clients', () => ({
       ANTHROPIC_EXTRACTION_MODEL: 'claude-haiku-test',
