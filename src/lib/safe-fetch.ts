@@ -85,7 +85,20 @@ export async function fetchExternal(raw: string, init: RequestInit = {}): Promis
   let target = (await assertPublicHttps(raw)).toString();
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const res = await fetch(target, { ...init, redirect: 'manual' });
+    // `no-store` here, not at the call sites.
+    //
+    // All twelve of them pass it today, which is exactly why it should
+    // not be their job: the thirteenth will forget, and a cached crawl
+    // is not a slow bug. It means we read a page once and keep
+    // publishing what it said that day — a snapshot hash and a
+    // "fetchedAt" that are both lies, under a study whose whole claim is
+    // that it read the document.
+    //
+    // Next 14 caches GET fetches by default, which is how the
+    // observatory's own sample went stale for a week behind two query
+    // shapes nobody had varied. That was a database read; this is the
+    // same mechanism pointed at other people's servers.
+    const res = await fetch(target, { ...init, redirect: 'manual', cache: 'no-store' });
     if (res.status < 300 || res.status >= 400) return res;
 
     const location = res.headers.get('location');

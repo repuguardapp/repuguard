@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 // safe-fetch is server-only, which throws on import outside a server
@@ -54,5 +56,32 @@ describe('the cause, not the wrapper', () => {
   it('survives something that is not an Error at all', () => {
     expect(describeFetchError('boom')).toBe('boom');
     expect(describeFetchError(undefined)).toBe('undefined');
+  });
+});
+
+/**
+ * A crawl is never answered from a cache.
+ *
+ * Next 14 caches GET fetches by default, and that is how the
+ * observatory's own sample went stale for a week behind two query shapes
+ * nobody had varied. Pointed at other people's servers the same
+ * mechanism is worse than slow: it means we read a page once and keep
+ * publishing what it said that day, with a content hash and a fetchedAt
+ * that are both lies, under a study whose entire claim is that it read
+ * the document.
+ *
+ * All twelve call sites pass `no-store` today. That is exactly why it
+ * should not be their job.
+ */
+describe('fetchExternal guarantees a live read', () => {
+  const SRC = readFileSync(join(__dirname, '..', 'src/lib/safe-fetch.ts'), 'utf8');
+
+  it('sets no-store itself rather than trusting the caller', () => {
+    expect(SRC).toContain("redirect: 'manual', cache: 'no-store'");
+  });
+
+  it('still follows redirects by hand, which is what the manual mode is for', () => {
+    expect(SRC).toContain("redirect: 'manual'");
+    expect(SRC).toContain('MAX_REDIRECTS');
   });
 });
