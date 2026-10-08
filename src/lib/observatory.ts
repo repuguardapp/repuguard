@@ -212,6 +212,44 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
      */
     const incoherent = all.length > 0 && ((sampleSize ?? 0) === 0 || !sourceRow?.source_id);
     if (incoherent) {
+      /**
+       * Four probes, because inference has run out.
+       *
+       * PostgREST answers 200 with an empty array for this table and 297
+       * rows for `scans`, through one client, on a database where the
+       * same role reading the same table in SQL sees 297. Owner, RLS,
+       * policies, grants, schema, role settings and columns are all
+       * identical between the two tables — I have checked each one and
+       * none of them explains it.
+       *
+       * So the next render stops being an opinion. `*` against three
+       * columns separates a column problem from a table one; a planned
+       * count against an exact one separates the statistics from the
+       * rows; and a table that is known to work proves the client was
+       * alive for all of it.
+       *
+       * This costs four queries on a path that is already refusing to
+       * serve, which is the cheapest place in the system to spend them.
+       */
+      const [star, justDomain, planned, control] = await Promise.all([
+        db.from('survey_domains').select('*').limit(1),
+        db.from('survey_domains').select('domain').limit(5),
+        db.from('survey_domains').select('domain', { head: true, count: 'planned' }),
+        db.from('survey_runs').select('ran_at', { head: true, count: 'exact' })
+      ]);
+
+      console.error('[observatory] sample_probe', {
+        starRows: Array.isArray(star.data) ? star.data.length : -1,
+        starStatus: star.status,
+        starError: star.error?.message ?? null,
+        domainRows: Array.isArray(justDomain.data) ? justDomain.data.length : -1,
+        domainError: justDomain.error?.message ?? null,
+        plannedCount: planned.count,
+        plannedError: planned.error?.message ?? null,
+        controlTableCount: control.count,
+        controlError: control.error?.message ?? null
+      });
+
       console.error('[observatory] sample_missing_under_live_crawl', {
         sampleSize: sampleSize ?? 0,
         sourceId: sourceRow?.source_id ?? null,
