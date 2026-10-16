@@ -27,10 +27,26 @@ import { Button } from '@/components/ui/button';
  * read the recipient's article.
  */
 
+/**
+ * The headline observation, with its three columns and nothing less.
+ *
+ * It used to be a bare percentage. A percentage is a ratio that has
+ * forgotten what it was a ratio OF, and this component then printed it
+ * beside the only other number it had — the sample size.
+ */
+export interface DraftHeadline {
+  label: string;
+  present: number;
+  notFound: number;
+  /** Published, never folded into "not found". It is 40% of this one. */
+  unclear: number;
+  /** present + notFound + unclear. The documents actually read. */
+  total: number;
+}
+
 export interface DraftFigures {
-  /** e.g. "38" — the headline percentage, or null while collecting. */
-  headlinePercent: number | null;
-  headlineLabel: string;
+  /** Null while the crawl has produced nothing to lead with. */
+  headline: DraftHeadline | null;
   documentsRead: number;
   lookedAt: number;
   sampleSize: number;
@@ -50,41 +66,76 @@ export function OutreachDraft({ figures }: { figures: DraftFigures }) {
   const [copied, setCopied] = useState(false);
 
   /**
-   * Not "les plus visités", and not 300.
+   * A COUNT OVER ITS OWN DENOMINATOR. NEVER A PERCENTAGE BESIDE ANOTHER
+   * NUMBER.
    *
-   * The sample came from the Majestic Million, which ranks by referring
-   * subnets — who links to a site, not who visits it — and it holds 297
-   * domains after three registry suffixes were excluded. Both numbers
-   * were hardcoded here, in the one artefact written to be forwarded to
-   * a journalist, after the same claim had already been corrected on the
-   * page, in the Zenodo record and in the schema.org markup. A reporter
-   * who checks the provenance and finds it wrong does not write the
-   * story, and is right not to.
+   * This line read: "13 % des politiques de confidentialité lues sur 297
+   * sites .fr traitent les transferts hors Union européenne."
+   *
+   * Both halves are false and they compound. We did not read policies on
+   * 297 sites — we read 106, from 280 domains attempted, out of a sample
+   * of 297. And the 13% is 14 over 106. Put beside 297 it invites the
+   * reader to multiply: 13% of 297 is 39, and the true figure is 14. The
+   * sentence overstated the finding by a factor of nearly three, in the
+   * one artefact written to be forwarded to a journalist.
+   *
+   * It got there by a fix. An earlier version hardcoded "300", that was
+   * corrected to the real sample size, and the correction dropped a
+   * truthful constant next to a ratio computed over something else.
+   * Removing one false number is not the same as making the sentence
+   * true.
+   *
+   * The public page has enforced the rule since the day it shipped —
+   * "the count beside the percentage, always; a percentage with no
+   * denominator is the shape of a number you cannot check" — and this
+   * component, which is the only place the figure leaves the building,
+   * was the one place not obeying it.
    */
-  const subject = useMemo(
-    () =>
-      figures.headlinePercent === null
-        ? `Ce que publient les politiques de confidentialité des grands sites .fr`
-        : `${figures.headlinePercent} % des politiques de confidentialité lues sur ${figures.sampleSize} sites .fr ${figures.headlineLabel}`,
-    [figures]
-  );
+  const subject = useMemo(() => {
+    const h = figures.headline;
+    return h === null
+      ? `Ce que publient les politiques de confidentialité des sites .fr`
+      : `${h.total} politiques de confidentialité .fr lues : ${h.present} ${h.label}`;
+  }, [figures]);
 
   const body = useMemo(() => {
     const first = name.trim() || '[prénom]';
     const personal = hook.trim() || '[une ligne sur ce que cette personne a écrit]';
+    const h = figures.headline;
+
+    /**
+     * The three columns, in the order that publishes our own doubt first.
+     *
+     * 42 of the 106 are undetermined — 40% — and that is the first
+     * question a serious reader asks. Saying it before being asked is
+     * what makes the other two numbers worth anything, and it is the
+     * paragraph the hand-written version led with.
+     */
     const figure =
-      figures.headlinePercent === null
-        ? `Premier résultat en cours de collecte`
-        : `Premier résultat : ${figures.headlinePercent} % ${figures.headlineLabel}`;
+      h === null
+        ? `Le premier résultat est encore en cours de collecte.`
+        : `${h.present} des ${h.total} politiques que nous avons pu lire ${h.label}. Dans ${h.notFound}, le sujet est absent. Pour ${h.unclear}, notre lecture automatique n'a pas tranché — et nous publions cette incertitude plutôt que de la ranger d'un côté ou de l'autre.`;
 
     return [
       `Bonjour ${first},`,
       '',
       personal,
       '',
-      `Nous avons tenté de lire la politique de confidentialité de ${figures.sampleSize} domaines .fr et compté sept mentions prévues par le RGPD dans les ${figures.documentsRead} que nous avons pu lire. ${figure}.`,
+      `Je publie un relevé sur les politiques de confidentialité des domaines .fr.`,
+      figure,
       '',
-      `${figures.refused} domaines sur ${figures.lookedAt} n'ont pas pu être lus du tout, et le détail des refus est publié avec le reste.`,
+      // lookedAt, not sampleSize. We attempted 280 of a sample of 297:
+      // the other 17 were lost to our own failures, and counting them as
+      // attempts would quietly inflate the denominator of the refusals
+      // printed on the next line.
+      // All three numbers, in one sentence, reconciling: a reader who
+      // adds them gets the attempted count back. The earlier version
+      // said "tenté de lire 297 domaines" and then used 280 as the
+      // denominator of the refusals two lines down — internally
+      // inconsistent, in a message whose only asset is being checkable.
+      `Les refus font partie du résultat : ${figures.lookedAt} domaines tentés sur un échantillon de ${figures.sampleSize}, dont ${figures.documentsRead} lus et ${figures.refused} illisibles — robots.txt, 403, PDF, pages assemblées dans le navigateur — comptés et ventilés par motif plutôt que retirés du dénominateur.`,
+      '',
+      `Aucune organisation n'est nommée ni évaluée. Ce sont des agrégats, et une politique qui omet une mention peut être parfaitement licite.`,
       '',
       `Méthode et données : ${figures.observatoryUrl}`,
       `CSV : ${figures.csvUrl}`,

@@ -210,11 +210,19 @@ export default async function ObservatoryOutreachPage({
             <CardContent>
               <OutreachDraft
                 figures={{
-                  headlinePercent:
+                  // The three columns travel together. Handing this
+                  // component a percentage was what let it print one
+                  // beside a denominator it was not computed over.
+                  headline:
                     headline && headlineTotal > 0
-                      ? Math.round((headline.present / headlineTotal) * 100)
+                      ? {
+                          label: HEADLINE.label,
+                          present: headline.present,
+                          notFound: headline.notFound,
+                          unclear: headline.unclear,
+                          total: headlineTotal
+                        }
                       : null,
-                  headlineLabel: HEADLINE.label,
                   documentsRead: report.documentsRead,
                   lookedAt: report.lookedAt,
                   sampleSize: report.sampleSize,

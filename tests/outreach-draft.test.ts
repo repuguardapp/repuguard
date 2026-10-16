@@ -46,7 +46,7 @@ describe('the figures in the draft are the figures on the page', () => {
   });
 
   it('says "collection in progress" rather than inventing a headline', () => {
-    expect(DRAFT).toContain('headlinePercent === null');
+    expect(DRAFT).toContain('h === null');
     expect(DRAFT).toContain('en cours de collecte');
   });
 });
@@ -83,8 +83,67 @@ describe('the draft never characterises the ranking', () => {
   });
 
   it('says attempted and read, not just read', () => {
-    // 297 attempted, 106 read. A sentence that mentions only the second
-    // invites the reader to assume the first.
+    // 280 attempted, 106 read, out of a sample of 297. This comment
+    // said "297 attempted", which is the same confusion the subject
+    // line was making: the sample is not the attempts. Seventeen
+    // domains were lost to our own failures and never tried.
     expect(code).toContain('figures.documentsRead');
+  });
+});
+
+/**
+ * The sentence that overstated the finding by a factor of nearly three.
+ *
+ * The subject line read: "13 % des politiques de confidentialité lues
+ * sur 297 sites .fr traitent les transferts hors Union européenne."
+ *
+ * We did not read policies on 297 sites. We read 106, from 280 domains
+ * attempted, out of a sample of 297. And 13% is 14 over 106 — printed
+ * beside 297 it invites the reader to multiply, and 13% of 297 is 39
+ * where the truth is 14.
+ *
+ * It arrived by a repair. An earlier version hardcoded "300", that was
+ * corrected to the real sample size, and the correction dropped a
+ * truthful constant next to a ratio computed over something else.
+ * Removing a false number is not the same as making a sentence true.
+ */
+describe('a ratio never appears beside a denominator it was not computed over', () => {
+  it('leads with a count over its own total, not a bare percentage', () => {
+    // The public page has enforced this since it shipped: the count
+    // beside the percentage, always. This component is where the figure
+    // leaves the building, and it was the one place not obeying it.
+    expect(DRAFT).toContain('${h.total} politiques de confidentialité .fr lues : ${h.present}');
+  });
+
+  it('computes no percentage at all, so none can be misplaced', () => {
+    expect(DRAFT).not.toContain('headlinePercent');
+    expect(DRAFT).not.toMatch(/\{[^}]*\}\s*%/);
+    expect(DRAFT).not.toContain('Math.round');
+  });
+
+  it('never puts the sample size next to the headline figure', () => {
+    // 297 is the population. The headline is counted over the documents
+    // read. The two must not share a sentence.
+    const subject = DRAFT.slice(DRAFT.indexOf('const subject'), DRAFT.indexOf('const body'));
+    expect(subject).not.toContain('sampleSize');
+    expect(subject).not.toContain('lookedAt');
+  });
+
+  it('publishes the undetermined column, which is 40% of this finding', () => {
+    // 42 of 106. It is the first question a serious reader asks, and
+    // saying it unprompted is what makes the other two worth anything.
+    expect(DRAFT).toContain('h.unclear');
+    expect(DRAFT).toContain("n'a pas tranché");
+  });
+
+  it('states attempted, read and refused in one reconciling sentence', () => {
+    // The old body said "tenté de lire 297 domaines" and then used 280
+    // as the denominator of the refusals two lines down. Internally
+    // inconsistent, in a message whose only asset is being checkable.
+    const refusals = DRAFT.slice(DRAFT.indexOf('Les refus font partie'));
+    const sentence = refusals.slice(0, refusals.indexOf('`,'));
+    for (const field of ['figures.lookedAt', 'figures.sampleSize', 'figures.documentsRead', 'figures.refused']) {
+      expect(sentence).toContain(field);
+    }
   });
 });
