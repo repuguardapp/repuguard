@@ -90,3 +90,83 @@ describe('the drafted line quotes the article and judges it', () => {
     expect(fn).not.toMatch(/excellent|intéressant|pertinent|remarquable|votre analyse/i);
   });
 });
+
+/**
+ * A list of people to write to that contained no people.
+ *
+ * Mounir opened this page ready to send, found press releases, and
+ * concluded there was nobody to contact. He was reading the page
+ * correctly. The signed articles were in the list — the ranking had
+ * pushed them below the fold, and the thing pushing them was a feed
+ * that cannot produce a contact at all.
+ *
+ * A regulator's release trips four of the topic patterns (CNIL, RGPD,
+ * politique de confidentialité, conformité) where a journalist writing
+ * about one of them trips two. Sorting by how many matched made the
+ * institution win every time, by construction.
+ */
+describe('only feeds with a byline can produce somebody to write to', () => {
+  it('declares what each feed is, rather than hinting at it in the label', () => {
+    // The old marker was the words "(pour le contexte)" inside a display
+    // string. That told a human and told the code nothing.
+    const feeds = [...SRC.matchAll(/id: '([a-z-]+)',[\s\S]{0,300}?kind: '(press|institution)'/g)];
+    expect(feeds.length).toBeGreaterThanOrEqual(6);
+    const kinds = Object.fromEntries(feeds.map((m) => [m[1], m[2]]));
+    expect(kinds['cnil']).toBe('institution');
+    expect(kinds['next']).toBe('press');
+  });
+
+  it('keeps the regulator polled and out of the candidates', () => {
+    // Removed from the list it would stop being watched, and a feed
+    // nobody watches is a feed nobody notices dying.
+    expect(SRC).toContain("id: 'cnil'");
+    expect(code).toContain("if (feed.kind === 'institution') continue;");
+  });
+
+  it('skips the institution after fetching it, so a dead one still reports', () => {
+    // Skipping before the fetch would make a broken regulator feed look
+    // identical to a healthy one — the exact failure this module exists
+    // to prevent.
+    expect(code.indexOf('await fetchExternal(feed.url')).toBeLessThan(
+      code.indexOf("if (feed.kind === 'institution') continue;")
+    );
+  });
+
+  it('gives every feed an id that names its own publication', () => {
+    // The id was `lalettrea` and the label was Acteurs publics. An id
+    // naming a different publication cannot attribute a failure, which
+    // is the only job an id has here.
+    // Scoped to the feed array: `cnil` is legitimately both a feed id
+    // and a topic id, and conflating the two namespaces would make this
+    // test fail on something that is not a defect.
+    const block = SRC.slice(
+      SRC.indexOf('export const PRESS_FEEDS'),
+      SRC.indexOf('const TOPICS')
+    );
+    const ids = [...block.matchAll(/\bid: '([a-z-]+)'/g)].map((m) => m[1]);
+    expect(ids.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).not.toContain('lalettrea');
+  });
+});
+
+describe('fit is weighted, not counted', () => {
+  it('ranks the specialist above the round-up', () => {
+    expect(code).toContain('if (b.fit !== a.fit) return b.fit - a.fit;');
+    expect(code).not.toContain('b.topics.length - a.topics.length');
+  });
+
+  it('weights international transfers highest, because that is the finding', () => {
+    // 14 of 106 is the headline. Somebody who has just written on
+    // transfers is the best recipient in the list; somebody whose piece
+    // merely contains "RGPD" is not.
+    const weights = Object.fromEntries(
+      [...SRC.matchAll(/id: '(transfers|policy|cookies|cnil|gdpr|dpo)',[\s\S]{0,900}?weight: (\d)/g)].map(
+        (m) => [m[1], Number(m[2])]
+      )
+    );
+    expect(weights['transfers']).toBeGreaterThan(weights['cnil']!);
+    expect(weights['transfers']).toBeGreaterThan(weights['gdpr']!);
+    expect(weights['policy']).toBeGreaterThan(weights['dpo']!);
+  });
+});

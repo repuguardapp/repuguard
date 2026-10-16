@@ -133,9 +133,10 @@ export default async function ObservatoryOutreachPage({
 
               {press.candidates.length === 0 ? (
                 <p className="text-muted-foreground">
-                  Aucun article sur le sujet dans les six derniers mois. Regarde l&apos;état des
-                  flux ci-dessous avant d&apos;en conclure quoi que ce soit — un flux mort et un
-                  silence réel se ressemblent.
+                  Aucun article signé sur le sujet dans les six derniers mois. Regarde
+                  l&apos;état des flux ci-dessous avant d&apos;en conclure quoi que ce soit — un
+                  flux mort et un silence réel se ressemblent, et c&apos;est le nombre de flux
+                  qui répondent qui les distingue.
                 </p>
               ) : (
                 <ul className="grid gap-3">
@@ -180,6 +181,12 @@ export default async function ObservatoryOutreachPage({
                     {f.label} —{' '}
                     {f.refused ? (
                       <span className="text-destructive">{f.refused}</span>
+                    ) : f.kind === 'institution' ? (
+                      // Said here rather than left to be deduced from a
+                      // zero. This feed answering with 0 candidates is
+                      // it working, not it failing, and the two look
+                      // identical in a column of numbers.
+                      'répond · aucun candidat, par construction : pas de signature'
                     ) : (
                       `${f.kept} article(s) retenu(s)`
                     )}

@@ -45,6 +45,29 @@ export interface PressFeed {
   /** How it is shown in the admin, so a dead feed is attributable. */
   label: string;
   url: string;
+  /**
+   * Whether anybody signs what this feed publishes.
+   *
+   * THIS FIELD EXISTS BECAUSE THE LIST WAS USELESS WITHOUT IT
+   *
+   * The CNIL's feed was here "for context" and it competed in the same
+   * ranked list as the publications. It won every time, by construction:
+   * a regulator's press release trips four of the topic patterns below —
+   * CNIL, RGPD, politique de confidentialité, conformité — where a
+   * journalist writing about one of them trips two. With four items kept
+   * per feed, the institutional releases floated to the top and buried
+   * the signed articles underneath them.
+   *
+   * The operator opened the page, saw press releases, and correctly
+   * concluded there was nobody to write to. The signed articles were
+   * there; the ranking had pushed them below the fold.
+   *
+   * An institutional feed can never yield a contactable human — there is
+   * no byline, only the institution — so it has no business in a list
+   * whose entire purpose is finding one. It is kept, polled and reported
+   * for feed health, and it produces no candidates.
+   */
+  kind: 'press' | 'institution';
 }
 
 /**
@@ -61,12 +84,56 @@ export interface PressFeed {
  * jurisdiction is a worse lead than no lead.
  */
 export const PRESS_FEEDS: PressFeed[] = [
-  { id: 'next', label: 'Next', url: 'https://next.ink/feed/' },
-  { id: 'lemagit', label: 'LeMagIT', url: 'https://www.lemagit.fr/rss/toutes-les-actualites.html' },
-  { id: 'zdnet-fr', label: 'ZDNet France', url: 'https://www.zdnet.fr/feeds/rss/actualites/' },
-  { id: 'usine-digitale', label: "L'Usine Digitale", url: 'https://www.usine-digitale.fr/rss' },
-  { id: 'lalettrea', label: 'Acteurs publics', url: 'https://acteurspublics.fr/feed' },
-  { id: 'cnil', label: 'CNIL (pour le contexte)', url: 'https://www.cnil.fr/fr/rss.xml' }
+  { id: 'next', label: 'Next', url: 'https://next.ink/feed/', kind: 'press' },
+  {
+    id: 'lemagit',
+    label: 'LeMagIT',
+    url: 'https://www.lemagit.fr/rss/toutes-les-actualites.html',
+    kind: 'press'
+  },
+  {
+    id: 'zdnet-fr',
+    label: 'ZDNet France',
+    url: 'https://www.zdnet.fr/feeds/rss/actualites/',
+    kind: 'press'
+  },
+  {
+    id: 'usine-digitale',
+    label: "L'Usine Digitale",
+    url: 'https://www.usine-digitale.fr/rss',
+    kind: 'press'
+  },
+  // The id said `lalettrea` and the label said Acteurs publics. A feed
+  // whose id names a different publication than its label cannot be
+  // attributed when it dies, which is the one job the id has.
+  {
+    id: 'acteurs-publics',
+    label: 'Acteurs publics',
+    url: 'https://acteurspublics.fr/feed',
+    kind: 'press'
+  },
+  // Added because five feeds was too thin to pace an outreach on, and a
+  // thin list looks exactly like a quiet field. None of these has been
+  // reached from here — this sandbox has no network — so they are
+  // candidates, in the same sense the ranking sources are: each one
+  // records what it answered and the admin prints it, so a URL that is
+  // wrong says so instead of quietly returning nothing.
+  { id: 'numerama', label: 'Numerama', url: 'https://www.numerama.com/feed/', kind: 'press' },
+  {
+    id: 'lmi',
+    label: 'Le Monde Informatique',
+    url: 'https://www.lemondeinformatique.fr/flux-rss/thematique/toutes-les-actualites/rss.xml',
+    kind: 'press'
+  },
+  { id: 'silicon', label: 'Silicon.fr', url: 'https://www.silicon.fr/feed', kind: 'press' },
+  // Polled for feed health and for nothing else: it has no byline, so it
+  // can never produce somebody to write to.
+  {
+    id: 'cnil',
+    label: 'CNIL (contexte, sans signature)',
+    url: 'https://www.cnil.fr/fr/rss.xml',
+    kind: 'institution'
+  }
 ];
 
 /**
@@ -78,17 +145,44 @@ export const PRESS_FEEDS: PressFeed[] = [
  * journalist", because the headline figure speaks directly to what they
  * were already working on.
  */
-const TOPICS: { id: string; label: string; pattern: RegExp }[] = [
+const TOPICS: { id: string; label: string; weight: number; pattern: RegExp }[] = [
   {
     id: 'transfers',
     label: 'transferts hors UE',
+    /**
+     * Weighted, not counted.
+     *
+     * The first sort was by how MANY topics an article matched, which
+     * rewarded breadth and buried the one article that mattered: a piece
+     * about international transfers speaks directly to the headline
+     * figure — 14 of 106 — while `RGPD`, `CNIL` and `conformité` match
+     * roughly everything published on this beat and say nothing about
+     * fit. Counting them made a generic news round-up outrank the
+     * specialist.
+     */
+    weight: 4,
     pattern: /transfert[s]? (de données|hors|internationa)|clause[s]? contractuelle|privacy shield|data privacy framework|schrems/i
   },
-  { id: 'cnil', label: 'sanction CNIL', pattern: /\bCNIL\b|sanction|amende|mise en demeure|délibération/i },
-  { id: 'cookies', label: 'cookies et consentement', pattern: /cookie|consentement|traceur|bandeau|CMP\b/i },
-  { id: 'policy', label: 'politique de confidentialité', pattern: /politique de confidentialité|mentions légales|données personnelles/i },
-  { id: 'gdpr', label: 'RGPD', pattern: /\bRGPD\b|\bGDPR\b|protection des données|CEPD|EDPB/i },
-  { id: 'dpo', label: 'DPO et conformité', pattern: /\bDPO\b|délégué à la protection|conformité/i }
+  {
+    id: 'policy',
+    label: 'politique de confidentialité',
+    weight: 3,
+    pattern: /politique de confidentialité|mentions légales|données personnelles/i
+  },
+  {
+    id: 'cookies',
+    label: 'cookies et consentement',
+    weight: 2,
+    pattern: /cookie|consentement|traceur|bandeau|CMP\b/i
+  },
+  {
+    id: 'cnil',
+    label: 'sanction CNIL',
+    weight: 1,
+    pattern: /\bCNIL\b|sanction|amende|mise en demeure|délibération/i
+  },
+  { id: 'gdpr', label: 'RGPD', weight: 1, pattern: /\bRGPD\b|\bGDPR\b|protection des données|CEPD|EDPB/i },
+  { id: 'dpo', label: 'DPO et conformité', weight: 1, pattern: /\bDPO\b|délégué à la protection|conformité/i }
 ];
 
 /** Nothing older than this is a conversation we can still join. */
@@ -108,6 +202,8 @@ export interface PressCandidate {
   publishedAt: string | null;
   /** Which of our observations the article touches, for the operator. */
   topics: string[];
+  /** How well it fits, weighted by observation rather than counted. */
+  fit: number;
   /** The personal line, drafted from the article's own title. */
   suggestedLine: string;
 }
@@ -116,6 +212,7 @@ export interface FeedOutcome {
   id: string;
   label: string;
   url: string;
+  kind: PressFeed['kind'];
   /** Null when it answered. Never an empty result pretending to be one. */
   refused: string | null;
   kept: number;
@@ -175,8 +272,13 @@ export async function findPressCandidates(): Promise<PressCandidates> {
         if (Number.isFinite(when) && when < cutoff) continue;
 
         const haystack = `${item.title} ${item.excerpt ?? ''}`;
-        const topics = TOPICS.filter((t) => t.pattern.test(haystack)).map((t) => t.label);
-        if (topics.length === 0) continue;
+        const matched = TOPICS.filter((t) => t.pattern.test(haystack));
+        if (matched.length === 0) continue;
+
+        // An institutional feed is polled so its health is reported, and
+        // its items are never offered as somebody to write to: there is
+        // no byline behind them.
+        if (feed.kind === 'institution') continue;
 
         candidates.push({
           feedId: feed.id,
@@ -184,7 +286,8 @@ export async function findPressCandidates(): Promise<PressCandidates> {
           title: item.title,
           url: item.link,
           publishedAt: item.publishedAt,
-          topics,
+          topics: matched.map((t) => t.label),
+          fit: matched.reduce((sum, t) => sum + t.weight, 0),
           suggestedLine: suggestLine(item.title, item.publishedAt)
         });
         kept += 1;
@@ -198,10 +301,12 @@ export async function findPressCandidates(): Promise<PressCandidates> {
     feeds.push(outcome);
   }
 
-  // Most on-topic first, then most recent. An article matching three of
-  // our observations is a better conversation than one matching one.
+  // Best fit first, then most recent. By weight and not by how many
+  // patterns tripped: somebody who has just written about international
+  // transfers is a far better conversation than somebody whose piece
+  // happens to contain the words RGPD, CNIL and conformité.
   candidates.sort((a, b) => {
-    if (b.topics.length !== a.topics.length) return b.topics.length - a.topics.length;
+    if (b.fit !== a.fit) return b.fit - a.fit;
     return (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '');
   });
 
