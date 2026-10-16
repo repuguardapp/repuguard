@@ -6,6 +6,8 @@ import { composeDigest, type DigestInput } from '@/lib/daily-digest';
 import { sendOpsDigest } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { latestCiRun } from '@/lib/ci-status';
+import { outreachTest } from '@/lib/outreach-test';
+import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
 
@@ -116,6 +118,11 @@ async function digest() {
     stalledItems: await readStalledItems(db),
     parkedItems: await readParkedItems(db),
     ci: await latestCiRun(),
+    // listReferrals returns null when the read failed, and outreachTest
+    // passes that null straight through — so a database error reports
+    // itself as unreadable rather than as "nobody linked to us", which
+    // is the sentence that retires a channel.
+    outreach: outreachTest(await listReferrals()),
     appUrl: baseUrl
   };
 

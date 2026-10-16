@@ -40,6 +40,17 @@ const HEALTHY: DigestInput = {
     failingStreak: 0
   },
   awaitingReview: 0,
+  // Mid-window with nothing earned yet: the ordinary morning, and the
+  // one this line exists for.
+  outreach: {
+    sentAt: '2026-10-16T09:05:00Z',
+    deadline: '2026-12-15',
+    daysElapsed: 3,
+    daysLeft: 57,
+    over: false,
+    earned: [],
+    prior: 1
+  },
   appUrl: 'https://lexyflow.com'
 };
 

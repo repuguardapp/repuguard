@@ -1,4 +1,5 @@
 import type { CiStatus } from './ci-status';
+import { OUTREACH_BLIND_SPOT, OUTREACH_WINDOW_DAYS, type OutreachTest } from './outreach-test';
 /**
  * The daily state of the business, composed from facts.
  *
@@ -146,6 +147,17 @@ export interface DigestInput {
    */
   ci: CiStatus | null;
   awaitingReview: number | null;
+  /**
+   * The sixty-day kill metric, with its clock.
+   *
+   * Here because a kill metric nobody is reminded of is an intention,
+   * and intentions lose to the sunk cost of the thing they were meant to
+   * kill. Printed every morning including the ones where the answer is
+   * nothing, and promoted to an action on the day the window closes —
+   * that day is a decision, and a decision that arrives silently does
+   * not get made.
+   */
+  outreach: OutreachTest | null;
   appUrl: string;
 }
 
@@ -279,6 +291,18 @@ export function composeDigest(input: DigestInput): Digest {
     );
   }
 
+  // The day the window closes, once, as a decision to make rather than a
+  // number to notice. A kill metric that expires quietly is an intention,
+  // and this one was agreed precisely because intentions lose to the sunk
+  // cost of the thing they were meant to kill.
+  if (input.outreach && input.outreach.over && input.outreach.earned.length === 0) {
+    actions.push(
+      `The ${OUTREACH_WINDOW_DAYS} days are up: no external domain has sent anyone to the observatory since the outreach went out on ${input.outreach.sentAt.slice(0, 10)}.\n` +
+        `    That was the agreed kill metric for the SEO channel — the decision is to stop adding pages to it, not to argue with the result.\n` +
+        `    Before deciding, note what this cannot see: ${OUTREACH_BLIND_SPOT}.`
+    );
+  }
+
   if (input.auditsStuck !== null && input.auditsStuck > 0) {
     actions.push(
       `${input.auditsStuck} audit(s) still unfinished beyond the sweep window. The reaper refunds them, but a pattern means the pipeline is failing.`
@@ -303,7 +327,11 @@ export function composeDigest(input: DigestInput): Digest {
     'stalled items': input.stalledItems,
     'abandoned items': input.parkedItems,
     CI: input.ci,
-    'review queue': input.awaitingReview
+    'review queue': input.awaitingReview,
+    // "Nobody linked to us" and "we could not tell" are different
+    // sentences, and this is the one that decides whether a channel gets
+    // killed. A database error must never read as a verdict.
+    'observatory backlink': input.outreach
   })
     .filter(([, value]) => value === null)
     .map(([label]) => label);
@@ -341,6 +369,21 @@ export function composeDigest(input: DigestInput): Digest {
     lines.push(`  CI (main)             ${verdict} · ${input.ci.sha}`);
   } else {
     lines.push('  CI (main)             unavailable');
+  }
+
+  // Every morning, green or not. The whole reason this line exists is
+  // the mornings where it says zero: a counter that only appears once it
+  // has good news is a counter for the outcomes we had already guessed.
+  if (input.outreach) {
+    const o = input.outreach;
+    lines.push(
+      o.earned.length > 0
+        ? `  Observatory backlink  EARNED · ${o.earned.map((e) => `${e.host} (${e.firstSeen.slice(0, 10)})`).join(', ')}`
+        : `  Observatory backlink  none yet · day ${o.daysElapsed} of ${OUTREACH_WINDOW_DAYS}, verdict due ${o.deadline}`,
+      `                        ${OUTREACH_BLIND_SPOT}`
+    );
+  } else {
+    lines.push('  Observatory backlink  unavailable');
   }
 
   if (input.corpus) {
