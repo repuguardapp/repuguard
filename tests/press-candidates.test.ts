@@ -67,8 +67,28 @@ describe('a dead feed says so instead of returning fewer leads', () => {
     // before anybody looked. A silent shortfall is the same bug.
     expect(code).toContain('refused: string | null');
     expect(code).toContain('feeds.push(outcome)');
-    expect(code).toContain("a répondu HTTP");
-    expect(code).toContain('aucune entrée exploitable dans le flux');
+    expect(code).toContain('HTTP ${res.status}');
+  });
+
+  it('says what the document was, not only that it was useless', () => {
+    // "aucune entrée exploitable dans le flux" was true of a publication
+    // that posted nothing this month, of a feed that moved and now
+    // serves an HTML page, and of a consent wall answering 200 — three
+    // situations needing three different repairs, printed identically.
+    // Acteurs publics failed this way and the line could not say which.
+    //
+    // describeFeed was written for exactly this and the regulator
+    // watcher has used it since the Garante returned 88 KB of HTML.
+    // This caller simply never called it.
+    expect(code).toContain('describeFeed(xml)');
+    expect(code).not.toContain('aucune entrée exploitable dans le flux');
+  });
+
+  it('names every address it tried, not only the last one', () => {
+    // "a" and "all four moved" are different repairs. A message that
+    // reports only the final attempt hides which one happened.
+    expect(code).toContain('refusals.push');
+    expect(code).toContain("refusals.join(' · ')");
   });
 
   it('is a list of candidates rather than a constant anybody trusts', () => {
@@ -168,5 +188,44 @@ describe('fit is weighted, not counted', () => {
     expect(weights['transfers']).toBeGreaterThan(weights['cnil']!);
     expect(weights['transfers']).toBeGreaterThan(weights['gdpr']!);
     expect(weights['policy']).toBeGreaterThan(weights['dpo']!);
+  });
+});
+
+/**
+ * A single constant URL has no way to say "I was wrong about this".
+ *
+ * LeMagIT answered 404 on 16 October and this sandbox cannot open the
+ * address to find the right one. That is the position the ranking source
+ * was in when its URL started returning 404 and eight runs went by before
+ * anybody looked. The answer there was to try several and record which
+ * one answered, and it is the answer here.
+ */
+describe('a publication gets several addresses, and the machine finds out', () => {
+  it('tries them in order and returns the first that yields entries', () => {
+    expect(code).toContain('async function firstWorkingFeed');
+    expect(code).toContain('for (const url of feed.urls)');
+  });
+
+  it('keeps the address that broke, first in the list', () => {
+    // If it comes back, we learn the 404 was an outage rather than a
+    // move — and the alternatives stop being needed. Dropping it would
+    // throw away the only evidence that distinguishes the two.
+    const block = SRC.slice(SRC.indexOf("id: 'lemagit'"), SRC.indexOf("id: 'zdnet-fr'"));
+    const urls = [...block.matchAll(/'(https:\/\/[^']+)'/g)].map((m) => m[1]);
+    expect(urls.length).toBeGreaterThan(1);
+    expect(urls[0]).toBe('https://www.lemagit.fr/rss/toutes-les-actualites.html');
+  });
+
+  it('reports the address that actually answered, not the one we hoped for', () => {
+    // The page prints a URL beside each feed. Printing the first
+    // candidate when the third is what replied would make a working
+    // feed look like it is being served from somewhere it is not.
+    expect(code).toContain('outcome.url = attempt.url');
+  });
+
+  it('leaves a one-address publication behaving exactly as before', () => {
+    // The confirmed-working feeds must not change behaviour because a
+    // broken neighbour needed a list.
+    expect(code).toContain('feed.urls.length === 1');
   });
 });

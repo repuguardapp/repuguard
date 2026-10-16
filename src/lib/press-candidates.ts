@@ -1,5 +1,5 @@
 import 'server-only';
-import { parseFeed } from './feeds';
+import { describeFeed, parseFeed } from './feeds';
 import { isAllowed, parseRobots } from './robots';
 import { fetchExternal } from './safe-fetch';
 
@@ -44,7 +44,16 @@ export interface PressFeed {
   id: string;
   /** How it is shown in the admin, so a dead feed is attributable. */
   label: string;
-  url: string;
+  /**
+   * Addresses to try, in order, until one answers with entries.
+   *
+   * A list and not a string because LeMagIT answered 404 and this
+   * sandbox cannot open the URL to find the right one. The ranking
+   * source learned the same lesson the hard way: its address started
+   * returning 404 and eight runs went by before anybody looked, because
+   * a single constant URL has no way to say "I was wrong about this".
+   */
+  urls: string[];
   /**
    * Whether anybody signs what this feed publishes.
    *
@@ -84,54 +93,71 @@ export interface PressFeed {
  * jurisdiction is a worse lead than no lead.
  */
 export const PRESS_FEEDS: PressFeed[] = [
-  { id: 'next', label: 'Next', url: 'https://next.ink/feed/', kind: 'press' },
+  // Confirmed working: this is the feed that produced the Clavey piece.
+  { id: 'next', label: 'Next', urls: ['https://next.ink/feed/'], kind: 'press' },
+  // Answered HTTP 404 on 16 October. The old address is kept FIRST and
+  // on purpose: if it comes back, we learn that it was an outage rather
+  // than a move, and the alternatives below stop being needed.
   {
     id: 'lemagit',
     label: 'LeMagIT',
-    url: 'https://www.lemagit.fr/rss/toutes-les-actualites.html',
+    urls: [
+      'https://www.lemagit.fr/rss/toutes-les-actualites.html',
+      'https://www.lemagit.fr/rss/toutes-les-actualites.xml',
+      'https://www.lemagit.fr/rss',
+      'https://www.lemagit.fr/feed'
+    ],
     kind: 'press'
   },
   {
     id: 'zdnet-fr',
     label: 'ZDNet France',
-    url: 'https://www.zdnet.fr/feeds/rss/actualites/',
+    urls: ['https://www.zdnet.fr/feeds/rss/actualites/'],
     kind: 'press'
   },
   {
     id: 'usine-digitale',
     label: "L'Usine Digitale",
-    url: 'https://www.usine-digitale.fr/rss',
+    urls: ['https://www.usine-digitale.fr/rss'],
     kind: 'press'
   },
   // The id said `lalettrea` and the label said Acteurs publics. A feed
   // whose id names a different publication than its label cannot be
   // attributed when it dies, which is the one job the id has.
+  //
+  // Answered 200 with no entries on 16 October — a different failure
+  // from a 404 and one we could not read, because this module was
+  // printing "aucune entrée exploitable" instead of saying what the
+  // document was. It does now; the next render names the root element.
   {
     id: 'acteurs-publics',
     label: 'Acteurs publics',
-    url: 'https://acteurspublics.fr/feed',
+    urls: [
+      'https://acteurspublics.fr/feed',
+      'https://acteurspublics.fr/rss',
+      'https://www.acteurspublics.fr/feed'
+    ],
     kind: 'press'
   },
   // Added because five feeds was too thin to pace an outreach on, and a
-  // thin list looks exactly like a quiet field. None of these has been
-  // reached from here — this sandbox has no network — so they are
-  // candidates, in the same sense the ranking sources are: each one
-  // records what it answered and the admin prints it, so a URL that is
-  // wrong says so instead of quietly returning nothing.
-  { id: 'numerama', label: 'Numerama', url: 'https://www.numerama.com/feed/', kind: 'press' },
+  // thin list looks exactly like a quiet field. None of these had been
+  // reached from here — this sandbox has no network — so they went in as
+  // candidates, in the same sense the ranking sources are. All three
+  // answered on the first render, which is what the instrument is for.
+  { id: 'numerama', label: 'Numerama', urls: ['https://www.numerama.com/feed/'], kind: 'press' },
   {
     id: 'lmi',
     label: 'Le Monde Informatique',
-    url: 'https://www.lemondeinformatique.fr/flux-rss/thematique/toutes-les-actualites/rss.xml',
+    urls: ['https://www.lemondeinformatique.fr/flux-rss/thematique/toutes-les-actualites/rss.xml'],
     kind: 'press'
   },
-  { id: 'silicon', label: 'Silicon.fr', url: 'https://www.silicon.fr/feed', kind: 'press' },
+  { id: 'silicon', label: 'Silicon.fr', urls: ['https://www.silicon.fr/feed'], kind: 'press' },
   // Polled for feed health and for nothing else: it has no byline, so it
   // can never produce somebody to write to.
   {
     id: 'cnil',
     label: 'CNIL (contexte, sans signature)',
-    url: 'https://www.cnil.fr/fr/rss.xml',
+    urls: ['https://www.cnil.fr/fr/rss.xml'],
     kind: 'institution'
   }
 ];
@@ -211,9 +237,15 @@ export interface PressCandidate {
 export interface FeedOutcome {
   id: string;
   label: string;
+  /** The URL that answered, or the last one tried when none did. */
   url: string;
   kind: PressFeed['kind'];
-  /** Null when it answered. Never an empty result pretending to be one. */
+  /**
+   * Null when it answered. Never an empty result pretending to be one.
+   *
+   * When several addresses were tried, every one of them is named with
+   * what it said: "a" is a different repair from "all four moved".
+   */
   refused: string | null;
   kept: number;
 }
@@ -233,33 +265,58 @@ export async function findPressCandidates(): Promise<PressCandidates> {
   const feeds: FeedOutcome[] = [];
 
   for (const feed of PRESS_FEEDS) {
-    const outcome: FeedOutcome = { ...feed, refused: null, kept: 0 };
+    const outcome: FeedOutcome = {
+      id: feed.id,
+      label: feed.label,
+      url: feed.urls[0]!,
+      kind: feed.kind,
+      refused: null,
+      kept: 0
+    };
 
     try {
-      const allowed = await robotsAllows(feed.url);
-      if (!allowed) {
-        outcome.refused = 'robots.txt nous refuse ce chemin';
+      /**
+       * Several addresses per publication, tried until one answers.
+       *
+       * LeMagIT returned 404 and I cannot open the URL from here to find
+       * the right one — the same position the ranking source was in when
+       * its address started answering 404 for eight runs. Guessing a
+       * second URL is worth exactly what the first guess was worth.
+       *
+       * So the machine finds out: each candidate is tried in order, the
+       * first that yields items wins, and the page names the one that
+       * answered. A publication with one address behaves exactly as
+       * before.
+       */
+      const attempt = await firstWorkingFeed(feed);
+      outcome.url = attempt.url;
+
+      if (attempt.xml === null) {
+        outcome.refused = attempt.refused;
         feeds.push(outcome);
         continue;
       }
 
-      const res = await fetchExternal(feed.url, {
-        headers: { 'user-agent': 'LexyFlowPressWatch/1.0 (+https://lexyflow.com)' },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        cache: 'no-store'
-      });
-
-      if (!res.ok) {
-        outcome.refused = `a répondu HTTP ${res.status}`;
-        feeds.push(outcome);
-        continue;
-      }
-
-      const xml = (await res.text()).slice(0, MAX_BYTES);
+      const xml = attempt.xml;
       const parsed = parseFeed(xml);
 
       if (parsed.items.length === 0) {
-        outcome.refused = 'aucune entrée exploitable dans le flux';
+        /**
+         * Say what the document was, not only that it was useless.
+         *
+         * This line used to read "aucune entrée exploitable dans le
+         * flux", which is true of a publication that posted nothing this
+         * month, of a feed that moved and now serves an HTML page, and
+         * of a consent wall answering 200 — three different situations
+         * needing three different actions, printed identically.
+         *
+         * `describeFeed` was written for exactly this and the regulator
+         * watcher has been using it since the Garante's endpoint
+         * returned 88 KB of HTML. This caller simply never called it, so
+         * the one feed that failed this way cost a round trip to find
+         * out what everybody already had the tool to answer.
+         */
+        outcome.refused = `a répondu 200 mais sans entrée — ${describeFeed(xml)}`;
         feeds.push(outcome);
         continue;
       }
@@ -333,6 +390,54 @@ function suggestLine(title: string, publishedAt: string | null): string {
       ? ` du ${date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
       : '';
   return `Je vous écris après avoir lu « ${title.trim()} »${when}.`;
+}
+
+/**
+ * Try each address until one answers with something parseable.
+ *
+ * Returns the body of the first that worked, or every refusal named.
+ * "a" and "all of them moved" are different repairs, and a message that
+ * reports only the last attempt hides which.
+ */
+async function firstWorkingFeed(
+  feed: PressFeed
+): Promise<{ url: string; xml: string | null; refused: string }> {
+  const refusals: string[] = [];
+  let lastUrl = feed.urls[0]!;
+
+  for (const url of feed.urls) {
+    lastUrl = url;
+    try {
+      if (!(await robotsAllows(url))) {
+        refusals.push(`${url} — robots.txt nous refuse ce chemin`);
+        continue;
+      }
+
+      const res = await fetchExternal(url, {
+        headers: { 'user-agent': 'LexyFlowPressWatch/1.0 (+https://lexyflow.com)' },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        cache: 'no-store'
+      });
+
+      if (!res.ok) {
+        refusals.push(`${url} — HTTP ${res.status}`);
+        continue;
+      }
+
+      const xml = (await res.text()).slice(0, MAX_BYTES);
+      // A body that parses to nothing is still the answer from this
+      // address: handing it back lets the caller describe it rather than
+      // silently trying the next URL and reporting that one instead.
+      if (parseFeed(xml).items.length > 0 || feed.urls.length === 1) {
+        return { url, xml, refused: '' };
+      }
+      refusals.push(`${url} — 200 sans entrée (${describeFeed(xml)})`);
+    } catch (err) {
+      refusals.push(`${url} — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return { url: lastUrl, xml: null, refused: refusals.join(' · ') };
 }
 
 /** The same courtesy the crawlers observe, for the same reason. */
