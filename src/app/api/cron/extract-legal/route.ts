@@ -170,6 +170,26 @@ const Extraction = z.object({
    * reasoning as building the slug ourselves instead of asking for one.
    */
   imposes_a_measure: absent(z.boolean()),
+  /**
+   * Does this decision concern parties this record does not name?
+   *
+   * Asked because the operator answered it by hand three times, with
+   * the same sentence each time: "la décision vise deux personnes, une
+   * seule est nommée". Christopher Munro, Debbie Okparavero, Rizwan
+   * Manjra — three ICO items, each extracted with one name, each
+   * describing a decision that concerned two, each rejected manually.
+   *
+   * A record naming one of two respondents is not a shorter version of
+   * the decision. It is a public page attributing to one named person
+   * what a regulator attributed to two, and the omission is invisible
+   * to everyone who reads it.
+   *
+   * `entity` is a single string and the schema cannot hold the second
+   * name, so the honest answer is not to publish the first. The model
+   * reports the fact; the code rejects on it, with the operator's own
+   * wording as the reason.
+   */
+  other_parties_named: absent(z.boolean()),
   summary_en: absent(z.string()),
   /**
    * Where each checkable fact came from, in the page's own words.
@@ -237,6 +257,11 @@ const TOOL = {
         description:
           'True when this document imposes something on the named organisation: a fine to pay, an order to obey, a ban, a reprimand on its record. FALSE when it ends or lifts an earlier measure, records that the organisation has complied, withdraws a complaint, or closes a procedure — those are good news for the organisation and must never be published as a sanction against it. Required whenever an entity is named.'
       },
+      other_parties_named: {
+        type: 'boolean',
+        description:
+          'True when the document names MORE THAN ONE organisation or person the decision was taken against, so that the single name in `entity` would be an incomplete list. A prosecution of two former employees, a sanction against a company and its subsidiary, a ruling covering several respondents: all true. False when exactly one party is named, and false when none is. Judge only who the decision is AGAINST — an authority, a complainant, a court, a regulator mentioned in passing and a parent company described for context are not parties and do not make this true.'
+      },
       summary_en: {
         type: 'string',
         description:
@@ -294,6 +319,16 @@ const SYSTEM = [
   'closure of an injunction as an injunction says the opposite of what',
   'the regulator decided, about a named company, and is the one error',
   'here that would be worth suing over.',
+  'Say so when a decision is taken against more than one party. The entity',
+  'field holds one name, and a record naming one of two respondents is not',
+  'a shorter version of the decision — it attributes to one named person',
+  'what the regulator attributed to two. Set other_parties_named and let',
+  'the record be rejected rather than published incomplete.',
+  'A sanction is always against somebody. If you cannot name the party a',
+  'measure was imposed on, then what you are reading is not a measure',
+  'against them: an Article 65 binding decision resolving a dispute',
+  'between two supervisory authorities is not an order against a company,',
+  'and recording it as one publishes a sanction with nobody in the dock.',
   'The summary must be your own sentences, not the source\'s, and must contain',
   'only what the source establishes.'
 ].join(' ');
@@ -520,8 +555,57 @@ async function extractOne(
    * disagreement is left alone for a human, because inventing a sanction
    * is the error this whole file exists to prevent.
    */
-  const outcome =
+  /**
+   * A decision naming parties we cannot record is not published at all.
+   *
+   * The operator made this call three times by hand, with the same
+   * sentence each time, on three ICO prosecutions that each concerned
+   * two people and arrived here carrying one name. His wording is kept
+   * verbatim as the reason: it is the rule, and the rule was his.
+   *
+   * Rejection rather than a blank field, because `entity` holds one
+   * string and there is nowhere honest to put the second name. Half a
+   * list of respondents is not a partial record, it is a complete
+   * record of something that did not happen.
+   */
+  if (out.other_parties_named === true) {
+    await db
+      .from('legal_developments')
+      .update({
+        status: 'rejected',
+        rejected_reason:
+          'la décision vise plusieurs parties, une seule est nommée — publier ce nom seul lui attribuerait ce que le régulateur a attribué à plusieurs',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', item.id);
+    stats.rejected += 1;
+    return;
+  }
+
+  /**
+   * The label is derived, not trusted — in two directions now.
+   *
+   * `imposes_a_measure: false` demotes a punitive label to `closed`, for
+   * the reasons below.
+   *
+   * AND A SANCTION IS ALWAYS AGAINST SOMEBODY.
+   *
+   * `edpb-requires-belgian-dpa-to-handle-the-merits-of-noyb-cooki-f44724`
+   * is live on the site right now with outcome `order` and no entity at
+   * all. It is an Article 65(1)(a) binding decision resolving a dispute
+   * between the Belgian and Austrian supervisory authorities — a ruling
+   * about which regulator must handle a complaint. We published it as an
+   * enforcement order with nobody in the dock.
+   *
+   * A punitive outcome with no named party is not a record missing a
+   * field; the two facts contradict each other, and the one we can
+   * verify is the absence. So the label goes to `other` and a human
+   * decides, which is what the review queue is for.
+   */
+  const demoted =
     out.imposes_a_measure === false && PUNITIVE.has(out.outcome ?? '') ? 'closed' : out.outcome;
+  const outcome =
+    PUNITIVE.has(demoted ?? '') && !out.entity?.trim() ? 'other' : demoted;
 
   // Derived BEFORE the twin lookup, which compares outcomes: a closure
   // and the order it closes must not be matched against each other on a

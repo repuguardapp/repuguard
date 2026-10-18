@@ -860,3 +860,87 @@ describe('relevance never depends on how much we managed to read', () => {
     expect(patch['fine_amount']).toBeNull();
   });
 });
+
+/**
+ * Three defects, each measured against the rows in the database rather
+ * than remembered. Two of the three were not what I had recorded.
+ */
+const ROUTE = readFileSync(
+  join(__dirname, '..', 'src/app/api/cron/extract-legal/route.ts'),
+  'utf8'
+);
+const QUEUE = readFileSync(
+  join(__dirname, '..', 'src/app/[locale]/admin/legal-queue/page.tsx'),
+  'utf8'
+);
+
+describe('a sanction is always against somebody', () => {
+  it('demotes a punitive outcome that names no party', () => {
+    // edpb-requires-belgian-dpa-to-handle-the-merits-of-noyb-cooki-f44724
+    // is live with outcome `order` and entity null. It is an Article
+    // 65(1)(a) binding decision resolving a dispute between the Belgian
+    // and Austrian supervisory authorities — a ruling about which
+    // regulator handles a complaint. We published it as an enforcement
+    // order with nobody in the dock.
+    expect(ROUTE).toContain("PUNITIVE.has(demoted ?? '') && !out.entity?.trim() ? 'other' : demoted");
+  });
+
+  it('demotes rather than rejects, so a human still sees it', () => {
+    // The two facts contradict each other and only the absence is
+    // verifiable. Dropping the row would lose a real decision to fix a
+    // label; the review queue is where a disagreement belongs.
+    const rule = ROUTE.slice(ROUTE.indexOf('const demoted ='), ROUTE.indexOf('const twin ='));
+    expect(rule).not.toContain("status: 'rejected'");
+  });
+
+  it('keeps the queue badge for rows extracted before this rule', () => {
+    expect(QUEUE).toContain("['fine', 'reprimand', 'ban'].includes(row.outcome)");
+    // And `order` stays out of that list, for the same EDPB reason.
+    expect(QUEUE).not.toContain("['fine', 'reprimand', 'ban', 'order']");
+  });
+});
+
+describe('a decision against several parties is not published naming one', () => {
+  it('asks the model, and rejects on the answer', () => {
+    // Mounir answered this by hand three times with the same sentence:
+    // Christopher Munro, Debbie Okparavero, Rizwan Manjra — three ICO
+    // prosecutions, each concerning two people, each arriving with one
+    // name. The rule is his; the code only stops him retyping it.
+    expect(ROUTE).toContain('other_parties_named');
+    expect(ROUTE).toContain('out.other_parties_named === true');
+    expect(ROUTE).toContain('la décision vise plusieurs parties, une seule est nommée');
+  });
+
+  it('rejects rather than storing half the respondents', () => {
+    // `entity` is one string. There is nowhere honest to put the second
+    // name, and half a list of respondents is a complete record of
+    // something that did not happen.
+    const rule = ROUTE.slice(ROUTE.indexOf('out.other_parties_named === true'));
+    expect(rule.slice(0, 600)).toContain("status: 'rejected'");
+  });
+
+  it('tells the model what is not a party', () => {
+    // An authority, a complainant, a court and a parent company
+    // mentioned for context are not respondents. Without that line the
+    // flag fires on nearly every document and the corpus empties.
+    expect(ROUTE).toContain('are not parties and do not make this true');
+  });
+});
+
+describe('a fine carries its amount, or the reviewer is told it does not', () => {
+  it('warns in the queue, in the colour that does not cry wolf', () => {
+    // The extractor is told to keep a penalty notice whose figure it
+    // could not find, so this null is legitimate and common — the ICO
+    // puts the figure in a linked PDF the crawler never opens. A red
+    // badge on a legitimate null is what teaches a reviewer to click
+    // past the warning that matters.
+    expect(QUEUE).toContain("row.outcome === 'fine'");
+    expect(QUEUE).toContain('montant non extrait');
+    const badge = QUEUE.slice(QUEUE.indexOf("row.outcome === 'fine' ?"));
+    expect(badge.slice(0, 1200)).toContain('variant="secondary"');
+  });
+
+  it('still refuses to discard the decision over a missing number', () => {
+    expect(ROUTE).toContain('never a reason to discard the decision');
+  });
+});

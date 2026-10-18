@@ -188,6 +188,23 @@ export default async function LegalQueuePage({ params }: { params: { locale: str
                     maximumFractionDigits: 0
                   }).format(row.fine_amount)}
                 </Badge>
+              ) : row.outcome === 'fine' ? (
+                /* A fine whose figure we did not read.
+
+                   Deliberately NOT destructive. The extractor is told to
+                   keep a penalty notice whose amount it could not find —
+                   dropping the decision to save a number loses the
+                   decision — so this null is legitimate and common: the
+                   ICO routinely puts the figure in a linked PDF the
+                   crawler never opens.
+
+                   It is still the one field that carries the substance
+                   of a fine, so the reviewer has to know it is missing
+                   before approving a page that says "amende" and shows
+                   no sum. Neutral, because a red badge on a legitimate
+                   null is what teaches a reviewer to click past the
+                   warning that matters. */
+                <Badge variant="secondary">montant non extrait</Badge>
               ) : null}
             </div>
             <CardTitle className="text-base leading-snug">{row.raw_title}</CardTitle>
