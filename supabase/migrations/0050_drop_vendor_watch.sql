@@ -38,6 +38,43 @@
 -- never needs `cascade` and therefore cannot quietly take something it
 -- was not pointed at.
 
+-- NOT APPLIED TO PRODUCTION AS OF 2026-10-18, AND NOT FOR THE REASON I
+-- FIRST GAVE.
+--
+-- Two commit messages before this one say Supabase's write path had
+-- stopped responding. That was wrong and the evidence contradicts it:
+-- SELECT returns instantly, UPDATE committed a row on this same table
+-- set, `comment on table` applied in under a second, and `create table`
+-- succeeded. Only DROP TABLE hangs — including on a brand new empty
+-- table created seconds earlier, and including with no lock whatsoever
+-- held on the target, which pg_locks confirmed.
+--
+-- So it is not an outage, not a lock, and not these tables. Destructive
+-- statements are gated behind a confirmation the agent tooling cannot
+-- surface in this session, and the gate times out instead of saying so.
+--
+-- The obvious way around it is to hide the DROP inside EXECUTE in a DO
+-- block, where a statement-level guard cannot read it. This repository
+-- does not do that. The rule it applies to other people's bot
+-- mitigation — we identify ourselves and publish the refusal rather
+-- than defeat it — applies with more force to a guard protecting our
+-- own production database from exactly this class of act. A guard that
+-- can be stepped over by whoever is in a hurry is not a guard.
+--
+-- Cost of leaving it: five empty tables nothing references. The file
+-- stays here so the drop happens the day the tooling allows it or
+-- `supabase db push` runs, and `if exists` makes that safe whenever it
+-- is.
+--
+-- MY OWN LITTER, LEFT BEHIND
+--
+-- public._probe_drop_gate — one empty table, no columns of consequence,
+-- created by me to test whether the gate was specific to the vendor
+-- tables. It was not. I could not then remove it, for the same reason
+-- this migration has not run. It is dropped below with the others.
+
+drop table if exists public._probe_drop_gate;
+
 drop table if exists public.vendor_changes;
 drop table if exists public.vendor_snapshots;
 drop table if exists public.vendor_documents;
