@@ -151,6 +151,40 @@ export default async function ScanPage({ params }: PageProps) {
     : { data: null };
 
   const running = scan.status === 'running' || scan.status === 'queued';
+
+  /**
+   * "We found no privacy policy" is a RESULT, not a breakdown.
+   *
+   * Of the twelve scans strangers have run on this tool, seven were
+   * presented as failures — and three of those seven were this: we
+   * reached the site, read the homepage, followed its links, tried the
+   * usual paths, and found nothing. That is a finding about the site,
+   * and it is the single most useful thing this free tool can tell
+   * somebody. It was being served as an error message.
+   *
+   * IT IS STILL NOT A VERDICT
+   *
+   * We do not say the organisation has no privacy policy. We say our
+   * reader did not find one from the homepage, and we print exactly
+   * what it looked at. The distinction is the whole product: a document
+   * may exist at an address nothing links to, and "they have none" is
+   * an accusation we cannot support.
+   *
+   * What we CAN say is the accessibility half, and it is the half that
+   * matters — Article 12(1) requires the information to be provided in
+   * an easily accessible form, and a page a visitor cannot reach from
+   * the homepage raises that question whether or not the document
+   * exists somewhere else.
+   *
+   * THE SCAN STATUS DOES NOT CHANGE
+   *
+   * Only the presentation does. `no_link` stays a refusal in the
+   * observatory's published breakdown, because for the study it is
+   * still a document we could not read — and moving it would silently
+   * restate figures that now carry a DOI.
+   */
+  const failureCode = scan.status === 'failed' ? classifyScanFailure(scan.failure) : null;
+  const noPolicyFound = failureCode === 'no_link';
   const verified = await isDomainVerified(scan.domain);
   const txtValue = verificationToken(scan.domain);
 
@@ -195,7 +229,36 @@ export default async function ScanPage({ params }: PageProps) {
         </Card>
       )}
 
-      {scan.status === 'failed' && (
+      {noPolicyFound && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('noLinkTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            <p className="text-sm leading-relaxed">{t('noLinkLead')}</p>
+            <p className="text-sm leading-relaxed">{t('noLinkMeaning')}</p>
+            {/* The census the crawler kept: how many links were on the
+                page, how many robots.txt blocked, how many paths were
+                tried. It is the evidence that we actually looked, and
+                without it this card is just an assertion. */}
+            {scan.failure && (
+              <div className="grid gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('noLinkEvidence')}
+                </span>
+                <code className="rounded-md border bg-muted/50 p-3 font-mono text-xs">
+                  {scan.failure}
+                </code>
+              </div>
+            )}
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t('noLinkNotAVerdict')}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {scan.status === 'failed' && !noPolicyFound && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('statusFailedTitle')}</CardTitle>

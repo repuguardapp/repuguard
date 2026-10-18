@@ -167,3 +167,78 @@ describe('the page has to actually refresh itself', () => {
     }
   });
 });
+
+/**
+ * Three of twelve strangers got an error message instead of the answer.
+ *
+ * The free scan is the only entrance to this business. Of the twelve
+ * scans run on it, seven were presented as failures — and three of those
+ * seven were `no_link`: we reached the site, read the homepage, followed
+ * its links, tried the usual paths, and found nothing.
+ *
+ * That is a finding about the site, and it is the most useful thing this
+ * tool can tell somebody. It was being served as a breakdown.
+ */
+describe('finding no policy is a result, not a breakdown', () => {
+  it('renders it as its own card, outside the failure branch', () => {
+    const page = code(PAGE);
+    expect(page).toContain("const noPolicyFound = failureCode === 'no_link'");
+    expect(page).toContain('{noPolicyFound && (');
+    // And the failure card explicitly stands down for it, or the visitor
+    // gets both the result and the error about the same scan.
+    expect(page).toContain("scan.status === 'failed' && !noPolicyFound");
+  });
+
+  it('leaves the scan status alone, so published figures do not move', () => {
+    // `no_link` stays a refusal in the observatory's breakdown: for the
+    // study it is still a document we could not read, and restating it
+    // would silently change figures that now carry a DOI.
+    const page = code(PAGE);
+    expect(page).not.toMatch(/update\(\s*\{\s*status/);
+    expect(page).not.toContain("status: 'done'");
+  });
+
+  it('shows the census, because without it the card is an assertion', () => {
+    // How many links were on the page, how many robots.txt blocked, how
+    // many paths were tried. It is the evidence that we looked.
+    const page = code(PAGE);
+    const card = page.slice(page.indexOf('{noPolicyFound && ('), page.indexOf("scan.status === 'failed' && !noPolicyFound"));
+    expect(card).toContain('noLinkEvidence');
+    expect(card).toContain('{scan.failure}');
+  });
+
+  it('never says the organisation has no privacy policy, in any language', () => {
+    // A document may exist at an address nothing links to. "They have
+    // none" is an accusation we cannot support, and this page is opened
+    // by the company it names.
+    for (const locale of LOCALES) {
+      const m = messages[locale]!;
+      for (const key of ['noLinkTitle', 'noLinkLead', 'noLinkMeaning', 'noLinkNotAVerdict']) {
+        expect(typeof m[key]).toBe('string');
+      }
+      const all = [m['noLinkTitle'], m['noLinkLead'], m['noLinkMeaning'], m['noLinkNotAVerdict']]
+        .join(' ')
+        .toLowerCase();
+      // Every sentence is about OUR search, never about their compliance.
+      expect(all).not.toMatch(/non[- ]conform|not compliant|nicht konform|no cumple|em conformidade|違反|مخالف/);
+      expect(all).not.toMatch(/\bvous n'avez pas\b|\byou have no\b(?! privacy policy: )/);
+    }
+  });
+
+  it('says what it does claim: accessibility, with the article named', () => {
+    // The half we can support. Article 12(1) requires the information to
+    // be easily accessible, and a page a visitor cannot reach from the
+    // homepage raises that question whether or not the document exists.
+    expect(String(messages['en']!['noLinkMeaning'])).toContain('12(1)');
+    expect(String(messages['fr']!['noLinkMeaning'])).toContain('12.1');
+    for (const locale of LOCALES) {
+      expect(String(messages[locale]!['noLinkMeaning'])).toMatch(/12/);
+    }
+  });
+
+  it('carries the disclaimer in every locale, not only the two I speak', () => {
+    for (const locale of LOCALES) {
+      expect(String(messages[locale]!['noLinkNotAVerdict']).length).toBeGreaterThan(80);
+    }
+  });
+});
