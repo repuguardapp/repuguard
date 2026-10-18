@@ -1,8 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { appUrl } from '@/lib/app-url';
 import { matchOptOutToken, recordOptOut } from '@/lib/marketing-optout';
+import { supabaseService } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,14 +93,26 @@ const PAGE_SIZE = 200;
 const MAX_PAGES = 25;
 
 async function addressFor(token: string): Promise<string | null> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
+  /**
+   * Through supabaseService(), because this one honours an objection.
+   *
+   * This resolved an opt-out token to an address by listing users, on a
+   * client built here without the `cache: 'no-store'` that
+   * supabaseService installs. `listUsers()` is a GET, so Next 14's Data
+   * Cache could answer it — and the rule this route exists to enforce is
+   * that an objection is honoured immediately and definitively.
+   *
+   * Resolving a token against a stale list means recording the
+   * objection for the wrong address, or not finding the right one at
+   * all. Both are the failure this route cannot have.
+   */
+  let admin: ReturnType<typeof supabaseService>;
+  try {
+    admin = supabaseService();
+  } catch {
     console.error('[marketing-optout] service_credentials_missing');
     return null;
   }
-
-  const admin = createClient(url, key, { auth: { persistSession: false } });
 
   for (let page = 1; page <= MAX_PAGES; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: PAGE_SIZE });

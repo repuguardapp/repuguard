@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
 import { isCronAuthorized } from '@/lib/cron-auth';
@@ -164,11 +163,27 @@ function accountCutoff(): string {
  * behaviour is to leave it alone and let somebody look.
  */
 async function purgeUnconfirmedAccounts(): Promise<{ deleted: number; errors: string[] }> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return { deleted: 0, errors: ['supabase service credentials missing'] };
-
-  const admin = createClient(url, key, { auth: { persistSession: false } });
+  /**
+   * Through supabaseService(), because this one deletes accounts.
+   *
+   * This function built its own client, and that client had no
+   * `global.fetch` override — so `listUsers()`, which is a GET, was
+   * eligible for Next 14's Data Cache exactly like every other server
+   * read was before `supabaseService` was given `cache: 'no-store'`.
+   * The fix went into one place and two copies of the client existed.
+   *
+   * A cached user list here is not a stale number on a dashboard. It is
+   * this cron deciding, from a snapshot, which accounts are unconfirmed
+   * past the cutoff — and then deleting them. An account that confirmed
+   * after the snapshot was taken reads as unconfirmed, and the deletion
+   * is irreversible.
+   */
+  let admin: ReturnType<typeof supabaseService>;
+  try {
+    admin = supabaseService();
+  } catch {
+    return { deleted: 0, errors: ['supabase service credentials missing'] };
+  }
   const cutoff = accountCutoff();
   const errors: string[] = [];
   let deleted = 0;
