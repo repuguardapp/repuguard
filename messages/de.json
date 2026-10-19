@@ -571,6 +571,7 @@
     "boundaryBody": "Diese Feststellungen betreffen den Text dieses Dokuments zu diesem Datum und nichts anderes. Sie sind keine rechtliche Bewertung der Konformität von {domain}; dafür müssten die tatsächlich durchgeführten Verarbeitungen geprüft werden.",
     "ctaTitle": "Eine vollständige Prüfung Ihres eigenen Dokuments",
     "ctaBody": "Diese Feststellungen sind sachlich und öffentlich. Die rechtliche Bewertung — ausführliche Befunde, betroffene Artikel, Formulierungsvorschläge — erfolgt an Ihrem Dokument, vertraulich.",
+    "ctaFree": "Die erste Prüfung ist kostenlos, für ein Dokument bis 2 MB. Sie setzt ein Konto voraus: Der Bericht wird verschlüsselt gespeichert und Ihrer Organisation zugeordnet — es muss also eine Organisation geben, der er zugeordnet werden kann.",
     "ctaButton": "Prüfung starten",
     "notIndexed": "Diese Seite wird von Suchmaschinen nicht indexiert.",
     "indexMetaTitle": "Was veröffentlicht Ihre Datenschutzerklärung?",

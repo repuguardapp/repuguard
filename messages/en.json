@@ -571,6 +571,7 @@
     "boundaryBody": "These observations are about the text of this document, on this date, and nothing else. They are not a legal assessment of {domain}’s compliance, which would require examining the processing actually carried out.",
     "ctaTitle": "A full audit, on your own document",
     "ctaBody": "These observations are factual and public. The legal qualification — detailed findings, the articles engaged, suggested rewrites — happens on your document, privately.",
+    "ctaFree": "The first audit is free, on a document of up to 2 MB. It needs an account — the report is encrypted at rest and tied to your organisation, so there has to be an organisation to tie it to.",
     "ctaButton": "Run an audit",
     "notIndexed": "This page is not indexed by search engines.",
     "indexMetaTitle": "What does your privacy policy publish?",

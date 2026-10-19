@@ -83,8 +83,27 @@ export default async function PrivacyPage({ params: { locale } }: PageProps) {
       <p>
         To produce reports we transmit your extracted document text to:
       </p>
+      {/* The model named here must be the model we actually call.
+
+          This list said "Claude 3.5 Sonnet" while the audit pass had been
+          running on claude-sonnet-4-6 since the 3.5 model was retired by
+          Anthropic — the migration is in the comment above
+          ANTHROPIC_MODEL in lib/ai-clients.ts, and the privacy policy was
+          never updated with it.
+
+          Nobody was harmed by the wrong name: the sub-processor, the
+          country and the transfer basis were all correct. It is still a
+          false statement of fact in a published privacy policy, written
+          by a company that audits privacy policies, and our own engine
+          read this very section and flagged the missing DPA confirmation
+          without noticing that the model was wrong. A reader cannot
+          check what we process their text with if we name something we
+          stopped using.
+
+          If ANTHROPIC_MODEL or OPENAI_MODEL changes, this list changes in
+          the same commit. */}
       <ul>
-        <li>Anthropic, PBC (USA) — Claude 3.5 Sonnet, audit pass.</li>
+        <li>Anthropic, PBC (USA) — Claude Sonnet 4.6, audit pass.</li>
         <li>OpenAI, L.L.C. (USA) — GPT-4o, localisation pass.</li>
       </ul>
       <p>
