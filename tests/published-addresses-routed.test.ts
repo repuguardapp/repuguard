@@ -4,9 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * A message to legal@lexyflow.com vanished on 19 October. No forward,
- * no bounce, no trace: Cloudflare's MX accepted it and dropped it,
- * which is what Email Routing does for an address with no rule when the
- * catch-all is set to drop.
+ * no bounce, no trace.
+ *
+ * The first version of this comment said Cloudflare's MX had accepted
+ * and dropped it. That was a deduction from one symptom. Measured the
+ * next day through the Cloudflare API with full access: the operator
+ * belongs to one Cloudflare account and it holds ZERO zones —
+ * lexyflow.com is not in it, and the lookup succeeds rather than
+ * refusing. The cause of the loss is not established.
  *
  * legal@ is printed on the DPA as the address where a customer asks for
  * a signed counterpart. It is in the legal footer, on the integrations
@@ -104,6 +109,14 @@ describe('the script refuses to write before it has been asked', () => {
     // but never verified. Both look healthy in the dashboard.
     expect(ROUTING).toContain('catch-all');
     expect(ROUTING).toContain('NOT VERIFIED');
+  });
+
+  it('does not assert a cause that was never measured', () => {
+    // The script claimed Cloudflare had accepted and dropped the
+    // message. The account holds no zones at all, so that explanation
+    // is unsupported and the file now says the cause is unknown.
+    expect(ROUTING).toContain('DOES NOT HOLD');
+    expect(ROUTING).toContain('is NOT established');
   });
 
   it('never prints the token', () => {

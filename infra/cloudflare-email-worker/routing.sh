@@ -5,9 +5,24 @@
 # WHY THIS FILE EXISTS
 #
 # On 19 October a test message to legal@lexyflow.com vanished. No
-# forward, no bounce, no trace. Cloudflare's MX accepted it and dropped
-# it, which is what Email Routing does for an address with no rule when
-# the catch-all is set to drop.
+# forward, no bounce, no trace.
+#
+# I first wrote here that Cloudflare's MX had accepted it and dropped
+# it, which is what Email Routing does for an unrouted address when the
+# catch-all is set to drop. THAT WAS A DEDUCTION FROM ONE SYMPTOM AND IT
+# DOES NOT HOLD.
+#
+# Measured on 20 October through the Cloudflare API, with full access:
+# the operator belongs to exactly one Cloudflare account, and it holds
+# ZERO zones. lexyflow.com is not in it — `GET /zones?name=lexyflow.com`
+# returns total_count 0, and the call succeeds rather than refusing, so
+# it is not a permissions answer.
+#
+# So the DNS for lexyflow.com is administered somewhere this script
+# cannot reach, the cause of the silent loss is NOT established, and the
+# rest of this file assumes a Cloudflare zone that may not exist. It
+# will say so plainly: the zone lookup below exits with "zone not found"
+# rather than pretending.
 #
 # legal@ is printed on the DPA as the address where a customer asks for
 # a signed counterpart. It is in the legal footer, on the integrations
