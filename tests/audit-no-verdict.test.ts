@@ -117,8 +117,10 @@ describe('the published risk score is derived from what the reader can see', () 
   it('is reproducible by hand from the findings list', () => {
     // The only property that makes a score worth printing: somebody who
     // disagrees can recount the findings and check it.
+    // high sets the floor at 40; `low` adds 5; `info` adds nothing,
+    // because an informational finding informs and does not score.
     const findings = [{ severity: 'high' }, { severity: 'low' }, { severity: 'info' }];
-    expect(deriveRiskScore(findings)).toBe(40 + 5 * 2);
+    expect(deriveRiskScore(findings)).toBe(40 + 5 * 1);
   });
 
   it('stays inside the scale it prints', () => {
@@ -219,5 +221,44 @@ describe('the reader can judge the applicability instead of trusting it', () => 
       expect(m['appliesBecause']).toBeTruthy();
       expect(m['applicabilityUncertain']).toBeTruthy();
     }
+  });
+});
+
+describe('an uncertain finding changes the number, or the flag is theatre', () => {
+  it('does not let informational findings inflate the count', () => {
+    // The first version counted every finding at +5. Downgrading two
+    // findings from high to info then left the score unchanged at 90,
+    // because three other highs still set the floor and the count had
+    // not moved.
+    const high = { severity: 'high' };
+    const info = { severity: 'info' };
+    expect(deriveRiskScore([high, high, high, info, info])).toBe(50);
+    expect(deriveRiskScore([high, high, high])).toBe(50);
+  });
+
+  it('reproduces the real run, before and after the downgrade', () => {
+    // 19 October, LexyFlow's own privacy policy: 5 high, 5 medium,
+    // 1 low. Two of the five highs cite provisions whose reach the
+    // document does not settle — GDPR Art. 27 and EU AI Act Art. 13.
+    const before = [
+      ...Array(5).fill({ severity: 'high' }),
+      ...Array(5).fill({ severity: 'medium' }),
+      { severity: 'low' }
+    ];
+    expect(deriveRiskScore(before)).toBe(90);
+
+    const after = [
+      ...Array(3).fill({ severity: 'high' }),
+      ...Array(5).fill({ severity: 'medium' }),
+      { severity: 'low' },
+      ...Array(2).fill({ severity: 'info' })
+    ];
+    expect(deriveRiskScore(after)).toBe(80);
+  });
+
+  it('still scores a document whose only findings are informational', () => {
+    // Not zero: an info finding is a finding. Just not a gap.
+    expect(deriveRiskScore([{ severity: 'info' }])).toBe(2);
+    expect(deriveRiskScore([{ severity: 'info' }, { severity: 'info' }])).toBe(2);
   });
 });

@@ -648,8 +648,24 @@ const SEVERITY_FLOOR: Record<string, number> = {
 
 export function deriveRiskScore(findings: { severity: string }[]): number {
   if (findings.length === 0) return 0;
+
+  /**
+   * Informational findings inform. They do not add to the number.
+   *
+   * The first version counted every finding at +5, and the consequence
+   * only appeared once `applicability_certain` existed: downgrading two
+   * findings from `high` to `info` left the score at 90, because three
+   * other `high` findings still set the floor and the count had not
+   * moved. A flag that changes how a finding reads and not what it
+   * scores is a flag the number ignores.
+   *
+   * So the floor comes from every finding — an `info` is still worth 2
+   * when it is all there is — and the per-finding increment counts only
+   * what rises above informational.
+   */
   const floor = Math.max(...findings.map((f) => SEVERITY_FLOOR[f.severity] ?? 0));
-  return Math.min(100, floor + 5 * (findings.length - 1));
+  const counted = findings.filter((f) => f.severity !== 'info').length;
+  return Math.min(100, floor + 5 * Math.max(0, counted - 1));
 }
 
 /* ------------------------------------------------------------------ */
