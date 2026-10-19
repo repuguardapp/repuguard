@@ -183,7 +183,7 @@
     "riskScore": "Risiko-Score",
     "executiveSummary": "Zusammenfassung",
     "findings": "Befunde",
-    "noFindings": "Keine Befunde — Ihr Dokument ist gegenüber den ausgewählten Rahmenwerken in Ordnung.",
+    "noFindings": "Keine Feststellungen zu den ausgewählten Rahmenwerken. Das ist eine Aussage über diese Lesung dieses Dokuments — keine Aussage darüber, dass Ihre Organisation konform ist. Dieser Durchgang liest allein das Dokument: Er sieht weder die dahinterliegenden Verarbeitungen noch die Systeme, die Verträge oder das, was das Dokument auslässt.",
     "recommendation": "Empfehlung",
     "evidence": "Beleg",
     "savePdf": "Als PDF speichern",

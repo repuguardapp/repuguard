@@ -183,7 +183,7 @@
     "riskScore": "Score de risque",
     "executiveSummary": "Synthèse exécutive",
     "findings": "Constatations",
-    "noFindings": "Aucune constatation — votre document est en règle par rapport aux référentiels sélectionnés.",
+    "noFindings": "Aucune constatation au regard des référentiels sélectionnés. C'est un fait sur cette lecture de ce document — pas une déclaration de conformité de votre organisation. Cette passe lit le document seul : elle ne voit ni les traitements qu'il décrit, ni les systèmes, ni les contrats, ni ce que le document omet.",
     "recommendation": "Recommandation",
     "evidence": "Preuve",
     "savePdf": "Enregistrer en PDF",

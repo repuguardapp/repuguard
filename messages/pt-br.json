@@ -183,7 +183,7 @@
     "riskScore": "Pontuação de risco",
     "executiveSummary": "Resumo executivo",
     "findings": "Achados",
-    "noFindings": "Sem achados — seu documento está em ordem para os marcos selecionados.",
+    "noFindings": "Nenhuma constatação em relação aos referenciais selecionados. Isso é um fato sobre esta leitura deste documento — não uma declaração de que sua organização está em conformidade. Esta passagem lê apenas o documento: não vê os tratamentos que ele descreve, nem os sistemas, nem os contratos, nem o que o documento omite.",
     "recommendation": "Recomendação",
     "evidence": "Evidência",
     "savePdf": "Salvar como PDF",

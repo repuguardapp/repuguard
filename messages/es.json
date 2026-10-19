@@ -183,7 +183,7 @@
     "riskScore": "Puntuación de riesgo",
     "executiveSummary": "Resumen ejecutivo",
     "findings": "Hallazgos",
-    "noFindings": "Sin hallazgos: tu documento está en regla con los marcos seleccionados.",
+    "noFindings": "Ninguna observación frente a los marcos seleccionados. Es un hecho sobre esta lectura de este documento, no una declaración de que su organización cumple. Esta pasada lee únicamente el documento: no ve los tratamientos que describe, ni los sistemas, ni los contratos, ni lo que el documento omite.",
     "recommendation": "Recomendación",
     "evidence": "Evidencia",
     "savePdf": "Guardar como PDF",

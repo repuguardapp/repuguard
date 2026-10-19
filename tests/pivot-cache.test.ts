@@ -118,7 +118,10 @@ describe('Pass 1 pivot cache', () => {
 
     expect(mockAnthropic).toHaveBeenCalledTimes(1);
     expect(write).toHaveBeenCalledTimes(1);
-    expect(write.mock.calls[0]?.[0]).toMatchObject({ riskScore: 52 });
+    // The DERIVED score, not the model's 52. The pivot is what a second
+    // language reuses, so storing the model's number here would make the
+    // same document score 52 on a cache hit and 40 on a miss.
+    expect(write.mock.calls[0]?.[0]).toMatchObject({ riskScore: 40 });
   });
 
   it('audits normally when the cache read throws', async () => {
@@ -129,7 +132,7 @@ describe('Pass 1 pivot cache', () => {
       write: async () => undefined
     });
 
-    expect(report.riskScore).toBe(52);
+    expect(report.riskScore).toBe(40);
     expect(mockAlertOps).toHaveBeenCalledWith(
       'audit.pivot_cache_read_failed',
       expect.anything()
@@ -160,7 +163,7 @@ describe('Pass 1 pivot cache', () => {
     });
 
     expect(mockAnthropic).toHaveBeenCalledTimes(1);
-    expect(report.riskScore).toBe(52);
+    expect(report.riskScore).toBe(40);
     expect(mockAlertOps).toHaveBeenCalledWith(
       'audit.pivot_cache_unreadable',
       expect.anything()
@@ -169,7 +172,7 @@ describe('Pass 1 pivot cache', () => {
 
   it('runs without a cache at all', async () => {
     const report = await audit();
-    expect(report.riskScore).toBe(52);
+    expect(report.riskScore).toBe(40);
     expect(mockAnthropic).toHaveBeenCalledTimes(1);
   });
 });

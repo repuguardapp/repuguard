@@ -239,12 +239,54 @@ function buildAuditSystemPrompt(frameworks: FrameworkId[]): string {
     '  summary MUST appear as a structured entry in findings[]. If you',
     '  cannot ground an issue in a verbatim evidence quote, do not put',
     '  it in the summary either.',
-    '- An empty findings[] is only valid when the document is fully',
-    '  compliant. In that case the summary must say so explicitly and',
-    '  riskScore must be ≤ 10.',
-    '- riskScore must reflect the findings: zero findings → riskScore',
-    '  ≤ 10; any critical finding → riskScore ≥ 70; any high finding',
-    '  → riskScore ≥ 40.'
+    // WE DO NOT CERTIFY COMPLIANCE. THIS INSTRUCTION USED TO.
+    //
+    // It read: "An empty findings[] is only valid when the document is
+    // fully compliant. In that case the summary must say so explicitly."
+    //
+    // So we instructed the model to issue a conformity verdict, and it
+    // did. The first audit this company ever ran was a taxi operator's
+    // licence letter to a préfecture, and the report it produced says
+    // the document is "pleinement conforme à la fois au règlement sur
+    // l'IA de l'UE et au RGPD" — about a letter asking to keep driving
+    // a car.
+    //
+    // Finding nothing is not the same as there being nothing. This pass
+    // reads ONE document against the frameworks the customer ticked. It
+    // does not see the processing the document describes, the systems
+    // behind it, the contracts, the registers, or anything the document
+    // omits. A privacy policy can be immaculately drafted and describe
+    // processing that is unlawful, and we would return zero findings.
+    //
+    // And the artefact outlives the conversation. A customer who is
+    // later investigated has a PDF from a compliance vendor saying they
+    // were compliant. That is the single worst sentence this company
+    // could print, and we were printing it by instruction.
+    '- You NEVER state or imply that the document is compliant, in',
+    '  conformity, in good standing, or that it satisfies a framework.',
+    '  You report what you found. Absence of findings is a fact about',
+    '  this reading of this document, never a conclusion about the',
+    '  organisation, its processing, or its legal position.',
+    '- When findings[] is empty the summary says exactly that: which',
+    '  frameworks were applied, what the document is, and that this pass',
+    '  surfaced nothing against them. It may say a framework barely',
+    '  engages with the document — that is an observation. It may not',
+    '  say the document therefore complies with it.',
+    // riskScore is still ASKED FOR, and is no longer PUBLISHED.
+    //
+    // It is the tell that catches a model describing violations in the
+    // summary while shipping findings: [] — the Qatar PDPPL failure
+    // below. Throwing that away to stop publishing an invented number
+    // would trade a real guard for a cosmetic fix.
+    //
+    // What reaches the report is computed from the findings instead.
+    // The taxi letter was published as "2 / 100", and 2 was not
+    // measured: the instruction said "≤ 10" and the model picked a
+    // number inside the range. A figure with no derivation, printed to
+    // the unit, on a page headed "Rapport d'audit".
+    '- riskScore is your own assessment of the document, used as a',
+    '  cross-check against your findings. Zero findings → ≤ 10; any',
+    '  critical finding → ≥ 70; any high finding → ≥ 40.'
   );
   return lines.join('\n');
 }
@@ -475,6 +517,26 @@ async function runPass1(input: AuditInput, maxTokens: number): Promise<AuditPass
     );
   }
 
+  /**
+   * The published score is derived, never the model's own number.
+   *
+   * The first audit this company ran printed "Score de risque : 2 / 100"
+   * on a taxi licence letter. Nothing measured 2. The instruction said
+   * "zero findings → ≤ 10" and the model chose a value inside the band,
+   * which the report then rendered to the unit under a heading that
+   * says audit.
+   *
+   * This formula is reproducible from what the reader can see: the
+   * worst severity sets the floor, each additional finding adds a
+   * little, and the whole thing is capped. Somebody who disagrees with
+   * the number can recount the findings and check it — which is the
+   * only property that makes a score worth printing at all.
+   *
+   * Zero findings is 0, not "a small number". There is nothing to
+   * measure and the honest figure is the one that says so.
+   */
+  const score = deriveRiskScore(r.findings);
+
   // Normalise framework attribution before it can reach the database.
   const findings = r.findings.map((finding) => {
     const resolved = resolveFrameworkId(finding.framework, input.frameworks);
@@ -495,7 +557,33 @@ async function runPass1(input: AuditInput, maxTokens: number): Promise<AuditPass
     return { ...finding, framework: resolved };
   });
 
-  return { ...r, findings };
+  return { ...r, riskScore: score, findings };
+}
+
+/**
+ * Severity weights, and why a reader can check them.
+ *
+ * The worst finding sets the floor — one critical problem is a critical
+ * report however many minor ones sit beside it — and each additional
+ * finding adds a bounded amount, because ten medium failures are worse
+ * than one. Capped at 100 because the scale says so.
+ *
+ * The bands match what the model is asked to self-assess against, so
+ * the cross-check above still compares like with like: critical ≥ 70,
+ * high ≥ 40, zero findings ≤ 10.
+ */
+const SEVERITY_FLOOR: Record<string, number> = {
+  critical: 70,
+  high: 40,
+  medium: 20,
+  low: 8,
+  info: 2
+};
+
+export function deriveRiskScore(findings: { severity: string }[]): number {
+  if (findings.length === 0) return 0;
+  const floor = Math.max(...findings.map((f) => SEVERITY_FLOOR[f.severity] ?? 0));
+  return Math.min(100, floor + 5 * (findings.length - 1));
 }
 
 /* ------------------------------------------------------------------ */

@@ -183,7 +183,7 @@
     "riskScore": "Risk score",
     "executiveSummary": "Executive summary",
     "findings": "Findings",
-    "noFindings": "No findings recorded — your document is in good shape against the selected frameworks.",
+    "noFindings": "No findings against the frameworks you selected. That is a fact about this reading of this document — not a statement that your organisation complies. This pass reads the document alone: it does not see the processing behind it, the systems, the contracts, or anything the document leaves out.",
     "recommendation": "Recommendation",
     "evidence": "Evidence",
     "savePdf": "Save as PDF",
