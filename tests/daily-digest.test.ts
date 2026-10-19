@@ -51,6 +51,7 @@ const HEALTHY: DigestInput = {
     earned: [],
     prior: 1
   },
+  rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
   appUrl: 'https://lexyflow.com'
 };
 

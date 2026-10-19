@@ -24,6 +24,24 @@ import { OUTREACH_BLIND_SPOT, OUTREACH_WINDOW_DAYS, type OutreachTest } from './
  * verified — can be tested without a database.
  */
 
+/**
+ * What left the corpus, and who decided.
+ *
+ * Defined here rather than in the cron route: this module is the pure
+ * composer the tests render without a database, and a type it depends
+ * on belongs on its side of that line.
+ */
+export interface RejectionDigest {
+  /** Deleted by a rule, with enough to recognise a mistake. */
+  byRule: { title: string; reason: string; url: string }[];
+  /** More than we printed, so a quiet list is not a short one. */
+  ruleOverflow: number;
+  /** Rejected by the model as off topic. Routine, counted only. */
+  byModel: number;
+  /** Rejected by the operator in the queue. His own call. */
+  byHuman: number;
+}
+
 export interface DigestInput {
   /** null means the query failed, and is reported as such. */
   auditsCompleted: number | null;
@@ -158,6 +176,20 @@ export interface DigestInput {
    * not get made.
    */
   outreach: OutreachTest | null;
+  /**
+   * What left the corpus in the last day, and who decided.
+   *
+   * A rejection with a reason reads like the system working. That is
+   * how a £190,000 ICO penalty against Elderly Aids Limited left the
+   * corpus on 20 September — the dedup rule matched two documents on
+   * two ABSENT amounts, called the penalty notice a duplicate of the
+   * enforcement notice, and wrote a sentence explaining itself.
+   *
+   * The rules are named and the model is counted, because four
+   * off-topic press releases a day would bury the one line that
+   * matters.
+   */
+  rejections: RejectionDigest | null;
   appUrl: string;
 }
 
@@ -331,7 +363,10 @@ export function composeDigest(input: DigestInput): Digest {
     // "Nobody linked to us" and "we could not tell" are different
     // sentences, and this is the one that decides whether a channel gets
     // killed. A database error must never read as a verdict.
-    'observatory backlink': input.outreach
+    'observatory backlink': input.outreach,
+    // An unreadable rejection list is the one state that looks exactly
+    // like a quiet day: nothing deleted, and nothing said about it.
+    'rejections': input.rejections
   })
     .filter(([, value]) => value === null)
     .map(([label]) => label);
@@ -369,6 +404,30 @@ export function composeDigest(input: DigestInput): Digest {
     lines.push(`  CI (main)             ${verdict} · ${input.ci.sha}`);
   } else {
     lines.push('  CI (main)             unavailable');
+  }
+
+  /**
+   * Named, because a rejection with a reason reads like success.
+   *
+   * The rules are listed one by one and the model is a number. Four
+   * off-topic press releases a day are the filter working; a rule
+   * deleting a decision another organisation published is a different
+   * act, happens about once a day, and is the only line here that could
+   * be hiding a £190,000 fine.
+   */
+  if (input.rejections) {
+    const r = input.rejections;
+    lines.push(
+      `  Rejected (24h)        ${r.byRule.length + r.ruleOverflow} by rule · ${r.byModel} off topic · ${r.byHuman} by you`
+    );
+    for (const row of r.byRule) {
+      lines.push(`      ${row.title}`, `        ${firstLine(row.reason)}`, `        ${row.url}`);
+    }
+    if (r.ruleOverflow > 0) {
+      lines.push(`      … and ${r.ruleOverflow} more removed by a rule, not shown`);
+    }
+  } else {
+    lines.push('  Rejected (24h)        unavailable');
   }
 
   // Every morning, green or not. The whole reason this line exists is

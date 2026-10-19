@@ -135,6 +135,7 @@ function digestInput(outreach: DigestInput['outreach']): DigestInput {
     },
     awaitingReview: 0,
     outreach,
+    rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
     appUrl: 'https://lexyflow.com'
   };
 }

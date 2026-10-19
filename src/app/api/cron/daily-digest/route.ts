@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { alertOps } from '@/lib/alert';
 import { isCronAuthorized } from '@/lib/cron-auth';
-import { composeDigest, type DigestInput } from '@/lib/daily-digest';
+import { composeDigest, type DigestInput, type RejectionDigest } from '@/lib/daily-digest';
 import { sendOpsDigest } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { latestCiRun } from '@/lib/ci-status';
@@ -123,6 +123,7 @@ async function digest() {
     // itself as unreadable rather than as "nobody linked to us", which
     // is the sentence that retires a channel.
     outreach: outreachTest(await listReferrals()),
+    rejections: await readRejections(db, since),
     appUrl: baseUrl
   };
 
@@ -380,6 +381,86 @@ async function readBarrenSources(
       .filter(([, t]) => t.kept === 0 && t.rejected >= BARREN_MIN_CLASSIFIED)
       .map(([id, t]) => ({ id, rejected: t.rejected }))
       .sort((a, b) => b.rejected - a.rejected);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a rule deleted, by name, in the last day.
+ *
+ * A rejection with a reason reads like the system working, and that is
+ * exactly how a £190,000 ICO penalty against Elderly Aids Limited left
+ * the corpus on 20 September: the dedup rule matched two documents on
+ * two absent amounts, rejected the penalty notice as a duplicate of the
+ * enforcement notice, and wrote a sentence explaining itself. Nobody
+ * looked for a month.
+ *
+ * That specific bug is fixed. The shape is not: two rules now delete
+ * rows without a human, they have removed 37 items in thirty days, and
+ * the only surface that mentions any of it is a cumulative
+ * `rejected 207` in this very report — a number that cannot tell a
+ * recruitment notice from a sanction.
+ *
+ * SO THE MACHINE'S DELETIONS ARE NAMED AND THE MODEL'S ARE COUNTED
+ *
+ * The model rejecting a press release as off-topic is the filter doing
+ * its job, four times a day, and listing those would bury the line that
+ * matters. A rule removing a decision somebody else published is a
+ * different act: roughly one a day, small enough to read, and the only
+ * way to notice the day it takes something real.
+ */
+const MAX_NAMED_REJECTIONS = 8;
+
+async function readRejections(
+  db: ReturnType<typeof supabaseService>,
+  since: string
+): Promise<RejectionDigest | null> {
+  try {
+    const { data, error } = await db
+      .from('legal_developments')
+      .select('raw_title, primary_url, rejected_reason, summary_en, updated_at')
+      .eq('status', 'rejected')
+      .gte('updated_at', since)
+      .limit(500);
+    if (error) return null;
+
+    const rows = (data ?? []) as {
+      raw_title: string;
+      primary_url: string;
+      rejected_reason: string | null;
+      summary_en: string | null;
+    }[];
+
+    const byRule: RejectionDigest['byRule'] = [];
+    let byModel = 0;
+    let byHuman = 0;
+
+    for (const row of rows) {
+      const reason = row.rejected_reason ?? '';
+      // The two rule-written reasons are the two the code writes
+      // verbatim. Anything else came from the model or from a person.
+      const isRule =
+        reason.startsWith('duplicate of ') ||
+        reason.startsWith('la décision vise plusieurs parties');
+
+      if (isRule) {
+        byRule.push({ title: row.raw_title, reason, url: row.primary_url });
+      } else if (row.summary_en) {
+        // It had been extracted, so a human saw it in the queue and
+        // rejected it there. The model never gets that far.
+        byHuman += 1;
+      } else {
+        byModel += 1;
+      }
+    }
+
+    return {
+      byRule: byRule.slice(0, MAX_NAMED_REJECTIONS),
+      ruleOverflow: Math.max(0, byRule.length - MAX_NAMED_REJECTIONS),
+      byModel,
+      byHuman
+    };
   } catch {
     return null;
   }
