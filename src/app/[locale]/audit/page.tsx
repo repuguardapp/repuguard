@@ -5,6 +5,7 @@ import { AuditForm } from '@/components/AuditForm';
 import { TrustBadges } from '@/components/TrustBadges';
 import { buildAuditFormLabels } from '@/lib/audit-labels';
 import { FRAMEWORKS, frameworksForCountry } from '@/lib/legal-frameworks';
+import { getTierForOrg } from '@/lib/tier';
 import { supabaseService } from '@/lib/supabase';
 import { getCurrentUser, organizationIdFromUser } from '@/lib/supabase-server';
 
@@ -61,14 +62,45 @@ export default async function AuditPage({ params: { locale }, searchParams }: Pa
   // anyway, but doing it here lets us redirect proactively with a
   // friendly reason banner instead of dropping the user into the
   // form only to see it 402 on submit.
-  const { data: org } = await supabaseService()
+  const db = supabaseService();
+  const { data: org } = await db
     .from('organizations')
-    .select('credits_remaining,country')
+    .select('credits_remaining,country,free_audit_used')
     .eq('id', orgId)
     .maybeSingle();
-  const orgRow = org as { credits_remaining?: number; country?: string } | null;
+  const orgRow = org as {
+    credits_remaining?: number;
+    country?: string;
+    free_audit_used?: boolean;
+  } | null;
   const credits = orgRow?.credits_remaining ?? 0;
-  if (credits <= 0) {
+
+  /**
+   * THE FREE AUDIT WAS UNREACHABLE, AND THIS LINE IS WHY.
+   *
+   * The gate read `if (credits <= 0) redirect('/pricing')`, and a new
+   * organisation is created with `credits_remaining = 0` — the column
+   * default, nothing grants any. So every account that ever signed up
+   * was sent to the pricing page before the form rendered.
+   *
+   * The free trial lives in the audit route, one layer down: free tier,
+   * `free_audit_used` still false, document under 2 MB. It has never
+   * fired. `free_audit_used` is false on all four organisations in the
+   * database, which is not a coincidence — the API could never be
+   * reached to set it.
+   *
+   * The intent of the redirect was kind. Its comment says so: send them
+   * to pricing with a friendly banner rather than drop them into a form
+   * that 402s on submit. It just asked a narrower question than the
+   * endpoint does, and the answer it never asked for was the one that
+   * lets a stranger try the product.
+   *
+   * This page now applies the endpoint's own precedence, so the two
+   * cannot disagree about who may audit.
+   */
+  const tier = await getTierForOrg(db, orgId);
+  const freeTrialAvailable = tier === 'free' && orgRow?.free_audit_used !== true;
+  if (credits <= 0 && !freeTrialAvailable) {
     redirect(`/${locale}/pricing?reason=no_credits`);
   }
 
