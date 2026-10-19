@@ -144,7 +144,8 @@ type AuditError =
   | 'supabase_write_failed'
   | 'findings_insert_failed'
   | 'unauthenticated'
-  | 'organization_mismatch';
+  | 'organization_mismatch'
+  | 'onboarding_required';
 
 function errorJson(error: AuditError, detail: string, status: number, extra: Record<string, unknown> = {}) {
   return NextResponse.json({ error, detail, ...extra }, { status });
@@ -206,25 +207,73 @@ export async function POST(request: Request) {
   await recordOutreachEvent(outreachRef, 'audit_started');
 
   // ---- 1b. Org spoof guard ------------------------------------------
-  // The anonymous-org UUID is the public-share-link placeholder and
-  // intentionally needs no auth — anyone can submit a one-shot audit
-  // against it without an account. For every other UUID we require
-  // an authenticated session whose org id matches what the client
-  // claims, otherwise a logged-in user from org A could spend org B's
-  // audit credits, pollute B's audit history with arbitrary
-  // documents, or trip B's per-org rate limit (50/day) as a DoS.
-  const isAnonymousOrg = meta.organizationId === '00000000-0000-0000-0000-000000000000';
-  if (!isAnonymousOrg) {
-    const user = await getCurrentUser();
-    if (!user) {
-      return errorJson('unauthenticated', 'Sign in required for org-scoped audits.', 401);
+  /**
+   * The anonymous-org UUID is the public-share-link placeholder and
+   * needs no auth: anybody can run a one-shot audit from /embed/audit
+   * without an account. For every other UUID we require a session whose
+   * org matches the claim, or a logged-in user from org A could spend
+   * org B's credits, pollute B's history with arbitrary documents, or
+   * trip B's 50/day rate limit as a DoS.
+   *
+   * A SIGNED-IN VISITOR NEVER PRODUCES AN ANONYMOUS AUDIT.
+   *
+   * The guard used to test the claim first and skip itself entirely for
+   * the anonymous UUID, which meant anyone with an account could send
+   * `organizationId=00000000-…` and receive an audit that consumes no
+   * credit, never touches `free_audit_used`, is public by UUID and
+   * escapes the paywall — because every downstream branch reads that
+   * flag as "share link, never charged, never paywalled".
+   *
+   * It was a door out of the business model, open to anyone who opened
+   * the network tab.
+   *
+   * So the session is read FIRST and decides:
+   *
+   *   signed in, has an org   → the audit is forced onto that org,
+   *                             whatever was claimed
+   *   signed in, no org yet   → refused; finish onboarding
+   *   signed out              → only the anonymous UUID is accepted
+   *
+   * Forcing rather than refusing, for the claim that matters: the embed
+   * widget lives on somebody else's website, and a visitor who happens
+   * to hold a LexyFlow session should get their audit attributed to
+   * them, not an error on a third party's page.
+   *
+   * A mismatch between two REAL orgs stays a 403. Silently rewriting
+   * that one would turn an attack attempt into a success for the
+   * attacker's own org and erase the only trace of it.
+   */
+  const ANONYMOUS_ORG = '00000000-0000-0000-0000-000000000000';
+  const claimsAnonymous = meta.organizationId === ANONYMOUS_ORG;
+  const sessionUser = await getCurrentUser();
+
+  if (sessionUser) {
+    const sessionOrgId = organizationIdFromUser(sessionUser);
+    if (!sessionOrgId) {
+      log('onboarding_required', { claimed: meta.organizationId });
+      return errorJson(
+        'onboarding_required',
+        'Finish creating your organisation before running an audit.',
+        403
+      );
     }
-    const sessionOrgId = organizationIdFromUser(user);
-    if (sessionOrgId !== meta.organizationId) {
+    if (claimsAnonymous) {
+      log('anonymous_claim_forced_to_session_org', { session: sessionOrgId });
+      meta = { ...meta, organizationId: sessionOrgId };
+    } else if (sessionOrgId !== meta.organizationId) {
       log('org_mismatch_rejected', { claimed: meta.organizationId, session: sessionOrgId });
       return errorJson('organization_mismatch', 'Claimed organization does not match session.', 403);
     }
+  } else if (!claimsAnonymous) {
+    return errorJson('unauthenticated', 'Sign in required for org-scoped audits.', 401);
   }
+
+  // Recomputed AFTER the forcing above, never before. Everything
+  // downstream keys off this flag — the credit bypass, the free-trial
+  // fallback, the paywall, the analytics attribution — and reading it
+  // from the claim rather than from the decision is precisely how the
+  // door was open.
+  const isAnonymousOrg = meta.organizationId === ANONYMOUS_ORG;
   log('input_parsed', { fileSize: file.size, frameworks: meta.frameworks, lang: meta.targetLanguage });
 
   // ---- 1c. Analytics — submission funnel step -----------------------

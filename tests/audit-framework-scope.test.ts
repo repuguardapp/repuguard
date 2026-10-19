@@ -40,6 +40,19 @@ vi.mock('@/lib/supabase', () => ({ supabaseService: () => stubDb }));
 vi.mock('@/lib/analytics', () => ({ captureServerEvent: async () => undefined }));
 vi.mock('@/lib/alert', () => ({ alertOps: () => undefined }));
 
+// The org-spoof guard now reads the session on EVERY submission,
+// anonymous included — that is the point of the fix: a signed-in
+// visitor must never produce an anonymous audit, and you cannot know
+// whether one is signed in without looking. These tests exercise the
+// anonymous path, so they answer "nobody is signed in".
+vi.mock('@/lib/supabase-server', () => ({
+  getCurrentUser: async () => null,
+  organizationIdFromUser: () => null,
+  createSupabaseServerClient: () => {
+    throw new Error('not expected in this test');
+  }
+}));
+
 /** Captures the route's structured `[audit]` log lines. */
 function captureAuditLogs() {
   const entries: Record<string, unknown>[] = [];
