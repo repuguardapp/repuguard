@@ -71,11 +71,55 @@ export default async function AuditDetailPage({ params }: PageProps) {
 
   const supabase = createSupabaseServerClient();
 
-  const { data: audit } = await supabase
+  const COLUMNS =
+    'id,organization_id,document_hash,document_ciphertext,frameworks,status,risk_score,summary,language,created_at,completed_at,credit_consumed';
+
+  const { data: viaRls } = await supabase
     .from('audits')
-    .select('id,organization_id,document_hash,document_ciphertext,frameworks,status,risk_score,summary,language,created_at,completed_at,credit_consumed')
+    .select(COLUMNS)
     .eq('id', params.auditId)
     .maybeSingle();
+
+  /**
+   * RLS DENIED THE OWNER THEIR OWN REPORT, AND THIS IS THE FALLBACK.
+   *
+   * The policy on `audits` reads
+   * `auth.jwt()->'app_metadata'->>'organization_id'`. That claim is
+   * minted into the access token at SIGN-IN. A brand new account signs
+   * in first and gets its organisation during onboarding, so the token
+   * in the browser predates the organisation and carries no claim —
+   * for an hour, until it refreshes.
+   *
+   * The result: a new customer completes onboarding, runs the free
+   * audit, is redirected to the report, and the database refuses the
+   * row to the person who just created it. "Page not found", on the
+   * first thing they ever asked us to do. Invisible in testing with any
+   * session older than an hour.
+   *
+   * Onboarding now refreshes the session, which fixes it at the source.
+   * This stays because a token can be stale for other reasons, and
+   * because the failure mode is a customer being told their work does
+   * not exist.
+   *
+   * It is NOT a weaker check. The same ownership rule is applied, from
+   * `getUser()` — which asks the auth server rather than trusting the
+   * cookie — so the fallback reads fresher truth than the policy does.
+   * RLS stays the fast path and the default.
+   */
+  let audit = viaRls;
+  if (!audit) {
+    const owner = await getCurrentUser();
+    const ownerOrg = owner ? organizationIdFromUser(owner) : null;
+    if (ownerOrg) {
+      const { data: viaService } = await supabaseService()
+        .from('audits')
+        .select(COLUMNS)
+        .eq('id', params.auditId)
+        .eq('organization_id', ownerOrg)
+        .maybeSingle();
+      audit = viaService;
+    }
+  }
 
   if (!audit) notFound();
   const a = audit as AuditDetailRow;
