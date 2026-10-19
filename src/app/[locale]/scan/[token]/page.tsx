@@ -461,6 +461,19 @@ export default async function ScanPage({ params }: PageProps) {
         </CardHeader>
         <CardContent className="grid gap-4">
           <p className="text-sm leading-relaxed text-muted-foreground">{t('ctaBody')}</p>
+          {/* The wall and the free audit, said before the click.
+          
+              This line was written days before it could be published:
+              `free_audit_used` was false on every organisation in the
+              database, because /audit redirected to /pricing on zero
+              credits and a new organisation is created with zero. The
+              trial was unreachable, so the sentence would have been a
+              promise about code nobody had ever run.
+          
+              It fired for the first time on 19 October at 20:31, on a
+              fresh account in a private window, and the column finally
+              reads true. */}
+          <p className="text-sm leading-relaxed">{t('ctaFree')}</p>
           <Button asChild className="justify-self-start">
             <Link href="/audit">{t('ctaButton')}</Link>
           </Button>
