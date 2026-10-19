@@ -38,7 +38,9 @@ const pass1 = {
       title: 'Retention period not stated',
       body: 'The policy omits the storage period.',
       recommendation: 'State the retention period explicitly.',
-      evidence: 'We keep your data as long as necessary.'
+      evidence: 'We keep your data as long as necessary.',
+      applies_because: 'The document states it is the controller of EU residents\' data.',
+      applicability_certain: true
     },
     {
       framework: 'eu_ai_act',
@@ -47,7 +49,9 @@ const pass1 = {
       title: 'No AI interaction disclosure',
       body: 'Users are not told they interact with an AI system.',
       recommendation: 'Disclose AI involvement at first contact.',
-      evidence: 'Our engine analyses your document automatically.'
+      evidence: 'Our engine analyses your document automatically.',
+      applies_because: 'The document describes an automated analysis offered to EU users.',
+      applicability_certain: true
     }
   ]
 };
@@ -165,7 +169,9 @@ describe('Pass 2 localization — concurrent chunks', () => {
       title: `Gap ${i}`,
       body: `Body ${i}`,
       recommendation: `Fix ${i}`,
-      evidence: `Evidence ${i}`
+      evidence: `Evidence ${i}`,
+      applies_because: `Applies because ${i}`,
+      applicability_certain: true
     }))
   };
 

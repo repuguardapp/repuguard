@@ -134,3 +134,90 @@ describe('the published risk score is derived from what the reader can see', () 
     expect(ENGINE).toContain('riskScore: score');
   });
 });
+
+/**
+ * The title asserted what the body only conditioned.
+ *
+ * From the first real audit, on LexyFlow's own privacy policy:
+ *
+ *   title  "Aucun représentant UE/EEE identifié"      — severity: high
+ *   body   "LORSQUE le responsable de traitement n'est pas établi dans
+ *           l'UE/EEE mais cible des personnes concernées de l'UE,
+ *           l'article 27 impose en outre…"
+ *
+ * The body states the condition and is right. The title asserts the
+ * breach. LexyFlow is established in France, so Article 27 does not
+ * reach it and there is no finding — but the title is what the
+ * dashboard lists, what the reader skims, and what headlines the
+ * exported PDF, and it was scored `high` and drove the risk number.
+ *
+ * The same shape appeared under EU AI Act Art. 13, which binds
+ * high-risk systems only.
+ */
+describe('a finding proves that its article reaches the reader', () => {
+  it('requires the applicability half, like evidence requires the factual half', () => {
+    expect(ENGINE).toContain('applies_because: z.string()');
+    expect(ENGINE).toContain('applicability_certain: z.boolean()');
+    expect(ENGINE).toContain("'applies_because',");
+    expect(ENGINE).toContain("'applicability_certain'");
+  });
+
+  it('caps the severity in code, not in the prompt', () => {
+    // The prompt is where the previous version of this rule lived, and
+    // the model wrote the condition into the body and still chose
+    // `high`. An obligation nobody has established the reader is under
+    // must not be able to drive the score.
+    expect(ENGINE).toContain(
+      "f.applicability_certain ? f : { ...f, severity: 'info' as const }"
+    );
+    expect(ENGINE).toContain('deriveRiskScore(graded)');
+  });
+
+  it('keeps the finding rather than discarding it', () => {
+    // "We could not tell whether Art. 27 reaches you, and the document
+    // says nothing about it" is worth reading. It just is not a gap.
+    const rule = ENGINE.slice(ENGINE.indexOf('const graded ='), ENGINE.indexOf('const score ='));
+    expect(rule).not.toContain('filter');
+  });
+
+  it('tells the model what the title may not do, with the case that broke it', () => {
+    expect(ENGINE).toContain('never that an obligation is breached');
+    expect(ENGINE).toContain('Art. 27');
+  });
+
+  it('names the provisions whose reach depends on facts a document omits', () => {
+    // Without examples the flag is never set and the field is theatre.
+    for (const clue of ['Art. 27', 'Annex III', 'large-scale']) {
+      expect(ENGINE).toContain(clue);
+    }
+  });
+});
+
+describe('the reader can judge the applicability instead of trusting it', () => {
+  const PAGE = readFileSync(
+    join(__dirname, '..', 'src/app/[locale]/dashboard/[auditId]/page.tsx'),
+    'utf8'
+  );
+
+  it('shows the reasoning on the finding', () => {
+    expect(PAGE).toContain('applies_because');
+    expect(PAGE).toContain("t('appliesBecause')");
+  });
+
+  it('marks an uncertain provision beside its citation, not in a footnote', () => {
+    expect(PAGE).toContain('f.applicability_certain ? null : (');
+    expect(PAGE).toContain("t('applicabilityUncertain')");
+  });
+
+  it('reads the two columns out of the database', () => {
+    expect(PAGE).toContain('applies_because,applicability_certain');
+  });
+
+  it('has both strings in all seven languages', () => {
+    for (const locale of LOCALES) {
+      const m = report(locale);
+      expect(m['appliesBecause']).toBeTruthy();
+      expect(m['applicabilityUncertain']).toBeTruthy();
+    }
+  });
+});

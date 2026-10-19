@@ -743,7 +743,12 @@ async function runAuditPipeline(input: PipelineInput): Promise<void> {
         title: f.title,
         body: f.body,
         recommendation: f.recommendation,
-        evidence: f.evidence
+        evidence: f.evidence,
+        // The applicability half. `evidence` proves the fact; these two
+        // say whether the provision cited actually reaches this reader,
+        // which nothing used to have to establish.
+        applies_because: f.appliesBecause,
+        applicability_certain: f.applicabilityCertain
       }))
     );
     if (findingsErr) {

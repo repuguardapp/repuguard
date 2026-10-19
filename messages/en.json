@@ -185,6 +185,8 @@
     "findings": "Findings",
     "noFindings": "No findings against the frameworks you selected. That is a fact about this reading of this document — not a statement that your organisation complies. This pass reads the document alone: it does not see the processing behind it, the systems, the contracts, or anything the document leaves out.",
     "recommendation": "Recommendation",
+    "appliesBecause": "Applies because",
+    "applicabilityUncertain": "applicability to confirm",
     "evidence": "Evidence",
     "savePdf": "Save as PDF",
     "editDocument": "Edit document",

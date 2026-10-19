@@ -185,6 +185,8 @@
     "findings": "Hallazgos",
     "noFindings": "Ninguna observación frente a los marcos seleccionados. Es un hecho sobre esta lectura de este documento, no una declaración de que su organización cumple. Esta pasada lee únicamente el documento: no ve los tratamientos que describe, ni los sistemas, ni los contratos, ni lo que el documento omite.",
     "recommendation": "Recomendación",
+    "appliesBecause": "Se aplica porque",
+    "applicabilityUncertain": "aplicabilidad por confirmar",
     "evidence": "Evidencia",
     "savePdf": "Guardar como PDF",
     "editDocument": "Editar documento",

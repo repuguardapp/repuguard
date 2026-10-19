@@ -44,7 +44,9 @@ const PIVOT = {
       title: 'Retention period not stated',
       body: 'The policy omits the storage period.',
       recommendation: 'State it explicitly.',
-      evidence: 'We keep your data as long as necessary.'
+      evidence: 'We keep your data as long as necessary.',
+      applies_because: 'The document names itself as controller of EU residents\' data.',
+      applicability_certain: true
     }
   ]
 };

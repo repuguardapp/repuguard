@@ -185,6 +185,8 @@
     "findings": "Achados",
     "noFindings": "Nenhuma constatação em relação aos referenciais selecionados. Isso é um fato sobre esta leitura deste documento — não uma declaração de que sua organização está em conformidade. Esta passagem lê apenas o documento: não vê os tratamentos que ele descreve, nem os sistemas, nem os contratos, nem o que o documento omite.",
     "recommendation": "Recomendação",
+    "appliesBecause": "Aplica-se porque",
+    "applicabilityUncertain": "aplicabilidade a confirmar",
     "evidence": "Evidência",
     "savePdf": "Salvar como PDF",
     "editDocument": "Editar documento",

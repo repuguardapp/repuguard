@@ -34,7 +34,32 @@ const FindingSchema = z.object({
   title: z.string(),
   body: z.string(),
   recommendation: z.string(),
-  evidence: z.string()
+  evidence: z.string(),
+  /**
+   * What makes this provision govern THIS document.
+   *
+   * `evidence` proves the fact. Nothing proved the other half, and the
+   * first real audit walked straight through the gap: a `high` finding
+   * titled "Aucun représentant UE/EEE identifié", citing GDPR Art. 27,
+   * against a controller established in France — where Art. 27 does not
+   * apply at all.
+   *
+   * The body had it right: "LORSQUE le responsable n'est pas établi
+   * dans l'UE/EEE...". It stated the condition and the title asserted
+   * the breach, and the title is what the dashboard lists and what
+   * headlines the PDF.
+   */
+  applies_because: z.string(),
+  /**
+   * False when the provision's reach depends on a fact the document
+   * does not settle: where the controller is established, whether the
+   * system is high-risk, whether processing is large-scale.
+   *
+   * Forced to `info` severity in code. A provision that may not bind
+   * the reader cannot produce a high-severity gap, and must not drive a
+   * risk score.
+   */
+  applicability_certain: z.boolean()
 });
 
 const AuditPassSchema = z.object({
@@ -330,12 +355,36 @@ function buildSubmitAuditTool(frameworks: FrameworkId[]) {
               type: 'string',
               enum: ['critical', 'high', 'medium', 'low', 'info']
             },
-            title: { type: 'string', description: 'Headline of the issue, ≤ 90 chars.' },
+            title: {
+              type: 'string',
+              description:
+                'Headline of the issue, ≤ 90 chars. It states what is ABSENT FROM OR WRONG IN THIS DOCUMENT, never that an obligation is breached when that obligation\'s reach depends on facts the document does not settle. "Aucun représentant UE/EEE identifié" asserts a breach of GDPR Art. 27 against a controller that may well be established in the EU, where Art. 27 does not apply; the body of that same finding said "WHEN the controller is not established in the EU/EEA…" and was right. The title is what the dashboard lists and what headlines the exported PDF, so it carries the condition or it does not carry the claim. When applicability is uncertain, the title is phrased as the question it is: "Représentant UE/EEE : non traité — à vérifier si le responsable est hors UE".'
+            },
             body: { type: 'string', description: '2-4 paragraphs of analysis.' },
             recommendation: { type: 'string', description: 'Concrete remediation steps.' },
-            evidence: { type: 'string', description: 'Verbatim quote from the document.' }
+            evidence: { type: 'string', description: 'Verbatim quote from the document.' },
+            applies_because: {
+              type: 'string',
+              description:
+                'One sentence stating what makes this provision govern THIS document — the applicability half of what evidence does for the factual half. Point at something in the document or in the audit scope: "the document states LexyFlow is the controller and describes processing of EU residents\' data". If the only thing you can write is a restatement of the obligation, you have not established that it applies, and applicability_certain is false.'
+            },
+            applicability_certain: {
+              type: 'boolean',
+              description:
+                'True only when the document itself settles that this provision governs it. FALSE whenever the provision\'s reach turns on a fact the document does not state: where the controller is established (GDPR Art. 27), whether the system is high-risk under Annex III (EU AI Act Art. 13, 25, 26), whether processing is large-scale or systematic (Art. 35, Art. 37). A false value does not discard the finding — it is still worth raising — but it caps the severity, because an obligation nobody has established the reader is under cannot be a high-severity gap.'
+            }
           },
-          required: ['framework', 'citation', 'severity', 'title', 'body', 'recommendation', 'evidence']
+          required: [
+            'framework',
+            'citation',
+            'severity',
+            'title',
+            'body',
+            'recommendation',
+            'evidence',
+            'applies_because',
+            'applicability_certain'
+          ]
         }
       }
     },
@@ -535,10 +584,27 @@ async function runPass1(input: AuditInput, maxTokens: number): Promise<AuditPass
    * Zero findings is 0, not "a small number". There is nothing to
    * measure and the honest figure is the one that says so.
    */
-  const score = deriveRiskScore(r.findings);
+  /**
+   * A provision that may not bind the reader cannot be a severe gap.
+   *
+   * Enforced here and not left to the prompt, because the prompt is
+   * where the previous version of this rule lived and the first real
+   * audit returned a `high` finding citing GDPR Art. 27 against a
+   * controller established in France. The model had already written
+   * the condition into the body; it simply also chose `high`.
+   *
+   * The finding survives — "we could not tell whether Art. 27 reaches
+   * you, and the document says nothing about it" is worth reading. It
+   * stops driving the score.
+   */
+  const graded = r.findings.map((f) =>
+    f.applicability_certain ? f : { ...f, severity: 'info' as const }
+  );
+
+  const score = deriveRiskScore(graded);
 
   // Normalise framework attribution before it can reach the database.
-  const findings = r.findings.map((finding) => {
+  const findings = graded.map((finding) => {
     const resolved = resolveFrameworkId(finding.framework, input.frameworks);
     if (!resolved) {
       throw new Error(
@@ -867,7 +933,9 @@ export async function runMultiPassAudit(
     title: f.title,
     body: f.body,
     recommendation: f.recommendation,
-    evidence: f.evidence
+    evidence: f.evidence,
+    appliesBecause: f.applies_because,
+    applicabilityCertain: f.applicability_certain
   }));
 
   return {

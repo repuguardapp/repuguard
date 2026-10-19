@@ -32,6 +32,8 @@ interface FindingRow {
   body: string;
   recommendation: string;
   evidence: string;
+  applies_because: string | null;
+  applicability_certain: boolean;
 }
 
 interface AuditDetailRow {
@@ -135,7 +137,7 @@ export default async function AuditDetailPage({ params }: PageProps) {
 
   const { data: findings } = await supabase
     .from('audit_findings')
-    .select('id,framework_id,citation,severity,title,body,recommendation,evidence')
+    .select('id,framework_id,citation,severity,title,body,recommendation,evidence,applies_because,applicability_certain')
     .eq('audit_id', params.auditId)
     .order('severity', { ascending: true });
 
@@ -290,6 +292,17 @@ export default async function AuditDetailPage({ params }: PageProps) {
                       <span className="font-mono text-xs text-muted-foreground">
                         {f.citation}
                       </span>
+                      {/* The provision may not reach this reader, and the
+                          badge says so beside the citation rather than in
+                          a paragraph underneath. The run that prompted
+                          this cited GDPR Art. 27 — which binds controllers
+                          NOT established in the EU — against a controller
+                          established in France, and scored it `high`. */}
+                      {f.applicability_certain ? null : (
+                        <Badge variant="outline" className="text-xs">
+                          {t('applicabilityUncertain')}
+                        </Badge>
+                      )}
                     </div>
                     <CardTitle className="text-base leading-tight">{f.title}</CardTitle>
                   </div>
@@ -301,6 +314,14 @@ export default async function AuditDetailPage({ params }: PageProps) {
                   <blockquote className="border-s-2 border-muted-foreground/30 ps-3 italic text-muted-foreground">
                     &ldquo;{f.evidence}&rdquo;
                   </blockquote>
+                )}
+                {f.applies_because && (
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold uppercase tracking-wider">
+                      {t('appliesBecause')}
+                    </span>{' '}
+                    {f.applies_because}
+                  </p>
                 )}
                 <div className="rounded-md border bg-muted/50 p-3 print:bg-transparent">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
