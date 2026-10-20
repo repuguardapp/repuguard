@@ -18,17 +18,23 @@ import { describe, expect, it } from 'vitest';
  * page, and in the signature of every lifecycle e-mail in seven
  * languages. Somebody exercising a contractual right wrote into a void.
  *
- * The routing lived in a dashboard and nowhere else, so nothing could
- * notice an address was missing. That is the defect; the lost message
- * is its first symptom.
+ * The routing lived in a mailbox provider's settings and nowhere else,
+ * so nothing could notice an address was missing. That is the defect;
+ * the lost message is its first symptom.
  *
  * This test is the part that makes it stay fixed. Publishing a mailto:
- * without adding the address to routing.sh turns red here, before it
- * can turn silent in production.
+ * without adding the address to infra/email/ADDRESSES.md turns red
+ * here, before it can turn silent in production.
+ *
+ * The declaration is a table rather than a script on purpose: the DNS
+ * is at Namecheap and the mailboxes are iCloud aliases, neither of
+ * which has an API we hold. A script would have pretended to manage
+ * infrastructure nobody can reach from here — which is exactly what the
+ * Cloudflare version it replaces was doing.
  */
 
 const ROOT = join(__dirname, '..');
-const ROUTING = readFileSync(join(ROOT, 'infra/cloudflare-email-worker/routing.sh'), 'utf8');
+const ROUTING = readFileSync(join(ROOT, 'infra/email/ADDRESSES.md'), 'utf8');
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -70,7 +76,7 @@ describe('every address we publish has somewhere to arrive', () => {
 
   it('lists each one in the routing script', () => {
     const missing = [...publishedAddresses()].filter(
-      (addr) => !ROUTING.includes(addr.replace('@lexyflow.com', '@${ZONE_NAME}'))
+      (addr) => !ROUTING.includes(`\`${addr.replace('@lexyflow.com', '@')}\``)
     );
     expect(missing).toEqual([]);
   });
@@ -79,7 +85,7 @@ describe('every address we publish has somewhere to arrive', () => {
     // hello@ is RESEND_FROM. An unrouted From means every customer
     // REPLY to a sign-in link or an audit notification is lost the same
     // way legal@ was — and nobody would report that either.
-    expect(ROUTING).toContain('hello@${ZONE_NAME}');
+    expect(ROUTING).toContain('`hello@`');
   });
 
   it('does not invent an address nobody publishes', () => {
@@ -87,46 +93,47 @@ describe('every address we publish has somewhere to arrive', () => {
     // rule for an address that appears nowhere is a mailbox nobody will
     // ever read.
     const published = publishedAddresses();
-    const listed = [...ROUTING.matchAll(/"([a-z0-9._-]+)@\$\{ZONE_NAME\}"/g)].map(
+    const listed = [...ROUTING.matchAll(/^\| `([a-z0-9._-]+)@` \|/gm)].map(
       (m) => `${m[1]}@lexyflow.com`
     );
     expect(listed.length).toBeGreaterThan(0);
-    for (const addr of listed) expect(published).toContain(addr);
+    // dmarc@ is declared for the DMARC rua= target and is deliberately
+    // not printed anywhere in the product, so it is exempt.
+    for (const addr of listed) {
+      if (addr === 'dmarc@lexyflow.com') continue;
+      expect(published).toContain(addr);
+    }
   });
 });
 
-describe('the script refuses to write before it has been asked', () => {
-  it('defaults to a read-only report', () => {
-    // It has never run: api.cloudflare.com is refused by the sandbox's
-    // egress proxy, so nothing here has been executed against the live
-    // zone. Untested code that writes mail routing defaults to reading.
-    expect(ROUTING).toContain('APPLY="${1:-}"');
-    expect(ROUTING).toContain('if [ "${APPLY}" != "--apply" ]; then');
-  });
-
-  it('names the two ways mail is lost quietly', () => {
-    // A catch-all set to drop, and a destination that was registered
-    // but never verified. Both look healthy in the dashboard.
-    expect(ROUTING).toContain('catch-all');
-    expect(ROUTING).toContain('NOT VERIFIED');
+describe('the declaration records what was measured, not what was assumed', () => {
+  it('names where the DNS actually is', () => {
+    // The first version of this file managed Cloudflare Email Routing.
+    // The zone is at Namecheap and is in no Cloudflare account the
+    // operator belongs to — the lookup returns zero and SUCCEEDS, which
+    // is what distinguishes an absence from a refusal.
+    expect(ROUTING).toContain('Namecheap');
+    expect(ROUTING).toContain('total_count: 0');
   });
 
   it('does not assert a cause that was never measured', () => {
-    // The script claimed Cloudflare had accepted and dropped the
-    // message. The account holds no zones at all, so that explanation
-    // is unsupported and the file now says the cause is unknown.
-    expect(ROUTING).toContain('DOES NOT HOLD');
-    expect(ROUTING).toContain('is NOT established');
+    // The deleted script claimed Cloudflare had accepted and dropped
+    // the message. It could not have: the domain is not there.
+    expect(ROUTING).toContain('unsupported');
+    expect(ROUTING).not.toMatch(/catch-all set to drop/);
   });
 
-  it('never prints the token', () => {
-    // The usage line prints the variable NAME followed by "..." so the
-    // operator knows what to set. What must never appear is its
-    // expansion: `${CLOUDFLARE_API_TOKEN}` outside the Authorization
-    // header it belongs in.
-    const expansions = [...ROUTING.matchAll(/\$\{CLOUDFLARE_API_TOKEN\}/g)];
-    expect(expansions.length).toBe(1);
-    expect(ROUTING).toContain('Authorization: Bearer ${CLOUDFLARE_API_TOKEN}');
-    expect(ROUTING).not.toMatch(/(echo|printf)[^\n]*\$\{CLOUDFLARE_API_TOKEN\}/);
+  it('says why this is a table and not a script', () => {
+    // So the next person does not write a third one. Neither Namecheap
+    // nor iCloud aliases expose an API we hold.
+    expect(ROUTING).toContain('no API');
+  });
+
+  it('keeps the open question open instead of quietly deciding it', () => {
+    // infra/cloudflare-email-worker/ still describes a Worker that does
+    // not exist, feeding a webhook route that does. Deleting one
+    // orphans the other.
+    expect(ROUTING).toContain('Still unresolved');
+    expect(ROUTING).toContain('has not been made');
   });
 });
