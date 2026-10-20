@@ -1,4 +1,5 @@
 import type { CiStatus } from './ci-status';
+import { composeFunnel, firstStall, type Funnel } from './funnel';
 import { OUTREACH_BLIND_SPOT, OUTREACH_WINDOW_DAYS, type OutreachTest } from './outreach-test';
 /**
  * The daily state of the business, composed from facts.
@@ -190,6 +191,21 @@ export interface DigestInput {
    * matters.
    */
   rejections: RejectionDigest | null;
+  /**
+   * Where a visitor stops, by stage.
+   *
+   * The report has been green for weeks on every instrument it had —
+   * feeds, corpus, CI, extraction — while the thing the company is
+   * actually failing at was unmeasured: nobody but the operator has
+   * walked the product end to end. Five separate defects were found in
+   * the funnel in three days, every one of them a place somebody
+   * disappeared, and not one of them by an instrument. Four were found
+   * by the operator walking it himself.
+   *
+   * This is the only line in the digest that reports on the business
+   * rather than on the machine.
+   */
+  funnel: Funnel | null;
   appUrl: string;
 }
 
@@ -275,6 +291,27 @@ export function composeDigest(input: DigestInput): Digest {
       `Billing mirror disagrees with Stripe: our table says ${mirror} organisation(s) subscribed, Stripe says ${stripe}.\n` +
         `    Access is granted from our table, so the gap is either a customer with the wrong entitlement or a webhook we never received.`
     );
+  }
+
+  /**
+   * Somebody arrived and did not get through.
+   *
+   * Raised only when the entry stage is non-zero: "nobody has asked for
+   * a scan" is a traffic problem, it is already the subject of the
+   * backlink line below, and promoting it to an action every morning
+   * would train the reader to skip the list. A visitor who started and
+   * stopped is a different event, it is the one the last three days of
+   * repairs were about, and it has never once been visible.
+   */
+  if (input.funnel) {
+    const since = input.funnel.sinceOutreach;
+    const stall = firstStall(since);
+    if (stall && since.scanAsked !== null && since.scanAsked > 0) {
+      actions.push(
+        `Somebody walked into the funnel and stopped — ${stall}.\n` +
+          `    Since ${input.funnel.outreachFrom}. Walk that step yourself before changing it; four of the five defects found this week were found that way and none by a test.`
+      );
+    }
   }
 
   if (input.barrenSources && input.barrenSources.length > 0) {
@@ -366,7 +403,11 @@ export function composeDigest(input: DigestInput): Digest {
     'observatory backlink': input.outreach,
     // An unreadable rejection list is the one state that looks exactly
     // like a quiet day: nothing deleted, and nothing said about it.
-    'rejections': input.rejections
+    'rejections': input.rejections,
+    // Zeros across the funnel and an unreadable funnel look identical on
+    // the page and mean opposite things — one is "nobody came", the other
+    // is "we cannot tell whether anybody came".
+    funnel: input.funnel
   })
     .filter(([, value]) => value === null)
     .map(([label]) => label);
@@ -394,6 +435,11 @@ export function composeDigest(input: DigestInput): Digest {
     '',
     `  Active subscriptions  ${num(input.activeSubscriptions)}`
   );
+
+  // Directly under the subscription count on purpose. That line answers
+  // whether there is a business; this one is the only place the report
+  // says anything about why not.
+  lines.push(...composeFunnel(input.funnel));
 
   // In STANDING even when green, because "it is passing" is a fact worth
   // seeing daily — the five-month outage was invisible precisely because

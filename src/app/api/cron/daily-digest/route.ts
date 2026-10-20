@@ -6,7 +6,8 @@ import { composeDigest, type DigestInput, type RejectionDigest } from '@/lib/dai
 import { sendOpsDigest } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { latestCiRun } from '@/lib/ci-status';
-import { outreachTest } from '@/lib/outreach-test';
+import { FUNNEL_STAGES, type Funnel, type FunnelWindow } from '@/lib/funnel';
+import { OUTREACH_SENT_AT, outreachTest } from '@/lib/outreach-test';
 import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
@@ -102,7 +103,12 @@ async function digest() {
     )
   ]);
 
-  const billing = await readBilling(db);
+  // Read once and used twice: the standing subscription count and the
+  // funnel's paid stage are the same facts windowed differently, and a
+  // second round of Stripe pagination inside a 60s cron is how a figure
+  // becomes "unavailable" for no reason but our own structure.
+  const liveSubscriptions = await readStripeLiveSubscriptions();
+  const billing = readBillingFrom(await readMirrorSubscriptions(db), liveSubscriptions);
 
   const input: DigestInput = {
     auditsCompleted,
@@ -124,6 +130,7 @@ async function digest() {
     // is the sentence that retires a channel.
     outreach: outreachTest(await listReferrals()),
     rejections: await readRejections(db, since),
+    funnel: await readFunnel(db, since, liveSubscriptions),
     appUrl: baseUrl
   };
 
@@ -256,12 +263,16 @@ async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise
  * mirror, so a gap is either a customer with the wrong entitlement or a
  * webhook we never received, and both need a person.
  */
-async function readBilling(db: ReturnType<typeof supabaseService>): Promise<{
+function readBillingFrom(
+  mirror: number | null,
+  live: StripeLiveSubscription[] | null
+): {
   activeSubscriptions: number | null;
   billingMirrorDrift: { stripe: number; mirror: number } | null;
-}> {
-  const mirror = await readMirrorSubscriptions(db);
-  const fromStripe = await countStripeSubscriptions();
+} {
+  // Customers, not rows. Counting rows is what turned one test account
+  // into four customers for four months.
+  const fromStripe = live === null ? null : new Set(live.map((s) => s.customer)).size;
 
   return {
     activeSubscriptions: fromStripe,
@@ -293,20 +304,34 @@ async function readMirrorSubscriptions(
 }
 
 /**
- * Subscriptions Stripe itself calls live, counted by customer.
+ * One live subscription, with the moment it started.
+ *
+ * `created` is carried because the funnel needs the paid stage placed in
+ * a window, and Stripe is the only place that timestamp is trustworthy —
+ * our mirror had four phantom rows with null period ends for four
+ * months.
+ */
+interface StripeLiveSubscription {
+  customer: string;
+  /** Unix seconds, as Stripe gives it. */
+  created: number;
+}
+
+/**
+ * Subscriptions Stripe itself calls live.
  *
  * Bounded pagination rather than auto-pagination: this runs in a cron with
  * a fixed budget, and a number we stopped counting half way through is a
  * wrong number. Past the ceiling it returns null — "unavailable" is a
  * state this digest already knows how to print, and it is the honest one.
  */
-async function countStripeSubscriptions(): Promise<number | null> {
+async function readStripeLiveSubscriptions(): Promise<StripeLiveSubscription[] | null> {
   const LIVE: Stripe.SubscriptionListParams.Status[] = ['active', 'trialing', 'past_due'];
   const PAGE = 100;
   const MAX_PAGES = 5;
 
   try {
-    const customers = new Set<string>();
+    const found: StripeLiveSubscription[] = [];
 
     for (const status of LIVE) {
       let startingAfter: string | undefined;
@@ -319,7 +344,10 @@ async function countStripeSubscriptions(): Promise<number | null> {
         });
 
         for (const sub of batch.data) {
-          customers.add(typeof sub.customer === 'string' ? sub.customer : sub.customer.id);
+          found.push({
+            customer: typeof sub.customer === 'string' ? sub.customer : sub.customer.id,
+            created: sub.created
+          });
         }
 
         if (!batch.has_more) break;
@@ -329,7 +357,7 @@ async function countStripeSubscriptions(): Promise<number | null> {
       }
     }
 
-    return customers.size;
+    return found;
   } catch (err) {
     // A missing key, a network failure, a Stripe outage. Every one of them
     // means we do not know, and do not know is not zero.
@@ -550,4 +578,132 @@ async function readStalledItems(
   } catch {
     return null;
   }
+}
+
+/**
+ * Where a visitor stops, by stage and by window.
+ *
+ * THE FILTER THAT MAKES THIS NOT A LIE
+ *
+ * `scans` holds 309 rows and only 12 of them are people: the other 297
+ * have `origin = 'survey'` and are the observatory's own crawl of .fr
+ * domains, run by us, against strangers' sites, for the ranking study.
+ * Counting the table would have reported 309 visitors in a funnel whose
+ * true entry count is twelve, all twelve from one afternoon in
+ * September, all of them the operator testing his own product. That is
+ * precisely the shape of wrong number this report exists to prevent, and
+ * it was one missing WHERE clause away.
+ *
+ * WHY THERE ARE THREE READS AND NOT FIFTEEN COUNTS
+ *
+ * Each stage is read once with its timestamps and the three windows are
+ * derived in memory. The tables are small — 12, 6 and 3 rows — and
+ * fifteen `head: true` counts in a 60-second cron is fourteen more
+ * chances for one window to come back unreadable while its neighbours
+ * look fine, which would print a funnel with a hole in the middle.
+ *
+ * A read that hits its row ceiling returns null rather than a count.
+ * A truncated count is not a small count, and this is the one block in
+ * the digest whose zeros are supposed to be believed.
+ */
+const FUNNEL_ROW_CEILING = 20_000;
+
+/** Timestamps for one stage, or null when the read failed or truncated. */
+async function readStageTimes(
+  db: ReturnType<typeof supabaseService>,
+  build: () => PromiseLike<{ data: unknown; error: unknown }>
+): Promise<number[] | null> {
+  try {
+    const { data, error } = await build();
+    if (error) return null;
+    const rows = (data ?? []) as { created_at: string }[];
+    if (rows.length >= FUNNEL_ROW_CEILING) return null;
+    return rows.map((r) => Date.parse(r.created_at)).filter((t) => Number.isFinite(t));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Public scans with the one bit the funnel needs from each.
+ *
+ * `done` rather than "not failed": a scan that found no policy now
+ * renders its own Art. 12(1) result card, which is a legitimate answer,
+ * but it is not somebody seeing their own document assessed. Counting it
+ * as progress would make last week's repair look like a conversion.
+ */
+async function readScans(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ at: number; done: boolean }[] | null> {
+  try {
+    const { data, error } = await db
+      .from('scans')
+      .select('created_at, status')
+      .eq('origin', 'public')
+      .limit(FUNNEL_ROW_CEILING);
+    if (error) return null;
+    const rows = (data ?? []) as { created_at: string; status: string }[];
+    if (rows.length >= FUNNEL_ROW_CEILING) return null;
+    return rows
+      .map((r) => ({ at: Date.parse(r.created_at), done: r.status === 'done' }))
+      .filter((r) => Number.isFinite(r.at));
+  } catch {
+    return null;
+  }
+}
+
+async function readFunnel(
+  db: ReturnType<typeof supabaseService>,
+  since: string,
+  liveSubscriptions: StripeLiveSubscription[] | null
+): Promise<Funnel | null> {
+  const dayFrom = Date.parse(since);
+  const outreachFrom = Date.parse(OUTREACH_SENT_AT);
+
+  // `origin = 'public'` is the whole difference between a funnel and the
+  // survey crawl. See the comment above this function.
+  //
+  // One query, split in memory, so "asked" and "read" can never be taken
+  // from two different moments — two queries a second apart can report
+  // more scans read than asked, and a funnel that widens is a funnel
+  // nobody will believe again.
+  const scans = await readScans(db);
+  const scanAsked = scans === null ? null : scans.map((s) => s.at);
+  const scanDone = scans === null ? null : scans.filter((s) => s.done).map((s) => s.at);
+
+  const accounts = await readStageTimes(db, () =>
+    db.from('organizations').select('created_at').limit(FUNNEL_ROW_CEILING)
+  );
+
+  const audits = await readStageTimes(db, () =>
+    db.from('audits').select('created_at').limit(FUNNEL_ROW_CEILING)
+  );
+
+  // Stripe gives seconds; everything else here is milliseconds.
+  const paid =
+    liveSubscriptions === null ? null : liveSubscriptions.map((s) => s.created * 1000);
+
+  const stages: Record<string, number[] | null> = {
+    scanAsked,
+    scanRead: scanDone,
+    account: accounts,
+    audit: audits,
+    paid
+  };
+
+  const windowAt = (from: number | null): FunnelWindow =>
+    Object.fromEntries(
+      FUNNEL_STAGES.map((s) => {
+        const times = stages[s.key];
+        if (times === null || times === undefined) return [s.key, null];
+        return [s.key, from === null ? times.length : times.filter((t) => t >= from).length];
+      })
+    ) as FunnelWindow;
+
+  return {
+    day: windowAt(Number.isFinite(dayFrom) ? dayFrom : null),
+    sinceOutreach: windowAt(Number.isFinite(outreachFrom) ? outreachFrom : null),
+    allTime: windowAt(null),
+    outreachFrom: OUTREACH_SENT_AT.slice(0, 10)
+  };
 }

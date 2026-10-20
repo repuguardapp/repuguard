@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { composeDigest, type DigestInput, type RejectionDigest } from '@/lib/daily-digest';
+import { quietFunnel } from './support/quiet-funnel';
 
 /**
  * A rejection with a reason reads like the system working.
@@ -48,6 +49,7 @@ const base: DigestInput = {
   awaitingReview: 0,
   outreach: null,
   rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
+  funnel: quietFunnel(),
   appUrl: 'https://lexyflow.com'
 };
 

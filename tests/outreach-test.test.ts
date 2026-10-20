@@ -6,6 +6,7 @@ import {
   outreachTest
 } from '@/lib/outreach-test';
 import type { Referral } from '@/lib/referrals';
+import { quietFunnel } from './support/quiet-funnel';
 
 /**
  * The kill metric, and the three ways it could lie.
@@ -136,6 +137,7 @@ function digestInput(outreach: DigestInput['outreach']): DigestInput {
     awaitingReview: 0,
     outreach,
     rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
+    funnel: quietFunnel(),
     appUrl: 'https://lexyflow.com'
   };
 }

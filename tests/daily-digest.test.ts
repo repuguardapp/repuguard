@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { composeDigest, type DigestInput } from '../src/lib/daily-digest';
+import { quietFunnel } from './support/quiet-funnel';
 
 /**
  * The operational brain.
@@ -52,6 +53,7 @@ const HEALTHY: DigestInput = {
     prior: 1
   },
   rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
+  funnel: quietFunnel(),
   appUrl: 'https://lexyflow.com'
 };
 
