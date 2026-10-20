@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MULTIPLE_PARTIES_REASON } from '@/lib/rejection-reasons';
 
 /**
  * Extraction is the first place in the acquisition pipeline that spends
@@ -908,7 +909,13 @@ describe('a decision against several parties is not published naming one', () =>
     // name. The rule is his; the code only stops him retyping it.
     expect(ROUTE).toContain('other_parties_named');
     expect(ROUTE).toContain('out.other_parties_named === true');
-    expect(ROUTE).toContain('la décision vise plusieurs parties, une seule est nommée');
+    // His wording, asserted where it now lives. The sentence moved into
+    // rejection-reasons.ts when a third rule was added, because the
+    // digest recognises a rule-written rejection from that shared list
+    // and a literal copied into its classifier is a rule one edit away
+    // from being filed as routine noise.
+    expect(ROUTE).toContain('rejected_reason: MULTIPLE_PARTIES_REASON');
+    expect(MULTIPLE_PARTIES_REASON).toContain('la décision vise plusieurs parties, une seule est nommée');
   });
 
   it('rejects rather than storing half the respondents', () => {

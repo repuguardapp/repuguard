@@ -6,6 +6,11 @@ import { isCronAuthorized } from '@/lib/cron-auth';
 import { ANTHROPIC_EXTRACTION_MODEL, anthropic } from '@/lib/ai-clients';
 import { fairShare } from '@/lib/fair-share';
 import { recordModelUsage } from '@/lib/model-usage';
+import {
+  DUPLICATE_PREFIX,
+  MULTIPLE_PARTIES_REASON,
+  NATURAL_PERSON_REASON
+} from '@/lib/rejection-reasons';
 import { htmlToText } from '@/lib/feeds';
 import { verifySpan } from '@/lib/policy-observations';
 import { supabaseService } from '@/lib/supabase';
@@ -190,6 +195,22 @@ const Extraction = z.object({
    * wording as the reason.
    */
   other_parties_named: absent(z.boolean()),
+  /**
+   * Is the party named in `entity` a human being?
+   *
+   * Two arrived in the review queue on 20 October — `Bharat Singh
+   * Chand`, whose own summary calls him "a self-employed lead
+   * generator", and `Darian Bishop trading as ECO4U`, a sole trader —
+   * and three more had already been rejected by hand. Nothing in the
+   * pipeline could tell a company from a person, so the operator was
+   * the filter, item by item, forever.
+   *
+   * The reason this is a rule and not a preference is in
+   * rejection-reasons.ts. The field is asked here, in the same shape as
+   * `imposes_a_measure` and `other_parties_named`: the model reports one
+   * fact it can read off the page, and the code draws the conclusion.
+   */
+  entity_is_a_person: absent(z.boolean()),
   summary_en: absent(z.string()),
   /**
    * Where each checkable fact came from, in the page's own words.
@@ -262,6 +283,11 @@ const TOOL = {
         description:
           'True when the document names MORE THAN ONE organisation or person the decision was taken against, so that the single name in `entity` would be an incomplete list. A prosecution of two former employees, a sanction against a company and its subsidiary, a ruling covering several respondents: all true. False when exactly one party is named, and false when none is. Judge only who the decision is AGAINST — an authority, a complainant, a court, a regulator mentioned in passing and a parent company described for context are not parties and do not make this true.'
       },
+      entity_is_a_person: {
+        type: 'boolean',
+        description:
+          'True when the party named in `entity` is a NATURAL PERSON: a named individual, a sole trader, somebody self-employed, a former employee, a director prosecuted personally, or a business trading under a person\'s own name such as "Darian Bishop trading as ECO4U". False when it is a company, a public body, a council, a hospital, a school, a charity, a partnership or any other organisation. Judge the party the decision is against, not the signatory of the decision and not an individual mentioned as a complainant or a witness. Required whenever an entity is named.'
+      },
       summary_en: {
         type: 'string',
         description:
@@ -324,6 +350,13 @@ const SYSTEM = [
   'a shorter version of the decision — it attributes to one named person',
   'what the regulator attributed to two. Set other_parties_named and let',
   'the record be rejected rather than published incomplete.',
+  'Say so too when the party is a human being rather than an',
+  'organisation. A sole trader, somebody self-employed, a former',
+  'employee prosecuted personally, a business trading under a person\'s',
+  'own name: set entity_is_a_person. We publish what an authority',
+  'decided about an organisation, and a page headed with a private',
+  'individual\'s name and the word "fine", in seven languages and',
+  'indexed, is a different thing entirely.',
   'A sanction is always against somebody. If you cannot name the party a',
   'measure was imposed on, then what you are reading is not a measure',
   'against them: an Article 65 binding decision resolving a dispute',
@@ -573,8 +606,32 @@ async function extractOne(
       .from('legal_developments')
       .update({
         status: 'rejected',
-        rejected_reason:
-          'la décision vise plusieurs parties, une seule est nommée — publier ce nom seul lui attribuerait ce que le régulateur a attribué à plusieurs',
+        rejected_reason: MULTIPLE_PARTIES_REASON,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', item.id);
+    stats.rejected += 1;
+    return;
+  }
+
+  /**
+   * The party is a person, so there is nothing here to publish.
+   *
+   * Checked before the twin lookup and before any label is derived: a
+   * record we will never publish does not need its outcome corrected,
+   * and leaving it in the pipeline costs a review slot the operator was
+   * spending by hand. Two of these were sitting in the queue when this
+   * was written and three had already been removed by him.
+   *
+   * The full reasoning is on NATURAL_PERSON_REASON. The short version:
+   * a categorical exclusion, not a judgement about the person.
+   */
+  if (out.entity_is_a_person === true) {
+    await db
+      .from('legal_developments')
+      .update({
+        status: 'rejected',
+        rejected_reason: NATURAL_PERSON_REASON,
         updated_at: new Date().toISOString()
       })
       .eq('id', item.id);
@@ -616,7 +673,7 @@ async function extractOne(
       .from('legal_developments')
       .update({
         status: 'rejected',
-        rejected_reason: `duplicate of ${twin} (same authority, date and amount, reported by another source)`,
+        rejected_reason: `${DUPLICATE_PREFIX}${twin} (same authority, date and amount, reported by another source)`,
         updated_at: new Date().toISOString()
       })
       .eq('id', item.id);

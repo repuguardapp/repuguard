@@ -8,6 +8,7 @@ import { stripe } from '@/lib/stripe';
 import { latestCiRun } from '@/lib/ci-status';
 import { FUNNEL_STAGES, type Funnel, type FunnelWindow } from '@/lib/funnel';
 import { OUTREACH_SENT_AT, outreachTest } from '@/lib/outreach-test';
+import { isRuleWritten } from '@/lib/rejection-reasons';
 import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
@@ -466,13 +467,15 @@ async function readRejections(
 
     for (const row of rows) {
       const reason = row.rejected_reason ?? '';
-      // The two rule-written reasons are the two the code writes
-      // verbatim. Anything else came from the model or from a person.
-      const isRule =
-        reason.startsWith('duplicate of ') ||
-        reason.startsWith('la décision vise plusieurs parties');
-
-      if (isRule) {
+      /**
+       * Read from the shared list rather than from literals copied in
+       * here. Two were copied, a third rule was added the same day, and
+       * nothing would have failed: its deletions would simply have been
+       * filed as "off topic" and never named again. A rule that removes
+       * decisions without a human and reports itself as routine noise is
+       * the failure this whole block exists to catch.
+       */
+      if (isRuleWritten(reason)) {
         byRule.push({ title: row.raw_title, reason, url: row.primary_url });
       } else if (row.summary_en) {
         // It had been extracted, so a human saw it in the queue and
