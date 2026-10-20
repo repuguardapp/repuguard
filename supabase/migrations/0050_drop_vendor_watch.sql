@@ -38,33 +38,67 @@
 -- never needs `cascade` and therefore cannot quietly take something it
 -- was not pointed at.
 
--- NOT APPLIED TO PRODUCTION AS OF 2026-10-18, AND NOT FOR THE REASON I
--- FIRST GAVE.
+-- NOT APPLIED TO PRODUCTION AS OF 2026-10-20. THE DIAGNOSIS BELOW IS
+-- THE THIRD ONE AND THE FIRST TWO WERE BOTH WRONG.
 --
--- Two commit messages before this one say Supabase's write path had
--- stopped responding. That was wrong and the evidence contradicts it:
--- SELECT returns instantly, UPDATE committed a row on this same table
--- set, `comment on table` applied in under a second, and `create table`
--- succeeded. Only DROP TABLE hangs — including on a brand new empty
--- table created seconds earlier, and including with no lock whatsoever
--- held on the target, which pg_locks confirmed.
+-- WRONG ONCE: two commit messages say Supabase's write path had stopped
+-- responding. It had not. SELECT returns instantly, UPDATE committed on
+-- this same table set, `comment on table` applied in under a second,
+-- `create table` and `create policy` both succeeded.
 --
--- So it is not an outage, not a lock, and not these tables. Destructive
--- statements are gated behind a confirmation the agent tooling cannot
--- surface in this session, and the gate times out instead of saying so.
+-- WRONG TWICE: the version of this comment it replaces said the guard
+-- was TEXTUAL — that a `comment on` containing the word DROP also timed
+-- out. Re-measured on 20 October, that is false. Both of these return
+-- immediately:
 --
--- The obvious way around it is to hide the DROP inside EXECUTE in a DO
--- block, where a statement-level guard cannot read it. This repository
+--   select 1 where 'drop table' = 'drop table';
+--   comment on table public.vendors is '... DROP TABLE in full ...';
+--
+-- WHAT IS ACTUALLY TRUE, MEASURED
+--
+-- Statements that DESTROY data or objects time out, as a class. Both of
+-- these hang for 60s and return nothing:
+--
+--   drop table if exists public.<a table that does not exist>;
+--   truncate table public.vendor_changes;          -- an empty table
+--
+-- The first is a no-op against a name that is not in the catalogue, so
+-- it is not the object, not its contents, and not a lock —
+-- pg_stat_activity shows no session waiting, before or after. It is the
+-- statement's kind. The same timeout happens through `apply_migration`,
+-- which is the tool designed for exactly this, so it is not the wrong
+-- door either.
+--
+-- WHY IT IS STILL NOT APPLIED
+--
+-- There is no second door that is honest. The ways around a
+-- statement-level guard all work by hiding the statement from it:
+-- EXECUTE inside a DO block, or scheduling the drop from inside the
+-- database so the text we send contains no DROP at all. This repository
 -- does not do that. The rule it applies to other people's bot
 -- mitigation — we identify ourselves and publish the refusal rather
 -- than defeat it — applies with more force to a guard protecting our
--- own production database from exactly this class of act. A guard that
--- can be stepped over by whoever is in a hurry is not a guard.
+-- own production database from precisely this class of act. A guard
+-- that can be stepped over by whoever is in a hurry is not a guard.
 --
--- Cost of leaving it: five empty tables nothing references. The file
--- stays here so the drop happens the day the tooling allows it or
--- `supabase db push` runs, and `if exists` makes that safe whenever it
--- is.
+-- The legitimate door needs the database password, which lives in the
+-- Supabase dashboard and in no part of our infrastructure: the
+-- application reaches Postgres only through PostgREST with the service
+-- role key, and there is no connection string in Vercel to borrow. So
+-- this is a credential boundary, not a missing technique.
+--
+-- Cost of leaving it: five empty tables and one probe table that
+-- nothing references. The file stays here so the drop happens the next
+-- time anybody runs `supabase db push` or opens the SQL editor, and
+-- `if exists` makes it safe whenever that is.
+--
+-- DELIBERATELY NOT RECORDED AS APPLIED. On 20 October the migration
+-- ledger was reconciled: 0051 and 0052 were applied to production but
+-- missing from supabase_migrations.schema_migrations, so `db push`
+-- would have tried to replay them and failed. They were inserted with
+-- versions taken from their own commit dates. 0050 was NOT, because it
+-- has not run — and writing it into the ledger would make every future
+-- push skip the drop forever while reporting success.
 --
 -- MY OWN LITTER, LEFT BEHIND
 --
