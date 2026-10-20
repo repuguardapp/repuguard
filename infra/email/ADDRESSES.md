@@ -23,10 +23,19 @@ publishes an address this table does not list.
 | `support@` | iCloud custom domain | Product support |
 | `hello@` | iCloud custom domain | `RESEND_FROM` — the transactional sender. Unrouted, every customer REPLY to a sign-in link or an audit notification is lost the same way `legal@` was |
 | `dmarc@` | iCloud custom domain | `rua=` target, so DMARC reports arrive somewhere |
+| `contact@` | iCloud custom domain | Predates this table. Not printed anywhere in the product — kept because it exists and somebody may have given it out |
 
 Aliases are created in the iCloud+ Custom Email Domain settings. There
 is no API and no script: this file is the declaration, Apple holds the
 configuration.
+
+**A catch-all is enabled.** Mail to any address at lexyflow.com now
+arrives rather than disappearing, which removes the failure mode that
+started all of this. It does not remove the reason for this table: a
+catch-all says mail lands somewhere, not that anybody reads it, and not
+which obligation each address answers. An address published on a
+contract and an address nobody expects are different things, and the
+catch-all cannot tell them apart.
 
 ## How the mail actually flows
 
@@ -61,12 +70,18 @@ It managed Cloudflare Email Routing for a domain that is not on
 Cloudflare — written from a diagnosis of the silent loss that turned out
 to be unsupported. The list it carried was right; the provider was not.
 
-## Still unresolved
+## Resolved: the phantom inbound pipeline is gone
 
-`infra/cloudflare-email-worker/` describes a Worker named
+`infra/cloudflare-email-worker/` described a Worker named
 `lexyflow-inbound`, fed by `replies@go.lexyflow.com`, posting to
-`/api/webhooks/inbound`. The account holds zero Workers and zero zones,
-so that pipeline does not exist — while the route that receives it does.
-Deleting the worker would orphan the webhook; keeping it documents
-infrastructure nobody built. That is a decision, not a cleanup, and it
-has not been made.
+`/api/webhooks/inbound`. The Cloudflare account held zero Workers and
+zero zones: it never existed, while the route receiving it did.
+
+Deleted on 20 October, by the operator's decision — the folder, the
+route, `lib/reply-classifier.ts` which nothing else imported, its tests,
+and the `INBOUND_WEBHOOK_SECRET` entry in the config report. The
+variable itself is now inert in Vercel and can be removed there.
+
+The `outreach_*` tables stay: `/api/outreach/unsubscribe/[token]` reads
+them and is live. If inbound mail ever needs handling by API, it gets
+built against a provider that exists.

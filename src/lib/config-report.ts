@@ -80,7 +80,6 @@ function readEnv(): Record<string, string | undefined> {
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     CRON_SECRET: process.env.CRON_SECRET,
     DOMAIN_VERIFICATION_SECRET: process.env.DOMAIN_VERIFICATION_SECRET,
-    INBOUND_WEBHOOK_SECRET: process.env.INBOUND_WEBHOOK_SECRET,
     MARKETING_OPTOUT_SECRET: process.env.MARKETING_OPTOUT_SECRET,
     ZENODO_TOKEN: process.env.ZENODO_TOKEN,
     DOCUMENT_ENCRYPTION_KEY: process.env.DOCUMENT_ENCRYPTION_KEY,
@@ -171,11 +170,6 @@ export const CONFIG_GROUPS: { title: string; entries: ConfigEntry[] }[] = [
         name: 'CRON_SECRET',
         requirement: 'required',
         consequence: 'Absent, les travaux planifiés refusent de tourner : rien n\'est relevé.'
-      },
-      {
-        name: 'INBOUND_WEBHOOK_SECRET',
-        requirement: 'required',
-        consequence: "Absent, le webhook entrant refuse tout (échec fermé) et nomme la variable."
       },
       {
         name: 'RESEND_WEBHOOK_SECRET',

@@ -97,10 +97,22 @@ describe('every address we publish has somewhere to arrive', () => {
       (m) => `${m[1]}@lexyflow.com`
     );
     expect(listed.length).toBeGreaterThan(0);
-    // dmarc@ is declared for the DMARC rua= target and is deliberately
-    // not printed anywhere in the product, so it is exempt.
+    /**
+     * Two mailboxes exist without the product printing them, and both
+     * have a reason that is written down rather than assumed:
+     *
+     *   dmarc@    the rua= target. It receives machine reports and is
+     *             deliberately not published to anybody.
+     *   contact@  predates this table. It is in iCloud, somebody may
+     *             have given it out, and deleting a mailbox because no
+     *             code mentions it is how mail goes missing.
+     *
+     * Anything else declared and unpublished is a mailbox nobody will
+     * read, and this test says so.
+     */
+    const NOT_PRINTED = new Set(['dmarc@lexyflow.com', 'contact@lexyflow.com']);
     for (const addr of listed) {
-      if (addr === 'dmarc@lexyflow.com') continue;
+      if (NOT_PRINTED.has(addr)) continue;
       expect(published).toContain(addr);
     }
   });
@@ -129,11 +141,28 @@ describe('the declaration records what was measured, not what was assumed', () =
     expect(ROUTING).toContain('no API');
   });
 
-  it('keeps the open question open instead of quietly deciding it', () => {
-    // infra/cloudflare-email-worker/ still describes a Worker that does
-    // not exist, feeding a webhook route that does. Deleting one
-    // orphans the other.
-    expect(ROUTING).toContain('Still unresolved');
-    expect(ROUTING).toContain('has not been made');
+  it('records the decision that was taken, and what it removed', () => {
+    // The Worker fed a webhook route that existed. Deleting one would
+    // have orphaned the other, so this was a decision rather than a
+    // cleanup — and the operator took it on 20 October. What is gone
+    // is named, so nobody wonders later whether it was ever real.
+    expect(ROUTING).toContain('never existed');
+    expect(ROUTING).toContain('reply-classifier');
+    expect(ROUTING).toContain('INBOUND_WEBHOOK_SECRET');
+  });
+
+  it('keeps the tables the deletion did not touch', () => {
+    // /api/outreach/unsubscribe/[token] reads outreach_* and is live.
+    // Deleting a table because one of its two readers went away is the
+    // same mistake in the other direction.
+    expect(ROUTING).toContain('outreach_*');
+  });
+
+  it('says a catch-all is not a substitute for this table', () => {
+    // Mail now lands somewhere whatever the address. That removes the
+    // silent loss and not the reason for declaring which obligation
+    // each address answers.
+    expect(ROUTING).toContain('catch-all is enabled');
+    expect(ROUTING).toContain('not that anybody reads it');
   });
 });
