@@ -9,7 +9,12 @@ on:
 jobs:
   test:
     name: Vitest
-    runs-on: ubuntu-latest
+    # Pinned for the same reason as ci.yml, although nothing here is
+    # broken today: this job passed on Ubuntu 26.04 this morning while
+    # the e2e job stopped running on it. A label that moves under us is
+    # a dependency we did not choose and cannot see change — the unit
+    # suite is simply the one it has not bitten yet.
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4

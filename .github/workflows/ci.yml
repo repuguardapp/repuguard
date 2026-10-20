@@ -13,7 +13,17 @@ concurrency:
 jobs:
   build:
     name: typecheck · test · build
-    runs-on: ubuntu-latest
+    # Pinned, not `ubuntu-latest`. GitHub moved that label to Ubuntu
+    # 26.04 on 20 October and Playwright 1.59.1 cannot install a browser
+    # there, which silently stopped the e2e job below from running at
+    # all. Pinning both jobs to the same image also keeps the `.next`
+    # artifact this one uploads and the e2e job downloads built and run
+    # on one OS rather than two.
+    #
+    # This is a dated decision, not a permanent one: 24.04 will be
+    # retired in its turn. The point is that the version moves when we
+    # change it, rather than under us on a Tuesday morning.
+    runs-on: ubuntu-24.04
     # Install, typecheck, 981 unit tests, a full Next build and an
     # artifact upload. Ten minutes was already tight and the job was
     # killed at it once the artifact started carrying a real build.
@@ -83,7 +93,10 @@ jobs:
   e2e:
     name: Playwright · critical user flows
     needs: build
-    runs-on: ubuntu-latest
+    # See the note on the build job. On `ubuntu-latest` the browser
+    # install failed and the suite step was marked SKIPPED — neither
+    # pass nor fail, which is the one outcome nobody reads.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
