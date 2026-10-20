@@ -55,7 +55,7 @@ describe('the migration does not re-assert what was retracted', () => {
     expect(MIGRATION).not.toMatch(/write path had stopped responding\.\s*$/m);
     // The retraction itself must stay: a correction that gets tidied
     // away leaves the original claim as the only version anyone reads.
-    expect(PROSE).toMatch(/the first two were both wrong/i);
+    expect(PROSE).toMatch(/the diagnosis was wrong twice/i);
   });
 
   it('does not claim the guard reads the text of the statement', () => {
@@ -110,20 +110,48 @@ describe('the way around the guard stays refused, and named', () => {
   });
 });
 
-describe('the ledger entry that must not be written', () => {
-  it('says 0050 is deliberately absent from schema_migrations', () => {
+describe('the ledger, and the order the two things happened in', () => {
+  it('records that the drop ran, and that it was verified afterwards', () => {
+    // Applied by hand in the SQL editor on 20 October, because the
+    // guard left no honest door from here. "Success. No rows returned"
+    // is the editor's answer to a DROP whether or not anything went, so
+    // the catalogue was read again rather than believed.
+    expect(PROSE).toMatch(/applied to production on 2026-10-20/i);
+    expect(PROSE).toMatch(/zero of the six tables remain/i);
+  });
+
+  it('keeps the rule that an unapplied drop is never recorded as applied', () => {
     /**
-     * 0051 and 0052 were applied to production and missing from
+     * 0051 and 0052 were live in production and missing from
      * supabase_migrations.schema_migrations, so `db push` would have
-     * replayed them and failed. They were recorded on 20 October.
+     * replayed them and failed. Both were recorded on 20 October.
      *
-     * Recording 0050 the same way would be the worst available outcome:
-     * every future push would skip the drop and report success, and the
-     * five tables would become permanent while the file claiming to
-     * remove them stayed in the repository looking done.
+     * 0050 was deliberately left out until it had actually run. Writing
+     * an unapplied drop into the ledger is the worst available outcome:
+     * every future push skips it and reports success, and five empty
+     * tables become permanent behind a file that looks finished. The
+     * sequence is the lesson, so it stays written down.
      */
-    expect(MIGRATION).toContain('DELIBERATELY NOT RECORDED AS APPLIED');
-    expect(MIGRATION).toContain('skip the drop forever');
+    expect(PROSE).toMatch(/deliberately left out until it had actually run/i);
+    expect(PROSE).toMatch(/skip it and report success/i);
+    expect(PROSE).toMatch(/timestamp of the run rather than of the writing/i);
+  });
+
+  it('records that the first attempt was aimed at the wrong project', () => {
+    /**
+     * The account holds three Supabase projects and the dashboard had
+     * `bymytaxi` selected, not `Lexy`. It would have done nothing —
+     * none of the six names exist there — but that was `if exists`
+     * doing the work, not the procedure.
+     *
+     * The cause was mine: I wrote "Supabase → your project → SQL
+     * Editor" with the project ref in front of me. Anything destructive
+     * handed to a person now names the project and carries a read-only
+     * check that must return the expected count first.
+     */
+    expect(PROSE).toMatch(/bymytaxi/);
+    expect(PROSE).toMatch(/luck rather than aim/i);
+    expect(PROSE).toMatch(/names the project/i);
   });
 
   it('still drops the probe table I left behind', () => {

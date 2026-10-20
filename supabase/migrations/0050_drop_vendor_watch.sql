@@ -38,8 +38,31 @@
 -- never needs `cascade` and therefore cannot quietly take something it
 -- was not pointed at.
 
--- NOT APPLIED TO PRODUCTION AS OF 2026-10-20. THE DIAGNOSIS BELOW IS
--- THE THIRD ONE AND THE FIRST TWO WERE BOTH WRONG.
+-- APPLIED TO PRODUCTION ON 2026-10-20 AT 19:24 UTC, BY HAND, IN THE
+-- SUPABASE SQL EDITOR, BY THE OPERATOR.
+--
+-- Verified afterwards rather than assumed: zero of the six tables
+-- remain, and no enum type, function or sequence named for the feature
+-- survives it — 0034 created only tables and their indexes, and an
+-- index falls with its table. Recorded in
+-- supabase_migrations.schema_migrations with the version 20261020192450,
+-- which is when it ran rather than when it was written.
+--
+-- The account holds three Supabase projects and the first attempt was
+-- aimed at the wrong one. `bymytaxi` was selected in the dashboard,
+-- not `Lexy`. It would have done nothing — measured, none of the six
+-- names exist there, and `if exists` would have passed over all of
+-- them — but that was luck rather than aim, and the luck belonged to a
+-- clause rather than to the procedure.
+--
+-- The cause was mine: the instructions said "Supabase → your project →
+-- SQL Editor" while I had the project ref in front of me and did not
+-- write it down. Anything destructive handed to a person now names the
+-- project and carries a read-only check that must return the expected
+-- count before the destructive statement is pasted at all.
+--
+-- WHAT FOLLOWS IS THE RECORD OF WHY IT TOOK TWO DAYS, KEPT BECAUSE THE
+-- DIAGNOSIS WAS WRONG TWICE AND THE CORRECTIONS ARE THE USEFUL PART.
 --
 -- WRONG ONCE: two commit messages say Supabase's write path had stopped
 -- responding. It had not. SELECT returns instantly, UPDATE committed on
@@ -69,9 +92,9 @@
 -- which is the tool designed for exactly this, so it is not the wrong
 -- door either.
 --
--- WHY IT IS STILL NOT APPLIED
+-- WHY IT COULD NOT BE RUN FROM HERE, AND WAS HANDED OVER INSTEAD
 --
--- There is no second door that is honest. The ways around a
+-- There was no second door that is honest. The ways around a
 -- statement-level guard all work by hiding the statement from it:
 -- EXECUTE inside a DO block, or scheduling the drop from inside the
 -- database so the text we send contains no DROP at all. This repository
@@ -87,18 +110,25 @@
 -- role key, and there is no connection string in Vercel to borrow. So
 -- this is a credential boundary, not a missing technique.
 --
--- Cost of leaving it: five empty tables and one probe table that
--- nothing references. The file stays here so the drop happens the next
--- time anybody runs `supabase db push` or opens the SQL editor, and
--- `if exists` makes it safe whenever that is.
+-- So it was handed to the one person who holds that credential, as six
+-- lines to paste, preceded by a read-only check that had to return 6
+-- before the drops were pasted at all. That check is the only reason
+-- the wrong-project attempt was caught: the breadcrumb said `bymytaxi`
+-- and reading it was what stopped the Run.
 --
--- DELIBERATELY NOT RECORDED AS APPLIED. On 20 October the migration
--- ledger was reconciled: 0051 and 0052 were applied to production but
--- missing from supabase_migrations.schema_migrations, so `db push`
--- would have tried to replay them and failed. They were inserted with
--- versions taken from their own commit dates. 0050 was NOT, because it
--- has not run — and writing it into the ledger would make every future
--- push skip the drop forever while reporting success.
+-- THE LEDGER, RECONCILED THE SAME DAY
+--
+-- supabase_migrations.schema_migrations stopped at 0049b. 0051 and 0052
+-- were live in production — the applicability columns and all three
+-- anonymous-read policies — but absent from it, so `db push` would have
+-- replayed them and failed on objects that already exist. Both were
+-- inserted with versions taken from their own commit dates.
+--
+-- 0050 was deliberately left out until it had actually run. Writing an
+-- unapplied drop into the ledger makes every future push skip it and
+-- report success, which turns five empty tables into permanent ones
+-- behind a file that looks finished. It was added only afterwards, with
+-- the timestamp of the run rather than of the writing.
 --
 -- MY OWN LITTER, LEFT BEHIND
 --
