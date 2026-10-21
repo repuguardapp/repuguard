@@ -1,7 +1,6 @@
 import 'server-only';
 import { FRAMEWORKS, type LegalFramework } from './legal-frameworks';
 import { supabaseService } from './supabase';
-import { unstable_cache } from 'next/cache';
 
 /**
  * Read access to the published legal-watch corpus.
@@ -182,67 +181,6 @@ export async function listPublishedDecisions(
 }
 
 /**
- * The same read, but cacheable — so the pages that use it can be built
- * rather than rendered per request.
- *
- * WHY THIS IS NEEDED AT ALL
- *
- * supabaseService() sets `cache: 'no-store'` on every fetch, for good
- * reasons that have nothing to do with these pages. Next sees that
- * inside a static route and refuses to prerender, which is why the
- * 21 October build logged, seven times, once per locale:
- *
- *   [legal-decisions] list_failed
- *     Dynamic server usage: no-store fetch … /ar/decisions
- *
- * The route then falls back to rendering on demand. The page works —
- * production serves all 44 rows in Arabic — but every visit, Googlebot's
- * included, pays a database round trip. On /decisions that is the worst
- * page on the site to pay it: it is the hub every decision links back
- * to, so it is re-crawled far more often than any single decision, and
- * a slow answer there depresses the crawl rate for everything.
- *
- * unstable_cache runs the read inside a cache scope, where the no-store
- * fetch no longer forces the route dynamic. The data source does not
- * change; what changes is that the result is reusable.
- *
- * A FAILURE IS NEVER CACHED
- *
- * The inner function throws instead of returning null, and the wrapper
- * catches. unstable_cache stores what it is given — including a null —
- * so returning one would pin "this list could not be loaded" on the hub
- * for a full hour over a single blink of the database. A thrown error
- * caches nothing and the next request tries again.
- *
- * One hour matches the page's own `revalidate`, and the publication
- * cron runs every six, so nothing is ever stale by more than a sixth of
- * a publishing cycle.
- */
-const readPublished = unstable_cache(
-  async (locale: string, limit: number): Promise<PublishedDecision[]> => {
-    const rows = await listPublishedDecisions(locale, limit);
-    // Not `return []`: an empty corpus and an unreadable one are
-    // different sentences, and only one of them is safe to remember.
-    if (rows === null) throw new Error('legal_decisions_unreadable');
-    return rows;
-  },
-  ['published-decisions'],
-  { revalidate: 3600, tags: ['legal-decisions'] }
-);
-
-/** Cached list, or null when the read failed. Null is never cached. */
-export async function listPublishedDecisionsCached(
-  locale: string,
-  limit = 50
-): Promise<PublishedDecision[] | null> {
-  try {
-    return await readPublished(locale, limit);
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Other decisions a reader of this one would actually want.
  *
  * THE THIRD STRAND OF THE CRAWL GRAPH
@@ -385,7 +323,7 @@ export async function listDecisionsForFramework(
   // The corpus is read whole and filtered here. At 36 published rows
   // that costs nothing, and it keeps one definition of which framework
   // a decision belongs to instead of two.
-  const all = await listPublishedDecisionsCached(locale, 500);
+  const all = await listPublishedDecisions(locale, 500);
   if (all === null) return null;
 
   return all.filter((d) => d.frameworks.some((f) => f.id === frameworkId)).slice(0, limit);
