@@ -181,6 +181,91 @@ export async function listPublishedDecisions(
 }
 
 /**
+ * Other decisions a reader of this one would actually want.
+ *
+ * THE THIRD STRAND OF THE CRAWL GRAPH
+ *
+ * The hub gave each decision one inbound link. Reversing the framework
+ * arrow gave it a second, from a prerendered page. This gives it the
+ * rest: with 44 decisions each pointing at a handful of neighbours, the
+ * corpus stops being a fan out of one hub and becomes a mesh. A crawler
+ * that lands anywhere in it can walk the whole thing.
+ *
+ * RELATEDNESS IS MEASURED, NOT ASSERTED
+ *
+ * Two signals, both from the decision's own record, both checkable:
+ *
+ *   a cited provision in common — the strong one. Two decisions citing
+ *   Art. 6 GDPR are about the same obligation, whoever issued them.
+ *
+ *   the same authority — the weak one, used to rank and to fill. Two
+ *   ICO penalties share a regulator and a procedure.
+ *
+ * Nothing is related for the sake of filling a row. A decision with no
+ * provisions cited and no sibling from its authority returns an empty
+ * list and the page renders no section, because "related decisions"
+ * under an arbitrary pick is a claim about the law we did not verify.
+ *
+ * TWO QUERIES, NO STRING BUILDING
+ *
+ * PostgREST's `or=` takes a filter expression as text. `authority` is
+ * copied from a regulator's page and has held commas and parentheses;
+ * interpolating it into that expression is how a filter silently stops
+ * meaning what it says. Two parameterised reads cost less than being
+ * clever about one.
+ */
+export async function listRelatedDecisions(
+  decision: Pick<PublishedDecision, 'slug' | 'authority' | 'articles'>,
+  locale: string,
+  limit = 6
+): Promise<PublishedDecision[] | null> {
+  const db = supabaseService();
+  const base = () =>
+    db.from('legal_developments').select(SELECT).eq('status', 'published').limit(60);
+
+  try {
+    const reads = [];
+    if (decision.authority) reads.push(base().eq('authority', decision.authority));
+    if (decision.articles.length > 0) reads.push(base().overlaps('articles', decision.articles));
+    if (reads.length === 0) return [];
+
+    const results = await Promise.all(reads);
+    if (results.some((r) => r.error)) {
+      console.error('[legal-decisions] related_failed', {
+        error: results.find((r) => r.error)?.error?.message
+      });
+      return null;
+    }
+
+    const byId = new Map<string, PublishedDecision>();
+    for (const r of results) {
+      for (const row of (r.data ?? []) as unknown as Row[]) {
+        const shaped = shape(row, locale);
+        if (shaped && shaped.slug !== decision.slug) byId.set(shaped.id, shaped);
+      }
+    }
+
+    const shared = (d: PublishedDecision) =>
+      d.articles.filter((a) => decision.articles.includes(a)).length;
+
+    return [...byId.values()]
+      .sort(
+        (a, b) =>
+          // A shared provision outranks a shared regulator, and among
+          // equals the newer decision is the more useful one to read.
+          shared(b) - shared(a) ||
+          (b.decisionDate ?? '').localeCompare(a.decisionDate ?? '')
+      )
+      .slice(0, limit);
+  } catch (err) {
+    console.error('[legal-decisions] related_unavailable', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
+  }
+}
+
+/**
  * Published decisions that bear on one framework.
  *
  * THE LINK THIS EXISTS TO CREATE

@@ -7,7 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { auditHrefFor, getPublishedDecision, listPublishedSlugs } from '@/lib/legal-decisions';
+import {
+  auditHrefFor,
+  getPublishedDecision,
+  listPublishedSlugs,
+  listRelatedDecisions,
+  type PublishedDecision
+} from '@/lib/legal-decisions';
 import { frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
 
 /**
@@ -83,6 +89,11 @@ export default async function DecisionPage({ params }: PageProps) {
   const t = await getTranslations('decisions');
   const decision = await getPublishedDecision(params.slug, params.locale);
   if (!decision) notFound();
+
+  // null means the read failed. An empty list means nothing in the
+  // corpus cites the same provisions or came from the same regulator,
+  // which is a real answer and renders no section at all.
+  const related = await listRelatedDecisions(decision, params.locale);
 
   const facts: { label: string; value: string }[] = [];
   if (decision.entity) facts.push({ label: t('entity'), value: decision.entity });
@@ -209,6 +220,40 @@ export default async function DecisionPage({ params }: PageProps) {
                   className="text-sm underline underline-offset-4"
                 >
                   {frameworkLabel(framework, params.locale)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {/* The mesh.
+
+          The hub gave each decision one inbound link; the framework
+          pages gave it a second. This gives it the rest — 44 decisions
+          each pointing at up to six neighbours is a corpus a crawler
+          can walk from any entry point rather than a fan out of one
+          page it rarely visits.
+
+          Relatedness is measured, not filled in: a cited provision in
+          common first, the same authority second. A decision with
+          neither renders nothing here, because "related decisions"
+          over an arbitrary pick is a claim about the law nobody
+          checked. */}
+      {related && related.length > 0 ? (
+        <section className="grid gap-3">
+          <h2 className="text-sm font-medium">{t('indexTitle')}</h2>
+          <ul className="grid gap-2">
+            {related.map((r: PublishedDecision) => (
+              <li key={r.slug}>
+                <Link
+                  href={`/decisions/${r.slug}`}
+                  className="block rounded-md border bg-card p-3 transition hover:bg-accent"
+                >
+                  <div className="text-sm font-medium">{r.title}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {[r.authority, r.decisionDate].filter(Boolean).join(' · ')}
+                  </div>
                 </Link>
               </li>
             ))}
