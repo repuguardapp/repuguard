@@ -2,6 +2,7 @@ import 'server-only';
 import { alertOps } from './alert';
 import { classifyScanFailure, type FailureCode } from './scan-failure';
 import { supabaseService } from './supabase';
+import { unstable_cache } from 'next/cache';
 
 /**
  * The observatory's figures, counted from the same rows the product uses.
@@ -332,6 +333,51 @@ export async function observatoryReport(): Promise<ObservatoryReport | null> {
     console.error('[observatory] read_threw', {
       error: err instanceof Error ? err.message : String(err)
     });
+    return null;
+  }
+}
+
+/**
+ * The same report, read once an hour instead of once per visitor.
+ *
+ * /observatory stays `force-dynamic`, and that is not what this
+ * changes. Reading the Referer header is reading the request, the
+ * sixty-day backlink test needs to see who arrived, and a page cached
+ * for an hour cannot. That trade stands.
+ *
+ * What it removes is the other half of the cost. Rendering per request
+ * does not require querying per request: supabaseService() sets
+ * `cache: 'no-store'`, so every visit — Googlebot's included — was
+ * running the survey aggregation again for an answer that changes when
+ * the policy-survey cron runs, every three hours.
+ *
+ * This matters more than one URL should, because of what /observatory
+ * is. It is the only page on this site that has ever earned organic
+ * traffic: seven clicks from a Google result between 28 September and
+ * 1 October. A crawler's view of how fast a host answers is formed on
+ * the pages it visits most, and it applies that judgement to the whole
+ * site — which is the thing currently leaving 427 URLs discovered and
+ * unfetched.
+ *
+ * As with the decisions list, a failure is never cached: the inner
+ * function throws, the wrapper catches, and the next request tries
+ * again rather than serving an hour of "no data" over one bad second.
+ */
+const readReport = unstable_cache(
+  async (): Promise<ObservatoryReport> => {
+    const report = await observatoryReport();
+    if (report === null) throw new Error('observatory_unreadable');
+    return report;
+  },
+  ['observatory-report'],
+  { revalidate: 3600, tags: ['observatory'] }
+);
+
+/** Cached report, or null when the read failed. Null is never cached. */
+export async function observatoryReportCached(): Promise<ObservatoryReport | null> {
+  try {
+    return await readReport();
+  } catch {
     return null;
   }
 }

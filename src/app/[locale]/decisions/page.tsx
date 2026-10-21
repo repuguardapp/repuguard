@@ -5,7 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { listPublishedDecisions } from '@/lib/legal-decisions';
+import { listPublishedDecisionsCached } from '@/lib/legal-decisions';
 import { frameworkLabel } from '@/lib/legal-labels';
 
 /**
@@ -41,7 +41,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function DecisionsIndexPage({ params }: PageProps) {
   setRequestLocale(params.locale);
   const t = await getTranslations('decisions');
-  const decisions = await listPublishedDecisions(params.locale);
+  // Cached, so this route prerenders instead of running a database
+  // read on every visit. It is the hub every decision links back to, so
+  // it is the most re-crawled page on the site and the worst one to
+  // answer slowly. See listPublishedDecisionsCached for the mechanism.
+  const decisions = await listPublishedDecisionsCached(params.locale);
 
   return (
     <div className="mx-auto grid max-w-3xl gap-8 px-4 py-16 md:px-0">

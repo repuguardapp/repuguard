@@ -11,7 +11,7 @@ import { jsonLdScript } from '@/lib/json-ld';
 import {
   MIN_DOMAINS_FOR_DOWNLOAD,
   observatoryDataset,
-  observatoryReport
+  observatoryReportCached
 } from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
 import { Link } from '@/i18n/navigation';
@@ -47,6 +47,13 @@ import { Link } from '@/i18n/navigation';
  * route out of static rendering. That is the trade being made knowingly:
  * the whole point of the study is a sixty-day test of whether anyone
  * links to it, and a page cached for an hour cannot see who arrived.
+ *
+ * Rendering per request is not the same as QUERYING per request, and the
+ * second half of that cost has since been removed: the report comes from
+ * observatoryReportCached, so a visit renders fresh HTML from data read
+ * once an hour. Googlebot forms its view of how fast this host answers
+ * on the pages it visits, and this is the only one on the site that has
+ * ever earned an organic visit.
  *
  * It is declared here rather than inherited from a layout, which is the
  * rule this codebase settled on after `force-dynamic` on the locale
@@ -87,7 +94,10 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
   setRequestLocale(params.locale);
   const t = await getTranslations('observatory');
   const tScan = await getTranslations('scan');
-  const report = await observatoryReport();
+  // Cached. The page still renders per request — it must, to read the
+  // Referer — but it no longer re-runs the survey aggregation for every
+  // visit. See observatoryReportCached.
+  const report = await observatoryReportCached();
 
   // Counted after the page is composed and never awaited: a failure to
   // count is not a failure to serve.
