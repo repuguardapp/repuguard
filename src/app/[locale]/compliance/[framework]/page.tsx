@@ -11,6 +11,7 @@ import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { authorityName, frameworkLabel, frameworkName } from '@/lib/legal-labels';
 import { frameworkParams, frameworkPairKey, relatedFrameworks } from '@/lib/seo-routes';
+import { listDecisionsForFramework, type PublishedDecision } from '@/lib/legal-decisions';
 import { appUrl } from '@/lib/app-url';
 import { jsonLdScript } from '@/lib/json-ld';
 
@@ -88,6 +89,11 @@ export default async function FrameworkPage({ params }: PageProps) {
   const t = await getTranslations('frameworkPage');
   const name = frameworkName(framework, params.locale);
   const related = relatedFrameworks(framework.id, 4);
+  // null means the read failed and the page says so; an empty list
+  // renders nothing. "No decisions under the GDPR" would be a confident
+  // false statement about the law.
+  const decisions = await listDecisionsForFramework(framework.id, params.locale);
+  const tDecisions = await getTranslations('decisions');
 
   // JSON-LD: Article for the page itself and Legislation for the
   // regulation it describes, in one <script> so Google reads them as a
@@ -190,6 +196,53 @@ export default async function FrameworkPage({ params }: PageProps) {
             </li>
           ))}
         </ul>
+
+        {/* The arrow, reversed.
+
+            This route pointed at nothing and was pointed at by every
+            decision page. 427 of our URLs sit in Search Console as
+            "Discovered – currently not indexed" — found, never fetched —
+            because each decision had exactly one internal inbound link,
+            from the /decisions hub, on a domain with no external links.
+
+            These pages are prerendered and cheap for a crawler to
+            fetch, so a link from here is worth more than a link from a
+            page Googlebot is already deferring. Every decision listed
+            gains one to three of them.
+
+            It is also the page this route always claimed to be: what
+            regulators actually did under these articles, not only what
+            the articles say. */}
+        {decisions === null ? (
+          <p className="mt-16 text-sm text-muted-foreground">{tDecisions('unavailable')}</p>
+        ) : decisions.length > 0 ? (
+          <>
+            <h2 className="mt-16 text-2xl font-semibold tracking-tight">
+              {tDecisions('indexTitle')}
+            </h2>
+            <ul className="mt-4 grid gap-2">
+              {decisions.map((d: PublishedDecision) => (
+                <li key={d.slug}>
+                  <Link
+                    href={`/decisions/${d.slug}`}
+                    className="block rounded-md border bg-card p-4 transition hover:bg-accent"
+                  >
+                    <div className="text-sm font-medium">{d.title}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {[d.authority, d.decisionDate].filter(Boolean).join(' · ')}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/decisions"
+              className="mt-4 inline-block text-sm underline underline-offset-4"
+            >
+              {tDecisions('indexTitle')}
+            </Link>
+          </>
+        ) : null}
 
         {related.length > 0 && (
           <>

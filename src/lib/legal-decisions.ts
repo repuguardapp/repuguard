@@ -180,6 +180,70 @@ export async function listPublishedDecisions(
     .filter((d): d is PublishedDecision => d !== null);
 }
 
+/**
+ * Published decisions that bear on one framework.
+ *
+ * THE LINK THIS EXISTS TO CREATE
+ *
+ * Google knows 442 of our 658 URLs and has indexed 13. Of the 429 it
+ * refuses, 427 are "Discovered – currently not indexed": it has the URL
+ * and has never fetched the page. One page, exactly one, was crawled and
+ * turned down — so this is a crawl-budget problem, not a verdict on the
+ * writing.
+ *
+ * The cause is in the link graph. Every decision page had exactly one
+ * internal inbound link, from the /decisions hub, because decisions
+ * pointed out to frameworks and frameworks pointed back at nothing. A
+ * page reachable from one hub, on a domain with no external links, is a
+ * page Googlebot defers forever.
+ *
+ * This reverses the arrow. A framework page lists the decisions taken
+ * under it, which gives every decision one to three more inbound links
+ * — and they arrive from the prerendered framework pages, the cheapest
+ * ones for a crawler to fetch.
+ *
+ * It is also simply a better page. A reader on /compliance/gdpr seeing
+ * what regulators actually did under those articles is the page that
+ * route always claimed to be.
+ *
+ * WHERE THE ASSOCIATION COMES FROM
+ *
+ * `legal_sources.framework_ids`, not the decision row: a decision
+ * inherits the frameworks of the regulator feed that produced it. That
+ * is already how shape() builds `frameworks`, so this filters the shaped
+ * objects rather than inventing a second rule in SQL that could drift
+ * from the first.
+ *
+ * Null means the read failed. The caller must say so rather than render
+ * an empty list — "no decisions under the GDPR" is a false statement
+ * about the law, and a confident one.
+ */
+export async function listDecisionsForFramework(
+  frameworkId: string,
+  locale: string,
+  /**
+   * Generous on purpose. The first draft capped this at 12 and that
+   * silently defeated the point: measured against production, the 44
+   * published decisions split 25 under uk_gdpr and 19 under gdpr, so a
+   * cap of 12 would have left 20 of them with no second inbound link —
+   * the exact pages this exists to get crawled.
+   *
+   * The cap remains for page weight rather than for crawl. A list of
+   * enforcement decisions is a list a reader will scroll; a list of two
+   * hundred is a page nobody renders. The hub link below the list is
+   * what carries a crawler past it.
+   */
+  limit = 60
+): Promise<PublishedDecision[] | null> {
+  // The corpus is read whole and filtered here. At 36 published rows
+  // that costs nothing, and it keeps one definition of which framework
+  // a decision belongs to instead of two.
+  const all = await listPublishedDecisions(locale, 500);
+  if (all === null) return null;
+
+  return all.filter((d) => d.frameworks.some((f) => f.id === frameworkId)).slice(0, limit);
+}
+
 /** One decision by slug, or null — the page calls notFound() on null. */
 export async function getPublishedDecision(
   slug: string,

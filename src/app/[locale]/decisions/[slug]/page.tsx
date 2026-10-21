@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
-import { auditHrefFor, getPublishedDecision } from '@/lib/legal-decisions';
+import { auditHrefFor, getPublishedDecision, listPublishedSlugs } from '@/lib/legal-decisions';
 import { frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
 
 /**
@@ -32,6 +32,31 @@ import { frameworkLabel, outcomeLabel } from '@/lib/legal-labels';
  */
 
 export const revalidate = 3600;
+
+/**
+ * Prerendered at build, because Googlebot sets its crawl rate on how
+ * fast we answer.
+ *
+ * 427 of our URLs sit in Search Console as "Discovered – currently not
+ * indexed": found, never fetched. These 252 pages (36 decisions × 7
+ * locales) were the slowest on the site to serve — the only programmatic
+ * family without generateStaticParams, so every cold URL meant a
+ * database round trip before a byte of HTML. `compliance` and `compare`
+ * have had it from the start.
+ *
+ * `dynamicParams` is deliberately left at its default of true. The
+ * localisation cron publishes four more decisions every six hours, and
+ * those must render the moment they exist rather than waiting for the
+ * next deploy. This makes the known ones instant; it does not close the
+ * door behind them.
+ *
+ * A failed read returns [] from listPublishedSlugs, which prerenders
+ * nothing and falls back to exactly today's behaviour. A build must not
+ * break because the database blinked.
+ */
+export async function generateStaticParams() {
+  return (await listPublishedSlugs()).map(({ slug }) => ({ slug }));
+}
 
 interface PageProps {
   params: { locale: string; slug: string };
