@@ -8,6 +8,7 @@ import { stripe } from '@/lib/stripe';
 import { latestCiRun } from '@/lib/ci-status';
 import { FUNNEL_STAGES, type Funnel, type FunnelWindow } from '@/lib/funnel';
 import { OUTREACH_SENT_AT, outreachTest } from '@/lib/outreach-test';
+import { barrenSources, type ClassifiedRow } from '@/lib/source-yield';
 import { isRuleWritten } from '@/lib/rejection-reasons';
 import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
@@ -111,6 +112,11 @@ async function digest() {
   const liveSubscriptions = await readStripeLiveSubscriptions();
   const billing = readBillingFrom(await readMirrorSubscriptions(db), liveSubscriptions);
 
+  // Read once. The barren list is filtered against the same snapshot the
+  // three health buckets were built from, so a source cannot be reported
+  // as switched off and as a live cost in the same email.
+  const health = await readSourceHealth(db);
+
   const input: DigestInput = {
     auditsCompleted,
     auditsFailed,
@@ -120,8 +126,8 @@ async function digest() {
     awaitingReview,
     ...billing,
     corpus: await readCorpus(db),
-    ...(await readSourceHealth(db)),
-    barrenSources: await readBarrenSources(db),
+    ...health.buckets,
+    barrenSources: await readBarrenSources(db, health.enabledIds),
     stalledItems: await readStalledItems(db),
     parkedItems: await readParkedItems(db),
     ci: await latestCiRun(),
@@ -196,14 +202,23 @@ async function readCorpus(
  * failures we have already understood.
  */
 async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise<{
-  brokenSources: { id: string; error: string | null }[] | null;
-  neverPolledSources: string[] | null;
-  disabledSources: { id: string; reason: string | null }[] | null;
+  buckets: {
+    brokenSources: { id: string; error: string | null }[] | null;
+    neverPolledSources: string[] | null;
+    disabledSources: { id: string; reason: string | null }[] | null;
+  };
+  enabledIds: Set<string> | null;
 }> {
   const unavailable = {
-    brokenSources: null,
-    neverPolledSources: null,
-    disabledSources: null
+    buckets: {
+      brokenSources: null,
+      neverPolledSources: null,
+      disabledSources: null
+    },
+    // Not an empty set: "we could not read which sources are on" is not
+    // "none are on". readBarrenSources reports itself unreadable rather
+    // than filtering against a guess.
+    enabledIds: null
   };
 
   try {
@@ -228,13 +243,25 @@ async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise
     const live = rows.filter((r) => r.enabled);
 
     return {
-      brokenSources: live
-        .filter((r) => r.last_status === 'error')
-        .map((r) => ({ id: r.id, error: r.last_error })),
-      neverPolledSources: live.filter((r) => r.last_status === null).map((r) => r.id),
-      disabledSources: rows
-        .filter((r) => !r.enabled)
-        .map((r) => ({ id: r.id, reason: r.disabled_reason }))
+      buckets: {
+        brokenSources: live
+          .filter((r) => r.last_status === 'error')
+          .map((r) => ({ id: r.id, error: r.last_error })),
+        neverPolledSources: live.filter((r) => r.last_status === null).map((r) => r.id),
+        disabledSources: rows
+          .filter((r) => !r.enabled)
+          .map((r) => ({ id: r.id, reason: r.disabled_reason }))
+      },
+      /**
+       * Handed to readBarrenSources so the yield list obeys the same
+       * one-bucket rule as the three above.
+       *
+       * Passed rather than re-queried, and that is the point: two reads
+       * of legal_sources a few hundred milliseconds apart can disagree
+       * about which sources are on, and the bug this fixes is exactly a
+       * source appearing in two lists at once. One read, one answer.
+       */
+      enabledIds: new Set(live.map((r) => r.id))
     };
   } catch {
     return unavailable;
@@ -383,33 +410,27 @@ async function readStripeLiveSubscriptions(): Promise<StripeLiveSubscription[] |
  * not been judged, and counting it as a failure would accuse a source of
  * barrenness for being recent.
  */
-const BARREN_MIN_CLASSIFIED = 8;
 
 async function readBarrenSources(
-  db: ReturnType<typeof supabaseService>
+  db: ReturnType<typeof supabaseService>,
+  enabledIds: Set<string> | null
 ): Promise<{ id: string; rejected: number }[] | null> {
+  // Not knowing which sources are on is not the same as all of them
+  // being on, so the rule refuses rather than guesses. See source-yield.
+  if (enabledIds === null) return null;
+
   try {
     const { data, error } = await db
       .from('legal_developments')
       .select('source_id, status')
+      // `discovered` is excluded from the denominator: an item still
+      // queued for extraction has not been judged, and counting it as a
+      // failure would accuse a source of barrenness for being recent.
       .neq('status', 'discovered')
       .limit(20_000);
     if (error) return null;
 
-    const tally = new Map<string, { kept: number; rejected: number }>();
-    for (const row of (data ?? []) as { source_id: string; status: string }[]) {
-      const entry = tally.get(row.source_id) ?? { kept: 0, rejected: 0 };
-      if (row.status === 'rejected') entry.rejected += 1;
-      else entry.kept += 1;
-      tally.set(row.source_id, entry);
-    }
-
-    return [...tally.entries()]
-      // A sample worth believing. Three rejections in a row is a quiet
-      // fortnight at a regulator, not a verdict on the source.
-      .filter(([, t]) => t.kept === 0 && t.rejected >= BARREN_MIN_CLASSIFIED)
-      .map(([id, t]) => ({ id, rejected: t.rejected }))
-      .sort((a, b) => b.rejected - a.rejected);
+    return barrenSources((data ?? []) as ClassifiedRow[], enabledIds);
   } catch {
     return null;
   }
