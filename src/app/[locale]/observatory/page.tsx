@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { waitUntil } from '@vercel/functions';
 import { headers } from 'next/headers';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Download } from 'lucide-react';
+import { ArrowRight, Download, ScanLine } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { buildHreflangAlternates } from '@/lib/hreflang';
@@ -14,6 +14,7 @@ import {
   observatoryReport
 } from '@/lib/observatory';
 import { recordReferral } from '@/lib/referrals';
+import { Link } from '@/i18n/navigation';
 
 /**
  * The observatory.
@@ -296,6 +297,53 @@ export default async function ObservatoryPage({ params }: { params: { locale: st
           </CardContent>
         </Card>
       ) : null}
+
+      {/* The funnel entrance, which this page did not have.
+
+          /observatory is the only page on this site that has ever
+          received organic search traffic: seven visits from a Google
+          result between 28 September and 1 October, recorded by
+          recordReferral a few lines above. Every one of them landed on
+          a page whose only two links went to doi.org and to a CSV.
+          Nobody could have entered the product from here, so nobody
+          did.
+
+          WHY THIS IS NOT A SALES BOX, AND WHERE IT SITS
+
+          The page's value is that it is neutral. That is what the DOI
+          certifies, what makes it citable, and what would make somebody
+          link to it. An offer above the findings would trade the thing
+          that earns the traffic for the thing that converts it.
+
+          So it sits after the findings and the citation, and before the
+          dataset download — not after it. The download is the
+          researcher's exit, and it is conditional on a domain count, so
+          placing the entrance below it would hide the entrance on every
+          day the dataset is small. This card always renders.
+
+          It says only what is already true: the dataset records seven
+          checks across many domains, and the same seven can be run on
+          one. The words are the scan form's own, in all seven
+          languages, so no claim is invented here and nothing had to be
+          translated to say it. */}
+      <Card className="border-foreground/15 bg-muted/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ScanLine className="h-4 w-4" aria-hidden />
+            {tScan('formTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <p className="text-sm text-muted-foreground">{tScan('formLead')}</p>
+          <Link
+            href="/scan"
+            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background"
+          >
+            {tScan('formTitle')}
+            <ArrowRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* The same threshold the file itself enforces. Offering a
           download that answers 503 is a worse page than one that
