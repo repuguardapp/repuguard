@@ -661,5 +661,16 @@
     "citeConcept": "All editions",
     "empty": "The collection has not produced a reading yet. This page will show figures once it has; it will not show any before.",
     "unavailable": "We could not read our own figures just now. That is a failure of our database, not an absence of data — please try again shortly."
+  },
+  "embed": {
+    "metaTitle": "Embed the free policy scan",
+    "title": "Put the scan on your own site",
+    "lead": "One iframe. Your visitors check a privacy policy against seven published obligations and get the passage each reading rests on. No account, no key, nothing to install.",
+    "snippetLabel": "Copy this where you want it to appear",
+    "limitsTitle": "What it costs you, and what it costs us",
+    "limits": "Free, with no sign-up. We run {cap} scans a day across every site that embeds this; past that it answers plainly that today’s allowance is used up and starts again at midnight UTC. Each scan runs a language model we pay for, which is why there is a ceiling at all.",
+    "publicTitle": "Who can see a result",
+    "public": "A result lives at an unguessable address and anyone holding that address can open it. Treat the link the way you would a shared document: private until shared, public once it is. Uploaded documents are encrypted at rest and the key is not in the database.",
+    "sourceLabel": "The seven checks, and the study behind them"
   }
 }

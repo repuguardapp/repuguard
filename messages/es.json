@@ -661,5 +661,16 @@
     "citeConcept": "Todas las ediciones",
     "empty": "La recogida aún no ha producido ninguna lectura. Esta página mostrará cifras cuando las tenga; no mostrará ninguna antes.",
     "unavailable": "No hemos podido leer nuestras propias cifras ahora mismo. Es un fallo de nuestra base de datos, no una ausencia de datos: inténtelo de nuevo en un momento."
+  },
+  "embed": {
+    "metaTitle": "Integre el análisis gratuito",
+    "title": "Ponga el análisis en su propio sitio",
+    "lead": "Un iframe. Sus visitantes contrastan una política de privacidad con siete obligaciones publicadas y obtienen el pasaje en el que se apoya cada observación. Sin cuenta, sin clave, sin nada que instalar.",
+    "snippetLabel": "Copie esto donde quiera que aparezca",
+    "limitsTitle": "Lo que le cuesta a usted y lo que nos cuesta a nosotros",
+    "limits": "Gratuito y sin registro. Realizamos {cap} análisis al día entre todos los sitios que lo integran; superado ese límite, la respuesta indica con claridad que la asignación del día se ha agotado y vuelve a empezar a medianoche UTC. Cada análisis ejecuta un modelo de lenguaje que pagamos nosotros: de ahí el techo.",
+    "publicTitle": "Quién puede ver un resultado",
+    "public": "Un resultado vive en una dirección imposible de adivinar, y cualquiera que la tenga puede abrirlo. Trate el enlace como un documento compartido: privado mientras no circule, público en cuanto circule. Los documentos subidos se cifran en reposo y la clave no está en la base de datos.",
+    "sourceLabel": "Las siete comprobaciones y el estudio que las sustenta"
   }
 }

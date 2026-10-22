@@ -661,5 +661,16 @@
     "citeConcept": "Alle Ausgaben",
     "empty": "Die Erhebung hat noch keine Lesung erbracht. Diese Seite zeigt Zahlen, sobald sie welche hat — vorher keine.",
     "unavailable": "Wir konnten unsere eigenen Zahlen gerade nicht lesen. Das ist ein Fehler unserer Datenbank, kein Fehlen von Daten — bitte versuchen Sie es in Kürze erneut."
+  },
+  "embed": {
+    "metaTitle": "Den kostenlosen Scan einbinden",
+    "title": "Binden Sie den Scan auf Ihrer Website ein",
+    "lead": "Ein iframe. Ihre Besucher prüfen eine Datenschutzerklärung gegen sieben veröffentlichte Pflichten und erhalten die Textstelle, auf der jede Feststellung beruht. Ohne Konto, ohne Schlüssel, ohne Installation.",
+    "snippetLabel": "Fügen Sie dies dort ein, wo es erscheinen soll",
+    "limitsTitle": "Was es Sie kostet und was es uns kostet",
+    "limits": "Kostenlos und ohne Anmeldung. Wir führen {cap} Scans pro Tag über alle einbindenden Websites hinweg aus; darüber hinaus wird klar gemeldet, dass das Tageskontingent aufgebraucht ist, und es beginnt um Mitternacht UTC neu. Jeder Scan startet ein Sprachmodell, das wir bezahlen — daher die Obergrenze.",
+    "publicTitle": "Wer ein Ergebnis sehen kann",
+    "public": "Ein Ergebnis liegt unter einer nicht erratbaren Adresse, und wer diese Adresse hat, kann es öffnen. Behandeln Sie den Link wie ein geteiltes Dokument: privat, solange er nicht weitergegeben wird, öffentlich, sobald er es ist. Hochgeladene Dokumente werden ruhend verschlüsselt, und der Schlüssel liegt nicht in der Datenbank.",
+    "sourceLabel": "Die sieben Prüfungen und die Studie dahinter"
   }
 }

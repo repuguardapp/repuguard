@@ -56,6 +56,7 @@ const CORE_ROUTES = [
   '/sample-report',
   '/decisions',
   '/observatory',
+  '/embed',
   '/compliance',
   '/compare'
 ];

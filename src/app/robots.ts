@@ -23,7 +23,13 @@ const PRIVATE_PATHS = [
   '/admin/',
   '/onboarding',
   '/monitoring/',
-  '/embed/',
+  // Not '/embed/' as a whole: /[locale]/embed is the page that
+  // documents the widget and is meant to be indexed — it is the only
+  // acquisition channel we have that earns inbound links without
+  // prospecting. Only the widget itself stays out of the index, since
+  // a bare iframe target is not a page anybody should land on from a
+  // search result.
+  '/embed/audit',
   // The sign-in interstitial. Its URL carries a live one-time
   // token, and the page is meaningless without one.
   '/auth/confirm'

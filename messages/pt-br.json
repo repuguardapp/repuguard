@@ -661,5 +661,16 @@
     "citeConcept": "Todas as edições",
     "empty": "A coleta ainda não produziu nenhuma leitura. Esta página mostrará números quando os tiver; nenhum antes disso.",
     "unavailable": "Não conseguimos ler nossos próprios números agora. É uma falha do nosso banco de dados, não ausência de dados — tente novamente em instantes."
+  },
+  "embed": {
+    "metaTitle": "Incorpore a verificação gratuita",
+    "title": "Coloque a verificação no seu próprio site",
+    "lead": "Um iframe. Seus visitantes confrontam uma política de privacidade com sete obrigações publicadas e recebem o trecho em que cada constatação se apoia. Sem conta, sem chave, sem nada a instalar.",
+    "snippetLabel": "Copie isto onde quiser que apareça",
+    "limitsTitle": "O que custa a você e o que custa a nós",
+    "limits": "Gratuito e sem cadastro. Realizamos {cap} verificações por dia somando todos os sites que a incorporam; acima disso, a resposta informa com clareza que a cota do dia acabou e recomeça à meia-noite UTC. Cada verificação executa um modelo de linguagem que pagamos — daí o teto.",
+    "publicTitle": "Quem pode ver um resultado",
+    "public": "Um resultado fica em um endereço impossível de adivinhar, e qualquer pessoa com esse endereço pode abri-lo. Trate o link como um documento compartilhado: privado enquanto não circula, público assim que circula. Documentos enviados são criptografados em repouso e a chave não está no banco de dados.",
+    "sourceLabel": "As sete verificações e o estudo por trás delas"
   }
 }

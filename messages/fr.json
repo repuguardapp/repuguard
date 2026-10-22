@@ -661,5 +661,16 @@
     "citeConcept": "Toutes les éditions",
     "empty": "La collecte n'a pas encore produit de lecture. Cette page affichera des chiffres quand elle en aura ; elle n'en affichera aucun avant.",
     "unavailable": "Nous n'avons pas pu lire nos propres chiffres à l'instant. C'est une panne de notre base, pas une absence de données — réessayez dans un moment."
+  },
+  "embed": {
+    "metaTitle": "Intégrez le scan gratuit",
+    "title": "Mettez le scan sur votre site",
+    "lead": "Une iframe. Vos visiteurs confrontent une politique de confidentialité à sept obligations publiées et obtiennent le passage sur lequel repose chaque constat. Sans compte, sans clé, sans rien à installer.",
+    "snippetLabel": "Copiez ceci à l’endroit voulu",
+    "limitsTitle": "Ce que ça vous coûte, et ce que ça nous coûte",
+    "limits": "Gratuit, sans inscription. Nous effectuons {cap} scans par jour pour l’ensemble des sites qui l’intègrent ; au-delà, la réponse indique simplement que l’allocation du jour est épuisée et reprend à minuit UTC. Chaque scan fait tourner un modèle de langage que nous payons, d’où ce plafond.",
+    "publicTitle": "Qui peut voir un résultat",
+    "public": "Un résultat vit à une adresse indevinable, et quiconque détient cette adresse peut l’ouvrir. Traitez le lien comme un document partagé : privé tant qu’il ne circule pas, public dès qu’il circule. Les documents déposés sont chiffrés au repos et la clé n’est pas dans la base.",
+    "sourceLabel": "Les sept vérifications, et l’étude qui les fonde"
   }
 }

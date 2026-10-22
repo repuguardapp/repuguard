@@ -15,6 +15,7 @@ import { FREE_TIER_MAX_BYTES, getTierForOrg } from '@/lib/tier';
 import { hashDocument, wipeBuffer } from '@/lib/zero-knowledge';
 import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
 import { recordOutreachEvent } from '@/lib/outreach';
+import { claimAnonymousAudit } from '@/lib/anonymous-quota';
 
 /**
  * Asynchronous audit endpoint — accept, answer, then work.
@@ -135,6 +136,7 @@ type AuditError =
   | 'document_too_large_free_tier'
   | 'invalid_metadata'
   | 'rate_limited'
+  | 'free_scan_quota_reached'
   | 'no_credits'
   | 'credit_check_failed'
   | 'extraction_failed'
@@ -348,6 +350,44 @@ export async function POST(request: Request) {
   }
 
   const db = supabaseService();
+
+  /**
+   * The free widget's daily ceiling, counted in the database.
+   *
+   * The IP limiter above still runs and still discourages a burst from
+   * one address, but it cannot be a spend cap: its counters live in a
+   * Map inside one warm function instance, so on Vercel the ceiling is
+   * multiplied by however many instances are warm. And ORG_LIMIT is
+   * per organisation while every widget audit belongs to the SAME
+   * anonymous organisation — so one popular embedder, or one bored
+   * visitor, used to close the door for every other site at once.
+   *
+   * This is the cap that holds. It is claimed only for the anonymous
+   * org: a signed-in organisation spends its own credits and has
+   * nothing to do with this allowance.
+   *
+   * Claimed here, after the rate limit and before any model call, so a
+   * refused request costs nothing. See src/lib/anonymous-quota.
+   */
+  if (isAnonymousOrg) {
+    const quota = await claimAnonymousAudit(db);
+    if (!quota.ok) {
+      return NextResponse.json(
+        {
+          error: 'free_scan_quota_reached',
+          detail: `The free allowance of ${quota.cap} scans for today is used up. It starts again at midnight UTC.`,
+          resetAt: quota.resetAt
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((quota.resetAt - Date.now()) / 1000)),
+            'cache-control': 'no-store'
+          }
+        }
+      );
+    }
+  }
 
   // ---- 3. Credit gate + free-trial fallback (atomic) ----------------
   // Order of precedence:

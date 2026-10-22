@@ -13,7 +13,15 @@ import robots from '../src/app/robots';
  */
 
 const LOCALES = ['en', 'fr', 'es', 'de', 'pt-br', 'ja', 'ar'];
-const PRIVATE = ['/dashboard/', '/admin/', '/onboarding', '/embed/', '/monitoring/', '/auth/confirm'];
+/**
+ * `/embed/` is NOT in this list any more, and that is the change of
+ * 22 October rather than an omission. /[locale]/embed is the page that
+ * documents the widget and it is meant to be indexed — it is the only
+ * acquisition channel that earns inbound links without prospecting.
+ * The widget target itself stays out, and the pair of assertions below
+ * holds both halves.
+ */
+const PRIVATE = ['/dashboard/', '/admin/', '/onboarding', '/embed/audit', '/monitoring/', '/auth/confirm'];
 
 function crawlerRule() {
   const rules = robots().rules;
@@ -33,6 +41,29 @@ function isDisallowed(path: string): boolean {
     return regex.test(path);
   });
 }
+
+describe('the widget target is closed and the page describing it is open', () => {
+  it('keeps /embed/audit out of the index', () => {
+    // A bare iframe target is not a page anybody should land on from a
+    // search result.
+    expect(isDisallowed('/embed/audit')).toBe(true);
+    for (const locale of LOCALES) {
+      expect(isDisallowed(`/${locale}/embed/audit`), `/${locale}/embed/audit`).toBe(true);
+    }
+  });
+
+  it('lets /embed itself be crawled', () => {
+    /**
+     * The whole point of the page. Disallowing `/embed/` as a prefix
+     * would have blocked it on the trailing slash alone — a difference
+     * no one would have noticed until the page failed to appear and
+     * somebody spent a day on the sitemap.
+     */
+    for (const locale of LOCALES) {
+      expect(isDisallowed(`/${locale}/embed`), `/${locale}/embed`).toBe(false);
+    }
+  });
+});
 
 describe('private surfaces are disallowed at the URLs they actually have', () => {
   for (const path of PRIVATE) {
