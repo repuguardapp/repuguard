@@ -9,6 +9,7 @@ import { isAllowed, parseRobots, type RobotsRules } from '@/lib/robots';
 import { parseSitemap, describeSitemap, indexIsBlind, sitemapsFromRobots } from '@/lib/sitemap';
 import { supabaseService } from '@/lib/supabase';
 import { fetchExternal } from '@/lib/safe-fetch';
+import { classifyFailure, disableThreshold } from '@/lib/source-failure';
 
 /**
  * Legal watch — the intake of the Acquisition brain.
@@ -87,13 +88,23 @@ const MAX_ITEMS_PER_SOURCE = 40;
  * withdrew every one of its RSS feeds pending a redesign, so ours was
  * never coming back.
  *
- * Five runs is a day and a quarter: long enough that a regulator's
- * maintenance window or a bad afternoon does not disable anything,
- * short enough that a genuinely dead feed goes quiet within two days.
- * Re-enabling is deliberate, which is right — a dead feed returns only
- * when somebody has found its replacement.
+ * Five runs is thirty hours: short enough that a genuinely dead feed
+ * goes quiet within two days. Re-enabling is deliberate, which is right
+ * — a dead feed returns only when somebody has found its replacement.
+ *
+ * THIS COMMENT USED TO CLAIM FIVE RUNS WAS ALSO "long enough that a
+ * regulator's maintenance window does not disable anything". It is not,
+ * and on 22 October the CNIL proved it: four consecutive http_503 and
+ * one poll from being switched off, while its site served a maintenance
+ * page. France, four published decisions, a day and a quarter from
+ * silence over a server that was telling us to come back later.
+ *
+ * So the ceiling now depends on what failed. See src/lib/source-failure:
+ * a refusal or a wrong URL still dies in thirty hours, a 5xx gets a
+ * week. The number below is the terminal case only.
  */
-const DISABLE_AFTER_CONSECUTIVE_FAILURES = 5;
+// The numbers live in src/lib/source-failure, with the reasoning for
+// each ceiling. Nothing here re-declares them.
 
 /**
  * The same rule for a source that has never worked at all.
@@ -111,7 +122,6 @@ const DISABLE_AFTER_CONSECUTIVE_FAILURES = 5;
  * Twenty runs is five days: several probe reports, several corrections,
  * and still a bounded life for a URL that is simply wrong.
  */
-const DISABLE_UNVERIFIED_AFTER = 20;
 
 interface SourceRow {
   id: string;
@@ -546,7 +556,17 @@ async function pollSource(
     // A source that broke and a source that was never right are opposite
     // situations, and the five-run rule answers only the first.
     const unverified = !source.verified_at;
-    const limit = unverified ? DISABLE_UNVERIFIED_AFTER : DISABLE_AFTER_CONSECUTIVE_FAILURES;
+    /**
+     * The ceiling depends on what failed, not only on how often.
+     *
+     * The limit is chosen from THIS failure rather than from the streak's
+     * history, which is deliberate: a 403 arriving after four 503s is
+     * still a refusal and should end it, and a 503 arriving after four
+     * 404s means the server is down and we no longer know whether the URL
+     * is wrong. Deferring that judgement by one cycle is the honest move.
+     */
+    const kind = classifyFailure(error);
+    const limit = disableThreshold(error, unverified);
     const giveUp = streak >= limit;
     await stamp({
       last_status: 'error',
@@ -557,7 +577,9 @@ async function pollSource(
             enabled: false,
             disabled_reason: unverified
               ? `Never produced an item in ${streak} polls. The URL is probably wrong and the probe findings in last_error are where to look next.`
-              : `Auto-disabled after ${streak} consecutive failures. Last error: ${error}`
+              : kind === 'transient'
+                ? `Auto-disabled after ${streak} consecutive transient failures — about a week of them. The server kept saying "come back later" and we did, ${streak} times. Last error: ${error}`
+                : `Auto-disabled after ${streak} consecutive failures. Last error: ${error}`
           }
         : {})
     });
@@ -566,6 +588,7 @@ async function pollSource(
         source: source.id,
         streak,
         unverified,
+        kind,
         error
       });
       // Said once, at the moment it happens. After this the source is
@@ -573,7 +596,7 @@ async function pollSource(
       // never worked still says so here: giving up on a jurisdiction we
       // sell audits against is worth one line, even when each individual
       // failure was not.
-      alertOps('cron.watch_legal_source_disabled', { source: source.id, streak, unverified, error });
+      alertOps('cron.watch_legal_source_disabled', { source: source.id, streak, unverified, kind, error });
     }
     return {
       source: source.id,

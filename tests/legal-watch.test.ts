@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseFeed } from '../src/lib/feeds';
+import { disableThreshold } from '@/lib/source-failure';
 
 /**
  * Regulator feeds are not a contract we control. The parser's job is
@@ -167,7 +168,7 @@ describe('a dead source stops shouting', () => {
     // and it discredits the alerts that matter alongside it — the ICO
     // withdrew every one of its RSS feeds, so ours was never coming
     // back.
-    expect(source).toContain('DISABLE_AFTER_CONSECUTIVE_FAILURES');
+    expect(source).toContain('disableThreshold(error, unverified)');
     expect(source).toContain('cron.watch_legal_source_disabled');
 
     // A success must clear the streak, or an intermittent feed creeps
@@ -291,11 +292,11 @@ describe('a source that never worked is not a source that broke', () => {
    */
 
   it('gives a candidate a longer rope than a source that regressed', () => {
-    expect(source).toContain('DISABLE_UNVERIFIED_AFTER = 20');
-    expect(source).toContain('DISABLE_AFTER_CONSECUTIVE_FAILURES = 5');
-    expect(source).toContain(
-      'const limit = unverified ? DISABLE_UNVERIFIED_AFTER : DISABLE_AFTER_CONSECUTIVE_FAILURES;'
-    );
+    // Asserted against the rule rather than against the file that used
+    // to hold it: the thresholds moved into src/lib/source-failure on
+    // 22 October so they could be tested with real error strings.
+    expect(disableThreshold('http_404', true)).toBe(20);
+    expect(disableThreshold('http_404', false)).toBe(5);
   });
 
   it('does not alert on a candidate failing, which is the expected case', () => {
