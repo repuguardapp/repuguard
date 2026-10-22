@@ -32,7 +32,19 @@ import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
  */
 export const INDEXNOW_KEY = 'a7f3c21e9b5d4e08a1c6f2b7d9e4a308';
 
-/** Where the engines will look for it. Served by app/[key].txt/route.ts. */
+/**
+ * Where the engines will look for it.
+ *
+ * A static file in public/, NOT a route. The first version was
+ * app/[key].txt/route.ts and it never answered: the `[locale]` segment
+ * matched first, so Next took the key for a language and served the
+ * 404 page with lang="a7f3…txt". IndexNow would have refused every
+ * submission and nothing here would have said why — the test asserted
+ * the route's source text and never that the path was reachable.
+ *
+ * public/ is served before any dynamic segment is considered, which is
+ * the property this needs and a route cannot promise.
+ */
 export function indexNowKeyPath(): string {
   return `/${INDEXNOW_KEY}.txt`;
 }

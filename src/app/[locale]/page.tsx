@@ -2,6 +2,7 @@ import { ArrowRight, Globe, Languages, ShieldCheck, Sparkles } from 'lucide-reac
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { discoverLocales } from '@/i18n/locales.server';
+import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { FRAMEWORKS } from '@/lib/legal-frameworks';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -147,10 +148,22 @@ function Stats({
   t: Awaited<ReturnType<typeof getTranslations<'home'>>>;
   available: number;
 }) {
+  /**
+   * Counted, not typed.
+   *
+   * This tile read a hardcoded '6' while the product shipped seven
+   * locales, and the subtraction below used the same 6 — so both the
+   * native count and the "additional" count were wrong, on the
+   * homepage, in every language. The prose beside it said six too, in
+   * five of its seven translations, while the Arabic one correctly
+   * said seven. Three wrong numbers, one true source, nobody reading
+   * from it.
+   */
+  const nativeCount = NATIVE_LOCALE_CODES.length;
   const items = [
     { value: String(FRAMEWORKS.length), label: t('trust.frameworks') },
-    { value: '6', label: t('trust.languages') },
-    { value: `${Math.max(0, available - 6)}+`, label: t('trust.extraLanguages') }
+    { value: String(nativeCount), label: t('trust.languages') },
+    { value: `${Math.max(0, available - nativeCount)}+`, label: t('trust.extraLanguages') }
   ];
   return (
     <section className="border-y bg-muted/30">

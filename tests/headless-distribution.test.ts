@@ -73,6 +73,30 @@ describe('the homepage agrees with itself across its own languages', () => {
   });
 });
 
+describe('nothing on the homepage counts the locales by hand', () => {
+  const home = read('src/app/[locale]/page.tsx');
+
+  it('derives the native-language tile from the locale list', () => {
+    /**
+     * The tile read a hardcoded '6' while the product shipped seven,
+     * and the "additional languages" figure subtracted the same 6 — so
+     * two numbers were wrong on the most-visited page, in every
+     * language, beside prose that was wrong in five of seven. One true
+     * source existed the whole time and nothing read from it.
+     */
+    expect(home).toContain('const nativeCount = NATIVE_LOCALE_CODES.length;');
+    expect(home).toContain('value: String(nativeCount)');
+    expect(home).toContain('available - nativeCount');
+  });
+
+  it('leaves no bare locale count in the component', () => {
+    // Behaviour, not a lexeme: the Stats items must not contain a
+    // literal digit where a count belongs.
+    const stats = home.slice(home.indexOf('const items = ['), home.indexOf('];', home.indexOf('const items = [')));
+    expect(stats).not.toMatch(/value: ['`]\d/);
+  });
+});
+
 describe('llms.txt is derived, not typed out', () => {
   const route = read('src/app/llms.txt/route.ts');
 
@@ -100,13 +124,22 @@ describe('llms.txt is derived, not typed out', () => {
 
 describe('IndexNow submits where submitting is invited', () => {
   const lib = read('src/lib/indexnow.ts');
-  const keyRoute = read('src/app/[key].txt/route.ts');
 
-  it('serves the key only at its own path', () => {
-    // Echoing back whatever key was asked for would make the site an
-    // oracle that validates any key anybody invents.
-    expect(keyRoute).toContain('params.key !== INDEXNOW_KEY');
-    expect(keyRoute).toContain("status: 404");
+  it('serves the key as a static file, not a route', () => {
+    /**
+     * The first version was app/[key].txt/route.ts and it never
+     * answered: `[locale]` matched first, Next took the key for a
+     * language and served the 404 page. IndexNow would have refused
+     * every submission silently.
+     *
+     * The old test asserted that route's SOURCE TEXT — the comparison
+     * and the 404 branch — and passed while the path was unreachable.
+     * This one asserts the artefact that is actually served, and that
+     * its contents are the key itself, which is what the protocol
+     * checks.
+     */
+    const served = read(join('public', `${INDEXNOW_KEY}.txt`)).trim();
+    expect(served).toBe(INDEXNOW_KEY);
   });
 
   it('points the engines at the path it actually serves', () => {
