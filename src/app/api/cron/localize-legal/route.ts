@@ -7,6 +7,7 @@ import { OPENAI_MODEL, openai } from '@/lib/ai-clients';
 import { localizeInstrumentNames, outcomeLabel } from '@/lib/legal-labels';
 import { localizeDigitGroups } from '@/lib/number-format';
 import { supabaseService } from '@/lib/supabase';
+import { submitToIndexNow } from '@/lib/indexnow';
 
 /**
  * Legal watch, pass 3 — publish an approved item in seven languages.
@@ -201,6 +202,33 @@ async function publishOne(db: ReturnType<typeof supabaseService>, item: Approved
     console.warn('[cron/localize-legal] revalidate_failed', {
       id: item.id,
       error: err instanceof Error ? err.message : String(err)
+    });
+  }
+
+  /**
+   * Tell the engines that take a submission by machine.
+   *
+   * IndexNow is a protocol Bing and Yandex published so that sites can
+   * announce a URL instead of waiting to be crawled — the one
+   * submission channel in this product's acquisition plan that is
+   * automated by invitation rather than in spite of anybody.
+   *
+   * It says nothing about Google, which does not participate, and
+   * therefore nothing about the 427 URLs sitting in "Discovered –
+   * currently not indexed". Those are a crawl-budget problem no ping
+   * solves, and this must not be read later as having addressed them.
+   *
+   * Fire-and-report, never thrown, for the same reason as the
+   * revalidation above: the decision IS published. A search engine
+   * being unreachable is not a failed run, and the sitemap still
+   * carries every URL.
+   */
+  const ping = await submitToIndexNow([`/decisions/${item.slug}`, '/decisions']);
+  if (!ping.ok) {
+    console.warn('[cron/localize-legal] indexnow_failed', {
+      id: item.id,
+      status: ping.status,
+      error: ping.error
     });
   }
 }

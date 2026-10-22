@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCurrentUser } from '@/lib/supabase-server';
+import { jsonLdScript } from '@/lib/json-ld';
+import { softwareApplicationSchema } from '@/lib/product-schema';
+import { appUrl } from '@/lib/app-url';
 
 interface PageProps {
   params: { locale: string };
@@ -24,6 +27,19 @@ export default async function HomePage({ params: { locale } }: PageProps) {
 
   return (
     <div className="space-y-32 pb-20">
+      {/* What the product is, for machines. No aggregateRating and no
+          review: supplying them would mean inventing ratings for a
+          product with no customers, and that request was refused once
+          already — the markup came off rather than being filled. The
+          language list and framework count are derived from the same
+          constants the app runs on, so this cannot drift from the
+          product the way the hand-written "six native languages" did. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLdScript(
+          softwareApplicationSchema(appUrl(), t('hero.subtitle'))
+        )}
+      />
       <Hero locale={locale} t={t} isAuthenticated={isAuthenticated} />
       <Stats t={t} available={available.length} />
       <Features t={t} />
