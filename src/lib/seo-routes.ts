@@ -169,3 +169,45 @@ export function relatedFrameworks(id: FrameworkId, n = 4): LegalFramework[] {
     .slice(0, n)
     .map((s) => s.other);
 }
+
+/**
+ * The comparison links a framework page may actually emit.
+ *
+ * WHY THIS EXISTS RATHER THAN CALLING relatedFrameworks DIRECTLY
+ *
+ * The framework page used to build `/compare/${frameworkPairKey(id,
+ * r.id)}` straight from `relatedFrameworks(id, 4)`. That function ranks
+ * every other framework by affinity and knows nothing about which pages
+ * exist — and CURATED_PAIRS is a deliberately closed set of 33, because
+ * the comment at the top of this file refuses to ship a farm of thin
+ * programmatic pages.
+ *
+ * So the thirteen highest-affinity pairs that nobody curated were
+ * rendered as links to pages that were never generated: appi-vs-ccpa,
+ * eu_ai_act-vs-lgpd, lgpd-vs-uk_gdpr and ten more. Thirteen pairs over
+ * seven locales is 91 URLs answering 404, every one of them linked from
+ * a framework page — which is the family with the most inbound links we
+ * have. A crawler walking in from our strongest pages spent its budget
+ * on 404s, on a domain where 427 URLs are already waiting to be
+ * crawled at all.
+ *
+ * The fix is not to curate the thirteen. Adding 91 pages nobody chose
+ * to a site Google is already declining to crawl is the wrong
+ * direction, and the curation was a real decision. The fix is that the
+ * file which decides what pages exist also decides what links to them.
+ *
+ * Returns fewer than `n` entries — possibly none — when affinity and
+ * curation disagree. A section that renders four cards by padding with
+ * a page that does not exist is the defect, not the fix.
+ */
+export function relatedComparisons(
+  id: FrameworkId,
+  n = 4
+): { other: LegalFramework; slug: string }[] {
+  const curated = new Set(CURATED_PAIRS);
+  // Ask for the whole ranking, then keep the best ones that resolve.
+  return relatedFrameworks(id, FRAMEWORKS.length)
+    .map((other) => ({ other, slug: frameworkPairKey(id, other.id) }))
+    .filter(({ slug }) => curated.has(slug))
+    .slice(0, n);
+}

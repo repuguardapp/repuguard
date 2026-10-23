@@ -10,7 +10,7 @@ import { FRAMEWORKS, frameworkById, type FrameworkId } from '@/lib/legal-framewo
 import { NATIVE_LOCALE_CODES } from '@/i18n/locales';
 import { buildHreflangAlternates } from '@/lib/hreflang';
 import { authorityName, frameworkLabel, frameworkName } from '@/lib/legal-labels';
-import { frameworkParams, frameworkPairKey, relatedFrameworks } from '@/lib/seo-routes';
+import { frameworkParams, relatedComparisons } from '@/lib/seo-routes';
 import { listDecisionsForFramework, type PublishedDecision } from '@/lib/legal-decisions';
 import { appUrl } from '@/lib/app-url';
 import { jsonLdScript } from '@/lib/json-ld';
@@ -88,7 +88,9 @@ export default async function FrameworkPage({ params }: PageProps) {
 
   const t = await getTranslations('frameworkPage');
   const name = frameworkName(framework, params.locale);
-  const related = relatedFrameworks(framework.id, 4);
+  // Only pairs that have a page. Ranking by affinity alone emitted
+  // thirteen links to comparisons nobody curated — see relatedComparisons.
+  const related = relatedComparisons(framework.id, 4);
   // null means the read failed and the page says so; an empty list
   // renders nothing. "No decisions under the GDPR" would be a confident
   // false statement about the law.
@@ -248,10 +250,10 @@ export default async function FrameworkPage({ params }: PageProps) {
           <>
             <h2 className="mt-16 text-2xl font-semibold tracking-tight">{t('relatedTitle')}</h2>
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-              {related.map((r) => (
+              {related.map(({ other: r, slug }) => (
                 <li key={r.id}>
                   <Link
-                    href={`/compare/${frameworkPairKey(framework.id, r.id)}`}
+                    href={`/compare/${slug}`}
                     className="block rounded-md border bg-card p-4 transition hover:bg-accent"
                   >
                     {/* Acronyms, not full titles: two 60-character legal

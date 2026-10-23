@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FRAMEWORKS, type FrameworkId } from '@/lib/legal-frameworks';
-import { CURATED_PAIRS, relatedFrameworks } from '@/lib/seo-routes';
+import { CURATED_PAIRS, relatedComparisons, relatedFrameworks } from '@/lib/seo-routes';
 
 /**
  * The comparison pairs decide how many pages this site has.
@@ -81,5 +81,77 @@ describe('what a reader is offered next', () => {
 
   it('still sends a Gulf reader around the Gulf', () => {
     expect(relatedFrameworks('oman_pdpl', 4).map((f) => f.id)).toContain('saudi_pdpl');
+  });
+});
+
+/**
+ * Every offered comparison has a page behind it.
+ *
+ * THE DEFECT THIS HOLDS SHUT
+ *
+ * The framework page built its "related comparisons" links from
+ * `relatedFrameworks(id, 4)`, which ranks by affinity and knows nothing
+ * about CURATED_PAIRS. Thirteen of the 39 pairs it offered had no page:
+ * appi-vs-ccpa, appi-vs-eu_ai_act, appi-vs-lgpd, appi-vs-pipeda,
+ * appi-vs-uk_gdpr, ccpa-vs-eu_ai_act, ccpa-vs-lgpd, eu_ai_act-vs-lgpd,
+ * eu_ai_act-vs-pipeda, lgpd-vs-pipeda, lgpd-vs-uk_gdpr,
+ * adgm_dp-vs-eu_ai_act, difc_dp-vs-eu_ai_act. Over seven locales that
+ * is 91 URLs answering 404, each one linked from a framework page.
+ *
+ * The suite above tested which pairs exist, and the suite below it
+ * tested which frameworks get offered. Nothing tested that the two
+ * agreed, and the arithmetic that connects them lived in a template.
+ *
+ * It was found by crawling the rendered HTML of a production build, not
+ * by reading the source — `tests/crawl-graph.test.ts` asserts that an
+ * href string appears in a .tsx file, which stays true while the link
+ * it describes points at nothing.
+ */
+describe('a link to a comparison means the comparison exists', () => {
+  it('offers no pair that CURATED_PAIRS does not hold', () => {
+    for (const f of FRAMEWORKS) {
+      for (const { slug, other } of relatedComparisons(f.id, 4)) {
+        expect(CURATED_PAIRS.includes(slug), `${f.id} offers ${slug} (-> ${other.id}), which has no page`).toBe(true);
+      }
+    }
+  });
+
+  it('holds for every depth the page might ask for', () => {
+    // The page asks for 4. A later edit asking for 6 must not reopen it
+    // by reaching further down a ranking that ignores curation.
+    for (const n of [1, 2, 4, 6, FRAMEWORKS.length]) {
+      for (const f of FRAMEWORKS) {
+        for (const { slug } of relatedComparisons(f.id, n)) {
+          expect(CURATED_PAIRS.includes(slug), `${f.id} at n=${n} offers ${slug}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('returns fewer cards rather than one that 404s', () => {
+    /**
+     * EU AI Act's four highest-affinity partners are GDPR plus three
+     * pairs nobody curated. The honest result is one card, not four.
+     * Padding a grid with a page that does not exist is the defect.
+     */
+    const offered = relatedComparisons('eu_ai_act', 4);
+    expect(offered.length).toBeLessThan(4);
+    expect(offered.map((o) => o.slug)).toContain('eu_ai_act-vs-gdpr');
+  });
+
+  it('keeps the affinity order it was given', () => {
+    // Curation filters the ranking; it must not reshuffle it. A DIFC
+    // reader is still sent to the other two Emirati regimes first.
+    const ids = relatedComparisons('difc_dp', 4).map((o) => o.other.id);
+    expect(ids.slice(0, 2).sort()).toEqual(['adgm_dp', 'uae_pdpl']);
+  });
+
+  it('leaves no framework page without a single comparison to offer', () => {
+    // Not a cosmetic point: the comparison pages are the only family
+    // Google has ever chosen to index, and a framework page that links
+    // to none of them is a leaf in the graph we are trying to deepen.
+    for (const f of FRAMEWORKS) {
+      expect(relatedComparisons(f.id, 4).length, `${f.id} offers no comparison`).toBeGreaterThan(0);
+    }
   });
 });
