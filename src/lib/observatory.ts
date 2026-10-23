@@ -1,6 +1,7 @@
 import 'server-only';
 import { alertOps } from './alert';
 import { classifyScanFailure, type FailureCode } from './scan-failure';
+import { OBSERVATORY_LICENCE } from './observatory-licence';
 import { supabaseService } from './supabase';
 
 /**
@@ -440,7 +441,7 @@ async function tallyObservations(
  */
 export const MIN_DOMAINS_FOR_DOWNLOAD = 100;
 
-export const OBSERVATORY_LICENCE = 'https://creativecommons.org/licenses/by/4.0/';
+export { OBSERVATORY_LICENCE };
 
 /**
  * schema.org/Dataset for the study.
