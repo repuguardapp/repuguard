@@ -66,6 +66,9 @@ const HEALTHY: DigestInput = {
    * pass by measuring the wrong report.
    */
   delta: blindDelta(),
+  // Readable and empty: these fixtures assert other things, and a
+  // null here would put the digest into degraded-reporting mode.
+  refunds: [],
   appUrl: 'https://lexyflow.com'
 };
 

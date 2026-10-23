@@ -65,6 +65,9 @@ const base = (over: Partial<DigestInput> = {}): DigestInput => ({
   rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
   funnel: quietFunnel(),
   delta: quietDelta('2026-10-22'),
+  // Readable and empty: these fixtures assert other things, and a
+  // null here would put the digest into degraded-reporting mode.
+  refunds: [],
   appUrl: 'https://lexyflow.com',
   ...over
 });

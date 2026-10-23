@@ -81,6 +81,9 @@ const digest = (f: Funnel | null): string =>
     rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
     funnel: f,
     delta: quietDelta(),
+    // Readable and empty: these fixtures assert other things, and a
+    // null here would put the digest into degraded-reporting mode.
+    refunds: [],
     appUrl: 'https://lexyflow.com'
   } satisfies DigestInput).text;
 

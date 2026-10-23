@@ -125,6 +125,32 @@ export async function POST(request: Request) {
         // payment_failed event is recorded as audit trail but no special
         // handling beyond the idempotent insert above.
         break;
+      case 'charge.refunded':
+        /**
+         * Money going back out.
+         *
+         * Until 23 October this endpoint did not subscribe to this
+         * event at all, so a refund never arrived and the application
+         * carried on as though the money were still ours. It was found
+         * by refunding the live card test and then looking for the
+         * trace — there was none.
+         *
+         * The row is already persisted by the idempotency insert above,
+         * which is what the daily digest reads. This case exists so the
+         * event is handled rather than falling into `default`, and so
+         * it shouts once on the way past: the digest is tomorrow
+         * morning, and a refund that was not ours is worth knowing
+         * about tonight.
+         *
+         * Credits are deliberately NOT reversed here. A refund is a
+         * rare operator action and an automatic reversal has too many
+         * bad shapes — a partial refund, a customer who has already
+         * spent them, a balance driven negative. The digest names the
+         * refund and says the credits were not touched; a human decides
+         * the rest.
+         */
+        await handleChargeRefunded(event.data.object as Stripe.Charge);
+        break;
       default:
         // Unknown but harmless — recorded above for future inspection.
         break;
@@ -218,6 +244,38 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
       updated_at: new Date().toISOString()
     })
     .eq('stripe_subscription_id', sub.id);
+}
+
+/**
+ * A refund, recorded loudly and acted on by nobody automatically.
+ *
+ * The `stripe_webhook_events` row written before this runs is the
+ * durable record and the digest's source. This adds the two things a
+ * row in a table cannot do: a named log line, and one alert.
+ *
+ * `amount_refunded` rather than `amount`: the event fires for a partial
+ * refund too, and the amount that left is the refunded part, not the
+ * size of the original charge.
+ */
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  const context = {
+    chargeId: charge.id,
+    amountRefunded: charge.amount_refunded,
+    currency: charge.currency,
+    fullyRefunded: charge.refunded,
+    customer: typeof charge.customer === 'string' ? charge.customer : (charge.customer?.id ?? null)
+  };
+
+  console.log('[stripe-webhook] charge_refunded', context);
+
+  // Loud on purpose, and only here. Money going back out is rare enough
+  // that an alert per occurrence will never become the noise an
+  // operator learns to skip — which is the failure mode that cost us
+  // four alerts a day for a regulator that had withdrawn its RSS.
+  alertOps('stripe_charge_refunded', context);
+
+  // Credits are not reversed. See the case comment above; the digest
+  // says so in the same breath as it names the refund.
 }
 
 /**

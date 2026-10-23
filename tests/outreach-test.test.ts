@@ -140,6 +140,9 @@ function digestInput(outreach: DigestInput['outreach']): DigestInput {
     rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
     funnel: quietFunnel(),
     delta: quietDelta(),
+    // Readable and empty: these fixtures assert other things, and a
+    // null here would put the digest into degraded-reporting mode.
+    refunds: [],
     appUrl: 'https://lexyflow.com'
   };
 }
