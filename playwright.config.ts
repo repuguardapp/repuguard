@@ -7,10 +7,28 @@ const BASE = `http://127.0.0.1:${PORT}`;
  * Playwright config — boots `next start` against the production build,
  * runs the e2e/ specs, then tears it down.
  *
- * The tests intentionally avoid third-party services. Anything that
- * would call Stripe / Anthropic / Supabase is intercepted with route
- * mocks — see `e2e/fixtures.ts`. This makes the suite deterministic
- * and runnable in CI without secrets.
+ * WHAT THIS SUITE REACHES, AND WHAT IT DOES NOT
+ *
+ * This comment used to say that calls to Stripe / Anthropic / Supabase
+ * were "intercepted with route mocks — see `e2e/fixtures.ts`". There is
+ * no `e2e/fixtures.ts`, and there never was one. The whole suite holds
+ * a single route mock, inline in `auth-and-guards.spec.ts`. Nothing is
+ * intercepted, because nothing gets that far.
+ *
+ * The suite runs without secrets, which is the real reason it is
+ * deterministic — and the real limit. It stops at the login wall:
+ * `/en/audit` answers 307, `CheckoutButton` renders a sign-in link with
+ * no session, and both specs say so in their own headers. Every page
+ * behind that wall is untested at browser level.
+ *
+ * That is where four of the five funnel defects found in October lived
+ * — a dead-end scan result, a 404 on a new account's first report, an
+ * unreachable free trial, a paywall a signed-in user could walk around.
+ * This suite was green through all of them and would be green through
+ * the next one. It is worth running and it is not coverage of the
+ * funnel; closing that gap needs a database that is not production,
+ * because seeding production would put false rows into the organisation
+ * count the morning digest reports.
  */
 export default defineConfig({
   testDir: 'e2e',
