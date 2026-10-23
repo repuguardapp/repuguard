@@ -1,5 +1,6 @@
 import type { CiStatus } from './ci-status';
 import { composeFunnel, firstStall, type Funnel } from './funnel';
+import { isQuiet, type DigestDelta } from './digest-delta';
 import { OUTREACH_BLIND_SPOT, OUTREACH_WINDOW_DAYS, type OutreachTest } from './outreach-test';
 /**
  * The daily state of the business, composed from facts.
@@ -206,6 +207,20 @@ export interface DigestInput {
    * rather than on the machine.
    */
   funnel: Funnel | null;
+  /**
+   * What moved since the last report.
+   *
+   * Added on 23 October, the morning the CNIL recovered and the digest
+   * could not say so: the recovery showed as the DISAPPEARANCE of a
+   * line the reader would have had to remember from the day before,
+   * while fifteen lines of standing backlog — unchanged since the
+   * 20th — kept the top of the report.
+   *
+   * With this, a source that is newly off is named and one that has
+   * been off for three days is a count. The backlog still needs a
+   * decision; it stops asking for one in fifteen lines every morning.
+   */
+  delta: DigestDelta | null;
   appUrl: string;
 }
 
@@ -255,34 +270,66 @@ function firstLine(error: string): string {
 export function composeDigest(input: DigestInput): Digest {
   const actions: string[] = [];
 
+  /**
+   * Sources, named only when they moved.
+   *
+   * The old version enumerated every switched-off source every
+   * morning. Nine of them had not changed since 20 October, so the
+   * report opened with fifteen identical lines and the reader learned
+   * to skip the top — which is exactly what the comment two paragraphs
+   * below warns about and what this file then did anyway.
+   *
+   * `delta.blind` means there is nothing to compare with: the first
+   * run, or an unreadable snapshot. Then everything is printed, and
+   * the report says why, because calling the whole backlog "new" would
+   * be false on the first morning and after every outage.
+   */
+  const blind = !input.delta || input.delta.blind;
+  const movedOff = input.delta?.sourcesOff ?? [];
+  const movedBroken = input.delta?.sourcesBroken ?? [];
+  const movedNeverPolled = input.delta?.neverPolledNew ?? [];
+
   // First, because it is the only category nobody learns about any other
   // way. A failing source is at least noisy; a disabled one is silent by
   // design, and silence is what this whole report exists to break.
   if (input.disabledSources && input.disabledSources.length > 0) {
-    actions.push(
-      `${input.disabledSources.length} source(s) switched off — they are no longer polled, and nothing else will mention them again:\n` +
-        input.disabledSources
-          .map((s) => `    ${s.id}: ${s.reason ?? 'no reason recorded'}`)
-          .join('\n') +
-        `\n    Repair the URL or drop the jurisdiction — ${input.appUrl}/en/admin/ops`
-    );
+    const show = blind
+      ? input.disabledSources
+      : input.disabledSources.filter((s) => movedOff.includes(s.id));
+    if (show.length > 0) {
+      actions.push(
+        `${show.length} source(s) switched off${blind ? '' : ' since the last report'} — they are no longer polled, and nothing else will mention them again:\n` +
+          show.map((s) => `    ${s.id}: ${s.reason ?? 'no reason recorded'}`).join('\n') +
+          `\n    Repair the URL or drop the jurisdiction — ${input.appUrl}/en/admin/ops`
+      );
+    }
   }
 
   if (input.brokenSources && input.brokenSources.length > 0) {
-    actions.push(
-      `${input.brokenSources.length} regulator feed(s) failing — the acquisition pipeline is producing nothing from them:\n` +
-        input.brokenSources.map((s) => `    ${s.id}: ${s.error ?? 'unknown error'}`).join('\n') +
-        `\n    Fix or replace at ${input.appUrl}/en/admin/ops`
-    );
+    const show = blind
+      ? input.brokenSources
+      : input.brokenSources.filter((s) => movedBroken.includes(s.id));
+    if (show.length > 0) {
+      actions.push(
+        `${show.length} regulator feed(s) started failing — the acquisition pipeline is producing nothing from them:\n` +
+          show.map((s) => `    ${s.id}: ${s.error ?? 'unknown error'}`).join('\n') +
+          `\n    Fix or replace at ${input.appUrl}/en/admin/ops`
+      );
+    }
   }
 
   if (input.neverPolledSources && input.neverPolledSources.length > 0) {
     // Different from a failure and worth saying separately: a source
     // that has never run has never been proven to work at all.
-    actions.push(
-      `${input.neverPolledSources.length} source(s) have never been polled: ${input.neverPolledSources.join(', ')}\n` +
-        `    Run the watcher once at ${input.appUrl}/en/admin/ops`
-    );
+    const show = blind
+      ? input.neverPolledSources
+      : input.neverPolledSources.filter((id) => movedNeverPolled.includes(id));
+    if (show.length > 0) {
+      actions.push(
+        `${show.length} source(s) have never been polled: ${show.join(', ')}\n` +
+          `    Run the watcher once at ${input.appUrl}/en/admin/ops`
+      );
+    }
   }
 
   if (input.billingMirrorDrift) {
@@ -315,13 +362,15 @@ export function composeDigest(input: DigestInput): Digest {
   }
 
   if (input.barrenSources && input.barrenSources.length > 0) {
-    actions.push(
-      `${input.barrenSources.length} source(s) poll cleanly and have never produced a usable item — they read as healthy and cost a model call each:\n` +
-        input.barrenSources
-          .map((s) => `    ${s.id}: ${s.rejected} classified, 0 kept`)
-          .join('\n') +
-        `\n    Narrow the URL or switch it off — ${input.appUrl}/en/admin/ops`
-    );
+    const newly = input.delta?.barrenNew ?? [];
+    const show = blind ? input.barrenSources : input.barrenSources.filter((s) => newly.includes(s.id));
+    if (show.length > 0) {
+      actions.push(
+        `${show.length} source(s) poll cleanly and have never produced a usable item — they read as healthy and cost a model call each:\n` +
+          show.map((s) => `    ${s.id}: ${s.rejected} classified, 0 kept`).join('\n') +
+          `\n    Narrow the URL or switch it off — ${input.appUrl}/en/admin/ops`
+      );
+    }
   }
 
   if (input.stalledItems && input.stalledItems.count > 0) {
@@ -416,6 +465,44 @@ export function composeDigest(input: DigestInput): Digest {
 
   const lines: string[] = [];
 
+  /**
+   * What moved, before what needs doing.
+   *
+   * On 23 October the CNIL came back — the first clean poll since its
+   * maintenance window, and the proof that the transient-failure rule
+   * had kept it alive to recover. The report could not say so. A
+   * recovery showed only as a line DISAPPEARING, which nobody notices,
+   * while fifteen lines of three-day-old backlog held the top.
+   *
+   * A recovery is not an action, so it does not belong in NEEDS YOU.
+   * It belongs where a reader looks first, once, and then never has to
+   * think about again.
+   */
+  const d = input.delta;
+  if (d && !d.blind) {
+    const moved: string[] = [];
+    if (d.sourcesRecovered.length > 0)
+      moved.push(`  recovered         ${d.sourcesRecovered.join(', ')}`);
+    if (d.sourcesBack.length > 0)
+      moved.push(`  switched back on  ${d.sourcesBack.join(', ')}`);
+    if (d.barrenGone.length > 0)
+      moved.push(`  now producing     ${d.barrenGone.join(', ')}`);
+    if (d.publishedDelta !== 0)
+      moved.push(`  decisions published  ${d.publishedDelta > 0 ? '+' : ''}${d.publishedDelta}`);
+    if (moved.length > 0) {
+      lines.push(`CHANGED SINCE ${d.since}`, '', ...moved, '');
+    }
+  } else if (d?.blind) {
+    // Not "nothing changed". There was nothing to compare with, and a
+    // report that cannot tell the difference must say which it is.
+    lines.push(
+      'NO PREVIOUS REPORT TO COMPARE WITH',
+      '',
+      '  Everything below is printed in full rather than as a change.',
+      ''
+    );
+  }
+
   if (actions.length > 0) {
     lines.push('NEEDS YOU', '');
     actions.forEach((action, i) => lines.push(`  ${i + 1}. ${action}`, ''));
@@ -435,6 +522,30 @@ export function composeDigest(input: DigestInput): Digest {
     '',
     `  Active subscriptions  ${num(input.activeSubscriptions)}`
   );
+
+  /**
+   * The backlog, as a count.
+   *
+   * These sources still need a decision — repair the URL or drop the
+   * jurisdiction — and nine of them had not changed since 20 October
+   * while the report enumerated all nine every morning. Named when one
+   * moves, counted the rest of the time. The console has the list.
+   */
+  const standing = [
+    input.disabledSources ? `${input.disabledSources.length} off` : null,
+    input.brokenSources && input.brokenSources.length > 0
+      ? `${input.brokenSources.length} failing`
+      : null,
+    input.barrenSources && input.barrenSources.length > 0
+      ? `${input.barrenSources.length} barren`
+      : null,
+    input.neverPolledSources && input.neverPolledSources.length > 0
+      ? `${input.neverPolledSources.length} never polled`
+      : null
+  ].filter(Boolean);
+  if (standing.length > 0) {
+    lines.push(`  Sources               ${standing.join(' · ')} — ${input.appUrl}/en/admin/ops`);
+  }
 
   // Directly under the subscription count on purpose. That line answers
   // whether there is a business; this one is the only place the report
