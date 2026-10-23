@@ -12,6 +12,7 @@ import { barrenSources, type ClassifiedRow } from '@/lib/source-yield';
 import { isRuleWritten } from '@/lib/rejection-reasons';
 import { diffSnapshots, type DigestSnapshot } from '@/lib/digest-delta';
 import { listReferrals } from '@/lib/referrals';
+import { parseRefundEvent, type RefundEvent, type WebhookEventRow } from '@/lib/refunds';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
 
@@ -159,6 +160,7 @@ async function digest() {
     rejections: await readRejections(db, since),
     delta,
     funnel: await readFunnel(db, since, liveSubscriptions),
+    refunds: await readRefunds(db, since),
     appUrl: baseUrl
   };
 
@@ -507,6 +509,53 @@ async function readBarrenSources(
  * way to notice the day it takes something real.
  */
 const MAX_NAMED_REJECTIONS = 8;
+
+/**
+ * Refunds in the window, read from the events we stored.
+ *
+ * No table of its own: `stripe_webhook_events` already persists every
+ * event with its payload, and a migration to duplicate that would make
+ * the database less reconstructible for nothing. The one thing that
+ * had to change was outside this repository — the endpoint did not
+ * subscribe to `charge.refunded`, so the row was never written.
+ *
+ * Returns null when the read fails. "No money went back out" is the
+ * reassuring reading of a line that may simply have failed to load,
+ * and the composer prints `unavailable` rather than `none`.
+ *
+ * A row we cannot parse is dropped rather than guessed at, and the
+ * count is logged so a Stripe API version change shows up as a
+ * discrepancy in the logs instead of as a silently shorter list.
+ */
+async function readRefunds(
+  db: ReturnType<typeof supabaseService>,
+  since: string
+): Promise<RefundEvent[] | null> {
+  try {
+    const { data, error } = await db
+      .from('stripe_webhook_events')
+      .select('id, type, payload, processed_at')
+      .eq('type', 'charge.refunded')
+      .gte('processed_at', since)
+      .order('processed_at', { ascending: false })
+      .limit(100);
+    if (error) return null;
+
+    const rows = (data ?? []) as WebhookEventRow[];
+    const parsed = rows.map(parseRefundEvent).filter((r): r is RefundEvent => r !== null);
+
+    if (parsed.length !== rows.length) {
+      console.error('[cron/daily-digest] refund_payload_unparsed', {
+        rows: rows.length,
+        parsed: parsed.length
+      });
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 async function readRejections(
   db: ReturnType<typeof supabaseService>,

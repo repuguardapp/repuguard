@@ -2,6 +2,7 @@ import type { CiStatus } from './ci-status';
 import { composeFunnel, firstStall, type Funnel } from './funnel';
 import { isQuiet, type DigestDelta } from './digest-delta';
 import { OUTREACH_BLIND_SPOT, OUTREACH_WINDOW_DAYS, type OutreachTest } from './outreach-test';
+import { composeRefunds, refundActions, type RefundEvent } from './refunds';
 /**
  * The daily state of the business, composed from facts.
  *
@@ -221,6 +222,20 @@ export interface DigestInput {
    * decision; it stops asking for one in fifteen lines every morning.
    */
   delta: DigestDelta | null;
+  /**
+   * Money that went back out in the last day.
+   *
+   * Added on 23 October, after the payment path was exercised with a
+   * real card and refunded. Every step of that test showed somewhere
+   * except the refund — `charge.refunded` was not among the six events
+   * the endpoint subscribed to, so it never arrived at all, and the
+   * application carried on as though the money were still ours.
+   *
+   * Null is "we could not read it", never "there were none". The two
+   * are opposite claims and only one of them is reassuring, which is
+   * the same distinction the funnel and the delta already hold.
+   */
+  refunds: RefundEvent[] | null;
   appUrl: string;
 }
 
@@ -431,6 +446,11 @@ export function composeDigest(input: DigestInput): Digest {
     actions.push(`${input.auditsFailed} audit(s) failed in the last 24h. Credits were refunded.`);
   }
 
+  // Money that left the company. Rare enough never to become wallpaper,
+  // which is why it earns a numbered action where nine sources that
+  // have been off since the 20th earn a count.
+  actions.push(...refundActions(input.refunds));
+
   const unreadable = Object.entries({
     'audits completed': input.auditsCompleted,
     'audits failed': input.auditsFailed,
@@ -456,7 +476,10 @@ export function composeDigest(input: DigestInput): Digest {
     // Zeros across the funnel and an unreadable funnel look identical on
     // the page and mean opposite things — one is "nobody came", the other
     // is "we cannot tell whether anybody came".
-    funnel: input.funnel
+    funnel: input.funnel,
+    // "No money went back out" is the reassuring reading of a line that
+    // may simply have failed to load.
+    refunds: input.refunds
   })
     .filter(([, value]) => value === null)
     .map(([label]) => label);
@@ -517,6 +540,10 @@ export function composeDigest(input: DigestInput): Digest {
     `  Audits failed         ${num(input.auditsFailed)}`,
     `  Credits consumed      ${num(input.creditsConsumed)}`,
     `  New organizations     ${num(input.newOrganizations)}`,
+    // Printed on quiet mornings too, including "none". A money-out line
+    // that only appears when there is money out teaches the reader that
+    // its absence means nothing.
+    composeRefunds(input.refunds),
     '',
     'STANDING',
     '',
