@@ -19,6 +19,27 @@ import { describe, expect, it } from 'vitest';
  * These assertions hold the arrow in both directions. They do not prove
  * the pages get indexed — nothing in this repository can promise that —
  * only that the path exists for a crawler to follow.
+ *
+ * AND THEY DO NOT EVEN PROVE THAT. READ THIS BEFORE ADDING ONE.
+ *
+ * Every assertion below reads a .tsx file and checks that a string
+ * occurs in it. That is not the link graph; it is the source code that
+ * is supposed to produce the link graph. The two parted company on
+ * 23 October, while this file was green: the framework pages were
+ * emitting links to thirteen comparison pages that had never been
+ * generated — 91 URLs over seven locales, all 404, all linked from the
+ * family with the most inbound links we have. The href in the template
+ * was present and correct, so nothing here could see it, because what
+ * was wrong was the value interpolated into it.
+ *
+ * `e2e/link-graph.spec.ts` is the instrument for that class: it fetches
+ * the running site, parses the HTML that was served, follows every
+ * internal link and reports where each one lands. It was shown to fail
+ * on the broken build before being trusted on the fixed one.
+ *
+ * Keep these tests — prerendering and `dynamicParams` are build-time
+ * properties a crawl cannot observe. Do not add a new `toContain` on an
+ * href here and believe the graph is covered.
  */
 
 const ROOT = join(__dirname, '..');
