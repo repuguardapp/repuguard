@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { composeDigest, type DigestInput } from '../src/lib/daily-digest';
 import { quietFunnel } from './support/quiet-funnel';
+import { blindDelta } from './support/quiet-delta';
 
 /**
  * The operational brain.
@@ -54,6 +55,17 @@ const HEALTHY: DigestInput = {
   },
   rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
   funnel: quietFunnel(),
+  /**
+   * Blind, not quiet: these suites assert that a switched-off source is
+   * NAMED with its reason, which is what a reader sees the first time
+   * it happens and on any morning the previous report cannot be read.
+   *
+   * A quiet delta — compared, nothing moved — now collapses the same
+   * sources to a count in STANDING, which is the change of 23 October
+   * and has its own suite. Using it here would have made these guards
+   * pass by measuring the wrong report.
+   */
+  delta: blindDelta(),
   appUrl: 'https://lexyflow.com'
 };
 

@@ -11,6 +11,7 @@ import {
   type FunnelWindow
 } from '@/lib/funnel';
 import { quietFunnel } from './support/quiet-funnel';
+import { quietDelta } from './support/quiet-delta';
 
 /**
  * The instrument for the question the digest could not answer.
@@ -79,6 +80,7 @@ const digest = (f: Funnel | null): string =>
     },
     rejections: { byRule: [], ruleOverflow: 0, byModel: 0, byHuman: 0 },
     funnel: f,
+    delta: quietDelta(),
     appUrl: 'https://lexyflow.com'
   } satisfies DigestInput).text;
 

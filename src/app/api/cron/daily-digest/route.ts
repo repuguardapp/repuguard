@@ -10,6 +10,7 @@ import { FUNNEL_STAGES, type Funnel, type FunnelWindow } from '@/lib/funnel';
 import { OUTREACH_SENT_AT, outreachTest } from '@/lib/outreach-test';
 import { barrenSources, type ClassifiedRow } from '@/lib/source-yield';
 import { isRuleWritten } from '@/lib/rejection-reasons';
+import { diffSnapshots, type DigestSnapshot } from '@/lib/digest-delta';
 import { listReferrals } from '@/lib/referrals';
 import { supabaseService } from '@/lib/supabase';
 import { appUrl } from '@/lib/app-url';
@@ -117,6 +118,25 @@ async function digest() {
   // as switched off and as a live cost in the same email.
   const health = await readSourceHealth(db);
 
+  /**
+   * What moved since the last report.
+   *
+   * Read before anything is written, so today's snapshot cannot be
+   * compared with itself — the mistake that would make every morning
+   * look quiet.
+   */
+  const barrenToday = await readBarrenSources(db, health.enabledIds);
+  const corpusToday = await readCorpus(db);
+  const snapshot: DigestSnapshot = {
+    disabled: (health.buckets.disabledSources ?? []).map((s) => s.id).sort(),
+    broken: (health.buckets.brokenSources ?? []).map((s) => s.id).sort(),
+    barren: (barrenToday ?? []).map((s) => s.id).sort(),
+    neverPolled: [...(health.buckets.neverPolledSources ?? [])].sort(),
+    published: corpusToday?.published ?? 0,
+    approved: corpusToday?.approved ?? 0
+  };
+  const delta = diffSnapshots(snapshot, await readPreviousSnapshot(db));
+
   const input: DigestInput = {
     auditsCompleted,
     auditsFailed,
@@ -125,9 +145,9 @@ async function digest() {
     newOrganizations,
     awaitingReview,
     ...billing,
-    corpus: await readCorpus(db),
+    corpus: corpusToday,
     ...health.buckets,
-    barrenSources: await readBarrenSources(db, health.enabledIds),
+    barrenSources: barrenToday,
     stalledItems: await readStalledItems(db),
     parkedItems: await readParkedItems(db),
     ci: await latestCiRun(),
@@ -137,6 +157,7 @@ async function digest() {
     // is the sentence that retires a channel.
     outreach: outreachTest(await listReferrals()),
     rejections: await readRejections(db, since),
+    delta,
     funnel: await readFunnel(db, since, liveSubscriptions),
     appUrl: baseUrl
   };
@@ -159,6 +180,16 @@ async function digest() {
       ...composed
     });
   }
+
+  /**
+   * Stored after composing, before sending.
+   *
+   * If the send fails the snapshot still stands: tomorrow should
+   * compare against the state this run observed, not replay it as
+   * though nothing had happened. A failed delivery is a delivery
+   * problem, and the alertOps call below is what reports it.
+   */
+  await writeSnapshot(db, snapshot);
 
   const sent = await sendOpsDigest(recipients, composed.subject, composed.text);
   if (!sent) {
@@ -730,4 +761,57 @@ async function readFunnel(
     allTime: windowAt(null),
     outreachFrom: OUTREACH_SENT_AT.slice(0, 10)
   };
+}
+
+/**
+ * The most recent report before today's.
+ *
+ * Strictly before current_date, so a re-run on the same day compares
+ * with yesterday rather than with the row this run is about to write.
+ * Debugging the digest must not make the next morning believe
+ * everything changed twice.
+ *
+ * Null on any failure, which the composer renders as "no previous
+ * report to compare with" rather than as "nothing changed". Those are
+ * opposite claims and only one of them is reassuring.
+ */
+async function readPreviousSnapshot(
+  db: ReturnType<typeof supabaseService>
+): Promise<{ takenOn: string; snapshot: DigestSnapshot } | null> {
+  try {
+    const { data, error } = await db
+      .from('digest_snapshots')
+      .select('taken_on, payload')
+      .lt('taken_on', new Date().toISOString().slice(0, 10))
+      .order('taken_on', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as { taken_on: string; payload: DigestSnapshot };
+    return { takenOn: row.taken_on, snapshot: row.payload };
+  } catch (err) {
+    console.error('[cron/daily-digest] snapshot_read_failed', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
+  }
+}
+
+/** Today's state, for tomorrow to compare against. Never throws. */
+async function writeSnapshot(
+  db: ReturnType<typeof supabaseService>,
+  snapshot: DigestSnapshot
+): Promise<void> {
+  try {
+    const { error } = await db
+      .from('digest_snapshots')
+      .upsert({ taken_on: new Date().toISOString().slice(0, 10), payload: snapshot });
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    // Losing a snapshot costs tomorrow its comparison, which the report
+    // then says out loud. It must not cost today its digest.
+    console.error('[cron/daily-digest] snapshot_write_failed', {
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
 }
