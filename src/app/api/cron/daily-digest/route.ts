@@ -267,6 +267,7 @@ async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise
       last_status: string | null;
       last_error: string | null;
       disabled_reason: string | null;
+      abandoned_at: string | null;
     }[];
 
     // Each source appears in exactly one bucket: a disabled source is not
@@ -279,8 +280,22 @@ async function readSourceHealth(db: ReturnType<typeof supabaseService>): Promise
           .filter((r) => r.last_status === 'error')
           .map((r) => ({ id: r.id, error: r.last_error })),
         neverPolledSources: live.filter((r) => r.last_status === null).map((r) => r.id),
+        /**
+         * Abandoned sources are excluded, and that is the point.
+         *
+         * The report asked for a decision on nine jurisdictions every
+         * morning. On 23 October the decision was taken and recorded in
+         * `abandoned_at` with its reason: six Gulf regulators that
+         * publish no machine-readable enforcement, the EDPS refusing our
+         * collector on purpose, a free-zone press office, and Japan's
+         * PPC which is barren by structure rather than by URL.
+         *
+         * A question that has been answered must stop being asked. The
+         * rows stay — the reasoning survives and re-enabling is one line
+         * — but they leave the bucket that means "needs you".
+         */
         disabledSources: rows
-          .filter((r) => !r.enabled)
+          .filter((r) => !r.enabled && !r.abandoned_at)
           .map((r) => ({ id: r.id, reason: r.disabled_reason }))
       },
       /**
