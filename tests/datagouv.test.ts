@@ -331,3 +331,61 @@ describe('a deleted dataset is not an existing edition', () => {
     expect(findEdition([{ id: 'c', title, deleted: false }], title)?.id).toBe('c');
   });
 });
+
+describe('the metadata the platform asks for, and only what we hold', () => {
+  it('states the window the readings were taken in', () => {
+    /**
+     * data.gouv.fr scores metadata completeness and flagged three gaps
+     * on the first real deposit: undocumented file, no temporal
+     * coverage, no spatial coverage. All three are things we actually
+     * hold, so leaving them empty was an omission rather than a
+     * limitation.
+     */
+    expect(dataGouvPayload(report(), CSV)['temporal_coverage']).toEqual({
+      start: '2026-10-01',
+      end: '2026-10-05'
+    });
+  });
+
+  it('omits the window rather than inventing an end date', () => {
+    // A study still collecting has no end. Printing today's date would
+    // assert the reading finished when it has not.
+    expect(dataGouvPayload(report({ lastReadAt: null }), CSV)).not.toHaveProperty(
+      'temporal_coverage'
+    );
+  });
+
+  it('omits the window when the sample has no retrieval date either', () => {
+    expect(dataGouvPayload(report({ sourceDate: null }), CSV)).not.toHaveProperty(
+      'temporal_coverage'
+    );
+  });
+
+  it('declares France, while the description keeps the distinction', () => {
+    /**
+     * The coarse field says France; the precise sentence stays in the
+     * prose. The population is `.fr` REGISTRATIONS, and a `.fr` domain
+     * can be held from outside France — which is why the description
+     * states that French organisations on other suffixes are absent.
+     */
+    expect(dataGouvPayload(report(), CSV)['spatial']).toEqual({
+      zones: ['country:fr'],
+      granularity: 'country'
+    });
+    expect(String(dataGouvPayload(report(), CSV)['description'])).toContain(
+      'French organisations on other suffixes are absent'
+    );
+  });
+
+  it('documents the column that stops a reader dividing by the wrong total', () => {
+    // `denominator` differs by row: observations are out of documents
+    // read, refusals out of domains attempted. 87 of 106 and 87 of 280
+    // are different claims about the same number.
+    const doc = String(
+      (dataGouvPayload(report(), CSV)['resources'] as { description: string }[])[0]!.description
+    );
+    expect(doc).toContain('denominator');
+    expect(doc).toContain('observations are out of the documents actually read');
+    expect(doc).toContain('refusals are out of the domains attempted');
+  });
+});
