@@ -241,3 +241,93 @@ describe('an incomplete listing is not an absent edition', () => {
     expect(hasMorePages('nonsense')).toBe(false);
   });
 });
+
+describe('the licence the platform will actually store', () => {
+  /**
+   * The twelve ids data.gouv.fr publishes at /api/1/datasets/licenses/,
+   * read from demo.data.gouv.fr on 24 October. Recorded rather than
+   * guessed, because the first run of this client sent `cc-by-4.0` and
+   * the platform stored `notspecified` — silently, with a 200.
+   */
+  const PLATFORM_LICENCE_IDS = [
+    'cc-by', 'cc-by-sa', 'cc-zero', 'fr-lo', 'lov2', 'notspecified',
+    'odc-by', 'odc-odbl', 'odc-pddl', 'other-at', 'other-open', 'other-pd'
+  ];
+
+  it('sends an id the platform recognises', () => {
+    const id = dataGouvPayload(report(), CSV)['license'];
+    expect(PLATFORM_LICENCE_IDS).toContain(id);
+  });
+
+  it('does not silently publish with no licence at all', () => {
+    /**
+     * `notspecified` is in the list above and is a valid id, which is
+     * exactly why it is dangerous: an unrecognised value lands there
+     * with a 200 and nothing says so. The Zenodo record of the same
+     * artefact states CC-BY-4.0, so publishing this one unlicensed
+     * would be one study with two contradictory statements — and would
+     * drop the attribution obligation that is the mechanism by which a
+     * reuse points back here.
+     */
+    expect(dataGouvPayload(report(), CSV)['license']).not.toBe('notspecified');
+  });
+
+  it('obliges attribution rather than waiving it', () => {
+    // cc-zero and the public-domain ids would let a reuser take the
+    // data without naming the source. That is the opposite of why this
+    // is published.
+    const id = dataGouvPayload(report(), CSV)['license'];
+    expect(['cc-zero', 'odc-pddl', 'other-pd', 'other-open']).not.toContain(id);
+  });
+
+  it('states the exact version in prose, since the field cannot', () => {
+    // The platform's taxonomy is unversioned. The description carries
+    // the full URL so the precise licence is still stated somewhere a
+    // reader can act on.
+    expect(String(dataGouvPayload(report(), CSV)['description'])).toContain(
+      'https://creativecommons.org/licenses/by/4.0/'
+    );
+  });
+});
+
+describe('a deleted dataset is not an existing edition', () => {
+  const title = editionTitle(new Date('2026-10-23T00:00:00Z'));
+
+  it('skips a row carrying a deletion timestamp', () => {
+    /**
+     * data.gouv.fr deletes softly. Measured on 24 October: after a
+     * DELETE returning 204, the row stayed in /me/datasets/ with
+     * `deleted: "2026-10-24T10:16:08.325000+00:00"`, and the next run
+     * of this client reported `created: false` against it.
+     *
+     * Left unhandled, throwing away a bad draft would be irreversible
+     * in the direction that matters — the edition could never be
+     * deposited again, and the report would say it already had been.
+     */
+    expect(
+      findEdition(
+        [{ id: 'gone', title, deleted: '2026-10-24T10:16:08.325000+00:00' }],
+        title
+      )
+    ).toBeNull();
+  });
+
+  it('still finds the live one when a deleted one shares its title', () => {
+    // The real shape after a delete-and-redeposit: two rows, one dead.
+    expect(
+      findEdition(
+        [
+          { id: 'gone', title, deleted: '2026-10-24T10:16:08.325000+00:00' },
+          { id: 'live', title, deleted: null, page: 'https://x.invalid/d' }
+        ],
+        title
+      )
+    ).toEqual({ id: 'live', page: 'https://x.invalid/d' });
+  });
+
+  it('treats an absent or null deleted field as alive', () => {
+    expect(findEdition([{ id: 'a', title }], title)?.id).toBe('a');
+    expect(findEdition([{ id: 'b', title, deleted: null }], title)?.id).toBe('b');
+    expect(findEdition([{ id: 'c', title, deleted: false }], title)?.id).toBe('c');
+  });
+});

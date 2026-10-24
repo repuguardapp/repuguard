@@ -132,7 +132,24 @@ export function dataGouvPayload(
   return {
     title: editionTitle(now),
     description,
-    license: 'cc-by-4.0',
+    /**
+     * `cc-by`, not `cc-by-4.0`.
+     *
+     * Measured against the platform's own /datasets/licenses/ list: it
+     * publishes twelve ids and the Creative Commons Attribution one is
+     * unversioned. Sending `cc-by-4.0` is not rejected — it is silently
+     * stored as `notspecified`, which is how the first demo run came
+     * back. That would have published the dataset with no licence at
+     * all while the Zenodo record of the same artefact says CC-BY-4.0:
+     * one study, two contradictory statements, and the loss of the
+     * attribution obligation that is the whole mechanism by which reuse
+     * points back here.
+     *
+     * The platform's field is coarser than the truth, so the exact
+     * version is stated in the description, which carries the full
+     * https://creativecommons.org/licenses/by/4.0/ URL.
+     */
+    license: 'cc-by',
     frequency: 'quarterly',
     tags: ['rgpd', 'donnees-personnelles', 'vie-privee', 'web', 'mesure'],
     // Not a convenience. The documentation is explicit that a dataset
@@ -197,9 +214,25 @@ export function findEdition(
 
   for (const row of list) {
     if (!row || typeof row !== 'object') continue;
-    const r = row as { title?: unknown; id?: unknown; page?: unknown };
+    const r = row as { title?: unknown; id?: unknown; page?: unknown; deleted?: unknown };
     if (typeof r.title !== 'string' || r.title !== title) continue;
     if (typeof r.id !== 'string') continue;
+    /**
+     * A deleted dataset is not an existing edition.
+     *
+     * data.gouv.fr deletes softly: after a DELETE the row stays in
+     * `/me/datasets/` carrying a `deleted` timestamp. Measured on
+     * 24 October — the dataset this client had just created came back
+     * with `deleted: "2026-10-24T10:16:08..."` and the next run
+     * reported `created: false` against it.
+     *
+     * Without this, deleting a bad draft would be irreversible in the
+     * one direction that matters: the operator throws away a wrong
+     * deposit, re-runs, and nothing is ever created again — while the
+     * report cheerfully says the edition is already there and links to
+     * something that no longer exists.
+     */
+    if (r.deleted !== null && r.deleted !== undefined && r.deleted !== false) continue;
     return { id: r.id, page: typeof r.page === 'string' ? r.page : null };
   }
   return null;
