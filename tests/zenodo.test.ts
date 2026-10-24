@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { OBSERVATORY_LICENCE } from '@/lib/observatory-licence';
 
 /**
  * A DOI is permanent by design. A minted record with a wrong number in it
@@ -150,7 +151,14 @@ describe('the record stands on its own once detached from us', () => {
     // a licence that obliges a reuser to name the source turns every
     // reuse into the thing we are trying to earn.
     expect(LIB).toContain("license: 'cc-by-4.0'");
-    expect(OBSERVATORY).toContain('creativecommons.org/licenses/by/4.0');
+    // The constant itself, not a string in whichever file happens to
+    // hold it today. This assertion used to read the text of
+    // observatory.ts and broke the moment the licence moved into its own
+    // module — while the licence, its value and its three public uses
+    // were all unchanged. That is the failure mode of asserting a
+    // lexeme: it reports an edit as a defect and would say nothing if
+    // the value itself were wrong.
+    expect(OBSERVATORY_LICENCE).toBe('https://creativecommons.org/licenses/by/4.0/');
   });
 });
 

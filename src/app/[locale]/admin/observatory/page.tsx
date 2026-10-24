@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { AdminSessionExpired } from '@/components/AdminSessionExpired';
 import { DepositButton } from '@/components/DepositButton';
+import { DataGouvDepositButton } from '@/components/DataGouvDepositButton';
 import { OutreachDraft } from '@/components/OutreachDraft';
 import { findPressCandidates } from '@/lib/press-candidates';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,6 +117,7 @@ export default async function ObservatoryOutreachPage({
                 se remplace. Un clic par édition trimestrielle — pas un par contact.
               </p>
               <DepositButton />
+              <DataGouvDepositButton />
             </CardContent>
           </Card>
 
