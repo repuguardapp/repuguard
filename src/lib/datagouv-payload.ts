@@ -91,6 +91,15 @@ export function resolveConfig(
  * different would make one edition look like two studies, and would
  * mean two places to get a correction wrong.
  */
+/** Column documentation for the published CSV. */
+const DATASET_FILE_DOC = [
+  'Long format, four columns: `section`, `key`, `value`, `denominator`.',
+  '',
+  '`section` is one of `sample` (how the population was drawn), `progress` (how far the reading got), `observation` (the seven disclosures, each counted as present / not_found / unclear) and `refusal` (why a domain could not be read, by reason).',
+  '',
+  '`denominator` is the total each `value` should be read against, and it is not the same on every row: observations are out of the documents actually read, refusals are out of the domains attempted. A figure divided by the wrong one of those is wrong by a wide margin.'
+].join('\n');
+
 export function dataGouvPayload(
   report: ObservatoryReport,
   csvUrl: string,
@@ -129,9 +138,34 @@ export function dataGouvPayload(
     .filter((line, i, all) => !(line === '' && all[i - 1] === ''))
     .join('\n');
 
+  /**
+   * The window the readings were taken in.
+   *
+   * Both ends are dates we hold: the ranking was retrieved on
+   * `sourceDate` and the last policy was read at `lastReadAt`. Omitted
+   * entirely when either is missing — data.gouv.fr flags an absent
+   * temporal coverage as a metadata gap, and a gap is the correct thing
+   * to show when we cannot say truthfully what the window was.
+   */
+  const end = report.lastReadAt ? report.lastReadAt.slice(0, 10) : null;
+  const temporal =
+    report.sourceDate && end ? { temporal_coverage: { start: report.sourceDate, end } } : {};
+
   return {
     title: editionTitle(now),
     description,
+    /**
+     * France, with the caveat the description already carries.
+     *
+     * The population is `.fr` REGISTRATIONS, which is not the same set
+     * as "organisations located in France" — a `.fr` domain can be held
+     * from anywhere. The platform's field cannot express that
+     * distinction, so the coarse answer goes here and the precise one
+     * stays in the description, which says in as many words that French
+     * organisations on other suffixes are absent.
+     */
+    spatial: { zones: ['country:fr'], granularity: 'country' },
+    ...temporal,
     /**
      * `cc-by`, not `cc-by-4.0`.
      *
@@ -159,6 +193,15 @@ export function dataGouvPayload(
     resources: [
       {
         title: 'lexyflow-observatory-fr.csv',
+        /**
+         * What the columns mean.
+         *
+         * data.gouv.fr flags an undocumented file as a metadata gap and
+         * it is right to: this CSV is long-format, and `denominator` is
+         * the column that stops a reader turning 87 into a percentage
+         * of the wrong total.
+         */
+        description: DATASET_FILE_DOC,
         url: csvUrl,
         type: 'main',
         format: 'csv',
